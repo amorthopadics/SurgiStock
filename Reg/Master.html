@@ -152,9 +152,6 @@ body{display:flex;flex-direction:column;}
 @media(max-width:600px){.tab-btn span{display:none;}.tab-btn{padding:6px 9px;}}
 
 /* cache status indicator */
-#cache-status{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;flex-shrink:0;cursor:default;border-radius:var(--radius-lg);background:var(--bg3);border:1px solid var(--border);color:var(--text2);transition:color .2s,border-color .2s;}
-#cache-status i{font-size:15px;line-height:1;}
-#cache-status i.spin{animation:spin 1s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
 /* ═══ FIELD / FORM ═══ */
@@ -313,8 +310,95 @@ body{display:flex;flex-direction:column;}
 }
 
 /* ═══ MODULE-SPECIFIC ADDITIONS (Master Setup) ═══ */
-.tabs-fixed.four{width:390px;}
-.tabs-fixed.four .tab-btn.active span{max-width:110px;}
+.tabs-fixed.four{width:200px;flex-shrink:0;}
+.tabs-fixed.four .tab-btn.active span{max-width:120px;}
+@media(max-width:700px){   /* keep the active label visible on phones, inactive stays icon-only */
+  .tabs-fixed.four{width:auto;}
+  .tabs-fixed.four .tab-btn{flex:0 0 38px;padding:7px 0;}
+  .tabs-fixed.four .tab-btn.active{flex:0 0 auto;padding:7px 14px;}
+  .tabs-fixed.four .tab-btn.active span{display:inline;max-width:120px;margin-left:6px;opacity:1;}
+}
+
+/* sub menu — sits between the main tabs and the search box */
+.sub-nav{display:none;align-items:center;gap:3px;padding:3px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-lg);min-width:0;max-width:100%;overflow-x:auto;scrollbar-width:none;}
+.sub-nav::-webkit-scrollbar{display:none;}
+.sub-nav{width:360px;flex-shrink:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;}
+.sub-btn{display:inline-flex;align-items:center;justify-content:center;flex:0 0 34px;min-width:0;padding:7px 0;border:none;border-radius:var(--radius);background:transparent;color:var(--text2);font-family:var(--font);font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer;overflow:hidden;transition:background .18s,color .18s,box-shadow .18s;}
+.sub-btn i{font-size:15px;flex-shrink:0;}
+.sub-btn span{max-width:0;margin-left:0;opacity:0;overflow:hidden;transition:max-width .28s ease,margin-left .28s ease,opacity .2s;}
+.sub-btn.active{flex:1 0 auto;padding:7px 12px;background:var(--accent-dim);color:var(--accent);box-shadow:inset 0 0 0 1px rgba(88,166,255,.35);}
+.sub-btn.active span{max-width:110px;margin-left:6px;opacity:1;}
+.sub-btn:not(.active):hover{background:var(--surface2);color:var(--text);}
+@media(max-width:700px){
+  /* small screens: brand + tabs + sub menu share ONE row; the sub menu takes the leftover width and scrolls sideways */
+  .sub-nav{flex:1 1 0;width:auto;min-width:0;}
+  .sub-nav .sub-btn{scroll-margin-inline:6px;}
+  /* search (+ cache icon) drops to the next row */
+  .vb-brand{display:none;}
+}
+@media(max-width:480px){
+  .view-bar{padding:8px;gap:6px;}
+  .tabs-fixed.four .tab-btn{flex-basis:34px;}
+  .tabs-fixed.four .tab-btn.active{padding:7px 10px;font-size:11.5px;}
+  .sub-btn{flex-basis:32px;}
+  .sub-btn.active{padding:7px 10px;font-size:11.5px;}
+}
+
+/* header tools: search · Active / Inactive filters · Upload (import) menu */
+/* search: icon in the header; click opens a search box that drops down OVER the table (nothing else moves) */
+.doc-center-header{position:relative;}
+.hs{display:inline-flex;}
+.hs.has-val>.ib,.hs.open>.ib{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);}
+.hs-pop{display:none;position:absolute;top:calc(100% + 6px);right:16px;width:min(380px,calc(100% - 32px));z-index:60;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border:1.5px solid var(--accent);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg),0 0 0 3px var(--accent-dim);}
+.hs.open .hs-pop{display:flex;animation:hsDrop .16s ease;}
+@keyframes hsDrop{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
+.hs-pop>i{color:var(--accent);font-size:16px;flex-shrink:0;}
+.hs-in{flex:1;min-width:0;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--font);font-size:13px;padding:5px 0;}
+.hs-in::placeholder{color:var(--text3);}
+.hs-x{display:none;align-items:center;justify-content:center;width:24px;height:24px;flex-shrink:0;border:none;border-radius:50%;background:var(--bg3);color:var(--text2);font-size:13px;cursor:pointer;}
+.hs-x:hover{color:var(--text);}
+.hs.has-val .hs-x{display:inline-flex;}
+.hdr-actions .btn{white-space:nowrap;}
+.doc-center-body{overflow-x:auto;}
+.up-menu{max-width:calc(100vw - 24px);}
+@media(max-width:700px){
+  .doc-center-header{flex-wrap:wrap;padding:10px 12px;row-gap:8px;}
+  .doc-center-header .hist-tip{display:none;}
+  .doc-center-header .hdr-actions{flex:1 1 auto;margin-left:auto;gap:6px;}
+  .hs-pop{left:12px;right:12px;width:auto;}
+  .hs-in{font-size:16px;}   /* stops iOS zooming into the field */
+  .doc-center-body{padding:10px;}
+  .main-split{gap:8px;}
+}
+@media(max-width:800px){.doc-center-body .log-table th,.doc-center-body .log-table td{padding:9px 8px;}}
+@media(max-width:600px){
+  /* compact tables: drop "#" and "Added"; long text wraps so nothing forces a sideways scroll */
+  .doc-center-body .log-table th:first-child,.doc-center-body .log-table td:first-child,
+  .doc-center-body .log-table th:nth-last-child(2),.doc-center-body .log-table td:nth-last-child(2){display:none;}
+  .doc-center-body .log-table th,.doc-center-body .log-table td{padding:8px 6px;}
+  .doc-center-body .log-table th{white-space:normal;font-size:9.5px;letter-spacing:.03em;line-height:1.25;vertical-align:bottom;}
+  .doc-center-body .log-table .cell-desc{white-space:normal;max-width:none;overflow:visible;font-size:11.5px;line-height:1.35;word-break:break-word;}
+  .doc-center-body .log-table td strong{word-break:break-word;}
+  .doc-center-body .log-table .st-badge{padding:2px 7px;}
+  .doc-center-body .log-table .act-btns{gap:3px;}
+  .doc-center-body .log-table .ib.sm{width:24px;height:24px;font-size:12px;}
+}
+@media(max-width:360px){.doc-center-body{padding:6px;}.doc-center-header{padding:8px 10px;}}
+@media(max-width:480px){.hdr-actions .btn .lbl{display:none;}.hdr-actions .btn{padding:6px 9px;}}
+
+.doc-center-header .hdr-actions{flex-wrap:wrap;justify-content:flex-end;}
+.flt-group{display:inline-flex;gap:5px;}
+.hdr-actions .ib{width:30px;height:30px;font-size:15px;}
+.ib.flt{position:relative;}
+.ib.flt .flt-n{position:absolute;top:-6px;right:-6px;min-width:15px;height:15px;padding:0 3px;border-radius:8px;background:var(--surface2);border:1px solid var(--border2);color:var(--text2);font-size:9px;font-weight:700;line-height:13px;text-align:center;font-family:var(--mono);}
+.ib.flt.active:hover,.ib.flt.active.on{border-color:var(--teal);color:var(--teal);background:var(--teal-dim);}
+.ib.flt.inactive:hover,.ib.flt.inactive.on{border-color:var(--red);color:var(--red);background:var(--red-dim);}
+.up-wrap{position:relative;display:inline-flex;}
+.up-menu{display:none;position:absolute;top:calc(100% + 6px);right:0;min-width:178px;padding:4px;background:var(--surface2);border:1.5px solid var(--border2);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);z-index:320;flex-direction:column;gap:2px;}
+.up-menu.open{display:flex;}
+.up-menu button{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border:none;border-radius:var(--radius);background:transparent;color:var(--text);font-family:var(--font);font-size:12px;font-weight:600;text-align:left;cursor:pointer;white-space:nowrap;}
+.up-menu button i{font-size:15px;color:var(--accent);}
+.up-menu button:hover{background:var(--accent-dim);}
 .doc-center-header .hdr-actions{margin-left:auto;display:flex;align-items:center;gap:8px;}
 .log-table .cell-desc{max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2);}
 .log-table .cell-muted{color:var(--text3);font-style:italic;}
@@ -390,10 +474,8 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 <div class="view-bar">
   <div class="vb-brand" title="Master Setup"><i class="ti ti-building-hospital"></i></div>
   <div class="tab-nav tabs-fixed four" id="tab-nav"></div>
+  <div class="sub-nav" id="sub-nav"></div>
   <button class="btn btn-primary btn-sm" id="btn-add-itemlist" type="button" data-act="add-list" title="Add Item List"><i class="ti ti-playlist-add"></i><span>Add Item List</span></button>
-  <span class="vb-sep"></span>
-  <div id="selector-wrap" style="display:contents;"></div>
-  <div id="cache-status" title="Loading cache…"><i class="ti ti-loader spin"></i></div>
 </div>
 
 <div class="portal-wrap" id="panels"></div>
@@ -456,41 +538,49 @@ if (typeof window.AP2CacheWatcher === 'undefined') {
 const STATUS_FIELD = { key:'status', label:'Status', type:'status' };
 
 const MODULES = [
-  { key:'storebranch', label:'Store Branch',   plural:'Store Branches',   icon:'ti-building-store',
+  { key:'itemlist', label:'Item Lists', plural:'Item Lists', icon:'ti-list-check', custom:true, group:'itemlist',
+    hint:'Medical Domain-wise catalog: Item - Specs - Description' },
+  { key:'storebranch', label:'Store', plural:'Stores', icon:'ti-building-store', group:'settings',
     hint:'Physical store / location',
     fields:[
-      { key:'name',        label:'Store Branch Name', type:'text',     req:true, ph:'e.g. Main Store' },
-      { key:'description', label:'Description',       type:'textarea', ph:'Short description…' },
+      { key:'name',        label:'Store Name',  type:'text',     req:true, ph:'e.g. Main Store' },
+      { key:'description', label:'Description', type:'textarea', ph:'Short description…' },
       STATUS_FIELD ] },
-  { key:'medbranch',   label:'Medical Branch', plural:'Medical Branches', icon:'ti-bone',
+  { key:'medbranch',   label:'Medical Domain', plural:'Medical Domains', icon:'ti-bone', group:'settings',
     hint:'Medical field, e.g. Trauma, Orthoscopy, Orthoplasty',
     fields:[
-      { key:'name',        label:'Medical Branch Name', type:'text',     req:true, ph:'e.g. Trauma' },
+      { key:'name',        label:'Medical Domain Name', type:'text',     req:true, ph:'e.g. Trauma' },
       { key:'description', label:'Description',         type:'textarea', ph:'Short description…' },
       STATUS_FIELD ] },
-  { key:'item',     label:'Item',     plural:'Items',     icon:'ti-package',
+  { key:'matsource',   label:'Material Source', plural:'Material Sources', icon:'ti-truck-delivery', group:'settings',
+    hint:'Where the material comes from, e.g. Imported, Local',
+    fields:[
+      { key:'name',        label:'Material Source Name', type:'text',     req:true, ph:'e.g. Imported' },
+      { key:'description', label:'Description',          type:'textarea', ph:'Short description…' },
+      STATUS_FIELD ] },
+  { key:'item',     label:'Item Name', plural:'Item Names', icon:'ti-package', group:'settings',
     fields:[
       { key:'name',        label:'Item Name',   type:'text',     req:true, ph:'e.g. Surgical Gloves' },
       { key:'description', label:'Description', type:'textarea', ph:'Short description…' },
       STATUS_FIELD ] },
-  { key:'hospital', label:'Hospital', plural:'Hospitals', icon:'ti-building-hospital',
+  { key:'itemcat',  label:'Item Category', plural:'Item Categories', icon:'ti-category', group:'settings',
+    hint:'e.g. Consumables, Implants, Instruments',
     fields:[
-      { key:'name',        label:'Hospital Name', type:'text',     req:true, ph:'e.g. City General Hospital' },
-      { key:'description', label:'Description',   type:'textarea', ph:'Short description…' },
+      { key:'name',        label:'Item Category Name', type:'text',     req:true, ph:'e.g. Consumables' },
+      { key:'description', label:'Description',        type:'textarea', ph:'Short description…' },
       STATUS_FIELD ] },
-  { key:'doctor',   label:'Doctor',   plural:'Doctors',   icon:'ti-stethoscope',
-    fields:[
-      { key:'name',        label:'Doctor Name', type:'text',     req:true, ph:'e.g. Dr. Ahmed Khan' },
-      { key:'description', label:'Description', type:'textarea', ph:'Short description…' },
-      STATUS_FIELD ] },
-  { key:'specs',    label:'Specs',    plural:'Specs',     icon:'ti-list-details',
+  { key:'specs',    label:'Specs',    plural:'Specs',     icon:'ti-list-details', group:'settings',
     fields:[
       { key:'name',        label:'Specs Name',  type:'text',     req:true, ph:'e.g. Cardiology' },
       { key:'description', label:'Description', type:'textarea', ph:'Short description…' },
-      STATUS_FIELD ] },
-  { key:'itemlist', label:'Item Lists', plural:'Item Lists', icon:'ti-list-check', custom:true,
-    hint:'Medical Branch-wise catalog: Item - Specs - Description' }
+      STATUS_FIELD ] }
 ];
+/* main tabs — only two; the settings modules live in the sub menu under "Specs Settings" */
+const TOP_TABS = [
+  { key:'itemlist', label:'Item Lists',     icon:'ti-list-check' },
+  { key:'settings', label:'Specs Settings', icon:'ti-settings'   }
+];
+const SETTINGS_MODS = MODULES.filter(m => m.group==='settings');
 const MOD = Object.fromEntries(MODULES.map(m => [m.key, m]));
 
 /* ═══════════════════════════════════════════════════════
@@ -502,10 +592,11 @@ const CATALOG_KEY = 'item_list_catalog_v1';   // flat copy of Item List for othe
 const OLD_STORE_KEY = 'master_setup_v2';   // earlier version: its single "branch" list becomes Store Branch
 const SEED_SAMPLE_ROWS = true;   // set false to start with empty tables
 
-let data = { storebranch:[], medbranch:[], item:[], hospital:[], doctor:[], specs:[], itemlist:[] };
+let data = { storebranch:[], medbranch:[], matsource:[], item:[], itemcat:[], hospital:[], doctor:[], specs:[], itemlist:[] };
 const ui = {};   // per-tab UI state
 MODULES.forEach(m => ui[m.key] = { q:'', filter:'all', sortKey:'created', sortAsc:false, editId:null, mb:'' });
-let activeTab = 'storebranch';
+let activeTab = 'itemlist';
+let lastSettingsTab = 'storebranch';
 let armedDelete = null;
 
 function load(){
@@ -558,6 +649,13 @@ function seedBase(){
     { name:'Trauma',      description:'Fracture and injury care.',        status:'active' },
     { name:'Orthoscopy',  description:'Minimally invasive joint surgery.',status:'active' },
     { name:'Orthoplasty', description:'Joint reconstruction.',            status:'active' } ].map(mk);
+  data.matsource = [
+    { name:'Imported', description:'Sourced from overseas suppliers.', status:'active' },
+    { name:'Local',    description:'Sourced from local suppliers.',    status:'active' } ].map(mk);
+  data.itemcat = [
+    { name:'Consumables', description:'Single-use supplies.',   status:'active' },
+    { name:'Implants',    description:'Permanent implants.',    status:'active' },
+    { name:'Instruments', description:'Reusable instruments.',  status:'active' } ].map(mk);
   data.item     = [
     { name:'Surgical Gloves', description:'Latex-free, box of 100.', status:'active' },
     { name:'IV Cannula 20G',  description:'Sterile, single use.',     status:'active' },
@@ -584,30 +682,24 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 const fmtDate = ts => new Date(ts).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
 
 function buildUI(){
-  document.getElementById('tab-nav').innerHTML = MODULES.map((m,i)=>
-    `<button class="tab-btn${i===0?' active':''}" id="tab-${m.key}-btn" title="${m.label}" onclick="switchTab('${m.key}')"><i class="ti ${m.icon}"></i><span>${m.label}</span></button>`
+  document.getElementById('tab-nav').innerHTML = TOP_TABS.map((t,i)=>
+    `<button class="tab-btn${i===0?' active':''}" id="top-${t.key}-btn" title="${t.label}" onclick="switchTop('${t.key}')"><i class="ti ${t.icon}"></i><span>${t.label}</span></button>`
   ).join('');
-
-  document.getElementById('selector-wrap').innerHTML = MODULES.map((m,i)=>`
-    <div class="vb-group" id="selector-${m.key}" style="${i?'display:none;':''}">
-      <div class="sdw vb-search" id="${m.key}-sdw">
-        <button class="ib" type="button" title="Search ${m.label}" onclick="openSearch('${m.key}-sdw')"><i class="ti ti-search"></i></button>
-        <input id="${m.key}-search" type="text" placeholder="Search ${esc(m.label.toLowerCase())}…" autocomplete="off"
-          oninput="filterDrop('${m.key}',this.value)" onkeydown="if(event.key==='Escape')this.blur()"/>
-        <button class="clr-btn" type="button" tabindex="-1" onclick="clearDrop('${m.key}');openSearch('${m.key}-sdw')"><i class="ti ti-x"></i></button>
-      </div>
-    </div>`).join('');
+  document.getElementById('sub-nav').innerHTML = SETTINGS_MODS.map(m=>
+    `<button class="sub-btn" id="sub-${m.key}-btn" title="${esc(m.label)}" onclick="switchTab('${m.key}')"><i class="ti ${m.icon}"></i><span>${esc(m.label)}</span></button>`
+  ).join('');
 
   document.getElementById('panels').innerHTML = MODULES.map((m,i)=> m.custom ? listPanel(m,i) : `
     <div class="tab-panel" id="tab-${m.key}" style="display:${i?'none':'flex'};flex-direction:column;gap:10px;flex:1;min-height:0;">
       <div class="main-split">
-        <div class="doc-sidebar" id="${m.key}-sidebar"></div>
+        
         <div class="doc-center" id="${m.key}-center">
           <div class="doc-center-header">
             <h3><i class="ti ${m.icon}"></i>${esc(m.label)} List <span class="badge purple" id="${m.key}-count">0</span></h3>
             ${m.hint ? `<span class="hist-tip"><i class="ti ti-info-circle"></i>${esc(m.hint)}</span>` : ''}
             <div class="hdr-actions">
-              <button class="btn btn-primary btn-sm" data-act="add" data-k="${m.key}"><i class="ti ti-plus"></i> Add ${esc(m.label)}</button>
+              ${hdrTools(m.key)}
+              <button class="btn btn-primary btn-sm" data-act="add" data-k="${m.key}" title="Add ${esc(m.label)}"><i class="ti ti-plus"></i><span class="lbl">Add ${esc(m.label)}</span></button>
             </div>
           </div>
           <div class="doc-center-body" id="${m.key}-body"></div>
@@ -633,16 +725,15 @@ function render(k){ renderSidebar(k); renderTable(k); }
 
 function renderSidebar(k){
   if (MOD[k].custom) return renderListSidebar(k);
-  const rows = data[k], s = ui[k];
-  const cnt = { all:rows.length, active:rows.filter(r=>r.status==='active').length, inactive:rows.filter(r=>r.status==='inactive').length };
-  const tile = (f, label, icon, cls, badgeCls) =>
-    `<button class="doc-side-btn ${cls} ${s.filter===f?'selected':''}" data-act="filter" data-k="${k}" data-v="${f}">
-       <i class="ti ${icon}"></i>${label}<span class="doc-count-badge ${badgeCls}">${cnt[f]}</span></button>`;
-  document.getElementById(k+'-sidebar').innerHTML =
-    tile('all','All','ti-list','', '') +
-    '<div class="sidebar-sep"></div>' +
-    tile('active','Active','ti-circle-check','has-docs','') +
-    tile('inactive','Inactive','ti-circle-x','expired-docs','red');
+  renderFilters(k, data[k]);
+}
+/* Active / Inactive filter icons in the header (click again to clear) */
+function renderFilters(k, rows){
+  const el = document.getElementById(k+'-filters'); if (!el) return;
+  const s = ui[k], n = st => rows.filter(r => r.status===st).length;
+  const btn = (f, icon, label) => `<button class="ib flt ${f}${s.filter===f?' on':''}" type="button" data-act="sfilter" data-k="${k}" data-v="${f}"
+    title="${label} (${n(f)}) — ${s.filter===f?'click to show all':'click to filter'}" aria-pressed="${s.filter===f}"><i class="ti ${icon}"></i><b class="flt-n">${n(f)}</b></button>`;
+  el.innerHTML = btn('active','ti-circle-check','Active') + btn('inactive','ti-circle-x','Inactive');
 }
 
 function visibleRows(k){
@@ -762,7 +853,7 @@ function closeForm(k){ ui[k].editId = null; closePreview(k); }
  *  GENERIC UI HELPERS (from structure)
  * ═══════════════════════════════════════════════════════ */
 /* ═══════════════════════════════════════════════════════
- *  ITEM LIST — one-time catalog, Medical Branch-wise
+ *  ITEM LIST — one-time catalog, Medical Domain-wise
  *  Each entry = Medical Branch + Item + Specs + optional Description,
  *  shown merged as:  Item - Specs - Description
  *  A flat, ready-to-use copy is published to localStorage["item_list_catalog_v1"]
@@ -818,8 +909,8 @@ function listPanel(m,i){
             <h3><i class="ti ${m.icon}"></i>${esc(m.label)} <span class="badge purple" id="${m.key}-count">0</span></h3>
             <span class="hist-tip"><i class="ti ti-info-circle"></i>${esc(m.hint)}</span>
             <div class="hdr-actions">
-              <button class="btn btn-ghost btn-sm" data-act="csv" title="Download the current view as CSV"><i class="ti ti-download"></i> CSV</button>
-              <button class="btn btn-primary btn-sm" data-act="add-list"><i class="ti ti-playlist-add"></i> Add Item List</button>
+              ${hdrTools(m.key)}
+              <button class="btn btn-primary btn-sm" data-act="add-list" title="Add Item List"><i class="ti ti-playlist-add"></i><span class="lbl">Add Item List</span></button>
             </div>
           </div>
           <div class="doc-center-body" id="${m.key}-body"></div>
@@ -842,8 +933,9 @@ function renderListSidebar(k){
        <span class="doc-count-badge">${n}</span></button>`;
   }).join('');
   document.getElementById(k+'-sidebar').innerHTML =
-    tile('all','All','ti-list','','') + tile('active','Active','ti-circle-check','has-docs','') + tile('inactive','Inactive','ti-circle-x','expired-docs','red') +
+    `<button class="doc-side-btn ${!s.mb?'selected':''}" data-act="mbfilter" data-k="${k}" data-v="" title="All medical domains"><i class="ti ti-list"></i>All<span class="doc-count-badge">${rows.length}</span></button>` +
     (mbs ? '<div class="sidebar-sep"></div>' + mbs : '');
+  renderFilters(k, rows);
 }
 
 /* ── table: grouped by Medical Branch ── */
@@ -860,12 +952,12 @@ function renderListTable(k){
   if (!rows.length){
     const empty = !data[k].length;
     body.innerHTML = `<div class="doc-center-placeholder"><i class="ti ${empty?'ti-list-check':'ti-search-off'}"></i>
-      <span>${empty ? 'No item list entries yet — pick a Medical Branch, an Item and its Specs' : 'No entries match your filter'}</span>
+      <span>${empty ? 'No item list entries yet — pick a Medical Domain, an Item and its Specs' : 'No entries match your filter'}</span>
       ${empty ? `<button class="btn btn-primary btn-sm" data-act="add-list"><i class="ti ti-playlist-add"></i> Add Item List</button>` : ''}</div>`;
     return;
   }
   const groups = new Map();
-  rows.forEach(x => { const key = x.r.medbranchId || '_'; if (!groups.has(key)) groups.set(key, { id:x.r.medbranchId, name:x.v.mb || 'No Medical Branch', rows:[] }); groups.get(key).rows.push(x); });
+  rows.forEach(x => { const key = x.r.medbranchId || '_'; if (!groups.has(key)) groups.set(key, { id:x.r.medbranchId, name:x.v.mb || 'No Medical Domain', rows:[] }); groups.get(key).rows.push(x); });
   const ordered = [...groups.values()].sort((a,b) => a.name.localeCompare(b.name, undefined, {sensitivity:'base'}));
 
   body.innerHTML = ordered.map(g => {
@@ -884,8 +976,7 @@ function renderListTable(k){
         </div></td></tr>`;
     }).join('');
     return `<div class="grp">
-      <div class="grp-hd"><i class="ti ti-bone"></i><strong>${esc(g.name)}</strong><span class="cnt-chip">${g.rows.length}</span><span class="sp"></span>
-        ${g.id ? `<button class="btn btn-ghost btn-sm" data-act="add-list" data-mb="${esc(g.id)}" title="Add to ${esc(g.name)}"><i class="ti ti-plus"></i> Add</button>` : ''}</div>
+      <div class="grp-hd"><i class="ti ti-bone"></i><strong>${esc(g.name)}</strong><span class="cnt-chip">${g.rows.length}</span><span class="sp"></span></div>
       <table class="log-table"><thead><tr><th style="width:44px;">#</th><th>Item - Specs - Description</th><th>Status</th><th>Added</th><th></th></tr></thead><tbody>${trs}</tbody></table>
     </div>`;
   }).join('');
@@ -893,7 +984,7 @@ function renderListTable(k){
 
 function exportCsv(){
   const cell = x => '"' + String(x ?? '').replace(/"/g,'""') + '"';
-  const rows = [['Medical Branch','Item Name','Specs','Description','Item List Entry','Status']]
+  const rows = [['Medical Domain','Item Name','Specs','Description','Item List Entry','Status']]
     .concat(visibleEntries().map(x => [x.v.mb, x.v.item, x.v.specs, x.v.desc, x.v.label, x.r.status]));
   if (rows.length === 1) return showToast('Nothing to export','error');
   const a = document.createElement('a');
@@ -940,8 +1031,8 @@ function renderListModal(){
       <div class="modal-hd"><h3><i class="ti ti-playlist-add"></i>${d.id?'Edit Item List Entry':'Add Item List'}</h3>
         <button class="pph-close" style="margin-left:auto;" data-act="modal-close" title="Close"><i class="ti ti-x"></i></button></div>
       <div class="modal-bd">
-        <div class="field"><label>Medical Branch <span class="req">*</span></label>
-          ${selHTML('medbranch','medbranchId',d.medbranchId,'Select medical branch…',d.medbranchName,bad('medbranchId'))}</div>
+        <div class="field"><label>Medical Domain <span class="req">*</span></label>
+          ${selHTML('medbranch','medbranchId',d.medbranchId,'Select medical domain…',d.medbranchName,bad('medbranchId'))}</div>
         <div class="field"><label>Item Name <span class="req">*</span></label>
           ${selHTML('item','itemId',d.itemId,'Select item…',d.itemName,bad('itemId'))}</div>
         <div class="field"><label>Specs <span class="req">*</span></label>
@@ -970,7 +1061,7 @@ function saveEntry(another){
   const desc = (d.desc||'').trim().toLowerCase();
   if (data.itemlist.some(r => r.id!==d.id && r.medbranchId===d.medbranchId && r.itemId===d.itemId && r.specsId===d.specsId && (r.desc||'').trim().toLowerCase()===desc)){
     lmErrs.add('itemId'); lmErrs.add('specsId'); renderListModal();
-    return showToast('This entry already exists for this Medical Branch','error');
+    return showToast('This entry already exists for this Medical Domain','error');
   }
   const now = Date.now();
   const rec = {
@@ -1013,14 +1104,132 @@ function wireListEvents(){
   document.addEventListener('keydown', e => { if (e.key==='Escape' && draft) closeListModal(); });
 }
 
+
+/* ═══════════════════════════════════════════════════════
+ *  IMPORT — Upload icon → "Download template" or "Upload file" (CSV)
+ * ═══════════════════════════════════════════════════════ */
+function hdrTools(k){
+  const lbl = esc(MOD[k].label.toLowerCase());
+  return `<div class="hs" id="${k}-sdw">
+      <button class="ib" type="button" data-act="srch" data-k="${k}" title="Search ${lbl}" aria-haspopup="true"><i class="ti ti-search"></i></button>
+      <div class="hs-pop" id="${k}-pop">
+        <i class="ti ti-search"></i>
+        <input class="hs-in" id="${k}-search" type="text" placeholder="Type to search ${lbl}…" autocomplete="off" enterkeyhint="search"
+          oninput="filterDrop('${k}',this.value)" onkeydown="if(event.key==='Escape'||event.key==='Enter'){closeSearch(null);this.blur();}"/>
+        <button class="hs-x" type="button" data-act="srch-clear" data-k="${k}" title="Clear"><i class="ti ti-x"></i></button>
+      </div>
+    </div>
+    <div class="flt-group" id="${k}-filters"></div>
+    <div class="up-wrap">
+      <button class="ib" type="button" data-act="upmenu" data-k="${k}" title="Import — get template or upload file"><i class="ti ti-upload"></i></button>
+      <div class="up-menu" id="${k}-upmenu">
+        <button type="button" data-act="tpl" data-k="${k}"><i class="ti ti-file-download"></i> Download template</button>
+        <button type="button" data-act="upload" data-k="${k}"><i class="ti ti-upload"></i> Upload file</button>
+      </div>
+      <input type="file" class="imp-file" id="${k}-file" data-k="${k}" accept=".csv,text/csv" hidden>
+    </div>`;
+}
+function closeSearch(target){
+  document.querySelectorAll('.hs.open').forEach(h => { if (!target || !h.contains(target)) h.classList.remove('open'); });
+}
+function closeMenus(exceptK){
+  document.querySelectorAll('.up-menu.open').forEach(m => { if (m.id !== exceptK+'-upmenu') m.classList.remove('open'); });
+}
+function csvCell(x){ return '"' + String(x ?? '').replace(/"/g,'""') + '"'; }
+function downloadCsv(name, rows){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\ufeff' + rows.map(r => r.map(csvCell).join(',')).join('\r\n')], {type:'text/csv;charset=utf-8'}));
+  a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+function downloadTemplate(k){
+  const m = MOD[k];
+  if (m.custom) downloadCsv('item_list_template.csv', [['Medical Domain','Item Name','Specs','Description','Status'], ['Trauma','Surgical Gloves','Box of 100','Latex-free','active']]);
+  else downloadCsv(k+'_template.csv', [[m.fields[0].label,'Description','Status'], [m.fields[0].ph.replace(/^e\.g\.\s*/,''),'Short description','active']]);
+  showToast('Template downloaded','success');
+}
+function parseCsv(text){
+  text = text.replace(/^\ufeff/,'');
+  const first = text.split(/\r?\n/)[0] || '';
+  const d = (first.split(',').length < 2 && first.includes(';')) ? ';' : (first.split(',').length < 2 && first.includes('\t')) ? '\t' : ',';
+  const rows = []; let row = [], cur = '', q = false;
+  for (let i = 0; i < text.length; i++){
+    const c = text[i];
+    if (q){ if (c === '"'){ if (text[i+1] === '"'){ cur += '"'; i++; } else q = false; } else cur += c; }
+    else if (c === '"') q = true;
+    else if (c === d){ row.push(cur); cur = ''; }
+    else if (c === '\n' || c === '\r'){ if (c === '\r' && text[i+1] === '\n') i++; row.push(cur); cur = ''; rows.push(row); row = []; }
+    else cur += c;
+  }
+  if (cur !== '' || row.length){ row.push(cur); rows.push(row); }
+  return rows.filter(r => r.some(x => String(x).trim() !== ''));
+}
+const colIdx = (head, re, fallback) => { const i = head.findIndex(h => re.test(h)); return i >= 0 ? i : fallback; };
+const normStatus = v => /^(inactive|in-active|no|0|false|disabled)$/i.test(String(v||'').trim()) ? 'inactive' : 'active';
+
+function findOrCreate(kind, name, t, n){
+  const nm = name.trim().toLowerCase();
+  let r = data[kind].find(x => x.name.trim().toLowerCase() === nm);
+  if (!r){ r = { id:'r'+(t+n)+kind, name:name.trim(), description:'', status:'active', created:t }; data[kind].push(r); }
+  return r;
+}
+function importRows(k, rows){
+  const head = rows[0].map(h => String(h).trim().toLowerCase()), body = rows.slice(1), t = Date.now();
+  let added = 0, skipped = 0, n = 0;
+  if (MOD[k].custom){
+    const ci = { mb:colIdx(head,/domain|branch/,0), it:colIdx(head,/item/,1), sp:colIdx(head,/spec/,2), de:colIdx(head,/desc/,3), st:colIdx(head,/status/,4) };
+    body.forEach(r => {
+      const mbN = (r[ci.mb]||'').trim(), itN = (r[ci.it]||'').trim(), spN = (r[ci.sp]||'').trim();
+      if (!mbN || !itN || !spN){ skipped++; return; }
+      const mb = findOrCreate('medbranch', mbN, t, n++), it = findOrCreate('item', itN, t, n++), sp = findOrCreate('specs', spN, t, n++);
+      if (data.itemlist.some(e => e.medbranchId===mb.id && e.itemId===it.id && e.specsId===sp.id)){ skipped++; return; }
+      data.itemlist.unshift({ id:'e'+t+(n++), medbranchId:mb.id, medbranchName:mb.name, itemId:it.id, itemName:it.name, specsId:sp.id, specsName:sp.name,
+        desc:(r[ci.de]||'').trim(), status:normStatus(r[ci.st]), created:t, updated:t });
+      added++;
+    });
+  } else {
+    const ci = { nm:colIdx(head,/name/,0), de:colIdx(head,/desc/,1), st:colIdx(head,/status/,2) };
+    body.forEach(r => {
+      const name = (r[ci.nm]||'').trim();
+      if (!name || data[k].some(x => x.name.trim().toLowerCase() === name.toLowerCase())){ skipped++; return; }
+      data[k].unshift({ id:'r'+t+(n++), name, description:(r[ci.de]||'').trim(), status:normStatus(r[ci.st]), created:t });
+      added++;
+    });
+  }
+  if (added) persist();
+  renderAll();
+  showToast(added ? `Imported ${added} record${added>1?'s':''}` + (skipped ? ` · ${skipped} skipped` : '') : 'Nothing imported — ' + (skipped ? 'all rows were empty or duplicates' : 'file is empty'), added ? 'success' : 'error');
+}
+function wireImport(){
+  document.addEventListener('change', async e => {
+    const inp = e.target; if (!inp.classList || !inp.classList.contains('imp-file')) return;
+    const f = inp.files && inp.files[0]; if (!f) return;
+    try {
+      const rows = parseCsv(await f.text());
+      if (rows.length < 2) showToast('File has no data rows — download the template to see the format','error');
+      else importRows(inp.dataset.k, rows);
+    } catch(err){ showToast('Could not read that file','error'); }
+    inp.value = '';
+  });
+}
+
+function switchTop(top){ switchTab(top==='itemlist' ? 'itemlist' : lastSettingsTab); }
 function switchTab(tab){
+  const m = MOD[tab]; if (!m) return;
+  closeSearch(null);
+  const top = m.group==='settings' ? 'settings' : 'itemlist';
   document.querySelectorAll('.tab-panel').forEach(p=>p.style.display='none');
-  document.querySelectorAll('.tab-nav.tabs-fixed .tab-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.vb-group[id^="selector-"]').forEach(g=>g.style.display='none');
+  document.querySelectorAll('#tab-nav .tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#sub-nav .sub-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+tab).style.display='flex';
-  document.getElementById('tab-'+tab+'-btn').classList.add('active');
-  const sel=document.getElementById('selector-'+tab);
-  if(sel) sel.style.display='flex';
+  document.getElementById('top-'+top+'-btn').classList.add('active');
+  document.getElementById('sub-nav').style.display = top==='settings' ? 'flex' : 'none';
+  const sb = document.getElementById('sub-'+tab+'-btn');
+  if (sb){ sb.classList.add('active'); if (sb.scrollIntoView) sb.scrollIntoView({block:'nearest',inline:'nearest'}); }
+  const add = document.getElementById('btn-add-itemlist');
+  if (add) add.style.display = top==='itemlist' ? '' : 'none';
+  if (top==='settings') lastSettingsTab = tab;
   activeTab=tab;
 }
 function openSearch(sdwId){ const el=document.getElementById(sdwId); if(el) el.querySelector('input').focus(); }
@@ -1053,6 +1262,8 @@ function showToast(msg,type){
 function wireDelegation(){
   document.addEventListener('click', e=>{
     const el = e.target.closest('[data-act]');
+    closeMenus(el && el.dataset.act==='upmenu' ? el.dataset.k : null);
+    closeSearch(e.target);
     if (!el) { if (armedDelete){ armedDelete=null; renderTable(activeTab); } return; }
     const { act, k, id, v } = el.dataset;
     const s = ui[k];
@@ -1071,6 +1282,18 @@ function wireDelegation(){
       case 'cancel': closeForm(k); break;
       case 'save':   saveForm(k); break;
       case 'filter': s.filter = v; render(k); break;
+      case 'sfilter': s.filter = (s.filter===v ? 'all' : v); render(k); break;
+      case 'srch': {
+        const h = document.getElementById(k+'-sdw'), open = !h.classList.contains('open');
+        closeSearch(null);
+        h.classList.toggle('open', open);
+        if (open) setTimeout(() => { const i = document.getElementById(k+'-search'); if (i){ i.focus(); i.select(); } }, 0);
+        break;
+      }
+      case 'srch-clear': clearDrop(k); document.getElementById(k+'-search').focus(); break;
+      case 'upmenu':  document.getElementById(k+'-upmenu').classList.toggle('open'); break;
+      case 'tpl':     downloadTemplate(k); break;
+      case 'upload':  document.getElementById(k+'-file').click(); break;
       case 'sort':   s.sortAsc = (s.sortKey===v) ? !s.sortAsc : true; s.sortKey = v; renderTable(k); break;
       case 'toggle': {
         const r = data[k].find(x=>x.id===id); if(!r) break;
@@ -1113,14 +1336,9 @@ async function init(){
   buildUI();
   wireDelegation();
   wireListEvents();
+  wireImport();
   renderAll();
-  switchTab('storebranch');
-  const cs = document.getElementById('cache-status');
-  try {
-    const st = window.AP2CacheWatcher.getStatus();
-    cs.innerHTML = `<i class="ti ${st.healthy?'ti-circle-check':'ti-database-off'}" style="color:var(--${st.healthy?'teal':'text3'})"></i>`;
-    cs.title = st.healthy ? 'Cache connected' : 'Local storage mode';
-  } catch(e){ cs.innerHTML='<i class="ti ti-database-off"></i>'; }
+  switchTab('itemlist');
 }
 document.addEventListener('DOMContentLoaded', init);
 </script>
