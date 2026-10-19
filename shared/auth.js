@@ -37,7 +37,7 @@
   const INACTIVITY_TTL   = 30 * 60 * 1000;   // 30 min idle
   const ABSOLUTE_TTL     = 8  * 60 * 60 * 1000; // 8 hr hard limit
   const SERVER_CHECK_INT = 5  * 60 * 1000;    // server ping every 5 min
-  const ALLOWED_ORIGIN   = 'https://amorthopadics.github.io/SurgiStock/';
+  const ALLOWED_ORIGIN   = 'https://effimalik.github.io/Testing/';
    const API_BASE = 'https://script.google.com/macros/s/AKfycbwHZnQa4elV-ChUslHoci1UhWZnTuBPhLIlrI_-TsOX6ysamVvUDrpkpS3pRVMEoWeP/exec';
    
 
