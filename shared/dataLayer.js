@@ -49,7 +49,11 @@
   // Dataset keys that intentionally return a multi-sheet object
   // instead of a flat array. Add to this only when a backend handler
   // genuinely needs to bundle multiple sheets in one response.
-  const OBJECT_SHAPE_DATASETS = new Set(['ap2_loginData', 'ap2_ticLog']);
+  const OBJECT_SHAPE_DATASETS = new Set(['ap2_loginData', 'ap2_ticLog', 'ap2_specsData']);
+
+  // Object-shape datasets that are valid even when every sheet is still empty
+  // (e.g. a brand-new Specs database with header rows only).
+  const ALLOW_EMPTY_OBJECT_DATASETS = new Set(['ap2_specsData']);
 
   /* ─────────────────────────────────────────
      LOGOUT CLEANUP
@@ -545,7 +549,7 @@
           throw new Error(`[DataLayer] ${dsKey}: expected object payload, got ${Array.isArray(json) ? 'array' : typeof json}`);
         }
         const hasAnyData = Object.values(json).some(v => Array.isArray(v) && v.length > 0);
-        if (!hasAnyData) {
+        if (!hasAnyData && !ALLOW_EMPTY_OBJECT_DATASETS.has(dsKey)) {
           console.warn(`[DataLayer] ${dsKey}: empty response — not caching`);
           throw new Error(`[DataLayer] ${dsKey}: empty or invalid data received`);
         }
@@ -747,6 +751,8 @@
     getRecovery   (force) { return _get('ap2_recovery', force); },
     // Returns { ticLog: [...], Ticket: [...] } — object-shape dataset, not a flat array
     getTicLog     (force) { return _get('ap2_ticLog',   force); },
+    // Returns { Stores, Doctors, Hospitals, MedBranch, Items, Quality, Properties, Specs, ItemNames } — object-shape
+    getSpecsData  (force) { return _get('ap2_specsData', force); },
 
     /* ── FORCE REFRESH ── */
     async forceRefresh(dsKey) {
