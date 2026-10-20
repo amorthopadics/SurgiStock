@@ -703,7 +703,6 @@ async function startGoogleLogin() {
   await sleep(250);
   if (myToken !== flowToken) return;
 
-  console.log('[Login] server result:', result);   // shows the real reason when access is denied
   const status = result && result.status;
 
   if (!result || !result.allowed) {
@@ -723,9 +722,7 @@ async function startGoogleLogin() {
     hideVerify();
     showDenied(
       result && result.email  ? result.email  : null,
-      result && result.reason ? result.reason
-        : (result && (result.msg || result.error)) ? 'Server said: ' + (result.msg || result.error)
-        : 'Your account is not authorised to access FleetFlow Pro. Contact support.',
+      result && result.reason ? result.reason : 'Your account is not authorised to access FleetFlow Pro. Contact support.',
       result && result.title  ? result.title  : 'Access Denied',
       status === 'inactive' ? 'ti-user-off' : 'ti-shield-x'
     );
