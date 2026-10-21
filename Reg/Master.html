@@ -155,9 +155,10 @@ body{display:flex;flex-direction:column;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
 .cache-ind{margin-left:auto;}
-.cache-ind.ok{color:var(--teal);border-color:var(--teal);}
-.cache-ind.warn{color:var(--amber);border-color:var(--amber);}
-.cache-ind.err{color:var(--red);border-color:var(--red);}
+.cache-ind,.cache-ind:hover{background:none;border:0;box-shadow:none;}
+.cache-ind.ok{color:var(--teal);}
+.cache-ind.warn{color:var(--amber);}
+.cache-ind.err{color:var(--red);}
 .cache-ind.busy i{animation:spin 1s linear infinite;}
 
 /* ═══ FIELD / FORM ═══ */
@@ -433,7 +434,6 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 .hist-tip{font-size:10.5px;color:var(--text3);display:flex;align-items:center;gap:5px;}
 
 /* ═══ ITEM LIST builder ═══ */
-@media(max-width:700px){#btn-add-itemlist span,#btn-add-specsetting span{display:none;}#btn-add-itemlist,#btn-add-specsetting{padding:8px 10px;}}
 .spec-chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;background:var(--accent-dim);color:var(--accent);border:1px solid rgba(88,166,255,.25);white-space:nowrap;}
 .it-cell{line-height:1.3;}
 .it-cell strong{font-size:12.5px;}
@@ -521,6 +521,23 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 /* ═══ hints / form hint ═══ */
 .form-hint{font-size:10.5px;color:var(--text3);display:flex;align-items:center;gap:5px;}
 @media(max-width:700px){.doc-center-header .hist-tip{display:none;}}
+
+/* ═══ HEADER — text never wraps; when space runs out the text goes and only the controls stay ═══ */
+.doc-center{container:dch / inline-size;}
+.doc-center-header{flex-wrap:nowrap;}
+.doc-center-header h3,.doc-center-header .hist-tip,.doc-center-header .hdr-actions .btn{white-space:nowrap;flex-shrink:0;}
+.doc-center-header .hdr-actions{flex-wrap:nowrap;flex-shrink:1;min-width:0;overflow-x:auto;scrollbar-width:none;}
+.doc-center-header .hdr-actions::-webkit-scrollbar{display:none;}
+@container dch (max-width:900px){ .doc-center-header .hist-tip{display:none;} }
+@container dch (max-width:560px){
+  .doc-center-header h3{display:none;}
+  .doc-center-header .hdr-actions{margin-left:0;width:100%;justify-content:flex-end;}
+}
+@media(max-width:700px){
+  .doc-center-header{flex-wrap:nowrap;padding:8px 10px;}
+  .doc-center-header h3,.doc-center-header .hist-tip{display:none;}
+  .doc-center-header .hdr-actions{margin-left:0;width:100%;justify-content:flex-end;flex-wrap:nowrap;}
+}
 </style>
 </head>
 <body>
@@ -529,8 +546,6 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 <div class="view-bar">
   <div class="vb-brand" title="Master Setup"><i class="ti ti-building-hospital"></i></div>
   <div class="tab-nav tabs-fixed four" id="tab-nav"></div>
-  <button class="btn btn-primary btn-sm" id="btn-add-itemlist" type="button" data-act="add-list" title="Add Item List"><i class="ti ti-playlist-add"></i><span>Add Item List</span></button>
-  <button class="btn btn-primary btn-sm" id="btn-add-specsetting" type="button" data-act="add" data-k="specsetting" title="Add Specs Setting" style="display:none;"><i class="ti ti-plus"></i><span>Add Specs Setting</span></button>
   <button class="ib cache-ind warn" id="cache-ind" type="button" title="Cache: waiting…"><i class="ti ti-database"></i></button>
 </div>
 
@@ -1332,7 +1347,7 @@ function renderListTable(k){
       <td class="merged" title="${esc(v.label)}">${v.raw ? esc(v.label) : `<strong>${esc(v.item)}</strong>${sep}${esc(v.specs)}${(v.extras||[]).map(e => sep+esc(e)).join('')}${v.desc ? sep+`<span class="d">${esc(v.desc)}</span>` : ''}`}</td>
       <td><span class="st-badge ${r.status}">${r.status==='active'?'Active':'Inactive'}</span></td>
       <td class="acts"><div class="act-btns">
-        ${v.raw ? '' : `<button class="ib sm" title="Edit" data-act="edit" data-k="${k}" data-id="${r.id}"><i class="ti ti-pencil"></i></button>`}
+        <button class="ib sm" title="Edit" data-act="edit" data-k="${k}" data-id="${r.id}"><i class="ti ti-pencil"></i></button>
         <button class="ib sm" title="Set ${r.status==='active'?'inactive':'active'}" data-act="toggle" data-k="${k}" data-id="${r.id}"><i class="ti ti-${r.status==='active'?'toggle-right':'toggle-left'}"></i></button>
         <button class="ib sm danger ${armed?'armed':''}" title="${armed?'Click again to confirm':'Delete'}" data-act="del" data-k="${k}" data-id="${r.id}"><i class="ti ti-${armed?'check':'trash'}"></i></button>
       </div></td></tr>`;
@@ -1357,6 +1372,12 @@ function exportCsv(){
 function openListModal(id, mbId){
   const rec = id ? data.itemlist.find(r => r.id===id) : null;
   draft = rec ? Object.assign({}, rec) : { id:null, status:'active' };
+  if (rec && rec.rawLabel !== undefined){                         // entry that came from the sheet as ready-made text
+    draft.raw = true; draft.rawLabel = rec.rawLabel;
+    draft.vals = { medbranch: liveName('medbranch', rec.medbranchId, rec.medbranchName) };
+    lmErrs = new Set(); renderListModal();
+    document.getElementById('itemlist-preview-panel').classList.add('open'); return;
+  }
   const ex = (rec && rec.extras) || {};
   const mbRef = rec ? rec.medbranchId : (mbId || ui.itemlist.mb || '');
   draft.vals = {
@@ -1469,7 +1490,43 @@ function wireCombo(){
   }, true);
 }
 
+function renderRawModal(){
+  const d = draft, bad = k => lmErrs.has(k);
+  document.getElementById('itemlist-preview-panel').innerHTML = `
+    <div class="pph"><h3><i class="ti ti-playlist-add"></i><span>Edit Item List Entry</span></h3>
+      <button class="pph-close" data-act="modal-close" title="Close"><i class="ti ti-x"></i></button></div>
+    <div class="ppb"><div class="form-stack">
+      <div class="field inl"><div class="fgrp-lbl"><i class="ti ti-bone"></i>Medical Domain <span class="req">*</span></div>
+        ${cbHTML('v:medbranch','medbranch',d.vals.medbranch,'Search or type medical domain…',bad('medbranch'))}</div>
+      <div class="field inl"><div class="fgrp-lbl"><i class="ti ti-list-details"></i>Item - Specs - Description <span class="req">*</span></div>
+        <input class="date-input${bad('rawLabel')?' bad':''}" type="text" data-f="rawLabel" value="${esc(d.rawLabel)}" placeholder="Item - Specs - Description" autocomplete="off"/></div>
+      <div class="field inl"><label>Status</label>
+        <select class="date-input" data-f="status"><option value="active"${d.status==='active'?' selected':''}>Active</option><option value="inactive"${d.status==='inactive'?' selected':''}>Inactive</option></select></div>
+    </div></div>
+    <div class="ppf form-actions">
+      <button class="btn btn-ghost" type="button" data-act="modal-close">Cancel</button>
+      <button class="btn btn-primary" type="button" data-act="modal-save"><i class="ti ti-device-floppy"></i> Update</button>
+    </div>`;
+}
+function saveRawEntry(){
+  const d = draft; lmErrs = new Set();
+  const mbName = (d.vals.medbranch||'').trim(), text = (d.rawLabel||'').trim();
+  if (!mbName) lmErrs.add('medbranch');
+  if (!text) lmErrs.add('rawLabel');
+  if (!lmErrs.size && data.itemlist.some(e => e.id!==d.id && entryView(e).label.trim().toLowerCase()===text.toLowerCase() && entryView(e).mb.trim().toLowerCase()===mbName.toLowerCase())){
+    lmErrs.add('rawLabel'); renderRawModal(); return showToast('Duplicate — this entry already exists','error');
+  }
+  if (lmErrs.size){ renderRawModal(); return showToast('Please fill the highlighted fields','error'); }
+  const now = Date.now();
+  let mb = data.medbranch.find(x => x.name.trim().toLowerCase()===mbName.toLowerCase());
+  if (!mb){ mb = { id:'r'+now+'medbranch', name:mbName, description:'', status:'active', created:now }; data.medbranch.unshift(mb); }
+  const rec = data.itemlist.find(x => x.id===d.id);
+  if (rec) Object.assign(rec, { rawLabel:text, medbranchId:mb.id, medbranchName:mb.name, status:d.status, updated:now });
+  persist(); syncSpecsSheet();
+  render('itemlist'); render('specsetting'); closeListModal(); showToast('Entry updated','success');
+}
 function renderListModal(){
+  if (draft && draft.raw) return renderRawModal();
   const d = draft, bad = k => lmErrs.has(k);
   document.getElementById('itemlist-preview-panel').innerHTML = `
     <div class="pph"><h3><i class="ti ti-playlist-add"></i><span>${d.id?'Edit Item List Entry':'Add Item List'}</span></h3>
@@ -1489,6 +1546,7 @@ function renderListModal(){
 }
 
 function saveEntry(another){
+  if (draft && draft.raw) return saveRawEntry();
   const d = draft; lmErrs = new Set();
   const v = {}; ['medbranch','matsource','item','itemcat'].forEach(k => v[k] = (d.vals[k]||'').trim());
   if (!v.medbranch) lmErrs.add('medbranch');
