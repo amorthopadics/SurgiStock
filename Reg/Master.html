@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheWatcher.js?v=1"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/code.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cioView.js"></script>
 
 <style>
@@ -434,6 +435,10 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 /* ═══ ITEM LIST builder ═══ */
 @media(max-width:700px){#btn-add-itemlist span,#btn-add-specsetting span{display:none;}#btn-add-itemlist,#btn-add-specsetting{padding:8px 10px;}}
 .spec-chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;background:var(--accent-dim);color:var(--accent);border:1px solid rgba(88,166,255,.25);white-space:nowrap;}
+.it-cell{line-height:1.3;}
+.it-cell strong{font-size:12.5px;}
+.it-sep{color:var(--text3);margin:0 4px;font-size:10px;}
+.it-desc{color:var(--text2);font-size:10px;font-style:italic;}
 .sid{font-family:var(--mono);font-weight:700;color:var(--accent);}
 .chips{display:flex;flex-wrap:wrap;gap:6px;}
 .chip{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;}
@@ -647,7 +652,6 @@ const MOD = Object.fromEntries(MODULES.map(m => [m.key, m]));
 const STORE_KEY = 'master_setup_v3';
 const CATALOG_KEY = 'item_list_catalog_v1';   // flat copy of Item List for other modules
 const OLD_STORE_KEY = 'master_setup_v2';   // earlier version: its single "branch" list becomes Store Branch
-const SEED_SAMPLE_ROWS = false;   // set false to start with empty tables
 
 let data = { spectypes:[], storebranch:[], medbranch:[], matsource:[], item:[], itemcat:[], hospital:[], doctor:[], specs:[], itemlist:[] };
 const ui = {};   // per-tab UI state
@@ -666,11 +670,10 @@ function load(){
       const o = JSON.parse(old);
       data.storebranch = o.branch || [];
       ['item','hospital','doctor','specs'].forEach(k => data[k] = o[k] || []);
-      if (SEED_SAMPLE_ROWS) seedMed(); else persist();
+      persist();
       return;
     }
   } catch(e){ console.warn('[module] storage read failed', e.message); }
-  if (SEED_SAMPLE_ROWS) seed();
 }
 function persist(){
   assignSids();
@@ -707,7 +710,7 @@ async function syncSpecsSheet(){
  *  to pin it, set  localStorage.master_cache_key = '<key>'.
  * ═══════════════════════════════════════════════════════ */
 const PENDING_KEY  = 'master_setup_pending_sync';
-const SIG_KEY = 'master_setup_cache_sig';
+const SIG_KEY = 'master_setup_cache_sig_v2';
 const CACHE_POLL_MS = 4000;
 const CACHE = { timer:null, busy:false, count:0 };
 
@@ -751,7 +754,7 @@ function setCacheInd(state, title){
 /* cache rows → per-type lists (ids kept when the sheet ID matches an existing record, so Item List links survive) */
 function applySpecsRows(rows){
   const have = new Map();
-  specTypes().forEach(m => (data[m.key]||[]).forEach(r => { if (r.sid) have.set(r.sid, r); }));
+  specTypes().forEach(m => (data[m.key]||[]).forEach(r => { if (r.sid) have.set(m.key+'|'+r.sid, r); }));
   const byType = {}; let count = 0;
   rows.forEach(row => {
     if (!Array.isArray(row)) return;
@@ -764,8 +767,8 @@ function applySpecsRows(rows){
       (data.spectypes = data.spectypes || []).push({ key, label }); data[key] = data[key] || []; t = typeOf(key);
     }
     let desc = String(row[3] ?? '').trim(); if (/^(none|null|n\/a|-|—)$/i.test(desc)) desc = '';
-    const prev = have.get(sid);
-    (byType[t.key] = byType[t.key] || []).push({ id: prev ? prev.id : 'c'+sid, sid, name, description:desc,
+    const prev = have.get(t.key+'|'+sid);
+    (byType[t.key] = byType[t.key] || []).push({ id: (prev && !/^c\d+$/.test(prev.id)) ? prev.id : 'c'+t.key+'_'+sid, sid, name, description:desc,
       status: normStatus(row[4]), created: prev ? (prev.created||Date.now()) : Date.now() });
     count++;
   });
@@ -835,62 +838,6 @@ function startCache(){
   if (_AP2_CACHE_KEY){ try { window.parent.postMessage({ type:'ap-cache-request', key:_AP2_CACHE_KEY }, '*'); } catch(e){} }
   CACHE.timer = setInterval(refreshFromCache, CACHE_POLL_MS);   // safety net if no notification arrives
 }
-function seed(){ seedBase(); seedLists(); }
-function seedLists(){
-  const mb = data.medbranch, it = data.item, sp = data.specs;
-  if (mb.length < 2 || it.length < 2 || sp.length < 2) return;
-  const t = Date.now();
-  const e = (n, m, i, j, desc) => ({ id:'e'+(t+n), medbranchId:mb[m].id, medbranchName:mb[m].name, itemId:it[i].id, itemName:it[i].name,
-    specsId:sp[j].id, specsName:sp[j].name, desc, status:'active', created:t-n*86400000, updated:t-n*86400000 });
-  data.itemlist = [ e(0,0,0,1,'Box of 100'), e(1,0,1,0,'Sterile, single use'), e(2,1,1,1,'') ];
-  persist();
-}
-function seedMed(){
-  const t = Date.now();
-  data.medbranch = [
-    { name:'Trauma',      description:'Fracture and injury care.',        status:'active' },
-    { name:'Orthoscopy',  description:'Minimally invasive joint surgery.',status:'active' },
-    { name:'Orthoplasty', description:'Joint reconstruction.',            status:'active' } ]
-    .map((o,i)=>Object.assign({ id:'r'+(t+i+50), created:t-i*86400000 }, o));
-  persist();
-}
-function seedBase(){
-  const t = Date.now();
-  const mk = (o,i)=>Object.assign({ id:'r'+(t+i), created:t-i*86400000 }, o);
-  data.storebranch = [
-    { name:'Main Store',    description:'Head office store.',        status:'active' },
-    { name:'North Store',   description:'Outpatient supplies.',      status:'active' },
-    { name:'Old Town Store',description:'Closed for renovation.',    status:'inactive' } ].map(mk);
-  data.medbranch = [
-    { name:'Trauma',      description:'Fracture and injury care.',        status:'active' },
-    { name:'Orthoscopy',  description:'Minimally invasive joint surgery.',status:'active' },
-    { name:'Orthoplasty', description:'Joint reconstruction.',            status:'active' } ].map(mk);
-  data.matsource = [
-    { name:'Imported', description:'Sourced from overseas suppliers.', status:'active' },
-    { name:'Local',    description:'Sourced from local suppliers.',    status:'active' } ].map(mk);
-  data.itemcat = [
-    { name:'Consumables', description:'Single-use supplies.',   status:'active' },
-    { name:'Implants',    description:'Permanent implants.',    status:'active' },
-    { name:'Instruments', description:'Reusable instruments.',  status:'active' } ].map(mk);
-  data.item     = [
-    { name:'Surgical Gloves', description:'Latex-free, box of 100.', status:'active' },
-    { name:'IV Cannula 20G',  description:'Sterile, single use.',     status:'active' },
-    { name:'Thermometer',     description:'Discontinued model.',      status:'inactive' } ].map(mk);
-  data.hospital = [
-    { name:'City General Hospital', description:'Main referral hospital.',   status:'active' },
-    { name:'Al Noor Medical Center',description:'Day-care and paediatrics.', status:'active' },
-    { name:'Green Valley Clinic',   description:'Temporarily closed.',       status:'inactive' } ].map(mk);
-  data.doctor   = [
-    { name:'Dr. Ahmed Khan',  description:'Cardiology consultant.', status:'active' },
-    { name:'Dr. Sara Ali',    description:'Paediatrician.',         status:'active' },
-    { name:'Dr. Omar Hassan', description:'On leave.',              status:'inactive' } ].map(mk);
-  data.specs    = [
-    { name:'Cardiology',  description:'Heart and vascular care.', status:'active' },
-    { name:'Orthopedics', description:'Bone and joint care.',     status:'active' },
-    { name:'Dermatology', description:'',                          status:'inactive' } ].map(mk);
-  persist();
-}
-
 /* ═══════════════════════════════════════════════════════
  *  BUILD UI (tabs · selectors · panels) from MODULES
  * ═══════════════════════════════════════════════════════ */
@@ -1064,8 +1011,7 @@ function renderSpecTable(){
       const r = x.r, armed = armedDelete && armedDelete.k===k && armedDelete.id===r.id;
       return `<tr>
         <td class="num sid">${r.sid}</td>
-        <td><strong>${esc(r.name)}</strong></td>
-        ${r.description ? `<td class="cell-desc" title="${esc(r.description)}">${esc(r.description)}</td>` : `<td class="cell-muted">—</td>`}
+        <td class="it-cell" title="${esc(r.name + (r.description ? ' / ' + r.description : ''))}"><strong>${esc(r.name)}</strong>${r.description ? `<span class="it-sep">/</span><span class="it-desc">${esc(r.description)}</span>` : ''}</td>
         <td><span class="st-badge ${r.status}">${r.status==='active'?'Active':'Inactive'}</span></td>
         <td class="acts"><div class="act-btns">
           <button class="ib sm" title="Edit" data-act="edit" data-k="${k}" data-t="${x.t}" data-id="${r.id}"><i class="ti ti-pencil"></i></button>
@@ -1073,13 +1019,13 @@ function renderSpecTable(){
           <button class="ib sm danger ${armed?'armed':''}" title="${armed?'Click again to confirm':'Delete'}" data-act="ss-del" data-k="${k}" data-t="${x.t}" data-id="${r.id}"><i class="ti ti-${armed?'check':'trash'}"></i></button>
         </div></td></tr>`;
     }).join('');
-    const empty = `<tr><td colspan="5" class="cell-muted" style="text-align:center;padding:14px;">No items yet in ${esc(m.label)}</td></tr>`;
+    const empty = `<tr><td colspan="4" class="cell-muted" style="text-align:center;padding:14px;">No items yet in ${esc(m.label)}</td></tr>`;
     const delT = m.custom && !(data[m.key]||[]).length
       ? `<button class="ib sm danger" title="Remove this empty Specs" data-act="ss-deltype" data-k="${k}" data-t="${m.key}"><i class="ti ti-trash"></i></button>` : '';
     return `<div class="spec-card">
       <div class="grp-hd"><i class="ti ${m.icon}" style="color:var(--accent);font-size:16px;"></i><strong>${esc(m.label)}</strong><span class="cnt-chip">${(data[m.key]||[]).length}</span><span class="sp"></span>
         <button class="ib sm" title="Add item to ${esc(m.label)}" data-act="add" data-k="${k}" data-t="${m.key}"><i class="ti ti-plus"></i></button>${delT}</div>
-      <div class="spec-scroll"><table class="log-table"><thead><tr>${th('sid','ID')}${th('name','Item')}${th('description','Description')}${th('status','Status')}<th style="cursor:default"></th></tr></thead>
+      <div class="spec-scroll"><table class="log-table"><thead><tr>${th('sid','ID')}${th('name','Item / Description')}${th('status','Status')}<th style="cursor:default"></th></tr></thead>
       <tbody>${trs || empty}</tbody></table></div></div>`;
   }).join('');
   const html = cards ? `<div class="specs-grid">${cards}</div>` : '';
