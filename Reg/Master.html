@@ -10,11 +10,7 @@
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheWatcher.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/code.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cioView.js"></script>
-<script src="https://amorthopadics.github.io/SurgiStock/shared/auth.js"></script>
-<script src="https://amorthopadics.github.io/SurgiStock/shared/accessGuard.js"></script>
-<script src="https://amorthopadics.github.io/SurgiStock/shared/dataLayer.js"></script>
 
-  
 <style>
 /* ═══ THEME — keep identical across every module ═══ */
 :root,[data-theme="dark"]{
@@ -720,19 +716,33 @@ function persist(){
   publishCatalog();
 }
 /* ── Specs Settings → Google Sheet: ID | Specs | Item | Description | Status ── */
-const SPECS_API   = 'https://script.google.com/macros/s/AKfycbyQR53GeSrDwbhclHJ0idlVMipA5EQeLWFWzZk8heoff0zWPktMnEwsCpZquNP7H-uzmg/exec';
+const SPECS_API   = 'https://script.google.com/macros/s/AKfycbyY3pSYw1m0aaI43_8prqeHrnS-pP-VkHYk40qvYO8YInjVxaRayK3vWyXNabrJotiWfQ/exec';
 const SPECS_SHEET = 'Specs Settings';
 const SPECS_SNAP_KEY = 'master_specs_snapshot_v1';   // last state known to be in the sheet: { sid: [ID,Specs,Item,Description,Status] }
 const specsLoadSnap = () => { try { return JSON.parse(localStorage.getItem(SPECS_SNAP_KEY) || 'null'); } catch(e){ return null; } };
 const specsSaveSnap = m => { try { localStorage.setItem(SPECS_SNAP_KEY, JSON.stringify(m)); } catch(e){} };
-/* session → { sessionId, token } for the backend (adjust here if your portal stores them differently) */
+/* session → { sessionId, token } for the backend.
+   The portal stores the session as one JSON object { sessionId, token, email, permissions, … } under a key this module
+   does not know, so find it by shape (and remember the key). Legacy keys are still honoured. */
+let _specsSessKey = null;
+function _specsReadSess(store, key){
+  try { const o = JSON.parse(store.getItem(key) || 'null');
+        if (o && typeof o === 'object' && o.sessionId && o.token) return { sessionId:String(o.sessionId), token:String(o.token) };
+  } catch(e){}
+  return null;
+}
 function specsSession(){
-  let sid = '', tok = '';
+  const stores = []; try { stores.push(sessionStorage); } catch(e){} try { stores.push(localStorage); } catch(e){}
+  for (const st of stores){                                   // 1) remembered key
+    if (_specsSessKey){ const r = _specsReadSess(st, _specsSessKey); if (r) return r; }
+  }
+  for (const st of stores){                                   // 2) scan every key for a { sessionId, token } object
+    try { for (let i = 0; i < st.length; i++){ const k = st.key(i), r = _specsReadSess(st, k); if (r){ _specsSessKey = k; return r; } } } catch(e){}
+  }
+  let sid = '', tok = '';                                     // 3) legacy flat keys
   try {
-    const raw = sessionStorage.getItem('ap_session') || localStorage.getItem('ap_session') || '';
-    if (raw){ try { const o = JSON.parse(raw); sid = o.sessionId || o.id || ''; tok = o.token || ''; } catch(e){ sid = raw; } }
-    sid = sid || sessionStorage.getItem('ap_sessionId') || localStorage.getItem('ap_sessionId') || '';
-    tok = tok || sessionStorage.getItem('ap_token') || localStorage.getItem('ap_token') || '';
+    sid = sessionStorage.getItem('ap_sessionId') || localStorage.getItem('ap_sessionId') || '';
+    tok = sessionStorage.getItem('ap_token')     || localStorage.getItem('ap_token')     || '';
   } catch(e){}
   return { sessionId:sid, token:tok };
 }
