@@ -686,8 +686,10 @@ const SPECS_API   = 'https://script.google.com/macros/s/AKfycbyY3pSYw1m0aaI43_8p
 const SPECS_SHEET = 'Specs Settings';
 async function syncSpecsSheet(){
   assignSids();
-  const rows = specRows().sort((a,b) => a.r.sid - b.r.sid)
-    .map(x => [x.r.sid, x.tl, x.r.name, x.r.description || '', x.r.status==='active' ? 'Active' : 'Inactive']);
+  const rows = specRows().map(x => ({ sid:x.r.sid, row:[x.r.sid, x.tl, x.r.name, x.r.description || '', x.r.status==='active' ? 'Active' : 'Inactive'] }))
+    .concat((data.itemlist||[]).map(e => { const v = entryView(e);          // Item List → ID | Item List | Medical Domain | label | Status
+      return { sid:e.sid, row:[e.sid, 'Item List', v.mb, v.label, e.status==='active' ? 'Active' : 'Inactive'] }; }))
+    .sort((a,b) => a.sid - b.sid).map(x => x.row);
   let session = ''; try { session = sessionStorage.getItem('ap_session') || localStorage.getItem('ap_session') || ''; } catch(e){}
   try { localStorage.setItem(PENDING_KEY, '1'); } catch(e){}       // local changes not yet confirmed in the sheet
   try {
@@ -710,7 +712,7 @@ async function syncSpecsSheet(){
  *  to pin it, set  localStorage.master_cache_key = '<key>'.
  * ═══════════════════════════════════════════════════════ */
 const PENDING_KEY  = 'master_setup_pending_sync';
-const SIG_KEY = 'master_setup_cache_sig_v2';
+const SIG_KEY = 'master_setup_cache_sig_v3';
 const CACHE_POLL_MS = 4000;
 const CACHE = { timer:null, busy:false, count:0 };
 
@@ -755,12 +757,15 @@ function setCacheInd(state, title){
 function applySpecsRows(rows){
   const have = new Map();
   specTypes().forEach(m => (data[m.key]||[]).forEach(r => { if (r.sid) have.set(m.key+'|'+r.sid, r); }));
-  const byType = {}; let count = 0;
+  const byType = {}, ilRows = []; let count = 0;
   rows.forEach(row => {
     if (!Array.isArray(row)) return;
     if (String(row[0]).trim().toLowerCase() === 'id') return;          // header row, if present
     const sid = parseInt(row[0], 10), label = String(row[1] ?? '').trim(), name = String(row[2] ?? '').trim();
     if (!sid || !label || !name) return;
+    if (/^item\s*lists?$/i.test(label)){                              // Item List row: ID | Item List | Medical Domain | label | Status
+      ilRows.push({ sid, mb:name, label:String(row[3] ?? '').trim(), status:normStatus(row[4]) }); count++; return;
+    }
     let t = specTypeOf(label);
     if (!t){                                                           // a Specs the portal doesn't know yet → becomes its own table
       const key = 'sp_' + label.toLowerCase().replace(/[^a-z0-9]+/g, '_');
@@ -773,6 +778,14 @@ function applySpecsRows(rows){
     count++;
   });
   specTypes().forEach(m => { data[m.key] = byType[m.key] || []; });
+  /* Item List rows → Item Lists screen (an entry made in this portal is kept as-is while the sheet still shows the same text) */
+  const prevIL = new Map((data.itemlist||[]).filter(e => e.sid).map(e => [e.sid, e]));
+  data.itemlist = ilRows.map(x => {
+    const prev = prevIL.get(x.sid), mbRec = (data.medbranch||[]).find(m => m.name.trim().toLowerCase() === x.mb.toLowerCase());
+    if (prev && !prev.rawLabel){ const v = entryView(prev); if (v.label === x.label && v.mb.toLowerCase() === x.mb.toLowerCase()){ prev.status = x.status; return prev; } }
+    return { id:'il'+x.sid, sid:x.sid, medbranchId:mbRec ? mbRec.id : '', medbranchName:x.mb, rawLabel:x.label,
+             status:x.status, created:(prev && prev.created) || Date.now(), updated:Date.now() };
+  });
   /* keep Item List entries linked: if an id vanished, re-link by the saved name */
   const relink = (e, idF, nameF, kind) => {
     if (!e[idF] || (data[kind]||[]).some(x => x.id === e[idF])) return;
@@ -959,7 +972,7 @@ function renderTable(k){
  * ═══════════════════════════════════════════════════════ */
 function assignSids(){
   let max = 0; const pend = [];
-  specTypes().forEach(m => (data[m.key]||[]).forEach(r => { if (r.sid) max = Math.max(max, r.sid); else pend.push(r); }));
+  specTypes().flatMap(m => data[m.key]||[]).concat(data.itemlist||[]).forEach(r => { if (r.sid) max = Math.max(max, r.sid); else pend.push(r); });
   pend.sort((a,b) => (a.created||0)-(b.created||0)).forEach(r => { r.sid = ++max; });
 }
 function specTypeOf(label){
@@ -1217,6 +1230,9 @@ function liveName(kind, id, snap){
   return r ? r.name : (snap || '');
 }
 function entryView(r){
+  if (r.rawLabel !== undefined){                                   // came from the sheet as ready-made text
+    return { mb:liveName('medbranch', r.medbranchId, r.medbranchName), item:r.rawLabel, specs:'', extras:[], desc:'', raw:true, label:r.rawLabel };
+  }
   const mb = liveName('medbranch', r.medbranchId, r.medbranchName);
   const item = liveName('item', r.itemId, r.itemName);
   const specs = liveName('specs', r.specsId, r.specsName);
@@ -1313,10 +1329,10 @@ function renderListTable(k){
     const r = x.r, v = x.v, armed = armedDelete && armedDelete.k===k && armedDelete.id===r.id;
     return `<tr>
       <td><span class="spec-chip"><i class="ti ti-bone"></i>${esc(v.mb || '—')}</span></td>
-      <td class="merged" title="${esc(v.label)}"><strong>${esc(v.item)}</strong>${sep}${esc(v.specs)}${(v.extras||[]).map(e => sep+esc(e)).join('')}${v.desc ? sep+`<span class="d">${esc(v.desc)}</span>` : ''}</td>
+      <td class="merged" title="${esc(v.label)}">${v.raw ? esc(v.label) : `<strong>${esc(v.item)}</strong>${sep}${esc(v.specs)}${(v.extras||[]).map(e => sep+esc(e)).join('')}${v.desc ? sep+`<span class="d">${esc(v.desc)}</span>` : ''}`}</td>
       <td><span class="st-badge ${r.status}">${r.status==='active'?'Active':'Inactive'}</span></td>
       <td class="acts"><div class="act-btns">
-        <button class="ib sm" title="Edit" data-act="edit" data-k="${k}" data-id="${r.id}"><i class="ti ti-pencil"></i></button>
+        ${v.raw ? '' : `<button class="ib sm" title="Edit" data-act="edit" data-k="${k}" data-id="${r.id}"><i class="ti ti-pencil"></i></button>`}
         <button class="ib sm" title="Set ${r.status==='active'?'inactive':'active'}" data-act="toggle" data-k="${k}" data-id="${r.id}"><i class="ti ti-${r.status==='active'?'toggle-right':'toggle-left'}"></i></button>
         <button class="ib sm danger ${armed?'armed':''}" title="${armed?'Click again to confirm':'Delete'}" data-act="del" data-k="${k}" data-id="${r.id}"><i class="ti ti-${armed?'check':'trash'}"></i></button>
       </div></td></tr>`;
@@ -1515,7 +1531,7 @@ function saveEntry(another){
     if (idx >= 0) data.itemlist[idx] = rec; else data.itemlist.unshift(rec);
     last = rec;
   });
-  persist();
+  persist(); syncSpecsSheet();
   switchTab('itemlist'); render('itemlist'); render('specsetting');
   const note = created ? ` · ${created} new added to Specs Settings` : '';
 
@@ -1653,7 +1669,7 @@ function importRows(k, rows){
       added++;
     });
   }
-  if (added) persist();
+  if (added){ persist(); if (k==='itemlist' || k==='specsetting') syncSpecsSheet(); }
   renderAll();
   showToast(added ? `Imported ${added} record${added>1?'s':''}` + (skipped ? ` · ${skipped} skipped` : '') : 'Nothing imported — ' + (skipped ? 'all rows were empty or duplicates' : 'file is empty'), added ? 'success' : 'error');
 }
@@ -1812,7 +1828,7 @@ function wireDelegation(){
       case 'toggle': {
         const r = data[k].find(x=>x.id===id); if(!r) break;
         r.status = r.status==='active' ? 'inactive' : 'active';
-        persist(); render(k);
+        persist(); render(k); if (k==='itemlist') syncSpecsSheet();
         showToast(MOD[k].label+' set to '+r.status,'success'); break;
       }
       case 'del': {
@@ -1820,7 +1836,7 @@ function wireDelegation(){
           armedDelete=null;
           data[k] = data[k].filter(x=>x.id!==id);
           if (s.editId===id || s.viewId===id) closeForm(k);
-          persist(); render(k); showToast(MOD[k].label+' deleted','success');
+          persist(); render(k); if (k==='itemlist') syncSpecsSheet(); showToast(MOD[k].label+' deleted','success');
         } else {
           armedDelete = { k, id }; renderTable(k);
           clearTimeout(wireDelegation._t);
