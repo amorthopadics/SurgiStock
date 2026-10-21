@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheWatcher.js?v=1"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/code.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cioView.js"></script>
 
 <style>
@@ -692,7 +693,7 @@ async function syncSpecsSheet(){
       body: JSON.stringify({ action:'saveSpecsSettings', sheet:SPECS_SHEET, header:['ID','Specs','Item','Description','Status'], rows, session }) });
     const j = await res.json();
     if (!j || j.success === false) throw new Error((j && j.error) || 'Sheet save failed');
-    try { localStorage.removeItem(PENDING_KEY); localStorage.setItem(LASTSYNC_KEY, String(Date.now())); } catch(e){}
+    try { localStorage.removeItem(PENDING_KEY);  } catch(e){}
   } catch(e){ console.warn('[specs] sheet sync failed', e.message); showToast('Saved locally — sheet sync failed','error'); }
 }
 
@@ -707,9 +708,9 @@ async function syncSpecsSheet(){
  *  to pin it, set  localStorage.master_cache_key = '<key>'.
  * ═══════════════════════════════════════════════════════ */
 const PENDING_KEY  = 'master_setup_pending_sync';
-const LASTSYNC_KEY = 'master_setup_last_sync';
+const SIG_KEY = 'master_setup_cache_sig';
 const CACHE_POLL_MS = 4000;
-const CACHE = { key:null, appliedTs:0, timer:null, busy:false };
+const CACHE = { timer:null, busy:false, count:0 };
 
 function idbOpen(){
   return new Promise((res, rej) => {
@@ -726,26 +727,23 @@ function pickSpecs(d){
   const k = Object.keys(d).find(x => /^specs$/i.test(x) && Array.isArray(d[x]));
   return k ? d[k] : null;
 }
-/* returns { key, ts, rows } or null when the cache is not warmed yet */
-async function readSpecsCache(){
+/* Same method as allEmp: AP2CacheWatcher.readKey(KEY) → payload.  allEmp has a fixed key ('ap2_employee');
+   for this dataset the key name is found once (record whose data has a "Specs" array), then reused.
+   To fix it by hand:  localStorage.master_cache_key = '<key>'  */
+let _AP2_CACHE_KEY = null; try { _AP2_CACHE_KEY = localStorage.getItem('master_cache_key') || null; } catch(e){}
+async function discoverCacheKey(){
   const db = await idbOpen();
   if (!db.objectStoreNames.contains(_IDB_STORE)) return null;
-  const store = () => db.transaction(_IDB_STORE, 'readonly').objectStore(_IDB_STORE);
-  const get = key => new Promise((res, rej) => { const r = store().get(key); r.onsuccess = () => res(r.result || null); r.onerror = () => rej(r.error); });
-  let pinned = null; try { pinned = localStorage.getItem('master_cache_key'); } catch(e){}
-  const tryKey = async key => { if (!key) return null; const rec = await get(key); const rows = rec && pickSpecs(rec.data); return rows ? { key, ts:rec.ts||0, rows } : null; };
-  let hit = await tryKey(pinned) || await tryKey(CACHE.key);
-  if (hit) return hit;
-  return new Promise((res, rej) => {                                   // discover: scan records once
-    const r = store().openCursor();
-    r.onsuccess = () => {
-      const c = r.result; if (!c) return res(null);
-      const rows = c.value && pickSpecs(c.value.data);
-      if (rows) return res({ key:c.key, ts:c.value.ts||0, rows });
-      c.continue();
-    };
+  return new Promise((res, rej) => {
+    const r = db.transaction(_IDB_STORE, 'readonly').objectStore(_IDB_STORE).openCursor();
+    r.onsuccess = () => { const c = r.result; if (!c) return res(null); if (c.value && pickSpecs(c.value.data)) return res(c.key); c.continue(); };
     r.onerror = () => rej(r.error);
   });
+}
+async function _readCache(){
+  if (!_AP2_CACHE_KEY) _AP2_CACHE_KEY = await discoverCacheKey();
+  if (!_AP2_CACHE_KEY) return null;
+  return AP2CacheWatcher.readKey(_AP2_CACHE_KEY);          // → { Specs:[[…]] } or null
 }
 function setCacheInd(state, title){
   const el = document.getElementById('cache-ind'); if (!el) return;
@@ -782,38 +780,61 @@ function applySpecsRows(rows){
   (data.itemlist||[]).forEach(e => { relink(e,'medbranchId','medbranchName','medbranch'); relink(e,'itemId','itemName','item'); relink(e,'specsId','specsName','specs'); });
   return count;
 }
+const sigOf = rows => { try { return String(rows.length) + ':' + JSON.stringify(rows); } catch(e){ return ''; } };
+let _emptyReadStreak = 0;                                  // one flaky empty read must not wipe good data
+function applyCachePayload(payload, manual){
+  const rows = pickSpecs(payload);
+  if (!rows || !rows.length) return false;
+  _emptyReadStreak = 0;
+  let pending = false, lastSig = ''; try { pending = localStorage.getItem(PENDING_KEY)==='1'; lastSig = localStorage.getItem(SIG_KEY)||''; } catch(e){}
+  if (pending){ setCacheInd('warn','Local changes waiting to sync — cache not applied'); syncSpecsSheet(); if (manual) showToast('Local changes are still syncing','info'); return true; }
+  const sig = sigOf(rows);
+  if (!manual && sig === lastSig){ setCacheInd('ok','Cache loaded · ' + (CACHE.count||rows.length) + ' rows'); return true; }   // nothing new
+  const n = applySpecsRows(rows);
+  CACHE.count = n; try { localStorage.setItem(SIG_KEY, sig); } catch(e){}
+  persist(); renderAll();
+  setCacheInd('ok','Cache loaded · ' + n + ' rows · ' + new Date().toLocaleTimeString('en-GB'));
+  if (manual) showToast('Loaded ' + n + ' rows from cache','success');
+  return true;
+}
 async function refreshFromCache(manual){
   if (CACHE.busy) return; CACHE.busy = true;
-  if (manual) setCacheInd('warn busy', 'Reading cache…');
+  if (manual) setCacheInd('warn busy','Reading cache…');
   try {
-    const hit = await readSpecsCache();
-    if (!hit){ setCacheInd('warn', 'Cache: no Specs data yet — showing local data'); if (manual) showToast('Cache has no Specs data yet','error'); return; }
-    CACHE.key = hit.key;
-    let lastSync = 0, pending = false;
-    try { lastSync = +localStorage.getItem(LASTSYNC_KEY) || 0; pending = localStorage.getItem(PENDING_KEY) === '1'; } catch(e){}
-    const when = hit.ts ? new Date(hit.ts).toLocaleString('en-GB') : '';
-    if (pending){                                                      // local edits not confirmed yet — never overwrite them
-      setCacheInd('warn', 'Local changes waiting to sync — cache not applied'); syncSpecsSheet();
-      if (manual) showToast('Local changes are still syncing','info'); return;
+    const payload = await _readCache();
+    if (!applyCachePayload(payload, manual)){
+      const have = specRows().length;
+      if (have && ++_emptyReadStreak < 2) { /* ignore a single empty read */ }
+      else setCacheInd('warn','Cache: no Specs data yet — showing local data');
+      if (manual) showToast('Cache has no Specs data yet','error');
     }
-    if (!manual && (hit.ts === CACHE.appliedTs || hit.ts <= lastSync)){ setCacheInd('ok', 'Cache loaded · ' + when); return; }
-    const n = applySpecsRows(hit.rows);
-    CACHE.appliedTs = hit.ts;
-    persist(); renderAll();
-    setCacheInd('ok', 'Cache loaded · ' + n + ' rows · ' + when);
-    if (manual) showToast('Loaded ' + n + ' rows from cache','success');
   } catch(e){
-    console.warn('[cache] read failed', e.message); setCacheInd('err', 'Cache error: ' + e.message);
+    console.warn('[cache] read failed', e.message); setCacheInd('err','Cache error: ' + e.message);
     if (manual) showToast('Cache read failed','error');
   } finally { CACHE.busy = false; }
 }
 function startCache(){
-  try { AP2CacheWatcher.init(); AP2CacheWatcher.subscribe(k => { if (!CACHE.key || k === CACHE.key) refreshFromCache(); }); } catch(e){}
+  try { AP2CacheWatcher.init(); AP2CacheWatcher.subscribe(() => { refreshFromCache(); }); }
+  catch(e){ console.warn('[master] cacheWatcher wiring failed, continuing without live updates:', e.message); }
   const btn = document.getElementById('cache-ind'); if (btn) btn.addEventListener('click', () => refreshFromCache(true));
-  window.addEventListener('ap-cache-status', e => { if (e.detail && e.detail.healthy === false) setCacheInd('err', 'Cache unavailable: ' + (e.detail.lastError||'')); });
-  window.addEventListener('focus', () => refreshFromCache());
-  refreshFromCache();
-  CACHE.timer = setInterval(refreshFromCache, CACHE_POLL_MS);        // catches writes made by other modules
+  window.addEventListener('ap-cache-status', e => { if (e.detail && e.detail.healthy === false) setCacheInd('err','Cache unavailable: ' + (e.detail.lastError||'')); });
+
+  /* Parent shell push (same messages allEmp uses) — fastest path when running inside the app */
+  const fromDatasets = ds => { if (!ds || typeof ds !== 'object') return;
+    const k = _AP2_CACHE_KEY && ds[_AP2_CACHE_KEY] ? _AP2_CACHE_KEY : Object.keys(ds).find(x => pickSpecs(ds[x]));
+    if (k){ _AP2_CACHE_KEY = k; applyCachePayload(ds[k]); } };
+  window.addEventListener('message', e => {
+    const m = e.data; if (!m) return;
+    if (m.type === 'ap-cache-preload' && m.datasets) fromDatasets(m.datasets);
+    if (m.type === 'ap-cache-ready' && pickSpecs(m.data)){ if (!_AP2_CACHE_KEY) _AP2_CACHE_KEY = m.key; applyCachePayload(m.data); }
+    if (m.type === 'ap-cache-updated'){
+      if (_AP2_CACHE_KEY){ try { window.parent.postMessage({ type:'ap-cache-request', key:_AP2_CACHE_KEY }, '*'); } catch(err){} }
+      refreshFromCache();
+    }
+  });
+  refreshFromCache();                                       // first paint straight from IndexedDB
+  if (_AP2_CACHE_KEY){ try { window.parent.postMessage({ type:'ap-cache-request', key:_AP2_CACHE_KEY }, '*'); } catch(e){} }
+  CACHE.timer = setInterval(refreshFromCache, CACHE_POLL_MS);   // safety net if no notification arrives
 }
 function seed(){ seedBase(); seedLists(); }
 function seedLists(){
