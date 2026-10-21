@@ -38,7 +38,7 @@
   const ABSOLUTE_TTL     = 8  * 60 * 60 * 1000; // 8 hr hard limit
   const SERVER_CHECK_INT = 5  * 60 * 1000;    // server ping every 5 min
   const ALLOWED_ORIGIN   = 'https://amorthopadics.github.io/SurgiStock/';
-   const API_BASE = 'https://script.google.com/macros/s/AKfycbywRCe33Fnszn6PazjnPHcokUSiiRbqNKHsVXeLAIWNTt7N_VsICmfW-i1xwoqyGlepBg/exec';
+   const API_BASE = 'https://script.google.com/macros/s/AKfycbzqvXgA3CTREZ1M9qpXaZ8xoQlW5SUrij1VDnKMPaziekmidrwpqXNCHnfU3dRCR6UfIQ/exec';
    
 
      
