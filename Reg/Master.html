@@ -641,7 +641,7 @@ const MOD = Object.fromEntries(MODULES.map(m => [m.key, m]));
 const STORE_KEY = 'master_setup_v3';
 const CATALOG_KEY = 'item_list_catalog_v1';   // flat copy of Item List for other modules
 const OLD_STORE_KEY = 'master_setup_v2';   // earlier version: its single "branch" list becomes Store Branch
-const SEED_SAMPLE_ROWS = true;   // set false to start with empty tables
+const SEED_SAMPLE_ROWS = false;   // set false to start with empty tables
 
 let data = { spectypes:[], storebranch:[], medbranch:[], matsource:[], item:[], itemcat:[], hospital:[], doctor:[], specs:[], itemlist:[] };
 const ui = {};   // per-tab UI state
@@ -671,6 +671,21 @@ function persist(){
   try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
   catch(e){ console.warn('[module] storage write failed', e.message); }
   publishCatalog();
+}
+/* ── Specs Settings → Google Sheet: ID | Specs | Item | Description | Status ── */
+const SPECS_API   = 'https://script.google.com/macros/s/AKfycbwJAbuQZ86WodR0u5WK49x_wggyiA3WM2qGP7J_M2jtBEs-TcbuQemdSe5yiKCJpf001A/exec';
+const SPECS_SHEET = 'Specs Settings';
+async function syncSpecsSheet(){
+  assignSids();
+  const rows = specRows().sort((a,b) => a.r.sid - b.r.sid)
+    .map(x => [x.r.sid, x.tl, x.r.name, x.r.description || '', x.r.status==='active' ? 'Active' : 'Inactive']);
+  let session = ''; try { session = sessionStorage.getItem('ap_session') || localStorage.getItem('ap_session') || ''; } catch(e){}
+  try {
+    const res = await fetch(SPECS_API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'saveSpecsSettings', sheet:SPECS_SHEET, header:['ID','Specs','Item','Description','Status'], rows, session }) });
+    const j = await res.json();
+    if (!j || j.success === false) throw new Error((j && j.error) || 'Sheet save failed');
+  } catch(e){ console.warn('[specs] sheet sync failed', e.message); showToast('Saved locally — sheet sync failed','error'); }
 }
 function seed(){ seedBase(); seedLists(); }
 function seedLists(){
@@ -999,7 +1014,7 @@ function saveSpec(another){
     }));
   }
   const wasEdit = !!d.id, newCount = d.isNew ? keys.length : 0;
-  persist(); render('specsetting');
+  persist(); render('specsetting'); syncSpecsSheet();
   if (another && !wasEdit){
     sdraft = blankSpecDraft(firstKey, d.status); renderSpecModal();
     const f = specPanelEl().querySelector('[data-si]'); if (f) f.focus();
@@ -1662,7 +1677,7 @@ function wireDelegation(){
       case 'ss-toggle': {
         const r = (data[el.dataset.t]||[]).find(x=>x.id===id); if(!r) break;
         r.status = r.status==='active' ? 'inactive' : 'active';
-        persist(); render(k); showToast('Specs setting set to '+r.status,'success'); break;
+        persist(); render(k); syncSpecsSheet(); showToast('Specs setting set to '+r.status,'success'); break;
       }
       case 'ss-del': {
         const t = el.dataset.t;
@@ -1670,7 +1685,7 @@ function wireDelegation(){
           armedDelete=null;
           data[t] = data[t].filter(x=>x.id!==id);
           if (s.editId===id) closeForm(k);
-          persist(); render(k); showToast('Specs setting deleted','success');
+          persist(); render(k); syncSpecsSheet(); showToast('Specs setting deleted','success');
         } else {
           armedDelete = { k:'specsetting', id }; renderTable(k);
           clearTimeout(wireDelegation._t);
