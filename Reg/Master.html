@@ -155,20 +155,10 @@ body{display:flex;flex-direction:column;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
 .cache-ind{margin-left:auto;}
-.cache-ind,.cache-ind:hover{background:none;border:0;box-shadow:none;}
-.cache-ind.ok{color:var(--teal);}
-.cache-ind.warn{color:var(--amber);}
-.cache-ind.err{color:var(--red);}
+.cache-ind.ok{color:var(--teal);border-color:var(--teal);}
+.cache-ind.warn{color:var(--amber);border-color:var(--amber);}
+.cache-ind.err{color:var(--red);border-color:var(--red);}
 .cache-ind.busy i{animation:spin 1s linear infinite;}
-.sync-ind,.sync-ind:hover{position:relative;background:none;border:0;box-shadow:none;color:var(--red);}
-.sync-ind .ping{position:absolute;top:2px;right:2px;width:9px;height:9px;border-radius:50%;background:var(--red);}
-.sync-ind .ping::after{content:'';position:absolute;inset:0;border-radius:50%;background:var(--red);animation:pingo 1.4s ease-out infinite;}
-.sync-ind .sync-n{position:absolute;bottom:-3px;right:-2px;min-width:14px;height:14px;padding:0 3px;border-radius:7px;background:var(--red);color:#fff;font-size:9px;line-height:14px;text-align:center;font-family:var(--mono);}
-.sync-ind.busy>i{animation:spin 1s linear infinite;}
-@keyframes pingo{0%{transform:scale(1);opacity:.75}100%{transform:scale(3.2);opacity:0}}
-@keyframes blinkb{0%,100%{box-shadow:inset 0 2px 0 transparent,inset 0 -2px 0 transparent;background:transparent}50%{box-shadow:inset 0 2px 0 var(--accent),inset 0 -2px 0 var(--accent);background:var(--accent-dim)}}
-tr.blink-row>td{animation:blinkb .7s ease-in-out 6;}
-tr.blink-row>td:first-child{box-shadow:inset 2px 0 0 var(--accent);}
 
 /* ═══ FIELD / FORM ═══ */
 .field{display:flex;flex-direction:column;gap:5px;}
@@ -406,15 +396,6 @@ tr.blink-row>td:first-child{box-shadow:inset 2px 0 0 var(--accent);}
 .flt-group{display:inline-flex;gap:5px;}
 .hdr-actions .ib{width:30px;height:30px;font-size:15px;}
 .ib.flt{position:relative;}
-.ib.flt.dupf{opacity:.45;}
-.ib.flt.dupf.has{opacity:1;border-color:var(--amber);color:var(--amber);background:var(--amber-dim);}
-.ib.flt.dupf.has.on{border-color:var(--orange);color:var(--orange);background:var(--orange-dim);}
-.ib.flt.dupf:disabled{cursor:default;}
-.dup-ic{color:var(--amber);margin-right:5px;font-size:13px;vertical-align:-1px;}
-tr.dup-row>td{background:var(--amber-dim);}
-body.cache-off [data-act="add"],body.cache-off [data-act="add-list"],body.cache-off [data-act="edit"],body.cache-off [data-act="toggle"],body.cache-off [data-act="del"],
-body.cache-off [data-act="ss-toggle"],body.cache-off [data-act="ss-del"],body.cache-off [data-act="ss-deltype"],body.cache-off [data-act="upload"],
-body.cache-off [data-act="save"],body.cache-off [data-act="sm-save"],body.cache-off [data-act="sm-save-new"],body.cache-off [data-act="modal-save"],body.cache-off [data-act="modal-save-new"]{opacity:.4;cursor:not-allowed;}
 .ib.flt .flt-n{position:absolute;top:-6px;right:-6px;min-width:15px;height:15px;padding:0 3px;border-radius:8px;background:var(--surface2);border:1px solid var(--border2);color:var(--text2);font-size:9px;font-weight:700;line-height:13px;text-align:center;font-family:var(--mono);}
 .ib.flt.active:hover,.ib.flt.active.on{border-color:var(--teal);color:var(--teal);background:var(--teal-dim);}
 .ib.flt.inactive:hover,.ib.flt.inactive.on{border-color:var(--red);color:var(--red);background:var(--red-dim);}
@@ -452,6 +433,7 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 .hist-tip{font-size:10.5px;color:var(--text3);display:flex;align-items:center;gap:5px;}
 
 /* ═══ ITEM LIST builder ═══ */
+@media(max-width:700px){#btn-add-itemlist span,#btn-add-specsetting span{display:none;}#btn-add-itemlist,#btn-add-specsetting{padding:8px 10px;}}
 .spec-chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;background:var(--accent-dim);color:var(--accent);border:1px solid rgba(88,166,255,.25);white-space:nowrap;}
 .it-cell{line-height:1.3;}
 .it-cell strong{font-size:12.5px;}
@@ -539,23 +521,6 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 /* ═══ hints / form hint ═══ */
 .form-hint{font-size:10.5px;color:var(--text3);display:flex;align-items:center;gap:5px;}
 @media(max-width:700px){.doc-center-header .hist-tip{display:none;}}
-
-/* ═══ HEADER — text never wraps; when space runs out the text goes and only the controls stay ═══ */
-.doc-center{container:dch / inline-size;}
-.doc-center-header{flex-wrap:nowrap;}
-.doc-center-header h3,.doc-center-header .hist-tip,.doc-center-header .hdr-actions .btn{white-space:nowrap;flex-shrink:0;}
-.doc-center-header .hdr-actions{flex-wrap:nowrap;flex-shrink:1;min-width:0;overflow-x:auto;scrollbar-width:none;}
-.doc-center-header .hdr-actions::-webkit-scrollbar{display:none;}
-@container dch (max-width:900px){ .doc-center-header .hist-tip{display:none;} }
-@container dch (max-width:560px){
-  .doc-center-header h3{display:none;}
-  .doc-center-header .hdr-actions{margin-left:0;width:100%;justify-content:flex-end;}
-}
-@media(max-width:700px){
-  .doc-center-header{flex-wrap:nowrap;padding:8px 10px;}
-  .doc-center-header h3,.doc-center-header .hist-tip{display:none;}
-  .doc-center-header .hdr-actions{margin-left:0;width:100%;justify-content:flex-end;flex-wrap:nowrap;}
-}
 </style>
 </head>
 <body>
@@ -564,8 +529,9 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 <div class="view-bar">
   <div class="vb-brand" title="Master Setup"><i class="ti ti-building-hospital"></i></div>
   <div class="tab-nav tabs-fixed four" id="tab-nav"></div>
+  <button class="btn btn-primary btn-sm" id="btn-add-itemlist" type="button" data-act="add-list" title="Add Item List"><i class="ti ti-playlist-add"></i><span>Add Item List</span></button>
+  <button class="btn btn-primary btn-sm" id="btn-add-specsetting" type="button" data-act="add" data-k="specsetting" title="Add Specs Setting" style="display:none;"><i class="ti ti-plus"></i><span>Add Specs Setting</span></button>
   <button class="ib cache-ind warn" id="cache-ind" type="button" title="Cache: waiting…"><i class="ti ti-database"></i></button>
-  <button class="ib sync-ind" id="sync-ind" type="button" style="display:none" title=""><i class="ti ti-cloud-upload"></i><span class="ping"></span><b class="sync-n">0</b></button>
 </div>
 
 <div class="portal-wrap" id="panels"></div>
@@ -718,151 +684,21 @@ function persist(){
 /* ── Specs Settings → Google Sheet: ID | Specs | Item | Description | Status ── */
 const SPECS_API   = 'https://script.google.com/macros/s/AKfycbyY3pSYw1m0aaI43_8prqeHrnS-pP-VkHYk40qvYO8YInjVxaRayK3vWyXNabrJotiWfQ/exec';
 const SPECS_SHEET = 'Specs Settings';
-const SPECS_SNAP_KEY = 'master_specs_snapshot_v1';   // last state known to be in the sheet: { sid: [ID,Specs,Item,Description,Status] }
-const specsLoadSnap = () => { try { return JSON.parse(localStorage.getItem(SPECS_SNAP_KEY) || 'null'); } catch(e){ return null; } };
-const specsSaveSnap = m => { try { localStorage.setItem(SPECS_SNAP_KEY, JSON.stringify(m)); } catch(e){} };
-/* session → { sessionId, token } for the backend (adjust here if your portal stores them differently) */
-let AP2_SESSION = null;   // parent-frame handshake, same as accLog
-window.addEventListener('message', e => { if (e.data && e.data.type === 'ap-session-ready') AP2_SESSION = { sessionId:e.data.sessionId, token:e.data.token, email:e.data.email }; });
-try { window.parent.postMessage({ type:'ap-session-request' }, '*'); } catch(e){}
-function specsSession(){
-  let sid = '', tok = '';
-  try {
-    const raw = sessionStorage.getItem('ap_session') || localStorage.getItem('ap_session') || '';
-    if (raw){ try { const o = JSON.parse(raw); sid = o.sessionId || o.id || ''; tok = o.token || ''; } catch(e){ sid = raw; } }
-    sid = sid || sessionStorage.getItem('ap_sessionId') || localStorage.getItem('ap_sessionId') || '';
-    tok = tok || sessionStorage.getItem('ap_token') || localStorage.getItem('ap_token') || '';
-  } catch(e){}
-  if (!sid && !tok && AP2_SESSION){ sid = AP2_SESSION.sessionId || ''; tok = AP2_SESSION.token || ''; }
-  return { sessionId:sid, token:tok };
-}
-async function specsPost(action, payload){
-  const sess = specsSession();
-  if (!sess.sessionId && !sess.token) throw new Error('Not logged in');   // blocked before sending, like accLog
-  const res = await fetch(SPECS_API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify(Object.assign({ action }, sess, payload)) });
-  const j = await res.json();
-  if (!j || j.success === false) throw new Error((j && j.error) || (action + ' failed'));
-  return j;
-}
-/* every row of the sheet as the portal sees it:  sid → [ID, Specs, Item, Description, Status] */
-function specsCurrentMap(){
+async function syncSpecsSheet(){
   assignSids();
-  const m = {};
-  specRows().forEach(x => { m[x.r.sid] = [x.r.sid, x.tl, x.r.name, x.r.description || '', x.r.status==='active' ? 'Active' : 'Inactive']; });
-  (data.itemlist||[]).forEach(e => { const v = entryView(e);               // Item List → ID | Item List | Medical Domain | label | Status
-    m[e.sid] = [e.sid, 'Item List', v.mb, v.label, e.status==='active' ? 'Active' : 'Inactive']; });
-  return m;
-}
-const toRowObj = r => ({ id:r[0], specs:r[1], item:r[2], description:r[3], status:r[4] });
-let _specsRun = null, _specsResync = false;
-/* sends only what changed since the last sync:  addSpecsSetting · updateSpecsSetting · deleteSpecsSetting */
-function specsErrText(m){
-  m = String(m || '');
-  if (/not logged in/i.test(m))          return 'You must be logged in to save changes';
-  if (/unauthori[sz]ed/i.test(m))        return 'Session expired — please log in again';
-  if (/forbidden/i.test(m))              return 'You do not have permission for this action';
-  if (/failed to fetch|network|load failed/i.test(m)) return 'Network error — check your connection';
-  return m || 'Unknown error';
-}
-function requestSpecsRefresh(){
-  try { window.parent.postMessage({ type:'ap-cache-request', key:_AP2_CACHE_KEY, force:true }, '*'); } catch(e){}
-}
-function specsRunSync(){
-  if (_specsRun){ _specsResync = true; return _specsRun; }
-  _specsRun = (async () => {
-    let res = { ok:true };
-    try { do { _specsResync = false; res = await specsSyncOnce(); } while (_specsResync); }
-    finally { _specsRun = null; }
-    return res;
-  })();
-  return _specsRun;
-}
-const FAILED_KEY = 'master_specs_sync_failed';
-function specsPendingCount(){                      // local changes the sheet has not confirmed yet
-  const cur = specsCurrentMap(), snap = specsLoadSnap(); if (!snap) return 0;
-  let n = 0;
-  Object.keys(cur).forEach(id => { if (!snap[id] || JSON.stringify(snap[id]) !== JSON.stringify(cur[id])) n++; });
-  Object.keys(snap).forEach(id => { if (!cur[id]) n++; });
-  return n;
-}
-function updateSyncInd(err){
-  const el = document.getElementById('sync-ind'); if (!el) return;
-  const n = specsPendingCount();
-  el.style.display = n ? '' : 'none';
-  el.querySelector('.sync-n').textContent = n;
-  el.title = n ? n + ' change' + (n>1?'s':'') + ' saved on this device, waiting to sync' + (err ? ' (' + err + ')' : '') + ' — click to retry now' : '';
-}
-/* resolves { ok, error, fatal }.
-   Network / temporary trouble is NOT shown as an error: the change stays saved locally, the red ping on the sync icon shows it is waiting,
-   and it is retried automatically. When it finally goes through a success message is shown.
-   Only a refusal from the server (no permission / session expired) is toasted — unless { silent:true }. */
-async function syncSpecsSheet(opts){
-  const ind = document.getElementById('sync-ind'); if (ind) ind.classList.add('busy');
-  const res = await specsRunSync();
-  if (ind) ind.classList.remove('busy');
-  if (!res.ok){
-    try { localStorage.setItem(FAILED_KEY, '1'); } catch(e){}
-    updateSyncInd(res.error);
-    if (res.fatal && !(opts && opts.silent)){
-      showToast(res.error, 'error');
-      try { localStorage.removeItem(PENDING_KEY); localStorage.removeItem(FAILED_KEY); localStorage.removeItem(SIG_KEY); } catch(e){}
-      refreshFromCache();                      // drop the refused change, show what the sheet really has
-    }
-  } else {
-    updateSyncInd();
-    let had = false; try { had = localStorage.getItem(FAILED_KEY) === '1'; if (had) localStorage.removeItem(FAILED_KEY); } catch(e){}
-    if (had) showToast('Saved — all pending changes are now synced to the sheet', 'success');
-  }
-  return res;
-}
-function startSpecsRetry(){
-  const retry = () => { if (specsPendingCount()) syncSpecsSheet({ silent:true }); };
-  window.addEventListener('online', retry);
-  setInterval(() => { if (navigator.onLine !== false) retry(); }, 10000);
-  const b = document.getElementById('sync-ind'); if (b) b.addEventListener('click', () => syncSpecsSheet());
-  if (specsPendingCount()){ try { localStorage.setItem(FAILED_KEY, '1'); } catch(e){} }   // left over from last session → confirm when it goes through
-  updateSyncInd(); retry();
-}
-async function specsSyncOnce(){
-  const cur = specsCurrentMap(), snap = specsLoadSnap();
-  if (!snap){ specsSaveSnap(cur); return { ok:true }; }
-  const next = Object.assign({}, snap);
-  const adds = [], upds = [], dels = [];
-  Object.keys(cur).forEach(id => { if (!snap[id]) adds.push(cur[id]); else if (JSON.stringify(snap[id]) !== JSON.stringify(cur[id])) upds.push(cur[id]); });
-  Object.keys(snap).forEach(id => { if (!cur[id]) dels.push(sidVal(id)); });
-  if (!adds.length && !upds.length && !dels.length){ try { localStorage.removeItem(PENDING_KEY); } catch(e){} return { ok:true }; }
-  try { localStorage.setItem(PENDING_KEY, '1'); } catch(e){}               // local changes not yet confirmed in the sheet
+  const rows = specRows().map(x => ({ sid:x.r.sid, row:[x.r.sid, x.tl, x.r.name, x.r.description || '', x.r.status==='active' ? 'Active' : 'Inactive'] }))
+    .concat((data.itemlist||[]).map(e => { const v = entryView(e);          // Item List → ID | Item List | Medical Domain | label | Status
+      return { sid:e.sid, row:[e.sid, 'Item List', v.mb, v.label, e.status==='active' ? 'Active' : 'Inactive'] }; }))
+    .sort((a,b) => a.sid - b.sid).map(x => x.row);
+  let session = ''; try { session = sessionStorage.getItem('ap_session') || localStorage.getItem('ap_session') || ''; } catch(e){}
+  try { localStorage.setItem(PENDING_KEY, '1'); } catch(e){}       // local changes not yet confirmed in the sheet
   try {
-    let rejected = 0;
-    if (adds.length){
-      const j = await specsPost('addSpecsSetting', { rows: adds.map(toRowObj) });
-      const rev = {}; Object.keys(j.idMap || {}).forEach(c => { rev[j.idMap[c]] = sidVal(c); });
-      (j.added || []).forEach(a => {                                       // server may have re-numbered an id → re-key local record
-        const clientId = rev[a.id] || a.id;
-        if (clientId !== a.id){
-          const rec = specRows().map(x => x.r).concat(data.itemlist||[]).find(r => r.sid === clientId);
-          if (rec) rec.sid = a.id;
-        }
-        next[a.id] = [a.id, a.specs, a.item, a.description, a.status];
-        const sent = adds.find(r => r[0] === clientId); if (sent) next[a.id] = sent.slice(), next[a.id][0] = a.id;
-      });
-      if ((j.skipped||[]).length){ rejected = j.skipped.length; showToast('Not saved to sheet: ' + j.skipped[0].reason, 'error'); }   // legacy — server no longer skips
-      if (Object.keys(j.idMap || {}).length){ persist(); renderAll(); }
-      adds.forEach(r => { if (!(j.added||[]).some(a => (rev[a.id]||a.id) === r[0])) next[r[0]] = r.slice(); });   // rejected rows: don't retry forever
-    }
-    if (upds.length){ await specsPost('updateSpecsSetting', { rows: upds.map(toRowObj) }); upds.forEach(r => { next[r[0]] = r.slice(); }); }
-    if (dels.length){ await specsPost('deleteSpecsSetting', { ids: dels }); dels.forEach(id => { delete next[id]; }); }
-    specsSaveSnap(next);
-    try { localStorage.removeItem(PENDING_KEY); } catch(e){}
-    requestSpecsRefresh();
-    if (rejected){ try { localStorage.removeItem(SIG_KEY); } catch(e){} }  // next cache poll reloads the sheet and drops rejected rows
-    return { ok:true };
-  } catch(e){
-    specsSaveSnap(next);
-    console.warn('[specs] sheet sync failed', e.message);
-    return { ok:false, error:specsErrText(e.message), fatal:/unauthori[sz]ed|forbidden|not logged in/i.test(String(e.message)) };   // fatal = the server refused (retrying won't help)
-  }
+    const res = await fetch(SPECS_API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'saveSpecsSettings', sheet:SPECS_SHEET, header:['ID','Specs','Item','Description','Status'], rows, session }) });
+    const j = await res.json();
+    if (!j || j.success === false) throw new Error((j && j.error) || 'Sheet save failed');
+    try { localStorage.removeItem(PENDING_KEY);  } catch(e){}
+  } catch(e){ console.warn('[specs] sheet sync failed', e.message); showToast('Saved locally — sheet sync failed','error'); }
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -878,15 +714,7 @@ async function specsSyncOnce(){
 const PENDING_KEY  = 'master_setup_pending_sync';
 const SIG_KEY = 'master_setup_cache_sig_v3';
 const CACHE_POLL_MS = 4000;
-const CACHE = { timer:null, busy:false, count:0, loaded:false };
-/* nothing can be added / edited / deleted until the cache has been read once (otherwise the sheet could be overwritten with stale data) */
-const LOCKED_ACTS = new Set(['add','edit','add-list','toggle','del','ss-toggle','ss-del','ss-deltype','save','sm-save','sm-save-new','modal-save','modal-save-new','upload']);
-function cacheReady(){
-  if (CACHE.loaded) return true;
-  showToast('Cache not loaded yet — please wait before making changes','error');
-  return false;
-}
-function applyCacheLock(){ document.body.classList.toggle('cache-off', !CACHE.loaded); }
+const CACHE = { timer:null, busy:false, count:0 };
 
 function idbOpen(){
   return new Promise((res, rej) => {
@@ -906,7 +734,7 @@ function pickSpecs(d){
 /* Same method as allEmp: AP2CacheWatcher.readKey(KEY) → payload.  allEmp has a fixed key ('ap2_employee');
    for this dataset the key name is found once (record whose data has a "Specs" array), then reused.
    To fix it by hand:  localStorage.master_cache_key = '<key>'  */
-let _AP2_CACHE_KEY = 'ap2_specsData'; try { _AP2_CACHE_KEY = localStorage.getItem('master_cache_key') || 'ap2_specsData'; } catch(e){}   // IndexedDB record that holds { Specs:[[…]] }
+let _AP2_CACHE_KEY = null; try { _AP2_CACHE_KEY = localStorage.getItem('master_cache_key') || null; } catch(e){}
 async function discoverCacheKey(){
   const db = await idbOpen();
   if (!db.objectStoreNames.contains(_IDB_STORE)) return null;
@@ -928,12 +756,12 @@ function setCacheInd(state, title){
 /* cache rows → per-type lists (ids kept when the sheet ID matches an existing record, so Item List links survive) */
 function applySpecsRows(rows){
   const have = new Map();
-  specTypes().forEach(m => (data[m.key]||[]).forEach(r => { if (r.sid) have.set(m.key+'|'+String(r.sid), r); }));
+  specTypes().forEach(m => (data[m.key]||[]).forEach(r => { if (r.sid) have.set(m.key+'|'+r.sid, r); }));
   const byType = {}, ilRows = []; let count = 0;
   rows.forEach(row => {
     if (!Array.isArray(row)) return;
     if (String(row[0]).trim().toLowerCase() === 'id') return;          // header row, if present
-    const sid = sidVal(row[0]), label = String(row[1] ?? '').trim(), name = String(row[2] ?? '').trim();
+    const sid = parseInt(row[0], 10), label = String(row[1] ?? '').trim(), name = String(row[2] ?? '').trim();
     if (!sid || !label || !name) return;
     if (/^item\s*lists?$/i.test(label)){                              // Item List row: ID | Item List | Medical Domain | label | Status
       ilRows.push({ sid, mb:name, label:String(row[3] ?? '').trim(), status:normStatus(row[4]) }); count++; return;
@@ -944,16 +772,16 @@ function applySpecsRows(rows){
       (data.spectypes = data.spectypes || []).push({ key, label }); data[key] = data[key] || []; t = typeOf(key);
     }
     let desc = String(row[3] ?? '').trim(); if (/^(none|null|n\/a|-|—)$/i.test(desc)) desc = '';
-    const prev = have.get(t.key+'|'+String(sid));
+    const prev = have.get(t.key+'|'+sid);
     (byType[t.key] = byType[t.key] || []).push({ id: (prev && !/^c\d+$/.test(prev.id)) ? prev.id : 'c'+t.key+'_'+sid, sid, name, description:desc,
       status: normStatus(row[4]), created: prev ? (prev.created||Date.now()) : Date.now() });
     count++;
   });
   specTypes().forEach(m => { data[m.key] = byType[m.key] || []; });
   /* Item List rows → Item Lists screen (an entry made in this portal is kept as-is while the sheet still shows the same text) */
-  const prevIL = new Map((data.itemlist||[]).filter(e => e.sid).map(e => [String(e.sid), e]));
+  const prevIL = new Map((data.itemlist||[]).filter(e => e.sid).map(e => [e.sid, e]));
   data.itemlist = ilRows.map(x => {
-    const prev = prevIL.get(String(x.sid)), mbRec = (data.medbranch||[]).find(m => m.name.trim().toLowerCase() === x.mb.toLowerCase());
+    const prev = prevIL.get(x.sid), mbRec = (data.medbranch||[]).find(m => m.name.trim().toLowerCase() === x.mb.toLowerCase());
     if (prev && !prev.rawLabel){ const v = entryView(prev); if (v.label === x.label && v.mb.toLowerCase() === x.mb.toLowerCase()){ prev.status = x.status; return prev; } }
     return { id:'il'+x.sid, sid:x.sid, medbranchId:mbRec ? mbRec.id : '', medbranchName:x.mb, rawLabel:x.label,
              status:x.status, created:(prev && prev.created) || Date.now(), updated:Date.now() };
@@ -971,16 +799,15 @@ const sigOf = rows => { try { return String(rows.length) + ':' + JSON.stringify(
 let _emptyReadStreak = 0;                                  // one flaky empty read must not wipe good data
 function applyCachePayload(payload, manual){
   const rows = pickSpecs(payload);
-  if (Array.isArray(rows) && !CACHE.loaded){ CACHE.loaded = true; applyCacheLock(); }      // cache was read (even if the sheet is still empty)
   if (!rows || !rows.length) return false;
   _emptyReadStreak = 0;
   let pending = false, lastSig = ''; try { pending = localStorage.getItem(PENDING_KEY)==='1'; lastSig = localStorage.getItem(SIG_KEY)||''; } catch(e){}
-  if (pending){ setCacheInd('warn','Local changes waiting to sync — cache not applied'); syncSpecsSheet({ silent:true }); if (manual) showToast('Local changes are still syncing','info'); return true; }
+  if (pending){ setCacheInd('warn','Local changes waiting to sync — cache not applied'); syncSpecsSheet(); if (manual) showToast('Local changes are still syncing','info'); return true; }
   const sig = sigOf(rows);
   if (!manual && sig === lastSig){ setCacheInd('ok','Cache loaded · ' + (CACHE.count||rows.length) + ' rows'); return true; }   // nothing new
   const n = applySpecsRows(rows);
   CACHE.count = n; try { localStorage.setItem(SIG_KEY, sig); } catch(e){}
-  persist(); specsSaveSnap(specsCurrentMap()); updateSyncInd(); renderAll();
+  persist(); renderAll();
   setCacheInd('ok','Cache loaded · ' + n + ' rows · ' + new Date().toLocaleTimeString('en-GB'));
   if (manual) showToast('Loaded ' + n + ' rows from cache','success');
   return true;
@@ -1143,47 +970,21 @@ function renderTable(k){
  *  Rows live in the per-type lists (Store, Medical Domain, …) so the
  *  Item List dropdowns keep working; this sheet is the single view/editor.
  * ═══════════════════════════════════════════════════════ */
-const _p = (n,l) => String(n).padStart(l||2,'0');
-const tsId = t => { const d = new Date(t); return '' + d.getFullYear() + _p(d.getMonth()+1) + _p(d.getDate()) + _p(d.getHours()) + _p(d.getMinutes()) + _p(d.getSeconds()) + _p(d.getMilliseconds(),3); };   // YYYYMMDDHHmmssSSS
-const sidVal = v => { const s = String(v).trim(); return /^\d{1,15}$/.test(s) ? parseInt(s,10) : s; };   // old short numeric IDs stay numbers, timestamp IDs stay text
 function assignSids(){
-  const used = new Set(), pend = [];
-  specTypes().flatMap(m => data[m.key]||[]).concat(data.itemlist||[]).forEach(r => { if (r.sid) used.add(String(r.sid)); else pend.push(r); });
-  pend.sort((a,b) => (a.created||0)-(b.created||0)).forEach(r => {
-    let t = r.created || Date.now(), id = tsId(t);
-    while (used.has(id)) id = tsId(++t);          // same millisecond → next millisecond
-    used.add(id); r.sid = id;
-  });
+  let max = 0; const pend = [];
+  specTypes().flatMap(m => data[m.key]||[]).concat(data.itemlist||[]).forEach(r => { if (r.sid) max = Math.max(max, r.sid); else pend.push(r); });
+  pend.sort((a,b) => (a.created||0)-(b.created||0)).forEach(r => { r.sid = ++max; });
 }
 function specTypeOf(label){
   const q = String(label||'').trim().toLowerCase();
   return specTypes().find(m => m.key===q || m.label.toLowerCase()===q || m.plural.toLowerCase()===q) || null;
 }
-/* ── duplicates: same Specs category + same Item (Specs rows) · same Medical Domain + same entry text (Item List) ── */
-const dupNorm = x => String(x ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
-function dupIdsOf(pairs){                       // pairs: [[recordId, key], …] → Set of record ids whose key appears more than once
-  const cnt = new Map(); pairs.forEach(([, key]) => cnt.set(key, (cnt.get(key)||0) + 1));
-  return new Set(pairs.filter(([, key]) => cnt.get(key) > 1).map(([id]) => id));
-}
-const dupSpecSet = () => dupIdsOf(specRows().map(x => [x.r.id, x.t + '|' + dupNorm(x.r.name)]));
-const dupListSet = () => dupIdsOf((data.itemlist||[]).map(e => { const v = entryView(e); return [e.id, dupNorm(v.mb) + '|' + dupNorm(v.label)]; }));
-const DUP_BADGE = `<i class="ti ti-copy dup-ic" title="Duplicate — edit or delete it"></i>`;
-/* duplicate filter button next to Active / Inactive. Lit when duplicates exist; auto-shows them once per new set of duplicates */
-function renderDupFilter(k, dups){
-  const s = ui[k], n = dups.size, el = document.getElementById(k+'-filters'); if (!el) return;
-  const sig = [...dups].sort().join(',');
-  if (!n){ s.dup = false; s.dupSig = ''; }
-  else if (sig !== s.dupSig){ s.dupSig = sig; s.dup = true; if (CACHE.loaded) showToast(n + ' duplicate row' + (n>1?'s':'') + ' found — showing duplicates only', 'error'); }
-  el.insertAdjacentHTML('beforeend', `<button class="ib flt dupf${n?' has':''}${s.dup?' on':''}" type="button" data-act="dupfilter" data-k="${k}" ${n?'':'disabled'}
-    title="${n ? 'Duplicates (' + n + ') — ' + (s.dup ? 'click to show all' : 'click to filter') : 'No duplicates'}" aria-pressed="${!!s.dup}"><i class="ti ti-copy"></i><b class="flt-n">${n}</b></button>`);
-}
 function specRows(){ return specTypes().flatMap(m => (data[m.key]||[]).map(r => ({ r, t:m.key, tl:m.label, ti:m.icon }))); }
 function visibleSpecRows(){
   const s = ui.specsetting, q = s.q.trim().toLowerCase();
-  const D = s.dup ? dupSpecSet() : null;
-  let rows = specRows().filter(x => (s.filter==='all' || x.r.status===s.filter) && (!s.type || x.t===s.type) && (!D || D.has(x.r.id)));
+  let rows = specRows().filter(x => (s.filter==='all' || x.r.status===s.filter) && (!s.type || x.t===s.type));
   if (q) rows = rows.filter(x => (x.r.sid+' '+x.tl+' '+x.r.name+' '+(x.r.description||'')+' '+x.r.status).toLowerCase().includes(q));
-  const val = x => s.sortKey==='sid' ? String(x.r.sid).padStart(17,'0') : s.sortKey==='name' ? x.r.name : s.sortKey==='description' ? (x.r.description||'') : x.r.status;
+  const val = x => s.sortKey==='sid' ? x.r.sid : s.sortKey==='name' ? x.r.name : s.sortKey==='description' ? (x.r.description||'') : x.r.status;
   const dir = s.sortAsc ? 1 : -1;
   return rows.sort((a,b) => { const p = val(a), c = val(b);
     return (typeof p==='number' && typeof c==='number') ? (p-c)*dir : String(p).localeCompare(String(c), undefined, {sensitivity:'base'})*dir; });
@@ -1207,12 +1008,11 @@ function specPanel(m,i){
       </div>
     </div>`;
 }
-function renderSpecSidebar(){ renderFilters('specsetting', specRows().map(x => x.r)); renderDupFilter('specsetting', dupSpecSet()); }
+function renderSpecSidebar(){ renderFilters('specsetting', specRows().map(x => x.r)); }
 /* every Specs = one table, all shown together in one frame; a new Specs adds a new table */
 function renderSpecTable(){
   const k = 'specsetting', s = ui[k], rows = visibleSpecRows(), total = specRows().length, types = specTypes();
-  const filtering = s.q.trim() || s.filter!=='all' || s.dup;
-  const DS = dupSpecSet();
+  const filtering = s.q.trim() || s.filter!=='all';
   document.getElementById(k+'-count').textContent = types.length + ' Specs · ' + rows.length + (rows.length!==total ? ' / '+total : '') + ' items';
   const body = document.getElementById(k+'-body');
   const th = (key,label) => `<th data-act="sort" data-k="${k}" data-v="${key}">${label}${s.sortKey===key ? `<i class="ti ti-chevron-${s.sortAsc?'up':'down'} sort-i"></i>` : ''}</th>`;
@@ -1222,13 +1022,13 @@ function renderSpecTable(){
     if (filtering && !mine.length) return '';
     const trs = mine.map(x => {
       const r = x.r, armed = armedDelete && armedDelete.k===k && armedDelete.id===r.id;
-      return `<tr data-rid="${r.id}"${DS.has(r.id) ? ' class="dup-row"' : ''}>
+      return `<tr>
         <td class="num sid">${r.sid}</td>
-        <td class="it-cell" title="${esc(r.name + (r.description ? ' / ' + r.description : ''))}">${DS.has(r.id) ? DUP_BADGE : ''}<strong>${esc(r.name)}</strong>${r.description ? `<span class="it-sep">/</span><span class="it-desc">${esc(r.description)}</span>` : ''}</td>
+        <td class="it-cell" title="${esc(r.name + (r.description ? ' / ' + r.description : ''))}"><strong>${esc(r.name)}</strong>${r.description ? `<span class="it-sep">/</span><span class="it-desc">${esc(r.description)}</span>` : ''}</td>
         <td><span class="st-badge ${r.status}">${r.status==='active'?'Active':'Inactive'}</span></td>
         <td class="acts"><div class="act-btns">
           <button class="ib sm" title="Edit" data-act="edit" data-k="${k}" data-t="${x.t}" data-id="${r.id}"><i class="ti ti-pencil"></i></button>
-          ${DS.has(r.id) ? '' : `<button class="ib sm" title="Set ${r.status==='active'?'inactive':'active'}" data-act="ss-toggle" data-k="${k}" data-t="${x.t}" data-id="${r.id}"><i class="ti ti-${r.status==='active'?'toggle-right':'toggle-left'}"></i></button>`}
+          <button class="ib sm" title="Set ${r.status==='active'?'inactive':'active'}" data-act="ss-toggle" data-k="${k}" data-t="${x.t}" data-id="${r.id}"><i class="ti ti-${r.status==='active'?'toggle-right':'toggle-left'}"></i></button>
           <button class="ib sm danger ${armed?'armed':''}" title="${armed?'Click again to confirm':'Delete'}" data-act="ss-del" data-k="${k}" data-t="${x.t}" data-id="${r.id}"><i class="ti ti-${armed?'check':'trash'}"></i></button>
         </div></td></tr>`;
     }).join('');
@@ -1281,7 +1081,7 @@ function renderSpecModal(){
       ${names}
       ${items}
       <div class="field inl"><label>Status</label>
-        <select class="date-input" data-sf="status"${d.id && dupSpecSet().has(d.id) ? ' disabled title="Duplicate — status cannot be changed"' : ''}><option value="active"${d.status==='active'?' selected':''}>Active</option><option value="inactive"${d.status==='inactive'?' selected':''}>Inactive</option></select></div>
+        <select class="date-input" data-sf="status"><option value="active"${d.status==='active'?' selected':''}>Active</option><option value="inactive"${d.status==='inactive'?' selected':''}>Inactive</option></select></div>
     </div></div>
     <div class="ppf form-actions">
       <button class="btn btn-ghost" type="button" data-act="sm-close">Cancel</button>
@@ -1290,7 +1090,6 @@ function renderSpecModal(){
     </div>`;
 }
 function saveSpec(another){
-  if (!cacheReady()) return;
   const d = sdraft, E = { n:[], r:[] };
   const names = d.newNames.map((n,i) => ({ i, v:n.trim() })).filter(x => x.v);
   const rows  = d.rows.map((r,i) => ({ i, name:r.name.trim(), description:r.description.trim() })).filter(r => r.name || r.description);
@@ -1298,18 +1097,16 @@ function saveSpec(another){
   if (d.isNew && !names.length) E.n.push(0);
   if (!rows.length) E.r.push(0);
   rows.forEach(r => { if (!r.name) E.r.push(r.i); });
-  const seenN = new Set(), taken = specTypes().map(m => dupNorm(m.label));
+  const seenN = new Set(), taken = specTypes().map(m => m.label.toLowerCase());
   let dupType = false;
-  names.forEach(x => { const k = dupNorm(x.v); if (seenN.has(k) || taken.includes(k)){ E.n.push(x.i); dupType = true; } seenN.add(k); });
+  names.forEach(x => { const k = x.v.toLowerCase(); if (seenN.has(k) || taken.includes(k)){ E.n.push(x.i); dupType = true; } seenN.add(k); });
   const targets = d.isNew ? names.map(x => x.v) : [d.t];
-  const seenR = new Set(); let dupItem = false, inactiveHit = null;
-  rows.forEach(r => { const k = dupNorm(r.name); if (!r.name) return;
-    const hit = !d.isNew && d.t ? (data[d.t]||[]).find(x => x.id!==d.id && dupNorm(x.name)===k) : null;
-    if (hit && hit.status==='inactive' && !inactiveHit) inactiveHit = hit;
-    if (seenR.has(k) || hit){ E.r.push(r.i); dupItem = true; } seenR.add(k); });
+  const seenR = new Set(); let dupItem = false;
+  rows.forEach(r => { const k = r.name.toLowerCase(); if (!r.name) return;
+    const exists = !d.isNew && d.t && (data[d.t]||[]).some(x => x.id!==d.id && x.name.trim().toLowerCase()===k);
+    if (seenR.has(k) || exists){ E.r.push(r.i); dupItem = true; } seenR.add(k); });
   if (E.t || E.n.length || E.r.length){
     d.errs = E; renderSpecModal();
-    if (inactiveHit && !d.id){ blinkRecord('specsetting', inactiveHit.id); return showToast(INACTIVE_MSG, 'info'); }
     return showToast(dupType ? 'This Specs already exists — select it above' : dupItem ? 'Duplicate — this item already exists' : 'Please fill the required fields','error');
   }
   d.errs = null;
@@ -1377,7 +1174,6 @@ function openForm(k, id){
 }
 
 function saveForm(k){
-  if (!cacheReady()) return;
   if (k==='itemlist') return saveEntry(false);
   if (k==='specsetting') return saveSpec();
   const m = MOD[k], s = ui[k];
@@ -1507,14 +1303,12 @@ function renderListSidebar(k){
     `<button class="doc-side-btn ${!s.mb?'selected':''}" data-act="mbfilter" data-k="${k}" data-v="" title="All medical domains"><i class="ti ti-list"></i>All<span class="doc-count-badge">${rows.length}</span></button>` +
     (mbs ? '<div class="sidebar-sep"></div>' + mbs : '');
   renderFilters(k, rows);
-  renderDupFilter(k, dupListSet());
 }
 
 /* ── table: grouped by Medical Branch ── */
 function visibleEntries(){
   const s = ui.itemlist, q = s.q.trim().toLowerCase();
-  const D = s.dup ? dupListSet() : null;
-  return data.itemlist.filter(r => (s.filter==='all' || r.status===s.filter) && (!s.mb || r.medbranchId===s.mb) && (!D || D.has(r.id)))
+  return data.itemlist.filter(r => (s.filter==='all' || r.status===s.filter) && (!s.mb || r.medbranchId===s.mb))
     .map(r => ({ r, v:entryView(r) }))
     .filter(x => !q || (x.v.mb+' '+x.v.label).toLowerCase().includes(q));
 }
@@ -1531,16 +1325,15 @@ function renderListTable(k){
   }
   rows.sort((a,b) => a.v.mb.localeCompare(b.v.mb, undefined, {sensitivity:'base'}) || a.v.label.localeCompare(b.v.label, undefined, {sensitivity:'base'}));
   const sep = `<span class="sep">${esc(LABEL_SEP.trim())}</span>`;
-  const DL = dupListSet();
   const trs = rows.map(x => {
     const r = x.r, v = x.v, armed = armedDelete && armedDelete.k===k && armedDelete.id===r.id;
-    return `<tr data-rid="${r.id}"${DL.has(r.id) ? ' class="dup-row"' : ''}>
+    return `<tr>
       <td><span class="spec-chip"><i class="ti ti-bone"></i>${esc(v.mb || '—')}</span></td>
-      <td class="merged" title="${esc(v.label)}">${DL.has(r.id) ? DUP_BADGE : ''}${v.raw ? esc(v.label) : `<strong>${esc(v.item)}</strong>${sep}${esc(v.specs)}${(v.extras||[]).map(e => sep+esc(e)).join('')}${v.desc ? sep+`<span class="d">${esc(v.desc)}</span>` : ''}`}</td>
+      <td class="merged" title="${esc(v.label)}">${v.raw ? esc(v.label) : `<strong>${esc(v.item)}</strong>${sep}${esc(v.specs)}${(v.extras||[]).map(e => sep+esc(e)).join('')}${v.desc ? sep+`<span class="d">${esc(v.desc)}</span>` : ''}`}</td>
       <td><span class="st-badge ${r.status}">${r.status==='active'?'Active':'Inactive'}</span></td>
       <td class="acts"><div class="act-btns">
-        <button class="ib sm" title="Edit" data-act="edit" data-k="${k}" data-id="${r.id}"><i class="ti ti-pencil"></i></button>
-        ${DL.has(r.id) ? '' : `<button class="ib sm" title="Set ${r.status==='active'?'inactive':'active'}" data-act="toggle" data-k="${k}" data-id="${r.id}"><i class="ti ti-${r.status==='active'?'toggle-right':'toggle-left'}"></i></button>`}
+        ${v.raw ? '' : `<button class="ib sm" title="Edit" data-act="edit" data-k="${k}" data-id="${r.id}"><i class="ti ti-pencil"></i></button>`}
+        <button class="ib sm" title="Set ${r.status==='active'?'inactive':'active'}" data-act="toggle" data-k="${k}" data-id="${r.id}"><i class="ti ti-${r.status==='active'?'toggle-right':'toggle-left'}"></i></button>
         <button class="ib sm danger ${armed?'armed':''}" title="${armed?'Click again to confirm':'Delete'}" data-act="del" data-k="${k}" data-id="${r.id}"><i class="ti ti-${armed?'check':'trash'}"></i></button>
       </div></td></tr>`;
   }).join('');
@@ -1564,12 +1357,6 @@ function exportCsv(){
 function openListModal(id, mbId){
   const rec = id ? data.itemlist.find(r => r.id===id) : null;
   draft = rec ? Object.assign({}, rec) : { id:null, status:'active' };
-  if (rec && rec.rawLabel !== undefined){                         // entry that came from the sheet as ready-made text
-    draft.raw = true; draft.rawLabel = rec.rawLabel;
-    draft.vals = { medbranch: liveName('medbranch', rec.medbranchId, rec.medbranchName) };
-    lmErrs = new Set(); renderListModal();
-    document.getElementById('itemlist-preview-panel').classList.add('open'); return;
-  }
   const ex = (rec && rec.extras) || {};
   const mbRef = rec ? rec.medbranchId : (mbId || ui.itemlist.mb || '');
   draft.vals = {
@@ -1682,46 +1469,7 @@ function wireCombo(){
   }, true);
 }
 
-function renderRawModal(){
-  const d = draft, bad = k => lmErrs.has(k);
-  document.getElementById('itemlist-preview-panel').innerHTML = `
-    <div class="pph"><h3><i class="ti ti-playlist-add"></i><span>Edit Item List Entry</span></h3>
-      <button class="pph-close" data-act="modal-close" title="Close"><i class="ti ti-x"></i></button></div>
-    <div class="ppb"><div class="form-stack">
-      <div class="field inl"><div class="fgrp-lbl"><i class="ti ti-bone"></i>Medical Domain <span class="req">*</span></div>
-        ${cbHTML('v:medbranch','medbranch',d.vals.medbranch,'Search or type medical domain…',bad('medbranch'))}</div>
-      <div class="field inl"><div class="fgrp-lbl"><i class="ti ti-list-details"></i>Item - Specs - Description <span class="req">*</span></div>
-        <input class="date-input${bad('rawLabel')?' bad':''}" type="text" data-f="rawLabel" value="${esc(d.rawLabel)}" placeholder="Item - Specs - Description" autocomplete="off"/></div>
-      <div class="field inl"><label>Status</label>
-        <select class="date-input" data-f="status"${d.id && dupListSet().has(d.id) ? ' disabled title="Duplicate — status cannot be changed"' : ''}><option value="active"${d.status==='active'?' selected':''}>Active</option><option value="inactive"${d.status==='inactive'?' selected':''}>Inactive</option></select></div>
-    </div></div>
-    <div class="ppf form-actions">
-      <button class="btn btn-ghost" type="button" data-act="modal-close">Cancel</button>
-      <button class="btn btn-primary" type="button" data-act="modal-save"><i class="ti ti-device-floppy"></i> Update</button>
-    </div>`;
-}
-function saveRawEntry(){
-  const d = draft; lmErrs = new Set();
-  const mbName = (d.vals.medbranch||'').trim(), text = (d.rawLabel||'').trim();
-  if (!mbName) lmErrs.add('medbranch');
-  if (!text) lmErrs.add('rawLabel');
-  const rawHit = !lmErrs.size ? data.itemlist.find(e => e.id!==d.id && entryView(e).label.trim().toLowerCase()===text.toLowerCase() && entryView(e).mb.trim().toLowerCase()===mbName.toLowerCase()) : null;
-  if (rawHit){
-    lmErrs.add('rawLabel'); renderRawModal();
-    if (rawHit.status==='inactive' && !d.id){ blinkRecord('itemlist', rawHit.id); return showToast(INACTIVE_MSG, 'info'); }
-    return showToast('Duplicate — this entry already exists','error');
-  }
-  if (lmErrs.size){ renderRawModal(); return showToast('Please fill the highlighted fields','error'); }
-  const now = Date.now();
-  let mb = data.medbranch.find(x => x.name.trim().toLowerCase()===mbName.toLowerCase());
-  if (!mb){ mb = { id:'r'+now+'medbranch', name:mbName, description:'', status:'active', created:now }; data.medbranch.unshift(mb); }
-  const rec = data.itemlist.find(x => x.id===d.id);
-  if (rec) Object.assign(rec, { rawLabel:text, medbranchId:mb.id, medbranchName:mb.name, status:d.status, updated:now });
-  persist(); syncSpecsSheet();
-  render('itemlist'); render('specsetting'); closeListModal(); showToast('Entry updated','success');
-}
 function renderListModal(){
-  if (draft && draft.raw) return renderRawModal();
   const d = draft, bad = k => lmErrs.has(k);
   document.getElementById('itemlist-preview-panel').innerHTML = `
     <div class="pph"><h3><i class="ti ti-playlist-add"></i><span>${d.id?'Edit Item List Entry':'Add Item List'}</span></h3>
@@ -1729,7 +1477,7 @@ function renderListModal(){
     <div class="ppb"><div class="form-stack">
       ${chipGroups(d, bad)}
       <div class="field inl"><label>Status</label>
-        <select class="date-input" data-f="status"${d.id && dupListSet().has(d.id) ? ' disabled title="Duplicate — status cannot be changed"' : ''}><option value="active"${d.status==='active'?' selected':''}>Active</option><option value="inactive"${d.status==='inactive'?' selected':''}>Inactive</option></select></div>
+        <select class="date-input" data-f="status"><option value="active"${d.status==='active'?' selected':''}>Active</option><option value="inactive"${d.status==='inactive'?' selected':''}>Inactive</option></select></div>
       <div class="merge-preview" id="lm-preview"></div>
     </div></div>
     <div class="ppf form-actions">
@@ -1741,8 +1489,6 @@ function renderListModal(){
 }
 
 function saveEntry(another){
-  if (!cacheReady()) return;
-  if (draft && draft.raw) return saveRawEntry();
   const d = draft; lmErrs = new Set();
   const v = {}; ['medbranch','matsource','item','itemcat'].forEach(k => v[k] = (d.vals[k]||'').trim());
   if (!v.medbranch) lmErrs.add('medbranch');
@@ -1750,26 +1496,18 @@ function saveEntry(another){
   const rows = d.rows.map((r,i) => ({ i, specs:(r.specs||'').trim(), desc:(r.desc||'').trim() })).filter(r => r.specs);
   if (!rows.length) lmErrs.add('r0');
   const find = (kind, name) => name ? (data[kind]||[]).find(x => x.name.trim().toLowerCase()===name.toLowerCase()) : null;
-  const seen = new Set(); let inactiveHit = null;
+  const seen = new Set();
   rows.forEach(r => {
     let dup = seen.has(r.specs.toLowerCase()); seen.add(r.specs.toLowerCase());
     if (!dup){
       const mb = find('medbranch',v.medbranch), it = find('item',v.item), sp = find('specs',r.specs), ms = find('matsource',v.matsource), ic = find('itemcat',v.itemcat);
       if (mb && it && sp && (!v.matsource || ms) && (!v.itemcat || ic))
-        { const hit = data.itemlist.find(e => e.id!==d.id && e.medbranchId===mb.id && e.itemId===it.id && e.specsId===sp.id
+        dup = data.itemlist.some(e => e.id!==d.id && e.medbranchId===mb.id && e.itemId===it.id && e.specsId===sp.id
           && ((e.extras||{}).matsource||'')===(ms?ms.id:'') && ((e.extras||{}).itemcat||'')===(ic?ic.id:'')
           && (e.desc||'').trim().toLowerCase()===r.desc.toLowerCase());
-          if (hit){ dup = true; if (hit.status==='inactive' && !inactiveHit) inactiveHit = hit; } }
-      if (!dup && mb && it && sp){                                          // same merged text as an entry that came from the sheet?
-        const tv = entryView({ medbranchId:mb.id, medbranchName:mb.name, itemId:it.id, itemName:it.name, specsId:sp.id, specsName:sp.name,
-          extras:{ matsource: ms?ms.id:'', itemcat: ic?ic.id:'' }, desc:r.desc });
-        const hit = data.itemlist.find(e => e.id!==d.id && dupNorm(entryView(e).mb)===dupNorm(tv.mb) && dupNorm(entryView(e).label)===dupNorm(tv.label));
-        if (hit){ dup = true; if (hit.status==='inactive' && !inactiveHit) inactiveHit = hit; }
-      }
     }
     if (dup) lmErrs.add('r'+r.i);
   });
-  if (lmErrs.size && inactiveHit && !d.id && !lmErrs.has('medbranch') && !lmErrs.has('item')){ renderListModal(); blinkRecord('itemlist', inactiveHit.id); return showToast(INACTIVE_MSG, 'info'); }
   if (lmErrs.size){ renderListModal(); return showToast(lmErrs.has('medbranch')||lmErrs.has('item') ? 'Please fill the highlighted fields' : 'Check the highlighted Specs rows (required or already exists)','error'); }
 
   const now = Date.now(); let n = 0, created = 0;
@@ -1979,32 +1717,6 @@ function filterDrop(key,query){
 function openPreview(scope){ const p=document.getElementById(scope+'-preview-panel'); if(p) p.classList.add('open'); }
 function closePreview(scope){ const p=document.getElementById(scope+'-preview-panel'); if(p) p.classList.remove('open'); }
 
-/* the record already exists but is Inactive: clear filters, scroll to it and blink its border so the user can activate it instead of adding a copy */
-function blinkRecord(k, rid){
-  const s = ui[k]; s.filter = 'all'; s.q = ''; s.dup = false; if (k==='specsetting') s.type = ''; else s.mb = '';
-  const inp = document.getElementById(k+'-search'); if (inp) inp.value = '';
-  render(k);
-  const tr = document.querySelector('#'+k+'-body tr[data-rid="'+rid+'"]'); if (!tr) return;
-  tr.scrollIntoView({ block:'center', behavior:'smooth' });
-  tr.classList.remove('blink-row'); void tr.offsetWidth; tr.classList.add('blink-row');
-  setTimeout(() => tr.classList.remove('blink-row'), 4800);
-}
-const INACTIVE_MSG = 'Already exists but is Inactive — activate it instead of adding again';
-/* Active ⇄ Inactive for rows stored in the sheet: save first-class, undo the change and show the reason if the sheet rejects it */
-const _toggleBusy = new Set();
-async function toggleStatus(r, k, label){
-  if (_toggleBusy.has(r.id)) return;
-  const old = r.status, next = old==='active' ? 'inactive' : 'active';
-  _toggleBusy.add(r.id); r.status = next; persist(); render(k);
-  const res = await syncSpecsSheet({ silent:true });
-  _toggleBusy.delete(r.id);
-  if (res.ok){ showToast(label + ' set to ' + next, 'success'); return; }
-  if (!res.fatal) return;                       // offline / temporary: change stays on this device, sync icon shows it is waiting
-  r.status = old; persist(); render('specsetting'); render('itemlist');           // the server refused it → undo
-  if (!specsPendingCount()){ try { localStorage.removeItem(PENDING_KEY); localStorage.removeItem(FAILED_KEY); } catch(e){} }
-  updateSyncInd();
-  showToast('Status not changed — ' + res.error, 'error');
-}
 function showToast(msg,type){
   const t=document.getElementById('toast'), icon=document.getElementById('toast-icon'), label=document.getElementById('toast-msg');
   t.className='toast show'+(type?' '+type:'');
@@ -2027,7 +1739,6 @@ function wireDelegation(){
     const s = ui[k];
 
     if (act!=='del' && act!=='ss-del' && armedDelete){ const a=armedDelete; armedDelete=null; renderTable(a.k); }
-    if (LOCKED_ACTS.has(act) && !cacheReady()) return;
 
     switch(act){
       case 'add':    k==='specsetting' ? openSpecForm() : k==='itemlist' ? openListModal() : openForm(k); break;
@@ -2072,12 +1783,11 @@ function wireDelegation(){
         else { draft[f] = v; if (f==='medbranchId') draft.medbranchName = liveName('medbranch',v,''); if (f==='itemId') draft.itemName = liveName('item',v,''); if (f==='specsId') draft.specsName = liveName('specs',v,''); lmErrs.delete(f); }
         renderListModal(); break;
       }
-      case 'dupfilter': s.dup = !s.dup; render(k); break;
       case 'ss-type':   s.type = (s.type===v ? '' : v); render(k); break;
       case 'ss-toggle': {
         const r = (data[el.dataset.t]||[]).find(x=>x.id===id); if(!r) break;
-        if (dupSpecSet().has(id)){ showToast('Duplicate — edit or delete it; status cannot be changed','error'); break; }
-        toggleStatus(r, 'specsetting', 'Specs setting'); break;
+        r.status = r.status==='active' ? 'inactive' : 'active';
+        persist(); render(k); syncSpecsSheet(); showToast('Specs setting set to '+r.status,'success'); break;
       }
       case 'ss-del': {
         const t = el.dataset.t;
@@ -2117,12 +1827,8 @@ function wireDelegation(){
       case 'sort':   s.sortAsc = (s.sortKey===v) ? !s.sortAsc : true; s.sortKey = v; renderTable(k); break;
       case 'toggle': {
         const r = data[k].find(x=>x.id===id); if(!r) break;
-        if (k==='itemlist'){
-          if (dupListSet().has(id)){ showToast('Duplicate — edit or delete it; status cannot be changed','error'); break; }
-          toggleStatus(r, k, MOD[k].label); break;
-        }
         r.status = r.status==='active' ? 'inactive' : 'active';
-        persist(); render(k);
+        persist(); render(k); if (k==='itemlist') syncSpecsSheet();
         showToast(MOD[k].label+' set to '+r.status,'success'); break;
       }
       case 'del': {
@@ -2155,11 +1861,9 @@ function wireDelegation(){
  *  INIT
  * ═══════════════════════════════════════════════════════ */
 async function init(){
-  applyCacheLock();
   load();
   assignSids();
   migrateLists();
-  if (!specsLoadSnap()) specsSaveSnap(specsCurrentMap());
   buildUI();
   wireDelegation();
   wireListEvents();
@@ -2169,7 +1873,6 @@ async function init(){
   renderAll();
   switchTab('itemlist');
   startCache();
-  startSpecsRetry();
 }
 document.addEventListener('DOMContentLoaded', init);
 </script>
