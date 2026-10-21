@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheWatcher.js?v=1"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/code.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cioView.js"></script>
 
 <style>
@@ -152,6 +153,12 @@ body{display:flex;flex-direction:column;}
 
 /* cache status indicator */
 @keyframes spin{to{transform:rotate(360deg);}}
+
+.cache-ind{margin-left:auto;}
+.cache-ind.ok{color:var(--teal);border-color:var(--teal);}
+.cache-ind.warn{color:var(--amber);border-color:var(--amber);}
+.cache-ind.err{color:var(--red);border-color:var(--red);}
+.cache-ind.busy i{animation:spin 1s linear infinite;}
 
 /* ═══ FIELD / FORM ═══ */
 .field{display:flex;flex-direction:column;gap:5px;}
@@ -520,6 +527,7 @@ select.date-input option{background:var(--surface2);color:var(--text);}
   <div class="tab-nav tabs-fixed four" id="tab-nav"></div>
   <button class="btn btn-primary btn-sm" id="btn-add-itemlist" type="button" data-act="add-list" title="Add Item List"><i class="ti ti-playlist-add"></i><span>Add Item List</span></button>
   <button class="btn btn-primary btn-sm" id="btn-add-specsetting" type="button" data-act="add" data-k="specsetting" title="Add Specs Setting" style="display:none;"><i class="ti ti-plus"></i><span>Add Specs Setting</span></button>
+  <button class="ib cache-ind warn" id="cache-ind" type="button" title="Cache: waiting…"><i class="ti ti-database"></i></button>
 </div>
 
 <div class="portal-wrap" id="panels"></div>
@@ -679,12 +687,134 @@ async function syncSpecsSheet(){
   const rows = specRows().sort((a,b) => a.r.sid - b.r.sid)
     .map(x => [x.r.sid, x.tl, x.r.name, x.r.description || '', x.r.status==='active' ? 'Active' : 'Inactive']);
   let session = ''; try { session = sessionStorage.getItem('ap_session') || localStorage.getItem('ap_session') || ''; } catch(e){}
+  try { localStorage.setItem(PENDING_KEY, '1'); } catch(e){}       // local changes not yet confirmed in the sheet
   try {
     const res = await fetch(SPECS_API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
       body: JSON.stringify({ action:'saveSpecsSettings', sheet:SPECS_SHEET, header:['ID','Specs','Item','Description','Status'], rows, session }) });
     const j = await res.json();
     if (!j || j.success === false) throw new Error((j && j.error) || 'Sheet save failed');
+    try { localStorage.removeItem(PENDING_KEY); localStorage.setItem(LASTSYNC_KEY, String(Date.now())); } catch(e){}
   } catch(e){ console.warn('[specs] sheet sync failed', e.message); showToast('Saved locally — sheet sync failed','error'); }
+}
+
+/* ═══════════════════════════════════════════════════════
+ *  CACHE → PORTAL
+ *  The shared cache (IndexedDB  ap2_fleet_cache / datasets) holds the
+ *  Specs Settings sheet as   data.Specs = [[ID, Specs, Item, Description, Status], …]
+ *  (header row is not stored).  Every screen — Specs Settings tables,
+ *  Item List drop-downs, the published catalog — reads from `data`,
+ *  so loading the cache into `data` feeds all of them.
+ *  The cache record is found automatically (any record whose data has a "Specs" array);
+ *  to pin it, set  localStorage.master_cache_key = '<key>'.
+ * ═══════════════════════════════════════════════════════ */
+const PENDING_KEY  = 'master_setup_pending_sync';
+const LASTSYNC_KEY = 'master_setup_last_sync';
+const CACHE_POLL_MS = 4000;
+const CACHE = { key:null, appliedTs:0, timer:null, busy:false };
+
+function idbOpen(){
+  return new Promise((res, rej) => {
+    let done = false;
+    const req = indexedDB.open(_IDB_NAME);
+    const t = setTimeout(() => { if (!done){ done = true; rej(new Error('idb-open-timeout')); } }, 2500);
+    req.onsuccess = e => { if (!done){ done = true; clearTimeout(t); res(e.target.result); } };
+    req.onerror   = e => { if (!done){ done = true; clearTimeout(t); rej(e.target.error); } };
+  });
+}
+/* the Specs array inside a cache payload ({Specs:[…]}), or null */
+function pickSpecs(d){
+  if (!d || typeof d !== 'object' || Array.isArray(d)) return null;
+  const k = Object.keys(d).find(x => /^specs$/i.test(x) && Array.isArray(d[x]));
+  return k ? d[k] : null;
+}
+/* returns { key, ts, rows } or null when the cache is not warmed yet */
+async function readSpecsCache(){
+  const db = await idbOpen();
+  if (!db.objectStoreNames.contains(_IDB_STORE)) return null;
+  const store = () => db.transaction(_IDB_STORE, 'readonly').objectStore(_IDB_STORE);
+  const get = key => new Promise((res, rej) => { const r = store().get(key); r.onsuccess = () => res(r.result || null); r.onerror = () => rej(r.error); });
+  let pinned = null; try { pinned = localStorage.getItem('master_cache_key'); } catch(e){}
+  const tryKey = async key => { if (!key) return null; const rec = await get(key); const rows = rec && pickSpecs(rec.data); return rows ? { key, ts:rec.ts||0, rows } : null; };
+  let hit = await tryKey(pinned) || await tryKey(CACHE.key);
+  if (hit) return hit;
+  return new Promise((res, rej) => {                                   // discover: scan records once
+    const r = store().openCursor();
+    r.onsuccess = () => {
+      const c = r.result; if (!c) return res(null);
+      const rows = c.value && pickSpecs(c.value.data);
+      if (rows) return res({ key:c.key, ts:c.value.ts||0, rows });
+      c.continue();
+    };
+    r.onerror = () => rej(r.error);
+  });
+}
+function setCacheInd(state, title){
+  const el = document.getElementById('cache-ind'); if (!el) return;
+  el.className = 'ib cache-ind ' + state; el.title = title;
+}
+/* cache rows → per-type lists (ids kept when the sheet ID matches an existing record, so Item List links survive) */
+function applySpecsRows(rows){
+  const have = new Map();
+  specTypes().forEach(m => (data[m.key]||[]).forEach(r => { if (r.sid) have.set(r.sid, r); }));
+  const byType = {}; let count = 0;
+  rows.forEach(row => {
+    if (!Array.isArray(row)) return;
+    if (String(row[0]).trim().toLowerCase() === 'id') return;          // header row, if present
+    const sid = parseInt(row[0], 10), label = String(row[1] ?? '').trim(), name = String(row[2] ?? '').trim();
+    if (!sid || !label || !name) return;
+    let t = specTypeOf(label);
+    if (!t){                                                           // a Specs the portal doesn't know yet → becomes its own table
+      const key = 'sp_' + label.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+      (data.spectypes = data.spectypes || []).push({ key, label }); data[key] = data[key] || []; t = typeOf(key);
+    }
+    let desc = String(row[3] ?? '').trim(); if (/^(none|null|n\/a|-|—)$/i.test(desc)) desc = '';
+    const prev = have.get(sid);
+    (byType[t.key] = byType[t.key] || []).push({ id: prev ? prev.id : 'c'+sid, sid, name, description:desc,
+      status: normStatus(row[4]), created: prev ? (prev.created||Date.now()) : Date.now() });
+    count++;
+  });
+  specTypes().forEach(m => { data[m.key] = byType[m.key] || []; });
+  /* keep Item List entries linked: if an id vanished, re-link by the saved name */
+  const relink = (e, idF, nameF, kind) => {
+    if (!e[idF] || (data[kind]||[]).some(x => x.id === e[idF])) return;
+    const nm = String(e[nameF]||'').trim().toLowerCase();
+    const m = nm && (data[kind]||[]).find(x => x.name.trim().toLowerCase() === nm); if (m) e[idF] = m.id;
+  };
+  (data.itemlist||[]).forEach(e => { relink(e,'medbranchId','medbranchName','medbranch'); relink(e,'itemId','itemName','item'); relink(e,'specsId','specsName','specs'); });
+  return count;
+}
+async function refreshFromCache(manual){
+  if (CACHE.busy) return; CACHE.busy = true;
+  if (manual) setCacheInd('warn busy', 'Reading cache…');
+  try {
+    const hit = await readSpecsCache();
+    if (!hit){ setCacheInd('warn', 'Cache: no Specs data yet — showing local data'); if (manual) showToast('Cache has no Specs data yet','error'); return; }
+    CACHE.key = hit.key;
+    let lastSync = 0, pending = false;
+    try { lastSync = +localStorage.getItem(LASTSYNC_KEY) || 0; pending = localStorage.getItem(PENDING_KEY) === '1'; } catch(e){}
+    const when = hit.ts ? new Date(hit.ts).toLocaleString('en-GB') : '';
+    if (pending){                                                      // local edits not confirmed yet — never overwrite them
+      setCacheInd('warn', 'Local changes waiting to sync — cache not applied'); syncSpecsSheet();
+      if (manual) showToast('Local changes are still syncing','info'); return;
+    }
+    if (!manual && (hit.ts === CACHE.appliedTs || hit.ts <= lastSync)){ setCacheInd('ok', 'Cache loaded · ' + when); return; }
+    const n = applySpecsRows(hit.rows);
+    CACHE.appliedTs = hit.ts;
+    persist(); renderAll();
+    setCacheInd('ok', 'Cache loaded · ' + n + ' rows · ' + when);
+    if (manual) showToast('Loaded ' + n + ' rows from cache','success');
+  } catch(e){
+    console.warn('[cache] read failed', e.message); setCacheInd('err', 'Cache error: ' + e.message);
+    if (manual) showToast('Cache read failed','error');
+  } finally { CACHE.busy = false; }
+}
+function startCache(){
+  try { AP2CacheWatcher.init(); AP2CacheWatcher.subscribe(k => { if (!CACHE.key || k === CACHE.key) refreshFromCache(); }); } catch(e){}
+  const btn = document.getElementById('cache-ind'); if (btn) btn.addEventListener('click', () => refreshFromCache(true));
+  window.addEventListener('ap-cache-status', e => { if (e.detail && e.detail.healthy === false) setCacheInd('err', 'Cache unavailable: ' + (e.detail.lastError||'')); });
+  window.addEventListener('focus', () => refreshFromCache());
+  refreshFromCache();
+  CACHE.timer = setInterval(refreshFromCache, CACHE_POLL_MS);        // catches writes made by other modules
 }
 function seed(){ seedBase(); seedLists(); }
 function seedLists(){
@@ -1761,6 +1891,7 @@ async function init(){
   wireImport();
   renderAll();
   switchTab('itemlist');
+  startCache();
 }
 document.addEventListener('DOMContentLoaded', init);
 </script>
