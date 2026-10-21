@@ -8,10 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheWatcher.js?v=1"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/code.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cioView.js"></script>
-<script src="https://amorthopadics.github.io/SurgiStock/shared/auth.js"></script>
-<script src="https://amorthopadics.github.io/SurgiStock/shared/accessGuard.js"></script>
-<script src="https://amorthopadics.github.io/SurgiStock/shared/dataLayer.js"></script>
 
 <style>
 /* ═══ THEME — keep identical across every module ═══ */
@@ -723,34 +721,26 @@ const SPECS_SHEET = 'Specs Settings';
 const SPECS_SNAP_KEY = 'master_specs_snapshot_v1';   // last state known to be in the sheet: { sid: [ID,Specs,Item,Description,Status] }
 const specsLoadSnap = () => { try { return JSON.parse(localStorage.getItem(SPECS_SNAP_KEY) || 'null'); } catch(e){ return null; } };
 const specsSaveSnap = m => { try { localStorage.setItem(SPECS_SNAP_KEY, JSON.stringify(m)); } catch(e){} };
-/* session → { sessionId, token } for the backend.
-   The portal stores the session as one JSON object { sessionId, token, email, permissions, … } under a key this module
-   does not know, so find it by shape (and remember the key). Legacy keys are still honoured. */
-let _specsSessKey = null;
-function _specsReadSess(store, key){
-  try { const o = JSON.parse(store.getItem(key) || 'null');
-        if (o && typeof o === 'object' && o.sessionId && o.token) return { sessionId:String(o.sessionId), token:String(o.token) };
-  } catch(e){}
-  return null;
-}
+/* session → { sessionId, token } for the backend (adjust here if your portal stores them differently) */
+let AP2_SESSION = null;   // parent-frame handshake, same as accLog
+window.addEventListener('message', e => { if (e.data && e.data.type === 'ap-session-ready') AP2_SESSION = { sessionId:e.data.sessionId, token:e.data.token, email:e.data.email }; });
+try { window.parent.postMessage({ type:'ap-session-request' }, '*'); } catch(e){}
 function specsSession(){
-  const stores = []; try { stores.push(sessionStorage); } catch(e){} try { stores.push(localStorage); } catch(e){}
-  for (const st of stores){                                   // 1) remembered key
-    if (_specsSessKey){ const r = _specsReadSess(st, _specsSessKey); if (r) return r; }
-  }
-  for (const st of stores){                                   // 2) scan every key for a { sessionId, token } object
-    try { for (let i = 0; i < st.length; i++){ const k = st.key(i), r = _specsReadSess(st, k); if (r){ _specsSessKey = k; return r; } } } catch(e){}
-  }
-  let sid = '', tok = '';                                     // 3) legacy flat keys
+  let sid = '', tok = '';
   try {
-    sid = sessionStorage.getItem('ap_sessionId') || localStorage.getItem('ap_sessionId') || '';
-    tok = sessionStorage.getItem('ap_token')     || localStorage.getItem('ap_token')     || '';
+    const raw = sessionStorage.getItem('ap_session') || localStorage.getItem('ap_session') || '';
+    if (raw){ try { const o = JSON.parse(raw); sid = o.sessionId || o.id || ''; tok = o.token || ''; } catch(e){ sid = raw; } }
+    sid = sid || sessionStorage.getItem('ap_sessionId') || localStorage.getItem('ap_sessionId') || '';
+    tok = tok || sessionStorage.getItem('ap_token') || localStorage.getItem('ap_token') || '';
   } catch(e){}
+  if (!sid && !tok && AP2_SESSION){ sid = AP2_SESSION.sessionId || ''; tok = AP2_SESSION.token || ''; }
   return { sessionId:sid, token:tok };
 }
 async function specsPost(action, payload){
+  const sess = specsSession();
+  if (!sess.sessionId && !sess.token) throw new Error('Not logged in');   // blocked before sending, like accLog
   const res = await fetch(SPECS_API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify(Object.assign({ action }, specsSession(), payload)) });
+    body: JSON.stringify(Object.assign({ action }, sess, payload)) });
   const j = await res.json();
   if (!j || j.success === false) throw new Error((j && j.error) || (action + ' failed'));
   return j;
@@ -769,10 +759,14 @@ let _specsRun = null, _specsResync = false;
 /* sends only what changed since the last sync:  addSpecsSetting · updateSpecsSetting · deleteSpecsSetting */
 function specsErrText(m){
   m = String(m || '');
+  if (/not logged in/i.test(m))          return 'You must be logged in to save changes';
   if (/unauthori[sz]ed/i.test(m))        return 'Session expired — please log in again';
   if (/forbidden/i.test(m))              return 'You do not have permission for this action';
   if (/failed to fetch|network|load failed/i.test(m)) return 'Network error — check your connection';
   return m || 'Unknown error';
+}
+function requestSpecsRefresh(){
+  try { window.parent.postMessage({ type:'ap-cache-request', key:_AP2_CACHE_KEY, force:true }, '*'); } catch(e){}
 }
 function specsRunSync(){
   if (_specsRun){ _specsResync = true; return _specsRun; }
@@ -810,7 +804,11 @@ async function syncSpecsSheet(opts){
   if (!res.ok){
     try { localStorage.setItem(FAILED_KEY, '1'); } catch(e){}
     updateSyncInd(res.error);
-    if (res.fatal && !(opts && opts.silent)) showToast(res.error, 'error');
+    if (res.fatal && !(opts && opts.silent)){
+      showToast(res.error, 'error');
+      try { localStorage.removeItem(PENDING_KEY); localStorage.removeItem(FAILED_KEY); localStorage.removeItem(SIG_KEY); } catch(e){}
+      refreshFromCache();                      // drop the refused change, show what the sheet really has
+    }
   } else {
     updateSyncInd();
     let had = false; try { had = localStorage.getItem(FAILED_KEY) === '1'; if (had) localStorage.removeItem(FAILED_KEY); } catch(e){}
@@ -832,14 +830,14 @@ async function specsSyncOnce(){
   const next = Object.assign({}, snap);
   const adds = [], upds = [], dels = [];
   Object.keys(cur).forEach(id => { if (!snap[id]) adds.push(cur[id]); else if (JSON.stringify(snap[id]) !== JSON.stringify(cur[id])) upds.push(cur[id]); });
-  Object.keys(snap).forEach(id => { if (!cur[id]) dels.push(+id); });
+  Object.keys(snap).forEach(id => { if (!cur[id]) dels.push(sidVal(id)); });
   if (!adds.length && !upds.length && !dels.length){ try { localStorage.removeItem(PENDING_KEY); } catch(e){} return { ok:true }; }
   try { localStorage.setItem(PENDING_KEY, '1'); } catch(e){}               // local changes not yet confirmed in the sheet
   try {
     let rejected = 0;
     if (adds.length){
       const j = await specsPost('addSpecsSetting', { rows: adds.map(toRowObj) });
-      const rev = {}; Object.keys(j.idMap || {}).forEach(c => { rev[j.idMap[c]] = +c; });
+      const rev = {}; Object.keys(j.idMap || {}).forEach(c => { rev[j.idMap[c]] = sidVal(c); });
       (j.added || []).forEach(a => {                                       // server may have re-numbered an id → re-key local record
         const clientId = rev[a.id] || a.id;
         if (clientId !== a.id){
@@ -857,12 +855,13 @@ async function specsSyncOnce(){
     if (dels.length){ await specsPost('deleteSpecsSetting', { ids: dels }); dels.forEach(id => { delete next[id]; }); }
     specsSaveSnap(next);
     try { localStorage.removeItem(PENDING_KEY); } catch(e){}
+    requestSpecsRefresh();
     if (rejected){ try { localStorage.removeItem(SIG_KEY); } catch(e){} }  // next cache poll reloads the sheet and drops rejected rows
     return { ok:true };
   } catch(e){
     specsSaveSnap(next);
     console.warn('[specs] sheet sync failed', e.message);
-    return { ok:false, error:specsErrText(e.message), fatal:/unauthori[sz]ed|forbidden/i.test(String(e.message)) };   // fatal = the server refused (retrying won't help)
+    return { ok:false, error:specsErrText(e.message), fatal:/unauthori[sz]ed|forbidden|not logged in/i.test(String(e.message)) };   // fatal = the server refused (retrying won't help)
   }
 }
 
@@ -929,12 +928,12 @@ function setCacheInd(state, title){
 /* cache rows → per-type lists (ids kept when the sheet ID matches an existing record, so Item List links survive) */
 function applySpecsRows(rows){
   const have = new Map();
-  specTypes().forEach(m => (data[m.key]||[]).forEach(r => { if (r.sid) have.set(m.key+'|'+r.sid, r); }));
+  specTypes().forEach(m => (data[m.key]||[]).forEach(r => { if (r.sid) have.set(m.key+'|'+String(r.sid), r); }));
   const byType = {}, ilRows = []; let count = 0;
   rows.forEach(row => {
     if (!Array.isArray(row)) return;
     if (String(row[0]).trim().toLowerCase() === 'id') return;          // header row, if present
-    const sid = parseInt(row[0], 10), label = String(row[1] ?? '').trim(), name = String(row[2] ?? '').trim();
+    const sid = sidVal(row[0]), label = String(row[1] ?? '').trim(), name = String(row[2] ?? '').trim();
     if (!sid || !label || !name) return;
     if (/^item\s*lists?$/i.test(label)){                              // Item List row: ID | Item List | Medical Domain | label | Status
       ilRows.push({ sid, mb:name, label:String(row[3] ?? '').trim(), status:normStatus(row[4]) }); count++; return;
@@ -945,16 +944,16 @@ function applySpecsRows(rows){
       (data.spectypes = data.spectypes || []).push({ key, label }); data[key] = data[key] || []; t = typeOf(key);
     }
     let desc = String(row[3] ?? '').trim(); if (/^(none|null|n\/a|-|—)$/i.test(desc)) desc = '';
-    const prev = have.get(t.key+'|'+sid);
+    const prev = have.get(t.key+'|'+String(sid));
     (byType[t.key] = byType[t.key] || []).push({ id: (prev && !/^c\d+$/.test(prev.id)) ? prev.id : 'c'+t.key+'_'+sid, sid, name, description:desc,
       status: normStatus(row[4]), created: prev ? (prev.created||Date.now()) : Date.now() });
     count++;
   });
   specTypes().forEach(m => { data[m.key] = byType[m.key] || []; });
   /* Item List rows → Item Lists screen (an entry made in this portal is kept as-is while the sheet still shows the same text) */
-  const prevIL = new Map((data.itemlist||[]).filter(e => e.sid).map(e => [e.sid, e]));
+  const prevIL = new Map((data.itemlist||[]).filter(e => e.sid).map(e => [String(e.sid), e]));
   data.itemlist = ilRows.map(x => {
-    const prev = prevIL.get(x.sid), mbRec = (data.medbranch||[]).find(m => m.name.trim().toLowerCase() === x.mb.toLowerCase());
+    const prev = prevIL.get(String(x.sid)), mbRec = (data.medbranch||[]).find(m => m.name.trim().toLowerCase() === x.mb.toLowerCase());
     if (prev && !prev.rawLabel){ const v = entryView(prev); if (v.label === x.label && v.mb.toLowerCase() === x.mb.toLowerCase()){ prev.status = x.status; return prev; } }
     return { id:'il'+x.sid, sid:x.sid, medbranchId:mbRec ? mbRec.id : '', medbranchName:x.mb, rawLabel:x.label,
              status:x.status, created:(prev && prev.created) || Date.now(), updated:Date.now() };
@@ -1144,10 +1143,17 @@ function renderTable(k){
  *  Rows live in the per-type lists (Store, Medical Domain, …) so the
  *  Item List dropdowns keep working; this sheet is the single view/editor.
  * ═══════════════════════════════════════════════════════ */
+const _p = (n,l) => String(n).padStart(l||2,'0');
+const tsId = t => { const d = new Date(t); return '' + d.getFullYear() + _p(d.getMonth()+1) + _p(d.getDate()) + _p(d.getHours()) + _p(d.getMinutes()) + _p(d.getSeconds()) + _p(d.getMilliseconds(),3); };   // YYYYMMDDHHmmssSSS
+const sidVal = v => { const s = String(v).trim(); return /^\d{1,15}$/.test(s) ? parseInt(s,10) : s; };   // old short numeric IDs stay numbers, timestamp IDs stay text
 function assignSids(){
-  let max = 0; const pend = [];
-  specTypes().flatMap(m => data[m.key]||[]).concat(data.itemlist||[]).forEach(r => { if (r.sid) max = Math.max(max, r.sid); else pend.push(r); });
-  pend.sort((a,b) => (a.created||0)-(b.created||0)).forEach(r => { r.sid = ++max; });
+  const used = new Set(), pend = [];
+  specTypes().flatMap(m => data[m.key]||[]).concat(data.itemlist||[]).forEach(r => { if (r.sid) used.add(String(r.sid)); else pend.push(r); });
+  pend.sort((a,b) => (a.created||0)-(b.created||0)).forEach(r => {
+    let t = r.created || Date.now(), id = tsId(t);
+    while (used.has(id)) id = tsId(++t);          // same millisecond → next millisecond
+    used.add(id); r.sid = id;
+  });
 }
 function specTypeOf(label){
   const q = String(label||'').trim().toLowerCase();
@@ -1177,7 +1183,7 @@ function visibleSpecRows(){
   const D = s.dup ? dupSpecSet() : null;
   let rows = specRows().filter(x => (s.filter==='all' || x.r.status===s.filter) && (!s.type || x.t===s.type) && (!D || D.has(x.r.id)));
   if (q) rows = rows.filter(x => (x.r.sid+' '+x.tl+' '+x.r.name+' '+(x.r.description||'')+' '+x.r.status).toLowerCase().includes(q));
-  const val = x => s.sortKey==='sid' ? x.r.sid : s.sortKey==='name' ? x.r.name : s.sortKey==='description' ? (x.r.description||'') : x.r.status;
+  const val = x => s.sortKey==='sid' ? String(x.r.sid).padStart(17,'0') : s.sortKey==='name' ? x.r.name : s.sortKey==='description' ? (x.r.description||'') : x.r.status;
   const dir = s.sortAsc ? 1 : -1;
   return rows.sort((a,b) => { const p = val(a), c = val(b);
     return (typeof p==='number' && typeof c==='number') ? (p-c)*dir : String(p).localeCompare(String(c), undefined, {sensitivity:'base'})*dir; });
