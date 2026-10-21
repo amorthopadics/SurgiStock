@@ -427,7 +427,52 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 .hist-tip{font-size:10.5px;color:var(--text3);display:flex;align-items:center;gap:5px;}
 
 /* ═══ ITEM LIST builder ═══ */
-@media(max-width:700px){#btn-add-itemlist span{display:none;}#btn-add-itemlist{padding:8px 10px;}}
+@media(max-width:700px){#btn-add-itemlist span,#btn-add-specsetting span{display:none;}#btn-add-itemlist,#btn-add-specsetting{padding:8px 10px;}}
+.spec-chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;background:var(--accent-dim);color:var(--accent);border:1px solid rgba(88,166,255,.25);white-space:nowrap;}
+.sid{font-family:var(--mono);font-weight:700;color:var(--accent);}
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;}
+.chip:hover{border-color:var(--accent);color:var(--accent);}
+.chip.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);}
+.chip.dis{opacity:.4;cursor:not-allowed;}
+.chip.new{border-style:dashed;}
+.chips.bad{padding:6px;border:1px solid var(--red);border-radius:var(--radius-lg);box-shadow:0 0 0 3px var(--red-dim);}
+.chip-empty{font-size:11.5px;color:var(--text3);}
+.fgrp-lbl{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.modal-bd .field{margin-bottom:12px;}
+.specs-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start;}
+@media(max-width:1100px){.specs-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:700px){.specs-grid{grid-template-columns:1fr;}}
+.spec-row{display:grid;grid-template-columns:64px minmax(0,1fr) 28px;gap:8px;align-items:start;padding:0;border:0;background:none;}
+.spec-row .rno{font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;grid-column:auto;padding-top:8px;line-height:1.2;}
+.spec-row .date-input{margin-bottom:0;}
+.spec-row .rcol{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.spec-row .ib{width:28px;height:28px;margin-top:1px;}
+.ppb .form-stack{gap:8px;}
+.ppb .date-input{padding:6px 10px;font-size:12.5px;}
+.ppb .field.inl{display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px;align-items:start;margin-bottom:0;}
+.ppb .field.inl>.fgrp-lbl,.ppb .field.inl>label{margin:0;padding-top:8px;}
+.ppb .field .fgrp-lbl{margin-bottom:4px;}
+.ppb .field.inl .fgrp-lbl{margin-bottom:0;}
+.ppb .modal-bd .field,.ppb .field{margin-bottom:0;}
+.spec-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;min-width:0;}
+.spec-card .grp-hd{padding:8px 10px;border-bottom:1px solid var(--border);background:var(--bg3);}
+.spec-scroll{max-height:240px;min-height:96px;overflow:auto;}
+.spec-scroll .log-table{width:100%;min-width:300px;}
+.spec-scroll .log-table th,.spec-scroll .log-table td{padding:5px 8px;font-size:12px;}
+.spec-scroll .log-table th{position:sticky;top:0;z-index:1;background:var(--bg3);cursor:pointer;}
+.spec-scroll .cell-desc{max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.spec-scroll .ib.sm{width:22px;height:22px;font-size:12px;}
+.ppb .chips{margin-top:2px;}
+.cb{position:relative;}
+.cb-pop{display:none;position:absolute;left:0;right:0;top:100%;margin-top:3px;z-index:30;max-height:190px;overflow-y:auto;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);padding:4px;}
+.cb.open .cb-pop{display:block;}
+.cb-opt{padding:6px 10px;border-radius:var(--radius);font-size:12.5px;cursor:pointer;display:flex;align-items:center;gap:6px;color:var(--text);}
+.cb-opt.hl,.cb-opt:hover{background:var(--accent-dim);color:var(--accent);}
+.cb-opt.add{color:var(--teal);font-weight:600;}
+.cb-none{padding:6px 10px;font-size:12px;color:var(--text3);}
+.cb-hint{display:none;align-items:center;gap:4px;font-size:10.5px;color:var(--teal);margin-top:3px;}
+.cb-hint.show{display:flex;}
 .hist-title{font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;}
 .modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;display:none;align-items:center;justify-content:center;padding:16px;}
 .modal-ov.open{display:flex;}
@@ -474,8 +519,8 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 <div class="view-bar">
   <div class="vb-brand" title="Master Setup"><i class="ti ti-building-hospital"></i></div>
   <div class="tab-nav tabs-fixed four" id="tab-nav"></div>
-  <div class="sub-nav" id="sub-nav"></div>
   <button class="btn btn-primary btn-sm" id="btn-add-itemlist" type="button" data-act="add-list" title="Add Item List"><i class="ti ti-playlist-add"></i><span>Add Item List</span></button>
+  <button class="btn btn-primary btn-sm" id="btn-add-specsetting" type="button" data-act="add" data-k="specsetting" title="Add Specs Setting" style="display:none;"><i class="ti ti-plus"></i><span>Add Specs Setting</span></button>
 </div>
 
 <div class="portal-wrap" id="panels"></div>
@@ -540,36 +585,38 @@ const STATUS_FIELD = { key:'status', label:'Status', type:'status' };
 const MODULES = [
   { key:'itemlist', label:'Item Lists', plural:'Item Lists', icon:'ti-list-check', custom:true, group:'itemlist',
     hint:'Medical Domain-wise catalog: Item - Specs - Description' },
-  { key:'storebranch', label:'Store', plural:'Stores', icon:'ti-building-store', group:'settings',
+  { key:'specsetting', label:'Specs Settings', plural:'Specs Settings', icon:'ti-settings', custom:true, group:'settings',
+    hint:'One sheet for every kind of Specs: ID - Specs - Item - Description - Status' },
+  { key:'storebranch', label:'Store', plural:'Stores', icon:'ti-building-store', group:'spectype',
     hint:'Physical store / location',
     fields:[
       { key:'name',        label:'Store Name',  type:'text',     req:true, ph:'e.g. Main Store' },
       { key:'description', label:'Description', type:'textarea', ph:'Short description…' },
       STATUS_FIELD ] },
-  { key:'medbranch',   label:'Medical Domain', plural:'Medical Domains', icon:'ti-bone', group:'settings',
+  { key:'medbranch',   label:'Medical Domain', plural:'Medical Domains', icon:'ti-bone', group:'spectype',
     hint:'Medical field, e.g. Trauma, Orthoscopy, Orthoplasty',
     fields:[
       { key:'name',        label:'Medical Domain Name', type:'text',     req:true, ph:'e.g. Trauma' },
       { key:'description', label:'Description',         type:'textarea', ph:'Short description…' },
       STATUS_FIELD ] },
-  { key:'matsource',   label:'Material Source', plural:'Material Sources', icon:'ti-truck-delivery', group:'settings',
+  { key:'matsource',   label:'Material Source', plural:'Material Sources', icon:'ti-truck-delivery', group:'spectype',
     hint:'Where the material comes from, e.g. Imported, Local',
     fields:[
       { key:'name',        label:'Material Source Name', type:'text',     req:true, ph:'e.g. Imported' },
       { key:'description', label:'Description',          type:'textarea', ph:'Short description…' },
       STATUS_FIELD ] },
-  { key:'item',     label:'Item Name', plural:'Item Names', icon:'ti-package', group:'settings',
+  { key:'item',     label:'Item Name', plural:'Item Names', icon:'ti-package', group:'spectype',
     fields:[
       { key:'name',        label:'Item Name',   type:'text',     req:true, ph:'e.g. Surgical Gloves' },
       { key:'description', label:'Description', type:'textarea', ph:'Short description…' },
       STATUS_FIELD ] },
-  { key:'itemcat',  label:'Item Category', plural:'Item Categories', icon:'ti-category', group:'settings',
+  { key:'itemcat',  label:'Item Category', plural:'Item Categories', icon:'ti-category', group:'spectype',
     hint:'e.g. Consumables, Implants, Instruments',
     fields:[
       { key:'name',        label:'Item Category Name', type:'text',     req:true, ph:'e.g. Consumables' },
       { key:'description', label:'Description',        type:'textarea', ph:'Short description…' },
       STATUS_FIELD ] },
-  { key:'specs',    label:'Specs',    plural:'Specs',     icon:'ti-list-details', group:'settings',
+  { key:'specs',    label:'Specs',    plural:'Specs',     icon:'ti-list-details', group:'spectype',
     fields:[
       { key:'name',        label:'Specs Name',  type:'text',     req:true, ph:'e.g. Cardiology' },
       { key:'description', label:'Description', type:'textarea', ph:'Short description…' },
@@ -580,7 +627,11 @@ const TOP_TABS = [
   { key:'itemlist', label:'Item Lists',     icon:'ti-list-check' },
   { key:'settings', label:'Specs Settings', icon:'ti-settings'   }
 ];
-const SETTINGS_MODS = MODULES.filter(m => m.group==='settings');
+const BASE_TYPES = MODULES.filter(m => m.group==='spectype');
+/* built-in Specs + any Specs the user creates (data.spectypes) — every Specs gets its own table */
+function specTypes(){ return BASE_TYPES.concat((data.spectypes||[]).map(t => ({ key:t.key, label:t.label, plural:t.label, icon:'ti-list-details', custom:true }))); }
+function typeOf(key){ return specTypes().find(m => m.key===key); }
+const PANEL_MODS = MODULES.filter(m => m.group!=='spectype');     // modules that own a screen
 const MOD = Object.fromEntries(MODULES.map(m => [m.key, m]));
 
 /* ═══════════════════════════════════════════════════════
@@ -592,11 +643,12 @@ const CATALOG_KEY = 'item_list_catalog_v1';   // flat copy of Item List for othe
 const OLD_STORE_KEY = 'master_setup_v2';   // earlier version: its single "branch" list becomes Store Branch
 const SEED_SAMPLE_ROWS = true;   // set false to start with empty tables
 
-let data = { storebranch:[], medbranch:[], matsource:[], item:[], itemcat:[], hospital:[], doctor:[], specs:[], itemlist:[] };
+let data = { spectypes:[], storebranch:[], medbranch:[], matsource:[], item:[], itemcat:[], hospital:[], doctor:[], specs:[], itemlist:[] };
 const ui = {};   // per-tab UI state
 MODULES.forEach(m => ui[m.key] = { q:'', filter:'all', sortKey:'created', sortAsc:false, editId:null, mb:'' });
+ui.specsetting.sortKey = 'sid'; ui.specsetting.sortAsc = true; ui.specsetting.type = ''; ui.specsetting.editType = null;
 let activeTab = 'itemlist';
-let lastSettingsTab = 'storebranch';
+let lastSettingsTab = 'specsetting';
 let armedDelete = null;
 
 function load(){
@@ -615,6 +667,7 @@ function load(){
   if (SEED_SAMPLE_ROWS) seed();
 }
 function persist(){
+  assignSids();
   try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
   catch(e){ console.warn('[module] storage write failed', e.message); }
   publishCatalog();
@@ -685,11 +738,8 @@ function buildUI(){
   document.getElementById('tab-nav').innerHTML = TOP_TABS.map((t,i)=>
     `<button class="tab-btn${i===0?' active':''}" id="top-${t.key}-btn" title="${t.label}" onclick="switchTop('${t.key}')"><i class="ti ${t.icon}"></i><span>${t.label}</span></button>`
   ).join('');
-  document.getElementById('sub-nav').innerHTML = SETTINGS_MODS.map(m=>
-    `<button class="sub-btn" id="sub-${m.key}-btn" title="${esc(m.label)}" onclick="switchTab('${m.key}')"><i class="ti ${m.icon}"></i><span>${esc(m.label)}</span></button>`
-  ).join('');
 
-  document.getElementById('panels').innerHTML = MODULES.map((m,i)=> m.custom ? listPanel(m,i) : `
+  document.getElementById('panels').innerHTML = PANEL_MODS.map((m,i)=> m.key==='specsetting' ? specPanel(m,i) : m.custom ? listPanel(m,i) : `
     <div class="tab-panel" id="tab-${m.key}" style="display:${i?'none':'flex'};flex-direction:column;gap:10px;flex:1;min-height:0;">
       <div class="main-split">
         
@@ -720,10 +770,11 @@ function buildUI(){
 /* ═══════════════════════════════════════════════════════
  *  RENDER — sidebar filter tiles + datatable
  * ═══════════════════════════════════════════════════════ */
-function renderAll(){ MODULES.forEach(m => render(m.key)); }
+function renderAll(){ PANEL_MODS.forEach(m => render(m.key)); }
 function render(k){ renderSidebar(k); renderTable(k); }
 
 function renderSidebar(k){
+  if (k==='specsetting') return renderSpecSidebar();
   if (MOD[k].custom) return renderListSidebar(k);
   renderFilters(k, data[k]);
 }
@@ -749,6 +800,7 @@ function visibleRows(k){
 }
 
 function renderTable(k){
+  if (k==='specsetting') return renderSpecTable();
   if (MOD[k].custom) return renderListTable(k);
   const m = MOD[k], s = ui[k], rows = visibleRows(k);
   document.getElementById(k+'-count').textContent = rows.length + (rows.length!==data[k].length ? ' / '+data[k].length : '');
@@ -788,6 +840,188 @@ function renderTable(k){
     </tr></thead><tbody>${trs}</tbody></table>`;
 }
 
+
+/* ═══════════════════════════════════════════════════════
+ *  SPECS SETTINGS — ONE sheet for every kind of Specs
+ *  ID · Specs (selected) · Item · Description · Status (default Active)
+ *  Rows live in the per-type lists (Store, Medical Domain, …) so the
+ *  Item List dropdowns keep working; this sheet is the single view/editor.
+ * ═══════════════════════════════════════════════════════ */
+function assignSids(){
+  let max = 0; const pend = [];
+  specTypes().forEach(m => (data[m.key]||[]).forEach(r => { if (r.sid) max = Math.max(max, r.sid); else pend.push(r); }));
+  pend.sort((a,b) => (a.created||0)-(b.created||0)).forEach(r => { r.sid = ++max; });
+}
+function specTypeOf(label){
+  const q = String(label||'').trim().toLowerCase();
+  return specTypes().find(m => m.key===q || m.label.toLowerCase()===q || m.plural.toLowerCase()===q) || null;
+}
+function specRows(){ return specTypes().flatMap(m => (data[m.key]||[]).map(r => ({ r, t:m.key, tl:m.label, ti:m.icon }))); }
+function visibleSpecRows(){
+  const s = ui.specsetting, q = s.q.trim().toLowerCase();
+  let rows = specRows().filter(x => (s.filter==='all' || x.r.status===s.filter) && (!s.type || x.t===s.type));
+  if (q) rows = rows.filter(x => (x.r.sid+' '+x.tl+' '+x.r.name+' '+(x.r.description||'')+' '+x.r.status).toLowerCase().includes(q));
+  const val = x => s.sortKey==='sid' ? x.r.sid : s.sortKey==='name' ? x.r.name : s.sortKey==='description' ? (x.r.description||'') : x.r.status;
+  const dir = s.sortAsc ? 1 : -1;
+  return rows.sort((a,b) => { const p = val(a), c = val(b);
+    return (typeof p==='number' && typeof c==='number') ? (p-c)*dir : String(p).localeCompare(String(c), undefined, {sensitivity:'base'})*dir; });
+}
+function specPanel(m,i){
+  return `
+    <div class="tab-panel" id="tab-${m.key}" style="display:${i?'none':'flex'};flex-direction:column;gap:10px;flex:1;min-height:0;">
+      <div class="main-split">
+        <div class="doc-center" id="${m.key}-center">
+          <div class="doc-center-header">
+            <h3><i class="ti ${m.icon}"></i>${esc(m.label)} <span class="badge purple" id="${m.key}-count">0</span></h3>
+            <span class="hist-tip"><i class="ti ti-info-circle"></i>${esc(m.hint)}</span>
+            <div class="hdr-actions">
+              ${hdrTools(m.key)}
+              <button class="btn btn-primary btn-sm" data-act="add" data-k="${m.key}" title="Add Specs Setting"><i class="ti ti-plus"></i><span class="lbl">Add Specs Setting</span></button>
+            </div>
+          </div>
+          <div class="doc-center-body" id="${m.key}-body"></div>
+        </div>
+        <div class="doc-preview-panel" id="${m.key}-preview-panel"></div>
+      </div>
+    </div>`;
+}
+function renderSpecSidebar(){ renderFilters('specsetting', specRows().map(x => x.r)); }
+/* every Specs = one table, all shown together in one frame; a new Specs adds a new table */
+function renderSpecTable(){
+  const k = 'specsetting', s = ui[k], rows = visibleSpecRows(), total = specRows().length, types = specTypes();
+  const filtering = s.q.trim() || s.filter!=='all';
+  document.getElementById(k+'-count').textContent = types.length + ' Specs · ' + rows.length + (rows.length!==total ? ' / '+total : '') + ' items';
+  const body = document.getElementById(k+'-body');
+  const th = (key,label) => `<th data-act="sort" data-k="${k}" data-v="${key}">${label}${s.sortKey===key ? `<i class="ti ti-chevron-${s.sortAsc?'up':'down'} sort-i"></i>` : ''}</th>`;
+  const shown = types.filter(m => !s.type || m.key===s.type);
+  const cards = shown.map(m => {
+    const mine = rows.filter(x => x.t===m.key);
+    if (filtering && !mine.length) return '';
+    const trs = mine.map(x => {
+      const r = x.r, armed = armedDelete && armedDelete.k===k && armedDelete.id===r.id;
+      return `<tr>
+        <td class="num sid">${r.sid}</td>
+        <td><strong>${esc(r.name)}</strong></td>
+        ${r.description ? `<td class="cell-desc" title="${esc(r.description)}">${esc(r.description)}</td>` : `<td class="cell-muted">—</td>`}
+        <td><span class="st-badge ${r.status}">${r.status==='active'?'Active':'Inactive'}</span></td>
+        <td class="acts"><div class="act-btns">
+          <button class="ib sm" title="Edit" data-act="edit" data-k="${k}" data-t="${x.t}" data-id="${r.id}"><i class="ti ti-pencil"></i></button>
+          <button class="ib sm" title="Set ${r.status==='active'?'inactive':'active'}" data-act="ss-toggle" data-k="${k}" data-t="${x.t}" data-id="${r.id}"><i class="ti ti-${r.status==='active'?'toggle-right':'toggle-left'}"></i></button>
+          <button class="ib sm danger ${armed?'armed':''}" title="${armed?'Click again to confirm':'Delete'}" data-act="ss-del" data-k="${k}" data-t="${x.t}" data-id="${r.id}"><i class="ti ti-${armed?'check':'trash'}"></i></button>
+        </div></td></tr>`;
+    }).join('');
+    const empty = `<tr><td colspan="5" class="cell-muted" style="text-align:center;padding:14px;">No items yet in ${esc(m.label)}</td></tr>`;
+    const delT = m.custom && !(data[m.key]||[]).length
+      ? `<button class="ib sm danger" title="Remove this empty Specs" data-act="ss-deltype" data-k="${k}" data-t="${m.key}"><i class="ti ti-trash"></i></button>` : '';
+    return `<div class="spec-card">
+      <div class="grp-hd"><i class="ti ${m.icon}" style="color:var(--accent);font-size:16px;"></i><strong>${esc(m.label)}</strong><span class="cnt-chip">${(data[m.key]||[]).length}</span><span class="sp"></span>
+        <button class="ib sm" title="Add item to ${esc(m.label)}" data-act="add" data-k="${k}" data-t="${m.key}"><i class="ti ti-plus"></i></button>${delT}</div>
+      <div class="spec-scroll"><table class="log-table"><thead><tr>${th('sid','ID')}${th('name','Item')}${th('description','Description')}${th('status','Status')}<th style="cursor:default"></th></tr></thead>
+      <tbody>${trs || empty}</tbody></table></div></div>`;
+  }).join('');
+  const html = cards ? `<div class="specs-grid">${cards}</div>` : '';
+  body.innerHTML = html || `<div class="doc-center-placeholder"><i class="ti ti-search-off"></i><span>No records match your filter</span></div>`;
+}
+
+/* ── Add / Edit Specs Setting — foldable side window (multiple New Specs · multiple Items) ── */
+let sdraft = null;
+const specPanelEl = () => document.getElementById('specsetting-preview-panel');
+const blankSpecDraft = (t, status) => ({ id:null, t:t||'', isNew:false, newNames:[''], rows:[{ name:'', description:'' }], status:status||'active' });
+function openSpecForm(id, t){
+  const rec = id ? (data[t]||[]).find(r => r.id===id) : null;
+  sdraft = blankSpecDraft(t);
+  if (rec){ sdraft.id = rec.id; sdraft.rows = [{ name:rec.name, description:rec.description||'' }]; sdraft.status = rec.status; }
+  renderSpecModal();
+  specPanelEl().classList.add('open');
+  setTimeout(() => { const f = specPanelEl().querySelector(sdraft && sdraft.isNew ? '[data-sn]' : '[data-si]'); if (f && sdraft && (sdraft.t||sdraft.isNew)) f.focus(); }, 260);
+}
+function closeSpecModal(){ specPanelEl().classList.remove('open'); sdraft = null; }
+function renderSpecModal(){
+  const d = sdraft, edit = !!d.id, E = d.errs || {}, has = (k,i) => (E[k]||[]).includes(i);
+  const chip = m => `<button type="button" class="chip${d.t===m.key&&!d.isNew?' on':''}${edit&&d.t!==m.key?' dis':''}" data-act="sm-type" data-v="${m.key}"${edit?' disabled':''}><i class="ti ${m.icon}"></i>${esc(m.label)}</button>`;
+  const addBtn = (act, show) => show ? `<button class="btn btn-ghost btn-sm" type="button" data-act="${act}" style="margin-left:auto;"><i class="ti ti-plus"></i> Add row</button>` : '';
+  const names = d.isNew ? `<div class="field"><div class="fgrp-lbl"><i class="ti ti-list-details"></i>New Specs Name <span class="req">*</span>${addBtn('sm-addname', true)}</div>
+      <div class="form-stack" style="gap:8px;">${d.newNames.map((n,i) => `<div class="spec-row"><div class="rno">New Specs ${i+1}</div>
+        <input class="date-input${has('n',i)?' bad':''}" data-sn="${i}" type="text" placeholder="e.g. Brand, Size, Color…" value="${esc(n)}" autocomplete="off"/>
+        ${d.newNames.length>1 ? `<button class="ib sm danger" type="button" title="Remove row" data-act="sm-delname" data-i="${i}"><i class="ti ti-trash"></i></button>` : '<span></span>'}</div>`).join('')}</div></div>` : '';
+  const items = `<div class="field"><div class="fgrp-lbl"><i class="ti ti-package"></i>Item <span class="req">*</span>${addBtn('sm-addrow', !edit)}</div>
+      <div class="form-stack" style="gap:8px;">${d.rows.map((r,i) => `<div class="spec-row"><div class="rno">Item ${i+1}</div>
+        <div class="rcol"><input class="date-input${has('r',i)?' bad':''}" data-si="${i}" data-sk="name" type="text" placeholder="e.g. Trauma, Main Store, Imported…" value="${esc(r.name)}" autocomplete="off"/>
+          <input class="date-input" data-si="${i}" data-sk="description" type="text" placeholder="Description (optional)" value="${esc(r.description)}" autocomplete="off"/></div>
+        ${d.rows.length>1 && !edit ? `<button class="ib sm danger" type="button" title="Remove row" data-act="sm-delrow" data-i="${i}"><i class="ti ti-trash"></i></button>` : '<span></span>'}</div>`).join('')}</div></div>`;
+  specPanelEl().innerHTML = `
+    <div class="pph"><h3><i class="ti ti-forms"></i><span>${edit?'Edit Specs Setting':'Add Specs Setting'}</span></h3>
+      <button class="pph-close" data-act="sm-close" title="Close"><i class="ti ti-x"></i></button></div>
+    <div class="ppb"><div class="form-stack">
+      <div class="edit-banner ${edit?'show':''}"><i class="ti ti-pencil"></i> Editing existing record · ID ${edit?(((data[d.t]||[]).find(r=>r.id===d.id)||{}).sid||''):''}</div>
+      <div class="field"><div class="fgrp-lbl">Specs ${d.isNew?'':'<span class="req">*</span>'}</div>
+        <div class="chips${E.t?' bad':''}">${specTypes().map(chip).join('')}${edit?'':`<button type="button" class="chip new${d.isNew?' on':''}" data-act="sm-type" data-v="__new__"><i class="ti ti-plus"></i>New Specs</button>`}</div></div>
+      ${names}
+      ${items}
+      <div class="field inl"><label>Status</label>
+        <select class="date-input" data-sf="status"><option value="active"${d.status==='active'?' selected':''}>Active</option><option value="inactive"${d.status==='inactive'?' selected':''}>Inactive</option></select></div>
+    </div></div>
+    <div class="ppf form-actions">
+      <button class="btn btn-ghost" type="button" data-act="sm-close">Cancel</button>
+      ${edit ? '' : `<button class="btn btn-ghost" type="button" data-act="sm-save-new"><i class="ti ti-plus"></i> Save &amp; Add Another</button>`}
+      <button class="btn btn-primary" type="button" data-act="sm-save"><i class="ti ti-device-floppy"></i> ${edit?'Update':'Save'}</button>
+    </div>`;
+}
+function saveSpec(another){
+  const d = sdraft, E = { n:[], r:[] };
+  const names = d.newNames.map((n,i) => ({ i, v:n.trim() })).filter(x => x.v);
+  const rows  = d.rows.map((r,i) => ({ i, name:r.name.trim(), description:r.description.trim() })).filter(r => r.name || r.description);
+  if (!d.isNew && !d.t) E.t = 1;
+  if (d.isNew && !names.length) E.n.push(0);
+  if (!rows.length) E.r.push(0);
+  rows.forEach(r => { if (!r.name) E.r.push(r.i); });
+  const seenN = new Set(), taken = specTypes().map(m => m.label.toLowerCase());
+  let dupType = false;
+  names.forEach(x => { const k = x.v.toLowerCase(); if (seenN.has(k) || taken.includes(k)){ E.n.push(x.i); dupType = true; } seenN.add(k); });
+  const targets = d.isNew ? names.map(x => x.v) : [d.t];
+  const seenR = new Set(); let dupItem = false;
+  rows.forEach(r => { const k = r.name.toLowerCase(); if (!r.name) return;
+    const exists = !d.isNew && d.t && (data[d.t]||[]).some(x => x.id!==d.id && x.name.trim().toLowerCase()===k);
+    if (seenR.has(k) || exists){ E.r.push(r.i); dupItem = true; } seenR.add(k); });
+  if (E.t || E.n.length || E.r.length){
+    d.errs = E; renderSpecModal();
+    return showToast(dupType ? 'This Specs already exists — select it above' : dupItem ? 'Duplicate — this item already exists' : 'Please fill the required fields','error');
+  }
+  d.errs = null;
+  const now = Date.now(); let n = 0, added = 0, firstKey = d.t;
+  const keys = d.isNew ? targets.map((label,i) => { const key = 'sp'+now+i; (data.spectypes = data.spectypes||[]).push({ key, label }); data[key] = []; return key; }) : [d.t];
+  firstKey = keys[0];
+  if (d.id){
+    const r = rows[0]; Object.assign(data[d.t].find(x => x.id===d.id), { name:r.name, description:r.description, status:d.status });
+  } else {
+    keys.forEach(key => rows.slice().reverse().forEach(r => {
+      data[key].unshift({ id:'r'+now+(n++)+Math.floor(Math.random()*1000), name:r.name, description:r.description, status:d.status, created:now }); added++;
+    }));
+  }
+  const wasEdit = !!d.id, newCount = d.isNew ? keys.length : 0;
+  persist(); render('specsetting');
+  if (another && !wasEdit){
+    sdraft = blankSpecDraft(firstKey, d.status); renderSpecModal();
+    const f = specPanelEl().querySelector('[data-si]'); if (f) f.focus();
+    showToast('Saved — add the next one','success');
+  } else {
+    closeSpecModal();
+    showToast(wasEdit ? 'Specs setting updated' : (newCount ? newCount+' new Specs · ' : '') + added+' item'+(added>1?'s':'')+' added','success');
+  }
+}
+function wireSpecEvents(){
+  const sync = e => {
+    const el = e.target, ds = el.dataset; if (!sdraft || !ds) return;
+    if (ds.sn !== undefined){ sdraft.newNames[+ds.sn] = el.value; }
+    else if (ds.si !== undefined){ sdraft.rows[+ds.si][ds.sk] = el.value; }
+    else if (ds.sf){ sdraft[ds.sf] = el.value; }
+    else return;
+    if (el.classList.contains('bad') && el.value) el.classList.remove('bad');
+  };
+  document.addEventListener('input', sync); document.addEventListener('change', sync);
+  document.addEventListener('keydown', e => { if (sdraft && e.key==='Escape') closeSpecModal(); });
+}
+
 /* ═══════════════════════════════════════════════════════
  *  FORM (right-hand panel)
  * ═══════════════════════════════════════════════════════ */
@@ -818,6 +1052,8 @@ function openForm(k, id){
 }
 
 function saveForm(k){
+  if (k==='itemlist') return saveEntry(false);
+  if (k==='specsetting') return saveSpec();
   const m = MOD[k], s = ui[k];
   const vals = {}; let ok = true;
   m.fields.forEach(f=>{
@@ -847,7 +1083,11 @@ function saveForm(k){
   }
   persist(); closeForm(k); render(k);
 }
-function closeForm(k){ ui[k].editId = null; closePreview(k); }
+function closeForm(k){
+  if (k==='specsetting') return closeSpecModal();
+  if (k==='itemlist') return closeListModal();
+  ui[k].editId = null; closePreview(k);
+}
 
 /* ═══════════════════════════════════════════════════════
  *  GENERIC UI HELPERS (from structure)
@@ -872,7 +1112,8 @@ function entryView(r){
   const item = liveName('item', r.itemId, r.itemName);
   const specs = liveName('specs', r.specsId, r.specsName);
   const desc = (r.desc || '').trim();
-  return { mb, item, specs, desc, label:[item, specs, desc].filter(Boolean).join(LABEL_SEP) };
+  const extras = Object.keys(r.extras||{}).map(key => liveName(key, r.extras[key], '')).filter(Boolean);
+  return { mb, item, specs, extras, desc, label:[item, specs, ...extras, desc].filter(Boolean).join(LABEL_SEP) };
 }
 
 /* flat list for other modules */
@@ -915,6 +1156,7 @@ function listPanel(m,i){
           </div>
           <div class="doc-center-body" id="${m.key}-body"></div>
         </div>
+        <div class="doc-preview-panel" id="${m.key}-preview-panel"></div>
       </div>
     </div>`;
 }
@@ -956,30 +1198,21 @@ function renderListTable(k){
       ${empty ? `<button class="btn btn-primary btn-sm" data-act="add-list"><i class="ti ti-playlist-add"></i> Add Item List</button>` : ''}</div>`;
     return;
   }
-  const groups = new Map();
-  rows.forEach(x => { const key = x.r.medbranchId || '_'; if (!groups.has(key)) groups.set(key, { id:x.r.medbranchId, name:x.v.mb || 'No Medical Domain', rows:[] }); groups.get(key).rows.push(x); });
-  const ordered = [...groups.values()].sort((a,b) => a.name.localeCompare(b.name, undefined, {sensitivity:'base'}));
-
-  body.innerHTML = ordered.map(g => {
-    g.rows.sort((a,b) => a.v.label.localeCompare(b.v.label, undefined, {sensitivity:'base'}));
-    const trs = g.rows.map((x,i) => {
-      const r = x.r, v = x.v, armed = armedDelete && armedDelete.k===k && armedDelete.id===r.id;
-      return `<tr>
-        <td class="num">${i+1}</td>
-        <td class="merged" title="${esc(v.label)}"><strong>${esc(v.item)}</strong><span class="sep">${esc(LABEL_SEP.trim())}</span>${esc(v.specs)}${v.desc ? `<span class="sep">${esc(LABEL_SEP.trim())}</span><span class="d">${esc(v.desc)}</span>` : ''}</td>
-        <td><span class="st-badge ${r.status}">${r.status==='active'?'Active':'Inactive'}</span></td>
-        <td class="txn-mono">${fmtDate(r.created)}</td>
-        <td class="acts"><div class="act-btns">
-          <button class="ib sm" title="Edit" data-act="edit" data-k="${k}" data-id="${r.id}"><i class="ti ti-pencil"></i></button>
-          <button class="ib sm" title="Set ${r.status==='active'?'inactive':'active'}" data-act="toggle" data-k="${k}" data-id="${r.id}"><i class="ti ti-${r.status==='active'?'toggle-right':'toggle-left'}"></i></button>
-          <button class="ib sm danger ${armed?'armed':''}" title="${armed?'Click again to confirm':'Delete'}" data-act="del" data-k="${k}" data-id="${r.id}"><i class="ti ti-${armed?'check':'trash'}"></i></button>
-        </div></td></tr>`;
-    }).join('');
-    return `<div class="grp">
-      <div class="grp-hd"><i class="ti ti-bone"></i><strong>${esc(g.name)}</strong><span class="cnt-chip">${g.rows.length}</span><span class="sp"></span></div>
-      <table class="log-table"><thead><tr><th style="width:44px;">#</th><th>Item - Specs - Description</th><th>Status</th><th>Added</th><th></th></tr></thead><tbody>${trs}</tbody></table>
-    </div>`;
+  rows.sort((a,b) => a.v.mb.localeCompare(b.v.mb, undefined, {sensitivity:'base'}) || a.v.label.localeCompare(b.v.label, undefined, {sensitivity:'base'}));
+  const sep = `<span class="sep">${esc(LABEL_SEP.trim())}</span>`;
+  const trs = rows.map(x => {
+    const r = x.r, v = x.v, armed = armedDelete && armedDelete.k===k && armedDelete.id===r.id;
+    return `<tr>
+      <td><span class="spec-chip"><i class="ti ti-bone"></i>${esc(v.mb || '—')}</span></td>
+      <td class="merged" title="${esc(v.label)}"><strong>${esc(v.item)}</strong>${sep}${esc(v.specs)}${(v.extras||[]).map(e => sep+esc(e)).join('')}${v.desc ? sep+`<span class="d">${esc(v.desc)}</span>` : ''}</td>
+      <td><span class="st-badge ${r.status}">${r.status==='active'?'Active':'Inactive'}</span></td>
+      <td class="acts"><div class="act-btns">
+        <button class="ib sm" title="Edit" data-act="edit" data-k="${k}" data-id="${r.id}"><i class="ti ti-pencil"></i></button>
+        <button class="ib sm" title="Set ${r.status==='active'?'inactive':'active'}" data-act="toggle" data-k="${k}" data-id="${r.id}"><i class="ti ti-${r.status==='active'?'toggle-right':'toggle-left'}"></i></button>
+        <button class="ib sm danger ${armed?'armed':''}" title="${armed?'Click again to confirm':'Delete'}" data-act="del" data-k="${k}" data-id="${r.id}"><i class="ti ti-${armed?'check':'trash'}"></i></button>
+      </div></td></tr>`;
   }).join('');
+  body.innerHTML = `<table class="log-table"><thead><tr><th style="width:190px;">Medical Domain</th><th>Item - Specs - Description</th><th style="width:90px;">Status</th><th style="width:110px;"></th></tr></thead><tbody>${trs}</tbody></table>`;
 }
 
 function exportCsv(){
@@ -998,14 +1231,21 @@ function exportCsv(){
 /* ── add / edit modal ── */
 function openListModal(id, mbId){
   const rec = id ? data.itemlist.find(r => r.id===id) : null;
-  draft = rec ? Object.assign({}, rec)
-              : { id:null, medbranchId: mbId || ui.itemlist.mb || '', itemId:'', specsId:'', desc:'', status:'active' };
+  draft = rec ? Object.assign({}, rec) : { id:null, status:'active' };
+  const ex = (rec && rec.extras) || {};
+  const mbRef = rec ? rec.medbranchId : (mbId || ui.itemlist.mb || '');
+  draft.vals = {
+    medbranch: rec ? liveName('medbranch', rec.medbranchId, rec.medbranchName) : liveName('medbranch', mbRef, ''),
+    matsource: ex.matsource ? liveName('matsource', ex.matsource, '') : '',
+    item:      rec ? liveName('item', rec.itemId, rec.itemName) : '',
+    itemcat:   ex.itemcat ? liveName('itemcat', ex.itemcat, '') : ''
+  };
+  draft.rows = [{ specs: rec ? liveName('specs', rec.specsId, rec.specsName) : '', desc: rec ? (rec.desc||'') : '' }];
   lmErrs = new Set();
   renderListModal();
-  document.getElementById('list-modal').classList.add('open');
-  setTimeout(() => { const f = document.querySelector('#list-modal [data-f="' + (draft.medbranchId ? 'itemId' : 'medbranchId') + '"]'); if (f) f.focus(); }, 60);
+  document.getElementById('itemlist-preview-panel').classList.add('open');
 }
-function closeListModal(){ document.getElementById('list-modal').classList.remove('open'); draft = null; }
+function closeListModal(){ document.getElementById('itemlist-preview-panel').classList.remove('open'); draft = null; }
 
 function selHTML(kind, field, cur, ph, snap, bad){
   const opts = (data[kind]||[]).filter(o => o.status==='active' || o.id===cur);
@@ -1013,84 +1253,182 @@ function selHTML(kind, field, cur, ph, snap, bad){
   return `<select class="date-input${bad?' bad':''}" data-f="${field}"><option value="">${ph}</option>${gone}${
     opts.map(o => `<option value="${esc(o.id)}"${o.id===cur?' selected':''}>${esc(o.name)}${o.status==='inactive'?' (inactive)':''}</option>`).join('')}</select>`;
 }
-function draftLabel(){
-  const d = draft;
-  return [liveName('item',d.itemId,d.itemName), liveName('specs',d.specsId,d.specsName), (d.desc||'').trim()].filter(Boolean).join(LABEL_SEP);
+function draftLabels(){
+  const v = draft.vals || {}, t = x => (x||'').trim();
+  return (draft.rows||[]).filter(r => t(r.specs))
+    .map(r => [t(v.item), t(r.specs), t(v.matsource), t(v.itemcat), t(r.desc)].filter(Boolean).join(LABEL_SEP));
 }
 function updateDraftPreview(){
   const el = document.getElementById('lm-preview'); if (!el) return;
-  const t = draftLabel();
-  el.innerHTML = t ? `<i class="ti ti-arrows-join-2"></i> ${esc(t)}` : '<i class="ti ti-arrows-join-2"></i> Item - Specs - Description will appear here';
-  el.classList.toggle('empty', !t);
+  const t = draftLabels();
+  el.innerHTML = t.length ? t.map(x => `<div><i class="ti ti-arrows-join-2"></i> ${esc(x)}</div>`).join('') : '<i class="ti ti-arrows-join-2"></i> Item - Specs - Description will appear here';
+  el.classList.toggle('empty', !t.length);
+}
+
+function chipsHTML(kind, field, cur, snap, bad, toggleOk){
+  const opts = (data[kind]||[]).filter(o => o.status==='active' || o.id===cur);
+  if (!opts.length) return `<span class="chip-empty">No items yet — add them under Specs Settings</span>`;
+  return `<div class="chips${bad?' bad':''}">${opts.map(o => `<button type="button" class="chip${o.id===cur?' on':''}" data-act="chip" data-f="${field}" data-v="${esc(o.id)}">${esc(o.name)}${o.status==='inactive'?' (inactive)':''}</button>`).join('')}</div>`;
+}
+/* searchable drop-down: pick an existing record or type a new one (a new one is saved to Specs Settings on save) */
+function cbHTML(id, kind, val, ph, bad){
+  const v = (val||'').trim(), isNew = v && !(data[kind]||[]).some(o => o.name.trim().toLowerCase()===v.toLowerCase());
+  return `<div class="cb"><input class="date-input${bad?' bad':''}" data-cbi="${id}" data-cbk="${kind}" type="text" placeholder="${esc(ph)}" value="${esc(val||'')}" autocomplete="off" role="combobox" aria-autocomplete="list"/>
+    <div class="cb-pop"></div>
+    <div class="cb-hint${isNew?' show':''}"><i class="ti ti-circle-plus"></i> New — will be saved to Specs Settings</div></div>`;
+}
+function specRowsHTML(d){
+  const many = d.rows.length > 1;
+  return d.rows.map((r,i) => `
+    <div class="spec-row">
+      <div class="rno">Specs ${i+1}</div>
+      ${cbHTML('r:'+i, 'specs', r.specs, 'Search or type specs…', lmErrs.has('r'+i))}
+      ${many && !d.id ? `<button class="ib sm danger" type="button" title="Remove row" data-act="row-del" data-i="${i}"><i class="ti ti-trash"></i></button>` : '<span></span>'}
+    </div>`).join('');
+}
+function chipGroups(d, bad){
+  const g = (label, req, inner, icon) => `<div class="field inl"><div class="fgrp-lbl"><i class="ti ${icon}"></i>${esc(label)}${req?' <span class="req">*</span>':''}</div>${inner}</div>`;
+  const v = d.vals;
+  return g('Medical Domain', true,  cbHTML('v:medbranch','medbranch',v.medbranch,'Search or type medical domain…',bad('medbranch')), 'ti-bone')
+    + g('Material Source', false, cbHTML('v:matsource','matsource',v.matsource,'Search or type material source…',false), 'ti-truck-delivery')
+    + g('Item', true,             cbHTML('v:item','item',v.item,'Search or type item…',bad('item')), 'ti-package')
+    + g('Category', false,        cbHTML('v:itemcat','itemcat',v.itemcat,'Search or type category…',false), 'ti-category')
+    + `<div class="field"><div class="fgrp-lbl"><i class="ti ti-list-details"></i>Specs <span class="req">*</span>
+        ${d.id ? '' : '<button class="btn btn-ghost btn-sm" type="button" data-act="row-add" style="margin-left:auto;"><i class="ti ti-plus"></i> Add row</button>'}</div>
+        <div class="form-stack" style="gap:8px;">${specRowsHTML(d)}</div></div>`;
+}
+
+/* combo behaviour */
+function cbSet(inp, val){
+  const [kind, key] = inp.dataset.cbi.split(':');
+  if (kind==='v') draft.vals[key] = val; else draft.rows[+key].specs = val;
+  inp.classList.remove('bad');
+  const v = val.trim(), hint = inp.parentElement.querySelector('.cb-hint');
+  hint.classList.toggle('show', !!v && !(data[inp.dataset.cbk]||[]).some(o => o.name.trim().toLowerCase()===v.toLowerCase()));
+  updateDraftPreview();
+}
+function cbClose(){ document.querySelectorAll('.cb.open').forEach(c => c.classList.remove('open')); }
+function cbOpen(inp){
+  cbClose();
+  const box = inp.parentElement, pop = box.querySelector('.cb-pop'), q = inp.value.trim(), ql = q.toLowerCase(), all = data[inp.dataset.cbk]||[];
+  const list = all.filter(o => o.status==='active' && (!ql || o.name.toLowerCase().includes(ql)));
+  const canAdd = q && !all.some(o => o.name.trim().toLowerCase()===ql);
+  pop.innerHTML = list.map(o => `<div class="cb-opt" data-v="${esc(o.name)}">${esc(o.name)}</div>`).join('')
+    + (canAdd ? `<div class="cb-opt add" data-v="${esc(q)}"><i class="ti ti-plus"></i>Add “${esc(q)}”</div>` : '')
+    + (!list.length && !canAdd ? '<div class="cb-none">Nothing yet — type to add</div>' : '');
+  box.classList.add('open');
+}
+function wireCombo(){
+  document.addEventListener('focusin', e => { if (draft && e.target.dataset && e.target.dataset.cbi) cbOpen(e.target); });
+  document.addEventListener('input',   e => { if (draft && e.target.dataset && e.target.dataset.cbi){ cbSet(e.target, e.target.value); cbOpen(e.target); } });
+  document.addEventListener('mousedown', e => {
+    const opt = e.target.closest && e.target.closest('.cb-opt');
+    if (opt){
+      e.preventDefault();
+      const inp = opt.closest('.cb').querySelector('input'); inp.value = opt.dataset.v; cbSet(inp, opt.dataset.v); cbClose(); return;
+    }
+    if (!(e.target.closest && e.target.closest('.cb'))) cbClose();
+  });
+  document.addEventListener('keydown', e => {
+    const inp = e.target; if (!draft || !inp.dataset || !inp.dataset.cbi) return;
+    const box = inp.parentElement, opts = [...box.querySelectorAll('.cb-opt')], cur = opts.findIndex(o => o.classList.contains('hl'));
+    const hl = i => { opts.forEach(o => o.classList.remove('hl')); if (opts[i]){ opts[i].classList.add('hl'); opts[i].scrollIntoView && opts[i].scrollIntoView({block:'nearest'}); } };
+    if (e.key==='ArrowDown'){ e.preventDefault(); if (!box.classList.contains('open')) cbOpen(inp); else hl(Math.min(opts.length-1, cur+1)); }
+    else if (e.key==='ArrowUp'){ e.preventDefault(); hl(Math.max(0, cur-1)); }
+    else if (e.key==='Enter'){
+      e.preventDefault(); e.stopPropagation();
+      if (cur>=0){ inp.value = opts[cur].dataset.v; cbSet(inp, inp.value); }
+      cbClose();
+    }
+    else if (e.key==='Escape' && box.classList.contains('open')){ e.stopPropagation(); cbClose(); }
+  }, true);
 }
 
 function renderListModal(){
   const d = draft, bad = k => lmErrs.has(k);
-  document.getElementById('list-modal').innerHTML = `
-    <div class="modal" role="dialog" aria-modal="true" style="max-width:520px;">
-      <div class="modal-hd"><h3><i class="ti ti-playlist-add"></i>${d.id?'Edit Item List Entry':'Add Item List'}</h3>
-        <button class="pph-close" style="margin-left:auto;" data-act="modal-close" title="Close"><i class="ti ti-x"></i></button></div>
-      <div class="modal-bd">
-        <div class="field"><label>Medical Domain <span class="req">*</span></label>
-          ${selHTML('medbranch','medbranchId',d.medbranchId,'Select medical domain…',d.medbranchName,bad('medbranchId'))}</div>
-        <div class="field"><label>Item Name <span class="req">*</span></label>
-          ${selHTML('item','itemId',d.itemId,'Select item…',d.itemName,bad('itemId'))}</div>
-        <div class="field"><label>Specs <span class="req">*</span></label>
-          ${selHTML('specs','specsId',d.specsId,'Select specs…',d.specsName,bad('specsId'))}</div>
-        <div class="field"><label>Description <span style="text-transform:none;letter-spacing:0;font-weight:500;">(optional)</span></label>
-          <textarea class="date-input" style="min-height:64px;" data-f="desc" placeholder="Size, brand, pack, remarks…">${esc(d.desc||'')}</textarea></div>
-        <div class="field"><label>Status</label>
-          <select class="date-input" data-f="status"><option value="active"${d.status==='active'?' selected':''}>Active</option><option value="inactive"${d.status==='inactive'?' selected':''}>Inactive</option></select></div>
-        <div class="merge-preview" id="lm-preview"></div>
-      </div>
-      <div class="modal-ft">
-        <span class="sp"></span>
-        <button class="btn btn-ghost" type="button" data-act="modal-close">Cancel</button>
-        ${d.id ? '' : `<button class="btn btn-ghost" type="button" data-act="modal-save-new"><i class="ti ti-plus"></i> Save &amp; Add Another</button>`}
-        <button class="btn btn-primary" type="button" data-act="modal-save"><i class="ti ti-device-floppy"></i> ${d.id?'Update':'Save'}</button>
-      </div>
+  document.getElementById('itemlist-preview-panel').innerHTML = `
+    <div class="pph"><h3><i class="ti ti-playlist-add"></i><span>${d.id?'Edit Item List Entry':'Add Item List'}</span></h3>
+      <button class="pph-close" data-act="modal-close" title="Close"><i class="ti ti-x"></i></button></div>
+    <div class="ppb"><div class="form-stack">
+      ${chipGroups(d, bad)}
+      <div class="field inl"><label>Status</label>
+        <select class="date-input" data-f="status"><option value="active"${d.status==='active'?' selected':''}>Active</option><option value="inactive"${d.status==='inactive'?' selected':''}>Inactive</option></select></div>
+      <div class="merge-preview" id="lm-preview"></div>
+    </div></div>
+    <div class="ppf form-actions">
+      <button class="btn btn-ghost" type="button" data-act="modal-close">Cancel</button>
+      ${d.id ? '' : `<button class="btn btn-ghost" type="button" data-act="modal-save-new"><i class="ti ti-plus"></i> Save &amp; Add Another</button>`}
+      <button class="btn btn-primary" type="button" data-act="modal-save"><i class="ti ti-device-floppy"></i> ${d.id?'Update':'Save'}</button>
     </div>`;
   updateDraftPreview();
 }
 
 function saveEntry(another){
   const d = draft; lmErrs = new Set();
-  ['medbranchId','itemId','specsId'].forEach(k => { if (!d[k]) lmErrs.add(k); });
-  if (lmErrs.size){ renderListModal(); return showToast('Please fill the highlighted fields','error'); }
+  const v = {}; ['medbranch','matsource','item','itemcat'].forEach(k => v[k] = (d.vals[k]||'').trim());
+  if (!v.medbranch) lmErrs.add('medbranch');
+  if (!v.item) lmErrs.add('item');
+  const rows = d.rows.map((r,i) => ({ i, specs:(r.specs||'').trim(), desc:(r.desc||'').trim() })).filter(r => r.specs);
+  if (!rows.length) lmErrs.add('r0');
+  const find = (kind, name) => name ? (data[kind]||[]).find(x => x.name.trim().toLowerCase()===name.toLowerCase()) : null;
+  const seen = new Set();
+  rows.forEach(r => {
+    let dup = seen.has(r.specs.toLowerCase()); seen.add(r.specs.toLowerCase());
+    if (!dup){
+      const mb = find('medbranch',v.medbranch), it = find('item',v.item), sp = find('specs',r.specs), ms = find('matsource',v.matsource), ic = find('itemcat',v.itemcat);
+      if (mb && it && sp && (!v.matsource || ms) && (!v.itemcat || ic))
+        dup = data.itemlist.some(e => e.id!==d.id && e.medbranchId===mb.id && e.itemId===it.id && e.specsId===sp.id
+          && ((e.extras||{}).matsource||'')===(ms?ms.id:'') && ((e.extras||{}).itemcat||'')===(ic?ic.id:'')
+          && (e.desc||'').trim().toLowerCase()===r.desc.toLowerCase());
+    }
+    if (dup) lmErrs.add('r'+r.i);
+  });
+  if (lmErrs.size){ renderListModal(); return showToast(lmErrs.has('medbranch')||lmErrs.has('item') ? 'Please fill the highlighted fields' : 'Check the highlighted Specs rows (required or already exists)','error'); }
 
-  const desc = (d.desc||'').trim().toLowerCase();
-  if (data.itemlist.some(r => r.id!==d.id && r.medbranchId===d.medbranchId && r.itemId===d.itemId && r.specsId===d.specsId && (r.desc||'').trim().toLowerCase()===desc)){
-    lmErrs.add('itemId'); lmErrs.add('specsId'); renderListModal();
-    return showToast('This entry already exists for this Medical Domain','error');
-  }
-  const now = Date.now();
-  const rec = {
-    id: d.id || 'e'+now+Math.floor(Math.random()*1000),
-    medbranchId:d.medbranchId, medbranchName:liveName('medbranch',d.medbranchId,d.medbranchName),
-    itemId:d.itemId, itemName:liveName('item',d.itemId,d.itemName),
-    specsId:d.specsId, specsName:liveName('specs',d.specsId,d.specsName),
-    desc:(d.desc||'').trim(), status:d.status, created:d.created || now, updated:now
+  const now = Date.now(); let n = 0, created = 0;
+  const ensure = (kind, name) => {              // missing → saved to Specs Settings (no description) and used right away
+    if (!name) return null;
+    let rec = find(kind, name);
+    if (!rec){ rec = { id:'r'+now+(n++)+kind, name, description:'', status:'active', created:now }; data[kind].unshift(rec); created++; }
+    return rec;
   };
-  const idx = data.itemlist.findIndex(r => r.id===rec.id);
-  if (idx >= 0) data.itemlist[idx] = rec; else data.itemlist.unshift(rec);
+  const mb = ensure('medbranch',v.medbranch), it = ensure('item',v.item), ms = ensure('matsource',v.matsource), ic = ensure('itemcat',v.itemcat);
+  const extras = {}; if (ms) extras.matsource = ms.id; if (ic) extras.itemcat = ic.id;
+  const wasEdit = !!d.id; let last = null;
+  rows.forEach(r => {
+    const sp = ensure('specs', r.specs);
+    const rec = {
+      id: d.id || 'e'+now+(n++)+Math.floor(Math.random()*1000),
+      medbranchId:mb.id, medbranchName:mb.name, itemId:it.id, itemName:it.name, specsId:sp.id, specsName:sp.name,
+      extras:Object.assign({}, extras), desc:r.desc, status:d.status, created:d.created || now, updated:now
+    };
+    const idx = data.itemlist.findIndex(x => x.id===rec.id);
+    if (idx >= 0) data.itemlist[idx] = rec; else data.itemlist.unshift(rec);
+    last = rec;
+  });
   persist();
-  switchTab('itemlist'); render('itemlist');
+  switchTab('itemlist'); render('itemlist'); render('specsetting');
+  const note = created ? ` · ${created} new added to Specs Settings` : '';
 
-  if (another && idx < 0){
-    draft = { id:null, medbranchId:rec.medbranchId, medbranchName:rec.medbranchName, itemId:'', specsId:'', desc:'', status:d.status };
+  if (another && !wasEdit){
+    draft = { id:null, status:d.status, vals:{ medbranch:mb.name, matsource:'', item:'', itemcat:'' }, rows:[{specs:'',desc:''}] };
     lmErrs = new Set(); renderListModal();
-    const f = document.querySelector('#list-modal [data-f="itemId"]'); if (f) f.focus();
-    showToast('Saved — add the next one','success');
+    showToast('Saved — add the next one'+note,'success');
   } else {
     closeListModal();
-    showToast(idx>=0 ? 'Entry updated' : 'Entry saved','success');
+    showToast((wasEdit ? 'Entry updated' : rows.length+(rows.length>1?' entries':' entry')+' saved')+note,'success');
   }
 }
 
 function wireListEvents(){
-  document.body.insertAdjacentHTML('beforeend','<div class="modal-ov" id="list-modal"></div>');
   const sync = e => {
-    const el = e.target, f = el.dataset && el.dataset.f;
+    const el = e.target;
+    if (draft && el.dataset && el.dataset.r !== undefined){
+      draft.rows[+el.dataset.r][el.dataset.rf] = el.value;
+      if (el.classList.contains('bad') && el.value) el.classList.remove('bad');
+      return updateDraftPreview();
+    }
+    const f = el.dataset && el.dataset.f;
     if (!draft || !f) return;
     draft[f] = el.value;
     if (f==='medbranchId') draft.medbranchName = liveName('medbranch', el.value, '');
@@ -1145,7 +1483,8 @@ function downloadCsv(name, rows){
 }
 function downloadTemplate(k){
   const m = MOD[k];
-  if (m.custom) downloadCsv('item_list_template.csv', [['Medical Domain','Item Name','Specs','Description','Status'], ['Trauma','Surgical Gloves','Box of 100','Latex-free','active']]);
+  if (k==='specsetting') downloadCsv('specs_setting_template.csv', [['Specs','Item','Description','Status'], ['Medical Domain','Trauma','Fracture and injury care','active']]);
+  else if (m.custom) downloadCsv('item_list_template.csv', [['Medical Domain','Item Name','Specs','Description','Status'], ['Trauma','Surgical Gloves','Box of 100','Latex-free','active']]);
   else downloadCsv(k+'_template.csv', [[m.fields[0].label,'Description','Status'], [m.fields[0].ph.replace(/^e\.g\.\s*/,''),'Short description','active']]);
   showToast('Template downloaded','success');
 }
@@ -1177,7 +1516,15 @@ function findOrCreate(kind, name, t, n){
 function importRows(k, rows){
   const head = rows[0].map(h => String(h).trim().toLowerCase()), body = rows.slice(1), t = Date.now();
   let added = 0, skipped = 0, n = 0;
-  if (MOD[k].custom){
+  if (k==='specsetting'){
+    const ci = { sp:colIdx(head,/spec|type/,0), it:colIdx(head,/item|name/,1), de:colIdx(head,/desc/,2), st:colIdx(head,/status/,3) };
+    body.forEach(r => {
+      const t0 = Date.now(), t = specTypeOf((r[ci.sp]||'').trim()), name = (r[ci.it]||'').trim();
+      if (!t || !name || data[t.key].some(x => x.name.trim().toLowerCase()===name.toLowerCase())){ skipped++; return; }
+      data[t.key].unshift({ id:'r'+t0+(n++)+t.key, name, description:(r[ci.de]||'').trim(), status:normStatus(r[ci.st]), created:Date.now() });
+      added++;
+    });
+  } else if (MOD[k].custom){
     const ci = { mb:colIdx(head,/domain|branch/,0), it:colIdx(head,/item/,1), sp:colIdx(head,/spec/,2), de:colIdx(head,/desc/,3), st:colIdx(head,/status/,4) };
     body.forEach(r => {
       const mbN = (r[ci.mb]||'').trim(), itN = (r[ci.it]||'').trim(), spN = (r[ci.sp]||'').trim();
@@ -1214,21 +1561,19 @@ function wireImport(){
   });
 }
 
-function switchTop(top){ switchTab(top==='itemlist' ? 'itemlist' : lastSettingsTab); }
+function switchTop(top){ switchTab(top==='itemlist' ? 'itemlist' : 'specsetting'); }
 function switchTab(tab){
   const m = MOD[tab]; if (!m) return;
   closeSearch(null);
   const top = m.group==='settings' ? 'settings' : 'itemlist';
   document.querySelectorAll('.tab-panel').forEach(p=>p.style.display='none');
   document.querySelectorAll('#tab-nav .tab-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('#sub-nav .sub-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+tab).style.display='flex';
   document.getElementById('top-'+top+'-btn').classList.add('active');
-  document.getElementById('sub-nav').style.display = top==='settings' ? 'flex' : 'none';
-  const sb = document.getElementById('sub-'+tab+'-btn');
-  if (sb){ sb.classList.add('active'); if (sb.scrollIntoView) sb.scrollIntoView({block:'nearest',inline:'nearest'}); }
   const add = document.getElementById('btn-add-itemlist');
   if (add) add.style.display = top==='itemlist' ? '' : 'none';
+  const addS = document.getElementById('btn-add-specsetting');
+  if (addS) addS.style.display = top==='settings' ? '' : 'none';
   if (top==='settings') lastSettingsTab = tab;
   activeTab=tab;
 }
@@ -1268,11 +1613,71 @@ function wireDelegation(){
     const { act, k, id, v } = el.dataset;
     const s = ui[k];
 
-    if (act!=='del' && armedDelete){ const a=armedDelete; armedDelete=null; renderTable(a.k); }
+    if (act!=='del' && act!=='ss-del' && armedDelete){ const a=armedDelete; armedDelete=null; renderTable(a.k); }
 
     switch(act){
-      case 'add':    k==='itemlist' ? openListModal() : openForm(k); break;
-      case 'edit':   k==='itemlist' ? openListModal(id) : openForm(k, id); break;
+      case 'add':    k==='specsetting' ? openSpecForm() : k==='itemlist' ? openListModal() : openForm(k); break;
+      case 'edit':   k==='specsetting' ? openSpecForm(id, el.dataset.t) : k==='itemlist' ? openListModal(id) : openForm(k, id); break;
+      case 'sm-close':    closeSpecModal(); break;
+      case 'sm-save':     saveSpec(false); break;
+      case 'sm-save-new': saveSpec(true); break;
+      case 'sm-type': {
+        if (!sdraft || sdraft.id) break;
+        if (v==='__new__'){ sdraft.isNew = !sdraft.isNew; if (sdraft.isNew) sdraft.t = ''; }
+        else { sdraft.isNew = false; sdraft.t = v; }
+        sdraft.errs = null;
+        renderSpecModal();
+        const f = specPanelEl().querySelector(sdraft.isNew ? '[data-sn]' : '[data-si]'); if (f) f.focus();
+        break;
+      }
+      case 'sm-addname': if (sdraft){ sdraft.newNames.push(''); renderSpecModal(); const a = specPanelEl().querySelectorAll('[data-sn]'); a[a.length-1].focus(); } break;
+      case 'sm-delname': if (sdraft && sdraft.newNames.length>1){ sdraft.newNames.splice(+el.dataset.i,1); sdraft.errs = null; renderSpecModal(); } break;
+      case 'sm-addrow':  if (sdraft){ sdraft.rows.push({ name:'', description:'' }); renderSpecModal(); const a = specPanelEl().querySelectorAll('[data-si][data-sk="name"]'); a[a.length-1].focus(); } break;
+      case 'sm-delrow':  if (sdraft && sdraft.rows.length>1){ sdraft.rows.splice(+el.dataset.i,1); sdraft.errs = null; renderSpecModal(); } break;
+      case 'ss-deltype': {
+        const t = el.dataset.t;
+        if ((data[t]||[]).length) break;
+        data.spectypes = (data.spectypes||[]).filter(x => x.key!==t); delete data[t];
+        persist(); render(k); showToast('Specs removed','success'); break;
+      }
+      case 'row-add': {
+        if (!draft) break;
+        draft.rows.push({ specs:'', desc:'' }); renderListModal();
+        const ins = document.querySelectorAll('#itemlist-preview-panel [data-rf="specs"]'); const last = ins[ins.length-1];
+        if (last){ last.focus(); if (last.scrollIntoView) last.scrollIntoView({block:'nearest'}); }
+        break;
+      }
+      case 'row-del': {
+        if (!draft || draft.rows.length<2) break;
+        draft.rows.splice(+el.dataset.i,1); lmErrs = new Set(); renderListModal(); break;
+      }
+      case 'chip': {
+        if (!draft) break;
+        const f = el.dataset.f;
+        if (f.startsWith('x:')){ const key = f.slice(2); draft.extras = draft.extras || {}; if (draft.extras[key]===v) delete draft.extras[key]; else draft.extras[key] = v; }
+        else { draft[f] = v; if (f==='medbranchId') draft.medbranchName = liveName('medbranch',v,''); if (f==='itemId') draft.itemName = liveName('item',v,''); if (f==='specsId') draft.specsName = liveName('specs',v,''); lmErrs.delete(f); }
+        renderListModal(); break;
+      }
+      case 'ss-type':   s.type = (s.type===v ? '' : v); render(k); break;
+      case 'ss-toggle': {
+        const r = (data[el.dataset.t]||[]).find(x=>x.id===id); if(!r) break;
+        r.status = r.status==='active' ? 'inactive' : 'active';
+        persist(); render(k); showToast('Specs setting set to '+r.status,'success'); break;
+      }
+      case 'ss-del': {
+        const t = el.dataset.t;
+        if (armedDelete && armedDelete.k==='specsetting' && armedDelete.id===id){
+          armedDelete=null;
+          data[t] = data[t].filter(x=>x.id!==id);
+          if (s.editId===id) closeForm(k);
+          persist(); render(k); showToast('Specs setting deleted','success');
+        } else {
+          armedDelete = { k:'specsetting', id }; renderTable(k);
+          clearTimeout(wireDelegation._t);
+          wireDelegation._t = setTimeout(()=>{ if(armedDelete && armedDelete.id===id){ armedDelete=null; renderTable(k); } }, 2800);
+        }
+        break;
+      }
       case 'add-list':       openListModal(null, el.dataset.mb); break;
       case 'csv':            exportCsv(); break;
       case 'mbfilter':       s.mb = (s.mb===v ? '' : v); render(k); break;
@@ -1332,10 +1737,13 @@ function wireDelegation(){
  * ═══════════════════════════════════════════════════════ */
 async function init(){
   load();
+  assignSids();
   migrateLists();
   buildUI();
   wireDelegation();
   wireListEvents();
+  wireSpecEvents();
+  wireCombo();
   wireImport();
   renderAll();
   switchTab('itemlist');
