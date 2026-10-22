@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Orders</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/cacheWatcher.js?v=1"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/auth.js"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/accessGuard.js"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/dataLayer.js"></script>
+<style>
+:root,[data-theme="dark"]{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2333;--surface:#21262d;--border:#30363d;--border2:#444c56;--text:#e6edf3;--text2:#8b949e;--accent:#58a6ff;--accent-dim:rgba(88,166,255,.12);--teal:#39d353;--teal-dim:rgba(57,211,83,.12);--amber:#e3b341;--red:#f85149;--red-dim:rgba(248,81,73,.12);--orange:#f0883e;--orange-dim:rgba(240,136,62,.12);--radius:8px;--radius-lg:12px;--font:'Sora',sans-serif;--mono:'JetBrains Mono',monospace;}
+[data-theme="light"]{--bg:#f0f2f5;--bg2:#fff;--bg3:#e8ecf0;--surface:#fff;--border:#c8d0d9;--border2:#9aa5b1;--text:#0d1117;--text2:#3d454f;--accent:#0550ae;--accent-dim:rgba(5,80,174,.12);--teal:#116329;--teal-dim:rgba(17,99,41,.13);--amber:#7d4e00;--red:#a8111b;--red-dim:rgba(168,17,27,.11);--orange:#953800;--orange-dim:rgba(149,56,0,.13);}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px}
+body{display:flex;flex-direction:column}
+.bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;background:var(--bg2);border-bottom:1px solid var(--border)}
+.bar h1{font-size:15px;display:flex;align-items:center;gap:8px;margin-right:auto}
+.tabs{display:flex;gap:4px}
+.tab{padding:6px 12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;font:inherit;font-size:13px}
+.tab.on{background:var(--accent-dim);color:var(--accent);border-color:var(--accent)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font:inherit;font-size:13px}
+.btn.out{background:var(--orange-dim);color:var(--orange);border-color:var(--orange)}
+.btn.in{background:var(--teal-dim);color:var(--teal);border-color:var(--teal)}
+.btn.pri{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.sm{padding:3px 8px;font-size:12px}
+.ib{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer}
+.ib.ok{color:var(--teal)}.ib.err{color:var(--red)}
+main{flex:1;min-height:0;overflow:auto;padding:12px 14px}
+input,select,textarea{font:inherit;font-size:13px;padding:7px 9px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg3);color:var(--text);width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+.tools{display:flex;gap:8px;margin-bottom:10px}.tools input{max-width:320px}
+table{width:100%;border-collapse:collapse;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--border);font-size:13px;vertical-align:top}
+th{background:var(--bg3);color:var(--text2);font-weight:600;font-size:12px}
+td.n,th.n{text-align:right;font-family:var(--mono)}
+.badge{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:600}
+.badge.out{background:var(--orange-dim);color:var(--orange)}.badge.in{background:var(--teal-dim);color:var(--teal)}
+.mono{font-family:var(--mono)}.dim{color:var(--text2)}.neg{color:var(--red)}
+.empty{padding:40px;text-align:center;color:var(--text2)}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:12px;z-index:50}
+.ov.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);width:100%;max-width:760px;max-height:92vh;display:flex;flex-direction:column}
+.mh,.mf{padding:12px 16px;display:flex;align-items:center;gap:8px}
+.mh{border-bottom:1px solid var(--border);font-weight:600}.mf{border-top:1px solid var(--border);justify-content:flex-end}
+.mb{padding:14px 16px;overflow:auto;display:flex;flex-direction:column;gap:12px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
+.pick{position:relative}
+.dd{position:absolute;left:0;right:0;top:100%;z-index:5;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);max-height:220px;overflow:auto;display:none}
+.dd div{padding:7px 10px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)}
+.dd div:hover{background:var(--accent-dim)}
+.lines td{padding:6px 8px}.lines input{padding:4px 7px}
+.warn{color:var(--amber);font-size:12px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border2);padding:9px 16px;border-radius:var(--radius);z-index:99;display:none;font-size:13px}
+.toast.error{border-color:var(--red);color:var(--red)}.toast.success{border-color:var(--teal)}
+@media(max-width:600px){.g2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="bar">
+  <h1><i class="ti ti-truck-delivery"></i>Orders</h1>
+  <div class="tabs" id="tabs"></div>
+  <button class="btn out" onclick="openForm('out')"><i class="ti ti-arrow-up-right"></i>New Order (Outgoing)</button>
+  <button class="btn in" onclick="openForm('in')"><i class="ti ti-arrow-down-left"></i>Add Items (Incoming)</button>
+  <span class="ib" id="cache-ind" title="Cache" onclick="refreshFromCache(true)"><i class="ti ti-database"></i></span>
+</div>
+<main>
+  <div class="tools"><input id="q" placeholder="Search order no, store, party, item…" oninput="render()"/></div>
+  <div id="view"></div>
+</main>
+
+<div class="ov" id="ov">
+  <div class="modal">
+    <div class="mh"><i class="ti" id="m-ico"></i><span id="m-title"></span></div>
+    <div class="mb">
+      <div class="g2">
+        <div><label>Store *</label><select id="f-store"></select></div>
+        <div><label>Date *</label><input type="date" id="f-date"/></div>
+        <div><label id="f-party-l">Party</label><input id="f-party"/></div>
+        <div><label>Reference / Note</label><input id="f-note"/></div>
+      </div>
+      <div class="pick">
+        <label>Add item (from Item List) *</label>
+        <input id="f-search" placeholder="Type to search items…" autocomplete="off" oninput="showDD()" onfocus="showDD()"/>
+        <div class="dd" id="dd"></div>
+      </div>
+      <table class="lines"><thead><tr><th>Item</th><th class="n" style="width:90px">In stock</th><th class="n" style="width:100px">Qty</th><th style="width:36px"></th></tr></thead><tbody id="lines"></tbody></table>
+      <div class="warn" id="m-warn"></div>
+    </div>
+    <div class="mf"><button class="btn" onclick="closeForm()">Cancel</button><button class="btn pri" onclick="saveOrder()"><i class="ti ti-check"></i>Save</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+/* ═══ CACHE: same method as the Master module — ap2_fleet_cache / datasets / ap2_specsData ═══ */
+const _IDB_NAME='ap2_fleet_cache', _IDB_STORE='datasets';
+let CACHE_KEY='ap2_specsData'; try{CACHE_KEY=localStorage.getItem('master_cache_key')||'ap2_specsData';}catch(e){}
+if(typeof window.AP2CacheWatcher==='undefined'){
+  window.AP2CacheWatcher={init(){},subscribe(){return()=>{}},async readKey(key){
+    try{
+      const db=await new Promise((res,rej)=>{const r=indexedDB.open(_IDB_NAME);r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e.target.error);setTimeout(()=>rej(new Error('timeout')),2500);});
+      if(!db.objectStoreNames.contains(_IDB_STORE))return null;
+      const rec=await new Promise((res,rej)=>{const r=db.transaction(_IDB_STORE,'readonly').objectStore(_IDB_STORE).get(key);r.onsuccess=()=>res(r.result||null);r.onerror=()=>rej(r.error);});
+      return rec&&rec.data?rec.data:null;
+    }catch(e){return null;}
+  }};
+}
+const pickSpecs=d=>{if(!d||typeof d!=='object'||Array.isArray(d))return null;const k=Object.keys(d).find(x=>/^specs$/i.test(x)&&Array.isArray(d[x]));return k?d[k]:null;};
+
+/* ═══ DATA ═══
+   items  ← Item List rows:  [ID, "Item List", Medical Domain, label, Status]
+   stores ← Store rows:      [ID, "Store", Name, Description, Status]
+   orders ← localStorage now; swap loadOrders()/saveOrders() for your backend */
+let items=[], stores=[], orders=[], tab='all', cacheLoaded=false, lines=[], formType='out';
+const ORD_KEY='orders_v1';
+function loadOrders(){try{orders=JSON.parse(localStorage.getItem(ORD_KEY)||'[]');}catch(e){orders=[];}}
+function saveOrders(){try{localStorage.setItem(ORD_KEY,JSON.stringify(orders));}catch(e){showToast('Storage write failed','error');}}
+
+function applyRows(rows){
+  const it=[],st=[];
+  rows.forEach(r=>{
+    if(!Array.isArray(r)||String(r[0]).toLowerCase()==='id')return;
+    const id=String(r[0]).trim(),kind=String(r[1]??'').trim(),a=String(r[2]??'').trim(),b=String(r[3]??'').trim();
+    const active=/^active$/i.test(String(r[4]??'').trim());
+    if(!id||!active)return;
+    if(/^item\s*lists?$/i.test(kind)&&b) it.push({id,domain:a,label:b});
+    else if(/^stores?(\s*branch)?$/i.test(kind)&&a) st.push({id,name:a});
+  });
+  items=it;stores=st;
+}
+function setInd(cls,t){const e=document.getElementById('cache-ind');e.className='ib '+cls;e.title=t;}
+async function refreshFromCache(manual){
+  try{
+    const p=await AP2CacheWatcher.readKey(CACHE_KEY), rows=pickSpecs(p);
+    if(!rows){setInd('err','Cache: no Specs data yet');if(manual)showToast('Cache has no Specs data yet','error');return;}
+    cacheLoaded=true;applyRows(rows);setInd('ok','Cache loaded · '+items.length+' items · '+stores.length+' stores');
+    render();if(manual)showToast('Loaded '+items.length+' items','success');
+  }catch(e){setInd('err','Cache error: '+e.message);}
+}
+function startCache(){
+  try{AP2CacheWatcher.init();AP2CacheWatcher.subscribe(()=>refreshFromCache());}catch(e){}
+  window.addEventListener('message',e=>{const m=e.data;if(!m)return;
+    if(m.type==='ap-cache-preload'&&m.datasets&&m.datasets[CACHE_KEY]){const r=pickSpecs(m.datasets[CACHE_KEY]);if(r){cacheLoaded=true;applyRows(r);render();}}
+    if(m.type==='ap-cache-ready'&&pickSpecs(m.data)){cacheLoaded=true;applyRows(pickSpecs(m.data));render();}
+    if(m.type==='ap-cache-updated')refreshFromCache();});
+  refreshFromCache();setInterval(refreshFromCache,4000);
+  try{window.parent.postMessage({type:'ap-cache-request',key:CACHE_KEY},'*');}catch(e){}
+}
+
+/* ═══ STOCK = incoming − outgoing, per store + item ═══ */
+const stockKey=(s,i)=>s+'|'+i;
+function stockMap(){const m={};orders.forEach(o=>o.lines.forEach(l=>{const k=stockKey(o.storeId,l.itemId);m[k]=(m[k]||0)+(o.type==='in'?1:-1)*l.qty;}));return m;}
+const nextNo=t=>(t==='out'?'OUT-':'IN-')+String(orders.filter(o=>o.type===t).length+1).padStart(4,'0');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const words=q=>String(q||'').toLowerCase().split(/[\s\-\/,;|]+/).filter(Boolean);
+const match=(q,h)=>{h=String(h).toLowerCase();return words(q).every(w=>h.includes(w));};
+function showToast(m,t){const e=document.getElementById('toast');e.textContent=m;e.className='toast '+(t||'');e.style.display='block';clearTimeout(showToast.t);showToast.t=setTimeout(()=>e.style.display='none',3000);}
+
+/* ═══ RENDER ═══ */
+const TABS=[['all','All'],['out','Outgoing'],['in','Incoming'],['stock','Stock']];
+function render(){
+  document.getElementById('tabs').innerHTML=TABS.map(([k,l])=>`<button class="tab${tab===k?' on':''}" onclick="tab='${k}';render()">${l}</button>`).join('');
+  const q=document.getElementById('q').value, v=document.getElementById('view');
+  if(tab==='stock'){
+    const sm=stockMap(),rows=[];
+    Object.keys(sm).forEach(k=>{const[s,i]=k.split('|');const it=items.find(x=>x.id===i),st=stores.find(x=>x.id===s);
+      const lbl=(it?it.label:(findLine(i)||i)),sn=st?st.name:s;if(match(q,sn+' '+lbl))rows.push({sn,lbl,qty:sm[k]});});
+    v.innerHTML=rows.length?`<table><thead><tr><th>Store</th><th>Item</th><th class="n">Qty in stock</th></tr></thead><tbody>${rows.sort((a,b)=>a.sn.localeCompare(b.sn)||a.lbl.localeCompare(b.lbl)).map(r=>`<tr><td>${esc(r.sn)}</td><td>${esc(r.lbl)}</td><td class="n ${r.qty<0?'neg':''}">${r.qty}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">No stock yet — add items with an Incoming order.</div>';
+    return;
+  }
+  const list=orders.filter(o=>(tab==='all'||o.type===tab)&&match(q,[o.no,o.storeName,o.party,o.note,o.lines.map(l=>l.label).join(' ')].join(' '))).sort((a,b)=>b.created-a.created);
+  v.innerHTML=list.length?`<table><thead><tr><th>Order No</th><th>Type</th><th>Date</th><th>Store</th><th>Party / Ref</th><th>Items</th><th class="n">Total qty</th><th></th></tr></thead><tbody>${list.map(o=>`
+    <tr><td class="mono">${esc(o.no)}</td>
+    <td><span class="badge ${o.type}">${o.type==='out'?'Outgoing':'Incoming'}</span></td>
+    <td>${esc(o.date)}</td><td>${esc(o.storeName)}</td>
+    <td>${esc(o.party)}${o.note?`<div class="dim" style="font-size:12px">${esc(o.note)}</div>`:''}</td>
+    <td>${o.lines.map(l=>`<div>${esc(l.label)} <span class="mono dim">× ${l.qty}</span></div>`).join('')}</td>
+    <td class="n">${o.lines.reduce((a,l)=>a+l.qty,0)}</td>
+    <td><button class="btn sm" onclick="delOrder('${o.id}')"><i class="ti ti-trash"></i></button></td></tr>`).join('')}</tbody></table>`
+    :'<div class="empty">No orders yet. Use the buttons above to create one.</div>';
+}
+const findLine=id=>{for(const o of orders){const l=o.lines.find(x=>x.itemId===id);if(l)return l.label;}return null;};
+
+/* ═══ FORM ═══ */
+function openForm(t){
+  if(!cacheLoaded)return showToast('Cache not loaded yet — please wait','error');
+  if(!stores.length)return showToast('No active Store found in Specs Settings','error');
+  formType=t;lines=[];
+  document.getElementById('m-ico').className='ti '+(t==='out'?'ti-arrow-up-right':'ti-arrow-down-left');
+  document.getElementById('m-title').textContent=(t==='out'?'New Order — Outgoing ':'Add Items — Incoming ')+nextNo(t);
+  document.getElementById('f-party-l').textContent=t==='out'?'Customer / Hospital / Department':'Supplier';
+  document.getElementById('f-store').innerHTML=stores.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
+  document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+  ['f-party','f-note','f-search'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('f-store').onchange=renderLines;
+  renderLines();document.getElementById('ov').classList.add('open');
+}
+function closeForm(){document.getElementById('ov').classList.remove('open');}
+function showDD(){
+  const q=document.getElementById('f-search').value,dd=document.getElementById('dd');
+  const res=items.filter(i=>match(q,i.domain+' '+i.label)&&!lines.some(l=>l.itemId===i.id)).slice(0,40);
+  dd.innerHTML=res.length?res.map(i=>`<div onclick="addLine('${esc(i.id)}')"><span class="dim">${esc(i.domain)} ·</span> ${esc(i.label)}</div>`).join(''):'<div class="dim">No matching items</div>';
+  dd.style.display='block';
+}
+document.addEventListener('click',e=>{if(!e.target.closest('.pick'))document.getElementById('dd').style.display='none';});
+function addLine(id){const i=items.find(x=>x.id===id);if(!i)return;lines.push({itemId:i.id,label:i.label,domain:i.domain,qty:1});
+  document.getElementById('f-search').value='';document.getElementById('dd').style.display='none';renderLines();}
+function renderLines(){
+  const sm=stockMap(),store=document.getElementById('f-store').value;
+  document.getElementById('lines').innerHTML=lines.length?lines.map((l,n)=>`<tr><td>${esc(l.label)}<div class="dim" style="font-size:11px">${esc(l.domain)}</div></td>
+    <td class="n">${sm[stockKey(store,l.itemId)]||0}</td>
+    <td><input type="number" min="1" step="1" value="${l.qty}" class="n" oninput="lines[${n}].qty=Math.floor(+this.value)||0;checkWarn()"/></td>
+    <td><button class="btn sm" onclick="lines.splice(${n},1);renderLines()"><i class="ti ti-x"></i></button></td></tr>`).join('')
+    :'<tr><td colspan="4" class="dim" style="text-align:center">Search above to add items</td></tr>';
+  checkWarn();
+}
+function checkWarn(){
+  const w=document.getElementById('m-warn');w.textContent='';if(formType!=='out')return;
+  const sm=stockMap(),store=document.getElementById('f-store').value;
+  const bad=lines.filter(l=>l.qty>(sm[stockKey(store,l.itemId)]||0));
+  if(bad.length)w.textContent='⚠ Quantity exceeds stock for: '+bad.map(l=>l.label).join(', ')+' — you can still save.';
+}
+function saveOrder(){
+  const storeId=document.getElementById('f-store').value,date=document.getElementById('f-date').value;
+  if(!storeId||!date)return showToast('Store and date are required','error');
+  if(!lines.length)return showToast('Add at least one item','error');
+  if(lines.some(l=>!(l.qty>0)))return showToast('Every quantity must be 1 or more','error');
+  const st=stores.find(s=>s.id===storeId);
+  orders.unshift({id:'o'+Date.now(),no:nextNo(formType),type:formType,date,storeId,storeName:st?st.name:storeId,
+    party:document.getElementById('f-party').value.trim(),note:document.getElementById('f-note').value.trim(),
+    lines:lines.map(l=>({...l})),created:Date.now()});
+  saveOrders();closeForm();render();showToast(formType==='out'?'Outgoing order saved':'Items added to store','success');
+}
+function delOrder(id){
+  const o=orders.find(x=>x.id===id);if(!o||!confirm('Delete '+o.no+'? Stock will be recalculated.'))return;
+  orders=orders.filter(x=>x.id!==id);saveOrders();render();
+}
+
+loadOrders();render();startCache();
+</script>
+</body>
+</html>
