@@ -162,31 +162,32 @@ window.addEventListener('message',e=>{const m=e.data;if(!m)return;
 try{parent.postMessage({type:'ap-session-request'},'*');parent.postMessage({type:'ap-cache-request',key:KEY},'*')}catch(e){}
 
 /* ── lists derived from the sheet ──
-   row = [ID, Specs(category), Item(name), Description(TYPE), Status]
-   Type buttons = every distinct Description found on name rows (case-insensitive: "Customer" = "customer"); blank = Customer (default) */
+   row = [ID, Specs, Item, Description, Status]   e.g. [id, "Doctor", "Dr Amjid", "Customer", "Active"]
+   Only rows whose Description (4th value) is "Customer"/"customer" are used for rate thresholds:
+   Specs  → Type button (Doctor, Hospital, Vendor …)      Item → Name in the drop-down */
+const ELIGIBLE='customer';
 const ICONS={customer:'ti-user',vendor:'ti-truck-delivery',hospital:'ti-building-hospital',doctor:'ti-stethoscope'};
 const IGN=/^(item\s*names?|item\s*lists?|item\s*categor(y|ies)|stores?|medical\s*domains?|material\s*sources?|specs)$/i,IL=/^item\s*lists?$/i;
-const typeKey=l=>norm(l)||'customer',typeIcon=k=>ICONS[k]||'ti-tag';
+const typeIcon=k=>ICONS[k]||'ti-tag';
 const cap=t=>t.charAt(0).toUpperCase()+t.slice(1);
-let parties=[],items=[],domains=[],types=[],cats=[];
+let parties=[],items=[],domains=[],types=[],custWord='Customer';
 const sameRow=(a,b)=>String(a[0])===String(b[0])||(norm(a[1])===norm(b[1])&&norm(a[2])===norm(b[2])&&(!IL.test(String(a[1]).trim())||norm(a[3])===norm(b[3])));
 const allRows=()=>cacheRows.concat(pending,synced).filter((r,i,a)=>Array.isArray(r)&&a.findIndex(x=>Array.isArray(x)&&sameRow(x,r))===i);
 function derive(){
-  parties=[];items=[];domains=[];const T=new Map([['customer',{k:'customer',l:'Customer'}]]),C=new Map();
+  parties=[];items=[];domains=[];const T=new Map();
   allRows().forEach(r=>{
     const sid=String(r[0]).trim(),lab=String(r[1]==null?'':r[1]).trim(),nm=String(r[2]==null?'':r[2]).trim();
     if(!sid||!lab||!nm||sid.toLowerCase()==='id')return;
     const act=!/^(inactive|in-active|no|0|false|disabled)$/i.test(String(r[4]||'').trim()),dsc=String(r[3]==null?'':r[3]).trim();
     if(IL.test(lab)){if(dsc&&act)items.push({sid,label:dsc,domain:nm});return}
     if(/^medical\s*domains?$/i.test(lab)){if(act)domains.push({sid,name:nm});return}
-    if(IGN.test(lab))return;
-    const k=typeKey(dsc),t=T.get(k);
-    if(!t)T.set(k,{k,l:cap(dsc)});else if(dsc&&/^[a-z]/.test(t.l)&&/^[A-Z]/.test(dsc))t.l=dsc;
-    if(!C.has(norm(lab)))C.set(norm(lab),lab);
-    if(act)parties.push({sid,name:nm,type:k,cat:lab});
+    if(IGN.test(lab)||norm(dsc)!==ELIGIBLE)return;
+    custWord=dsc;if(!act)return;
+    const k=norm(lab),t=T.get(k);
+    if(!t)T.set(k,{k,l:cap(lab)});else if(/^[a-z]/.test(t.l)&&/^[A-Z]/.test(lab))t.l=lab;
+    parties.push({sid,name:nm,type:k});
   });
-  types=[...T.values()].sort((a,b)=>a.k==='customer'?-1:b.k==='customer'?1:a.l.localeCompare(b.l));
-  cats=[...C.values()];
+  types=[...T.values()].sort((a,b)=>a.l.localeCompare(b.l));
 }
 
 /* ── write to the Master sheet (same rules: timestamp ID · Active · no duplicates) ── */
@@ -219,10 +220,8 @@ function askSelect(title,sub,lab,opts,okText){return new Promise(res=>{const ov=
   document.body.appendChild(ov);ov.onclick=e=>{const v=e.target.dataset.v;if(v==null&&e.target!==ov)return;const x=ov.querySelector('select').value;ov.remove();res(v==='1'?x:null)}})}
 async function addParty(name){
   if(!ready())return null;const t=types.find(x=>x.k===draft.type);if(!t){toast('Choose a Type first','error');return null}
-  const base=cats.length?cats:['Customer','Vendor','Hospital','Doctor'],opts=base.filter(c=>norm(c)===t.k).concat(base.filter(c=>norm(c)!==t.k));
-  const cat=await askSelect('Add name to Master sheet',name+' · Type: '+t.l,'Category',opts,'Add name');if(!cat)return null;
-  if(allRows().some(r=>!IL.test(String(r[1]).trim())&&norm(r[1])===norm(cat)&&norm(r[2])===norm(name))){toast(name+' already exists in '+cat+' (check it is Active in Master)','error');return null}
-  const r=newRow(cat,name,t.l);toast('Added to Master sheet as '+t.l,'success');return{text:name,sid:r[0],type:t.k,sub:cat}}
+  if(allRows().some(r=>!IL.test(String(r[1]).trim())&&norm(r[1])===t.k&&norm(r[2])===norm(name))){toast(name+' already exists in '+t.l+' (check it is Active and marked Customer in Master)','error');return null}
+  const r=newRow(t.l,name,custWord);toast('Added to Master sheet under '+t.l,'success');return{text:name,sid:r[0],type:t.k}}
 async function addItem(label){
   if(!ready())return null;if(!domains.length){toast('Add a Medical Domain in Master Setup first','error');return null}
   const dom=await askSelect('Add item to Master sheet',label,'Medical Domain',domains.map(d=>d.name),'Add item');if(!dom)return null;
@@ -256,7 +255,7 @@ const findRule=(p,i)=>rules.find(x=>String(x.pSid)===String(p)&&String(x.iSid)==
 window.RateThreshold={get:(p,i)=>{const r=findRule(p,i);return r?{min:r.min,max:r.max}:null},
   check:(p,i,rate)=>{const r=findRule(p,i);return r?{found:true,ok:rate>=r.min&&rate<=r.max,min:r.min,max:r.max}:{found:false,ok:true}}};
 const tName=k=>(types.find(t=>t.k===k)||{l:k}).l;
-const live=r=>{const p=parties.find(x=>String(x.sid)===String(r.pSid)),i=items.find(x=>String(x.sid)===String(r.iSid));return{p:p?p.name:r.pName,c:p?p.cat:'',i:i?i.label:r.iLabel}};
+const live=r=>{const p=parties.find(x=>String(x.sid)===String(r.pSid)),i=items.find(x=>String(x.sid)===String(r.iSid));return{p:p?p.name:r.pName,i:i?i.label:r.iLabel}};
 
 function renderTable(){
   const tk=toks(ui.q),all=rules;
@@ -269,7 +268,7 @@ function renderTable(){
   if(!rs.length){$('tbl').innerHTML=`<div class="doc-center-placeholder"><i class="ti ${all.length?'ti-search-off':'ti-adjustments-dollar'}"></i><span>${all.length?'No records match your filter':'No rate thresholds added yet'}</span>${all.length?'':'<button class="btn btn-primary btn-sm" data-a="new"><i class="ti ti-plus"></i> Add Threshold</button>'}</div>`;return}
   const th=(k,l,c)=>`<th class="${c||''}" data-s="${k}">${l}${ui.sortKey===k?`<i class="ti ti-chevron-${ui.asc?'up':'down'}" style="font-size:11px;margin-left:3px"></i>`:''}</th>`;
   $('tbl').innerHTML=`<table class="log-table"><thead><tr><th style="cursor:default">#</th>${th('p','Name')}${th('t','Type')}${th('i','Item')}${th('min','Min','r')}${th('max','Max','r')}${th('ts','Updated')}<th style="cursor:default"></th></tr></thead><tbody>${rs.map((r,n)=>{const l=live(r),a=armed===r.id;
-    return`<tr><td class="mono">${n+1}</td><td><strong>${esc(l.p)}</strong>${l.c?`<div class="mono">${esc(l.c)}</div>`:''}</td><td><span class="spec-chip"><i class="ti ${typeIcon(r.pType)}"></i>${esc(tName(r.pType))}</span></td><td>${esc(l.i)}</td><td class="r num">${f2(r.min)}</td><td class="r num">${f2(r.max)}</td><td class="mono">${fmtDate(r.ts)}</td>
+    return`<tr><td class="mono">${n+1}</td><td><strong>${esc(l.p)}</strong></td><td><span class="spec-chip"><i class="ti ${typeIcon(r.pType)}"></i>${esc(tName(r.pType))}</span></td><td>${esc(l.i)}</td><td class="r num">${f2(r.min)}</td><td class="r num">${f2(r.max)}</td><td class="mono">${fmtDate(r.ts)}</td>
     <td class="acts"><div class="act-btns"><button class="ib sm" title="Edit" data-e="${r.id}"><i class="ti ti-pencil"></i></button><button class="ib sm danger ${a?'armed':''}" title="${a?'Click again to confirm':'Delete'}" data-d="${r.id}"><i class="ti ti-${a?'check':'trash'}"></i></button></div></td></tr>`}).join('')}</tbody></table>`}
 
 /* ── side window ── */
@@ -287,7 +286,7 @@ function renderPanel(){
   const chip=m=>`<button type="button" class="chip${d.type===m.k?' on':''}${edit&&d.type!==m.k?' dis':''}" data-v="${m.k}"${edit?' disabled':''}><i class="ti ${typeIcon(m.k)}"></i>${esc(m.l)}</button>`;
   $('panel').innerHTML=`<div class="pph"><h3><i class="ti ti-forms"></i><span>${edit?'Edit Rate Threshold':'Add Rate Threshold'}</span></h3><button class="pph-close" data-a="close" title="Close"><i class="ti ti-x"></i></button></div>
   <div class="ppb"><div class="form-stack">
-    <div class="field"><label>Type <span class="req">*</span></label><div class="chips${E.t?' bad':''}">${types.map(chip).join('')}</div></div>
+    <div class="field"><label>Type <span class="req">*</span></label><div class="chips${E.t?' bad':''}">${types.length?types.map(chip).join(''):'<span style="font-size:12px;color:var(--text3)">No entries with Description “Customer” found in the sheet yet.</span>'}</div></div>
     <div class="field"><label>Name <span class="req">*</span></label><div class="cb${E.p?' bad':''}" id="pcb"></div></div>
     <div class="field"><div class="fgrp-lbl"><i class="ti ti-package"></i>Items &amp; amounts <span class="req">*</span>${edit?'':'<button class="btn btn-ghost btn-sm" type="button" data-a="addrow" style="margin-left:auto"><i class="ti ti-plus"></i> Add item</button>'}</div>
       <div class="form-stack" style="gap:8px">${d.rows.map((r,i)=>{const e=E.rows[i]||{};return`<div class="trow">
@@ -299,7 +298,7 @@ function renderPanel(){
   </div></div>
   <div class="ppf"><button class="btn btn-ghost" type="button" data-a="close">Cancel</button>${edit?'':'<button class="btn btn-ghost" type="button" data-a="saveadd"><i class="ti ti-plus"></i> Save &amp; Add Another</button>'}<button class="btn btn-primary" type="button" data-a="save"><i class="ti ti-device-floppy"></i> ${edit?'Update':'Save'}</button></div>`;
   pcomb=combo($('pcb'),{ph:d.type?'Search or add name…':'Choose a Type first',
-    list:()=>d.type?parties.filter(p=>p.type===d.type).map(p=>({text:p.name,sub:p.cat,sid:p.sid,type:p.type})):[],
+    list:()=>d.type?parties.filter(p=>p.type===d.type).map(p=>({text:p.name,sid:p.sid,type:p.type})):[],
     onPick:p=>{d.party=p;rcombs.forEach((_,i)=>prefill(i))},onAdd:addParty});
   if(d.party)pcomb.set(d.party);if(edit||!d.type)pcomb.input.disabled=true;
   rcombs=d.rows.map((r,i)=>{const c=combo(document.querySelector('.cb[data-ri="'+i+'"]'),{ph:'Item '+(i+1)+' — search or add item…',
