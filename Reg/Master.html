@@ -476,6 +476,8 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 .spec-row .rno{font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;grid-column:auto;padding-top:8px;line-height:1.2;}
 .spec-row .date-input{margin-bottom:0;}
 .spec-row .rcol{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.spec-row.one{grid-template-columns:50px minmax(0,1fr) minmax(0,1fr) 28px;}
+@media(min-width:1101px){#specsetting-preview-panel.open,#itemlist-preview-panel.open{width:480px;}}
 .spec-row .ib{width:28px;height:28px;margin-top:1px;}
 .ppb .form-stack{gap:8px;}
 .ppb .date-input{padding:6px 10px;font-size:12.5px;}
@@ -630,7 +632,7 @@ const STATUS_FIELD = { key:'status', label:'Status', type:'status' };
 
 const MODULES = [
   { key:'itemlist', label:'Item Lists', plural:'Item Lists', icon:'ti-list-check', custom:true, group:'itemlist',
-    hint:'Medical Domain-wise catalog: Item - Specs - Description' },
+    hint:'Medical Domain-wise catalog: Material Source - Item - Category - Specs - Description' },
   { key:'specsetting', label:'Specs Settings', plural:'Specs Settings', icon:'ti-settings', custom:true, group:'settings',
     hint:'One sheet for every kind of Specs: ID - Specs - Item - Description - Status' },
   { key:'storebranch', label:'Store', plural:'Stores', icon:'ti-building-store', group:'spectype',
@@ -1028,6 +1030,9 @@ function startCache(){
 /* ═══════════════════════════════════════════════════════
  *  BUILD UI (tabs · selectors · panels) from MODULES
  * ═══════════════════════════════════════════════════════ */
+/* search: every word typed must appear somewhere in the row — any order, any case; space, - / , ; | all separate words */
+const searchTokens = q => String(q||'').toLowerCase().split(/[\s\-\u2013\u2014\/,;|]+/).filter(Boolean);
+const matchAll = (q, hay) => { const t = searchTokens(q); if (!t.length) return true; const h = String(hay||'').toLowerCase(); return t.every(w => h.includes(w)); };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmtDate = ts => new Date(ts).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
 
@@ -1087,7 +1092,7 @@ function renderFilters(k, rows){
 function visibleRows(k){
   const s = ui[k], m = MOD[k], q = s.q.trim().toLowerCase();
   let rows = data[k].filter(r => s.filter==='all' || r.status===s.filter);
-  if (q) rows = rows.filter(r => m.fields.some(f => String(r[f.key]||'').toLowerCase().includes(q)));
+  if (q) rows = rows.filter(r => matchAll(q, m.fields.map(f => r[f.key]||'').join(' ')));
   const dir = s.sortAsc ? 1 : -1;
   rows.sort((a,b)=>{
     const x = a[s.sortKey] ?? '', y = b[s.sortKey] ?? '';
@@ -1172,9 +1177,7 @@ const DUP_BADGE = `<i class="ti ti-copy dup-ic" title="Duplicate — edit or del
 /* duplicate filter button next to Active / Inactive. Lit when duplicates exist; auto-shows them once per new set of duplicates */
 function renderDupFilter(k, dups){
   const s = ui[k], n = dups.size, el = document.getElementById(k+'-filters'); if (!el) return;
-  const sig = [...dups].sort().join(',');
-  if (!n){ s.dup = false; s.dupSig = ''; }
-  else if (sig !== s.dupSig){ s.dupSig = sig; s.dup = true; if (CACHE.loaded) showToast(n + ' duplicate row' + (n>1?'s':'') + ' found — showing duplicates only', 'error'); }
+  if (!n) s.dup = false;                       // count only — the filter is switched on by the person, never automatically
   el.insertAdjacentHTML('beforeend', `<button class="ib flt dupf${n?' has':''}${s.dup?' on':''}" type="button" data-act="dupfilter" data-k="${k}" ${n?'':'disabled'}
     title="${n ? 'Duplicates (' + n + ') — ' + (s.dup ? 'click to show all' : 'click to filter') : 'No duplicates'}" aria-pressed="${!!s.dup}"><i class="ti ti-copy"></i><b class="flt-n">${n}</b></button>`);
 }
@@ -1183,7 +1186,7 @@ function visibleSpecRows(){
   const s = ui.specsetting, q = s.q.trim().toLowerCase();
   const D = s.dup ? dupSpecSet() : null;
   let rows = specRows().filter(x => (s.filter==='all' || x.r.status===s.filter) && (!s.type || x.t===s.type) && (!D || D.has(x.r.id)));
-  if (q) rows = rows.filter(x => (x.r.sid+' '+x.tl+' '+x.r.name+' '+(x.r.description||'')+' '+x.r.status).toLowerCase().includes(q));
+  if (q) rows = rows.filter(x => matchAll(q, x.tl+' '+x.r.name+' '+(x.r.description||'')+' '+x.r.status));
   const val = x => s.sortKey==='sid' ? String(x.r.sid).padStart(17,'0') : s.sortKey==='name' ? x.r.name : s.sortKey==='description' ? (x.r.description||'') : x.r.status;
   const dir = s.sortAsc ? 1 : -1;
   return rows.sort((a,b) => { const p = val(a), c = val(b);
@@ -1224,7 +1227,6 @@ function renderSpecTable(){
     const trs = mine.map(x => {
       const r = x.r, armed = armedDelete && armedDelete.k===k && armedDelete.id===r.id;
       return `<tr data-rid="${r.id}"${DS.has(r.id) ? ' class="dup-row"' : ''}>
-        <td class="num sid">${r.sid}</td>
         <td class="it-cell" title="${esc(r.name + (r.description ? ' / ' + r.description : ''))}">${DS.has(r.id) ? DUP_BADGE : ''}<strong>${esc(r.name)}</strong>${r.description ? `<span class="it-sep">/</span><span class="it-desc">${esc(r.description)}</span>` : ''}</td>
         <td><span class="st-badge ${r.status}">${r.status==='active'?'Active':'Inactive'}</span></td>
         <td class="acts"><div class="act-btns">
@@ -1233,13 +1235,13 @@ function renderSpecTable(){
           <button class="ib sm danger ${armed?'armed':''}" title="${armed?'Click again to confirm':'Delete'}" data-act="ss-del" data-k="${k}" data-t="${x.t}" data-id="${r.id}"><i class="ti ti-${armed?'check':'trash'}"></i></button>
         </div></td></tr>`;
     }).join('');
-    const empty = `<tr><td colspan="4" class="cell-muted" style="text-align:center;padding:14px;">No items yet in ${esc(m.label)}</td></tr>`;
+    const empty = `<tr><td colspan="3" class="cell-muted" style="text-align:center;padding:14px;">No items yet in ${esc(m.label)}</td></tr>`;
     const delT = m.custom && !(data[m.key]||[]).length
       ? `<button class="ib sm danger" title="Remove this empty Specs" data-act="ss-deltype" data-k="${k}" data-t="${m.key}"><i class="ti ti-trash"></i></button>` : '';
     return `<div class="spec-card">
       <div class="grp-hd"><i class="ti ${m.icon}" style="color:var(--accent);font-size:16px;"></i><strong>${esc(m.label)}</strong><span class="cnt-chip">${(data[m.key]||[]).length}</span><span class="sp"></span>
         <button class="ib sm" title="Add item to ${esc(m.label)}" data-act="add" data-k="${k}" data-t="${m.key}"><i class="ti ti-plus"></i></button>${delT}</div>
-      <div class="spec-scroll"><table class="log-table"><thead><tr>${th('sid','ID')}${th('name','Item / Description')}${th('status','Status')}<th style="cursor:default"></th></tr></thead>
+      <div class="spec-scroll"><table class="log-table"><thead><tr>${th('name','Item / Description')}${th('status','Status')}<th style="cursor:default"></th></tr></thead>
       <tbody>${trs || empty}</tbody></table></div></div>`;
   }).join('');
   const html = cards ? `<div class="specs-grid">${cards}</div>` : '';
@@ -1268,15 +1270,15 @@ function renderSpecModal(){
         <input class="date-input${has('n',i)?' bad':''}" data-sn="${i}" type="text" placeholder="e.g. Brand, Size, Color…" value="${esc(n)}" autocomplete="off"/>
         ${d.newNames.length>1 ? `<button class="ib sm danger" type="button" title="Remove row" data-act="sm-delname" data-i="${i}"><i class="ti ti-trash"></i></button>` : '<span></span>'}</div>`).join('')}</div></div>` : '';
   const items = `<div class="field"><div class="fgrp-lbl"><i class="ti ti-package"></i>Item <span class="req">*</span>${addBtn('sm-addrow', !edit)}</div>
-      <div class="form-stack" style="gap:8px;">${d.rows.map((r,i) => `<div class="spec-row"><div class="rno">Item ${i+1}</div>
-        <div class="rcol"><input class="date-input${has('r',i)?' bad':''}" data-si="${i}" data-sk="name" type="text" placeholder="e.g. Trauma, Main Store, Imported…" value="${esc(r.name)}" autocomplete="off"/>
-          <input class="date-input" data-si="${i}" data-sk="description" type="text" placeholder="Description (optional)" value="${esc(r.description)}" autocomplete="off"/></div>
+      <div class="form-stack" style="gap:8px;">${d.rows.map((r,i) => `<div class="spec-row one"><div class="rno">Item ${i+1}</div>
+        <input class="date-input${has('r',i)?' bad':''}" data-si="${i}" data-sk="name" type="text" placeholder="Item e.g. Trauma, Imported…" value="${esc(r.name)}" autocomplete="off"/>
+        <input class="date-input" data-si="${i}" data-sk="description" type="text" placeholder="Description (optional)" value="${esc(r.description)}" autocomplete="off"/>
         ${d.rows.length>1 && !edit ? `<button class="ib sm danger" type="button" title="Remove row" data-act="sm-delrow" data-i="${i}"><i class="ti ti-trash"></i></button>` : '<span></span>'}</div>`).join('')}</div></div>`;
   specPanelEl().innerHTML = `
     <div class="pph"><h3><i class="ti ti-forms"></i><span>${edit?'Edit Specs Setting':'Add Specs Setting'}</span></h3>
       <button class="pph-close" data-act="sm-close" title="Close"><i class="ti ti-x"></i></button></div>
     <div class="ppb"><div class="form-stack">
-      <div class="edit-banner ${edit?'show':''}"><i class="ti ti-pencil"></i> Editing existing record · ID ${edit?(((data[d.t]||[]).find(r=>r.id===d.id)||{}).sid||''):''}</div>
+      <div class="edit-banner ${edit?'show':''}"><i class="ti ti-pencil"></i> Editing existing record</div>
       <div class="field"><div class="fgrp-lbl">Specs ${d.isNew?'':'<span class="req">*</span>'}</div>
         <div class="chips${E.t?' bad':''}">${specTypes().map(chip).join('')}${edit?'':`<button type="button" class="chip new${d.isNew?' on':''}" data-act="sm-type" data-v="__new__"><i class="ti ti-plus"></i>New Specs</button>`}</div></div>
       ${names}
@@ -1442,8 +1444,12 @@ function entryView(r){
   const item = liveName('item', r.itemId, r.itemName);
   const specs = liveName('specs', r.specsId, r.specsName);
   const desc = (r.desc || '').trim();
-  const extras = Object.keys(r.extras||{}).map(key => liveName(key, r.extras[key], '')).filter(Boolean);
-  return { mb, item, specs, extras, desc, label:[item, specs, ...extras, desc].filter(Boolean).join(LABEL_SEP) };
+  const ex = r.extras || {};
+  const ms  = ex.matsource ? liveName('matsource', ex.matsource, '') : '';
+  const cat = ex.itemcat   ? liveName('itemcat',   ex.itemcat,   '') : '';
+  const extras = Object.keys(ex).filter(key => key!=='matsource' && key!=='itemcat').map(key => liveName(key, ex[key], '')).filter(Boolean);
+  /* sequence:  Material Source - Item - Category - Specs - Description */
+  return { mb, ms, item, cat, specs, extras, desc, label:[ms, item, cat, specs, ...extras, desc].filter(Boolean).join(LABEL_SEP) };
 }
 
 /* flat list for other modules */
@@ -1451,7 +1457,7 @@ function publishCatalog(){
   try {
     const out = data.itemlist.map(r => { const v = entryView(r);
       return { id:r.id, medbranchId:r.medbranchId, medbranch:v.mb, itemId:r.itemId, item:v.item,
-               specsId:r.specsId, specs:v.specs, desc:v.desc, label:v.label, status:r.status }; });
+               specsId:r.specsId, specs:v.specs, matsource:v.ms, itemcat:v.cat, desc:v.desc, label:v.label, status:r.status }; });
     localStorage.setItem(CATALOG_KEY, JSON.stringify(out));
   } catch(e){ console.warn('[module] catalog publish failed', e.message); }
 }
@@ -1517,7 +1523,7 @@ function visibleEntries(){
   const D = s.dup ? dupListSet() : null;
   return data.itemlist.filter(r => (s.filter==='all' || r.status===s.filter) && (!s.mb || r.medbranchId===s.mb) && (!D || D.has(r.id)))
     .map(r => ({ r, v:entryView(r) }))
-    .filter(x => !q || (x.v.mb+' '+x.v.label).toLowerCase().includes(q));
+    .filter(x => !q || matchAll(q, x.v.mb+' '+x.v.label));
 }
 
 function renderListTable(k){
@@ -1537,7 +1543,7 @@ function renderListTable(k){
     const r = x.r, v = x.v, armed = armedDelete && armedDelete.k===k && armedDelete.id===r.id;
     return `<tr data-rid="${r.id}"${DL.has(r.id) ? ' class="dup-row"' : ''}>
       <td><span class="spec-chip"><i class="ti ti-bone"></i>${esc(v.mb || '—')}</span></td>
-      <td class="merged" title="${esc(v.label)}">${DL.has(r.id) ? DUP_BADGE : ''}${v.raw ? esc(v.label) : `<strong>${esc(v.item)}</strong>${sep}${esc(v.specs)}${(v.extras||[]).map(e => sep+esc(e)).join('')}${v.desc ? sep+`<span class="d">${esc(v.desc)}</span>` : ''}`}</td>
+      <td class="merged" title="${esc(v.label)}">${DL.has(r.id) ? DUP_BADGE : ''}${v.raw ? esc(v.label) : [v.ms?esc(v.ms):'', v.item?`<strong>${esc(v.item)}</strong>`:'', v.cat?esc(v.cat):'', v.specs?esc(v.specs):'', ...(v.extras||[]).map(esc), v.desc?`<span class="d">${esc(v.desc)}</span>`:''].filter(Boolean).join(sep)}</td>
       <td><span class="st-badge ${r.status}">${r.status==='active'?'Active':'Inactive'}</span></td>
       <td class="acts"><div class="act-btns">
         <button class="ib sm" title="Edit" data-act="edit" data-k="${k}" data-id="${r.id}"><i class="ti ti-pencil"></i></button>
@@ -1545,13 +1551,13 @@ function renderListTable(k){
         <button class="ib sm danger ${armed?'armed':''}" title="${armed?'Click again to confirm':'Delete'}" data-act="del" data-k="${k}" data-id="${r.id}"><i class="ti ti-${armed?'check':'trash'}"></i></button>
       </div></td></tr>`;
   }).join('');
-  body.innerHTML = `<table class="log-table"><thead><tr><th style="width:190px;">Medical Domain</th><th>Item - Specs - Description</th><th style="width:90px;">Status</th><th style="width:110px;"></th></tr></thead><tbody>${trs}</tbody></table>`;
+  body.innerHTML = `<table class="log-table"><thead><tr><th style="width:190px;">Medical Domain</th><th>Material Source - Item - Category - Specs - Description</th><th style="width:90px;">Status</th><th style="width:110px;"></th></tr></thead><tbody>${trs}</tbody></table>`;
 }
 
 function exportCsv(){
   const cell = x => '"' + String(x ?? '').replace(/"/g,'""') + '"';
-  const rows = [['Medical Domain','Item Name','Specs','Description','Item List Entry','Status']]
-    .concat(visibleEntries().map(x => [x.v.mb, x.v.item, x.v.specs, x.v.desc, x.v.label, x.r.status]));
+  const rows = [['Medical Domain','Material Source','Item Name','Category','Specs','Description','Item List Entry','Status']]
+    .concat(visibleEntries().map(x => [x.v.mb, x.v.ms, x.v.item, x.v.cat, x.v.specs, x.v.desc, x.v.label, x.r.status]));
   if (rows.length === 1) return showToast('Nothing to export','error');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob(['\ufeff' + rows.map(r => r.map(cell).join(',')).join('\r\n')], {type:'text/csv;charset=utf-8'}));
@@ -1595,12 +1601,12 @@ function selHTML(kind, field, cur, ph, snap, bad){
 function draftLabels(){
   const v = draft.vals || {}, t = x => (x||'').trim();
   return (draft.rows||[]).filter(r => t(r.specs))
-    .map(r => [t(v.item), t(r.specs), t(v.matsource), t(v.itemcat), t(r.desc)].filter(Boolean).join(LABEL_SEP));
+    .map(r => [t(v.matsource), t(v.item), t(v.itemcat), t(r.specs), t(r.desc)].filter(Boolean).join(LABEL_SEP));
 }
 function updateDraftPreview(){
   const el = document.getElementById('lm-preview'); if (!el) return;
   const t = draftLabels();
-  el.innerHTML = t.length ? t.map(x => `<div><i class="ti ti-arrows-join-2"></i> ${esc(x)}</div>`).join('') : '<i class="ti ti-arrows-join-2"></i> Item - Specs - Description will appear here';
+  el.innerHTML = t.length ? t.map(x => `<div><i class="ti ti-arrows-join-2"></i> ${esc(x)}</div>`).join('') : '<i class="ti ti-arrows-join-2"></i> Material Source - Item - Category - Specs - Description will appear here';
   el.classList.toggle('empty', !t.length);
 }
 
@@ -1619,9 +1625,10 @@ function cbHTML(id, kind, val, ph, bad){
 function specRowsHTML(d){
   const many = d.rows.length > 1;
   return d.rows.map((r,i) => `
-    <div class="spec-row">
+    <div class="spec-row one">
       <div class="rno">Specs ${i+1}</div>
       ${cbHTML('r:'+i, 'specs', r.specs, 'Search or type specs…', lmErrs.has('r'+i))}
+      <input class="date-input" data-r="${i}" data-rf="desc" type="text" placeholder="Description (optional)" value="${esc(r.desc||'')}" autocomplete="off"/>
       ${many && !d.id ? `<button class="ib sm danger" type="button" title="Remove row" data-act="row-del" data-i="${i}"><i class="ti ti-trash"></i></button>` : '<span></span>'}
     </div>`).join('');
 }
@@ -2031,7 +2038,7 @@ function wireDelegation(){
     if (LOCKED_ACTS.has(act) && !cacheReady()) return;
 
     switch(act){
-      case 'add':    k==='specsetting' ? openSpecForm() : k==='itemlist' ? openListModal() : openForm(k); break;
+      case 'add':    k==='specsetting' ? openSpecForm(null, el.dataset.t) : k==='itemlist' ? openListModal() : openForm(k); break;
       case 'edit':   k==='specsetting' ? openSpecForm(id, el.dataset.t) : k==='itemlist' ? openListModal(id) : openForm(k, id); break;
       case 'sm-close':    closeSpecModal(); break;
       case 'sm-save':     saveSpec(false); break;
