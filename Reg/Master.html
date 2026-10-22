@@ -717,7 +717,7 @@ function persist(){
   publishCatalog();
 }
 /* ── Specs Settings → Google Sheet: ID | Specs | Item | Description | Status ── */
-const SPECS_API   = 'https://script.google.com/macros/s/AKfycbyY3pSYw1m0aaI43_8prqeHrnS-pP-VkHYk40qvYO8YInjVxaRayK3vWyXNabrJotiWfQ/exec';
+const SPECS_API   = 'https://script.google.com/macros/s/AKfycbwCnVKZkbWPLa-3YK0x_HiCI_IpINs5A1pfumst72EIpId6NAbbtlI1F4E8MA8T5XlHhQ/exec';
 const SPECS_SHEET = 'Specs Settings';
 const SPECS_SNAP_KEY = 'master_specs_snapshot_v1';   // last state known to be in the sheet: { sid: [ID,Specs,Item,Description,Status] }
 const specsLoadSnap = () => { try { return JSON.parse(localStorage.getItem(SPECS_SNAP_KEY) || 'null'); } catch(e){ return null; } };
