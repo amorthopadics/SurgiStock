@@ -1240,7 +1240,7 @@ console.log('[AP2] IDB bridge ready — all data served from IndexedDB via Admin
     <nav id="sub-bar" role="menu" aria-hidden="false">
       <div class="sb2-header" onclick="toggleSidebar()" title="Toggle menu">
         <i class="ti ti-users" id="sb2-icon"></i>
-        <span id="sb2-title">Employees</span>
+        <span id="sb2-title">Items</span>
       </div>
       <div class="sb2-nav" id="sb2-nav"></div>
     </nav>
@@ -1264,8 +1264,8 @@ console.log('[AP2] IDB bridge ready — all data served from IndexedDB via Admin
        in JS) — same behavior as before, just a different look. -->
   <nav id="icon-bar" aria-label="Navigation">
     <div class="ib-scroll" id="ib-scroll">
-      <button class="dock-item active" id="ib-emp" style="background:var(--accent);" onclick="ibOpen('ib-emp',this)" title="Employees">
-        <i class="ti ti-users"></i><span class="dock-tip">Employees</span>
+      <button class="dock-item active" id="ib-emp" style="background:var(--accent);" onclick="ibOpen('ib-emp',this)" title="Items">
+        <i class="ti ti-users"></i><span class="dock-tip">Items</span>
       </button>
 
       <button class="dock-item" id="ib-bike" style="background:var(--teal);" onclick="ibOpen('ib-bike',this)" title="Bike Fleet">
@@ -1540,14 +1540,14 @@ async function cmRefresh(key, btn) {
    with a permKey are hidden until _applyPermissions() is called.            */
 const SECTIONS = {
   'ib-emp': {
-    icon:'ti-users', label:'Employees',
-    pageLabel:'Employees', pageSub:'Staff directory',
+    icon:'ti-users', label:'Items',
+    pageLabel:'Items', pageSub:'Staff directory',
     pillBg:'var(--accent-dim)', pillColor:'var(--accent)', pillIcon:'ti-users',
-    permKey: 'ap2_employee',   // ← Permissions sheet column
+    permKey: 'ap2_item',   // ← Permissions sheet column
     groups:[
       { label:'Directory', items:[
-		{ label:'Employee List', file:'Reg/Master.html', icon:'ti-list',      sub:'All staff records'     },
-        { label:'Add Employee',  file:'Reg/Rate.html', icon:'ti-user-plus', sub:'Register new employee' },
+		{ label:'Items List', file:'Reg/Master.html', icon:'ti-list',      sub:'All item records'     },
+        { label:'Add Items',  file:'Reg/Rate.html', icon:'ti-user-plus', sub:'Add new Item' },
       ]},
       { label:'Documents', items:[
         { label:'Expiring Docs', file:'Reg/empExp.html', icon:'ti-file-x', sub:'Visa · EID · Labour', badge:true },
