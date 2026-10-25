@@ -6,16 +6,15 @@
 <title>Orders</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
-<script src="https://amorthopadics.github.io/SurgiStock/shared/api.js?v=1"></script>
-<script src="https://amorthopadics.github.io/SurgiStock/shared/auth.js?v=7"></script>
-<script src="https://amorthopadics.github.io/SurgiStock/shared/accessGuard.js"></script>
-<script src="https://amorthopadics.github.io/SurgiStock/shared/dataLayer.js?v=8"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheWatcher.js?v=1"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/api.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheSync.js?v=1"></script>
-
+<script src="https://amorthopadics.github.io/SurgiStock/shared/auth.js"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/accessGuard.js"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/dataLayer.js"></script>
 <style>
-:root,[data-theme="dark"]{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2333;--surface:#21262d;--border:#30363d;--border2:#444c56;--text:#e6edf3;--text2:#8b949e;--accent:#58a6ff;--accent-dim:rgba(88,166,255,.12);--teal:#39d353;--teal-dim:rgba(57,211,83,.12);--amber:#e3b341;--red:#f85149;--red-dim:rgba(248,81,73,.12);--orange:#f0883e;--orange-dim:rgba(240,136,62,.12);--radius:8px;--radius-lg:12px;--font:'Sora',sans-serif;--mono:'JetBrains Mono',monospace;}
-[data-theme="light"]{--bg:#f0f2f5;--bg2:#fff;--bg3:#e8ecf0;--surface:#fff;--border:#c8d0d9;--border2:#9aa5b1;--text:#0d1117;--text2:#3d454f;--accent:#0550ae;--accent-dim:rgba(5,80,174,.12);--teal:#116329;--teal-dim:rgba(17,99,41,.13);--amber:#7d4e00;--red:#a8111b;--red-dim:rgba(168,17,27,.11);--orange:#953800;--orange-dim:rgba(149,56,0,.13);}
+:root,[data-theme="dark"]{color-scheme:dark;--bg:#0d1117;--bg2:#161b22;--bg3:#1c2333;--surface:#21262d;--border:#30363d;--border2:#444c56;--text:#e6edf3;--text2:#8b949e;--accent:#58a6ff;--accent-dim:rgba(88,166,255,.12);--teal:#39d353;--teal-dim:rgba(57,211,83,.12);--amber:#e3b341;--red:#f85149;--red-dim:rgba(248,81,73,.12);--orange:#f0883e;--orange-dim:rgba(240,136,62,.12);--radius:8px;--radius-lg:12px;--font:'Sora',sans-serif;--mono:'JetBrains Mono',monospace;}
+[data-theme="light"]{color-scheme:light;--bg:#f0f2f5;--bg2:#fff;--bg3:#e8ecf0;--surface:#fff;--border:#c8d0d9;--border2:#9aa5b1;--text:#0d1117;--text2:#3d454f;--accent:#0550ae;--accent-dim:rgba(5,80,174,.12);--teal:#116329;--teal-dim:rgba(17,99,41,.13);--amber:#7d4e00;--red:#a8111b;--red-dim:rgba(168,17,27,.11);--orange:#953800;--orange-dim:rgba(149,56,0,.13);}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px}
 body{display:flex;flex-direction:column}
@@ -79,14 +78,69 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border2);padding:9px 16px;border-radius:var(--radius);z-index:99;display:none;font-size:13px}
 .toast.error{border-color:var(--red);color:var(--red)}.toast.success{border-color:var(--teal)}
 @media(max-width:600px){.g2{grid-template-columns:1fr}}
+
+/* ═══ responsive order window ═══ */
+input[type=number]{-moz-appearance:textfield;appearance:textfield}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+#view{overflow-x:auto}#view table{min-width:680px}
+.ib{flex:none;transition:.12s}.ib:hover{border-color:var(--accent);color:var(--accent)}
+.ib:disabled{opacity:.5;pointer-events:none}
+.ib.lg{width:40px;height:40px;font-size:18px}
+.ib.pri{background:var(--accent);color:#fff;border-color:var(--accent)}.ib.pri:hover{color:#fff;filter:brightness(1.1)}
+.ib.dng:hover{border-color:var(--red);color:var(--red)}
+.modal{max-width:860px;max-height:calc(100dvh - 24px);overflow:hidden}
+.mh{flex-wrap:wrap;row-gap:8px}
+.mh .ttl{display:flex;align-items:center;gap:8px;font-size:15px;min-width:0}
+.mh .ttl i{font-size:18px;color:var(--accent)}
+.mh .chips{flex:1 1 auto;min-width:0}
+.mh .x{margin-left:auto}
+.mb>*{flex-shrink:0}
+.fg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,1.3fr);gap:10px}
+.fg label,.pick label{display:flex;align-items:center;gap:5px}
+.fg label i,.pick label i{font-size:14px}
+.sbox{position:relative}.sbox>i{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text2);pointer-events:none;font-size:16px}
+.sbox input{padding-left:34px;padding-top:9px;padding-bottom:9px}
+.di.add{color:var(--teal);font-weight:600;display:flex;align-items:center;gap:6px}
+.di.add i{font-size:15px}
+.lines{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;background:var(--bg2)}
+.ln{display:grid;grid-template-columns:minmax(0,1fr) 84px 104px 34px;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border)}
+.ln:last-child{border-bottom:0}
+.ln.hd{background:var(--bg3);color:var(--text2);font-size:12px;font-weight:600;padding:10px 12px}
+.ln .it{min-width:0;grid-area:it}.ln .it b{display:block;font-weight:500;overflow-wrap:anywhere}
+.ln .it small{color:var(--text2);font-size:11px}
+.ln .stk{text-align:right;font-family:var(--mono);grid-area:stk}.ln .stk .sl{display:none;font-family:var(--font);color:var(--text2);font-size:11px;margin-right:6px}
+.ln .qc{grid-area:qty}.ln .rm{grid-area:x}
+.ln .qc input{font-family:var(--mono);padding:6px 9px}
+.ln .qc input.bad{border-color:var(--amber);box-shadow:0 0 0 3px rgba(227,179,65,.15)}
+.ln.none{display:block;text-align:center;color:var(--text2)}
+.mf{gap:10px}.mf .sum{margin-right:auto;font-size:12px;color:var(--text2)}
+.mf .warn{flex:1;min-width:0}
+@media(max-width:760px){
+  .fg{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.fg .w2{grid-column:1/-1}
+}
+@media(max-width:700px){
+  .bar .btn .lbl{display:none}.bar .btn{width:36px;height:36px;padding:0;justify-content:center;font-size:16px}
+  .bar h1{width:100%}.tools input{max-width:none}
+}
+@media(max-width:560px){
+  .ov{padding:0;align-items:stretch}
+  .modal{max-width:none;width:100%;height:100dvh;max-height:none;border-radius:0;border:0}
+  .mh,.mf{padding:10px 12px}.mb{padding:12px}
+  .mh .chips{order:3;flex-basis:100%;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}
+  .mh .chip{white-space:nowrap}
+  .ln.hd{display:none}
+  .ln{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"it x" "stk qty";row-gap:8px}
+  .ln .stk{text-align:left;align-self:center}.ln .stk .sl{display:inline}
+  .ln .qc{justify-self:end;width:112px}
+}
 </style>
 </head>
 <body>
 <div class="bar">
   <h1><i class="ti ti-truck-delivery"></i>Orders</h1>
   <div class="tabs" id="tabs"></div>
-  <button class="btn out" onclick="openForm('out')"><i class="ti ti-arrow-up-right"></i>New Order (Outgoing)</button>
-  <button class="btn in" onclick="openForm('in')"><i class="ti ti-arrow-down-left"></i>Add Items (Incoming)</button>
+  <button class="btn out" title="New Order (Outgoing)" aria-label="New Order (Outgoing)" onclick="openForm('out')"><i class="ti ti-arrow-up-right"></i><span class="lbl">New Order (Outgoing)</span></button>
+  <button class="btn in" title="Add Items (Incoming)" aria-label="Add Items (Incoming)" onclick="openForm('in')"><i class="ti ti-arrow-down-left"></i><span class="lbl">Add Items (Incoming)</span></button>
   <button class="ib cache-ind warn" id="cache-ind" type="button" title="Cache: waiting…"><i class="ti ti-database"></i></button>
 </div>
 <main>
@@ -95,35 +149,34 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
 </main>
 
 <div class="ov" id="ov">
-  <div class="modal">
-    <div class="mh"><i class="ti" id="m-ico"></i><span id="m-title"></span></div>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="m-title">
+    <div class="mh">
+      <div class="ttl"><i class="ti" id="m-ico"></i><span id="m-title"></span></div>
+      <!-- OUTGOING only: Type chips (from the cache) -->
+      <div class="chips" id="f-types"></div>
+      <button type="button" class="ib x" title="Close" aria-label="Close" onclick="closeForm()"><i class="ti ti-x"></i></button>
+    </div>
     <div class="mb">
-      <div class="g2">
-        <div><label>Store <span class="req">*</span></label><select id="f-store"></select></div>
-        <div><label>Date <span class="req">*</span></label><input type="date" id="f-date"/></div>
-
-        <!-- OUTGOING: Type chips → Name drop-down, both from the cache -->
-        <div class="span2" id="f-out">
-          <label>Customer / Hospital / Department — Type <span class="req">*</span></label>
-          <div class="chips" id="f-types"></div>
-          <label style="margin-top:10px">Name <span class="req">*</span></label>
-          <div class="cb" id="f-pcb"></div>
-        </div>
-        <!-- INCOMING: supplier, free text -->
-        <div class="span2" id="f-in"><label>Supplier</label><input id="f-party"/></div>
-
-        <div class="span2"><label>Reference / Note</label><input id="f-note"/></div>
+      <div class="fg">
+        <div><label><i class="ti ti-building-store"></i>Store <span class="req">*</span></label><select id="f-store"></select></div>
+        <div><label><i class="ti ti-calendar"></i>Date <span class="req">*</span></label><input type="date" id="f-date"/></div>
+        <!-- OUTGOING: Name (by Type) · INCOMING: Supplier (from Specs Settings, can add new) -->
+        <div class="w2"><label id="f-plbl"></label><div class="cb" id="f-pcb"></div></div>
+        <div class="w2"><label><i class="ti ti-notes"></i>Reference / Note</label><input id="f-note" autocomplete="off"/></div>
       </div>
 
       <div class="pick">
-        <label>Add items (from Item List) — tick as many as you need <span class="req">*</span></label>
-        <input id="f-search" placeholder="Type to search items…" autocomplete="off" oninput="showDD()" onfocus="showDD()"/>
+        <label><i class="ti ti-packages"></i>Add items (from Item List) — tick as many as you need <span class="req">*</span></label>
+        <div class="sbox"><i class="ti ti-search"></i><input id="f-search" placeholder="Type to search items…" autocomplete="off" oninput="showDD()" onfocus="showDD()"/></div>
         <div class="dd" id="dd"></div>
       </div>
-      <table class="lines"><thead><tr><th>Item</th><th class="n" style="width:90px">In stock</th><th class="n" style="width:100px">Qty</th><th style="width:36px"></th></tr></thead><tbody id="lines"></tbody></table>
-      <div class="warn" id="m-warn"></div>
+      <div class="lines" id="lines"></div>
     </div>
-    <div class="mf"><button class="btn" onclick="closeForm()">Cancel</button><button class="btn pri" id="m-save" onclick="saveOrder()"><i class="ti ti-check"></i><span id="m-save-t">Save</span></button></div>
+    <div class="mf">
+      <span class="sum" id="m-sum"></span><span class="warn" id="m-warn"></span>
+      <button type="button" class="ib lg" title="Cancel" aria-label="Cancel" onclick="closeForm()"><i class="ti ti-x"></i></button>
+      <button type="button" class="ib lg pri" id="m-save" title="Save" aria-label="Save" onclick="saveOrder()"><i class="ti ti-check"></i></button>
+    </div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -149,7 +202,7 @@ function showToast(m,t){const e=$('toast');e.textContent=m;e.className='toast '+
 const session=AP2Api.session,post=AP2Api.post,errText=m=>AP2Api.errText(m);
 
 /* ═══ STATE ═══ */
-let items=[],stores=[],parties=[],types=[];     // from the cache
+let items=[],stores=[],parties=[],types=[],suppliers=[],supplierKind='Supplier';     // from the cache
 let orders=rd(OK,[]),ordersLoaded=false;          // from the sheet
 let tab='all',formType='out',draft=null,pcomb=null,picked=new Set(),busy=false,lastPType='';
 
@@ -164,7 +217,7 @@ const typeIcon=k=>ICONS[k]||'ti-tag';
 const cap=t=>t.charAt(0).toUpperCase()+t.slice(1);
 const IGN=/^(item\s*names?|item\s*lists?|item\s*categor(y|ies)|stores?(\s*branch)?|medical\s*domains?|material\s*sources?|specs)$/i;
 function applyRows(rows){
-  const it=[],st=[],pa=[],T=new Map();
+  const it=[],st=[],pa=[],su=[],T=new Map();
   rows.forEach(r=>{
     if(!Array.isArray(r)||String(r[0]).toLowerCase()==='id')return;
     const id=String(r[0]).trim(),kind=String(r[1]??'').trim(),a=String(r[2]??'').trim(),b=String(r[3]??'').trim();
@@ -173,17 +226,19 @@ function applyRows(rows){
     const lenient=!/^(inactive|in-active|no|0|false|disabled)$/i.test(String(r[4]??'').trim());
     if(/^item\s*lists?$/i.test(kind)){if(strict&&b)it.push({id,domain:a,label:b});return;}
     if(/^stores?(\s*branch)?$/i.test(kind)){if(strict)st.push({id,name:a});return;}
+    /* Specs Settings → Specs = "Supplier": Item column = supplier name (used by Incoming orders) */
+    if(/^suppliers?$/i.test(kind)){supplierKind=kind;if(lenient&&!su.some(x=>norm(x.name)===norm(a)))su.push({sid:id,name:a});return;}
     if(IGN.test(kind)||norm(b)!==ELIGIBLE||!lenient)return;
     const k=norm(kind),t=T.get(k);
     if(!t)T.set(k,{k,l:cap(kind)});else if(/^[a-z]/.test(t.l)&&/^[A-Z]/.test(kind))t.l=kind;
     pa.push({sid:id,name:a,type:k});
   });
-  items=it;stores=st;parties=pa;types=[...T.values()].sort((a,b)=>a.l.localeCompare(b.l));
+  items=it;stores=st;parties=pa;suppliers=su.sort((x,y)=>x.name.localeCompare(y.name));types=[...T.values()].sort((a,b)=>a.l.localeCompare(b.l));
 }
 const cache=AP2Cache.create({
   indicator:'cache-ind',
   toast:(m,t)=>showToast(m,t),
-  title:()=>'Cache loaded · '+items.length+' items · '+stores.length+' stores · '+parties.length+' names',
+  title:()=>'Cache loaded · '+items.length+' items · '+stores.length+' stores · '+parties.length+' names · '+suppliers.length+' suppliers',
   onRows:rows=>{applyRows(rows);render();return items.length;}
 });
 
@@ -237,24 +292,49 @@ function render(){
     :`<div class="empty">${ordersLoaded?'No orders yet. Use the buttons above to create one.':'Loading orders…'}</div>`;
 }
 
-/* ═══ searchable drop-down (same behaviour as Rate Threshold) ═══ */
+/* ═══ searchable drop-down (same behaviour as Rate Threshold) ═══
+   o.add(text) → optional: when the typed text is not in the list, an "Add … as new" row appears (returns the new item or null) */
 function combo(host,o){
   host.innerHTML='<input autocomplete="off" placeholder="'+esc(o.ph)+'"/><div class="dd2"></div>';
-  const inp=host.firstChild,dd=host.lastChild;let cur=[],hi=-1,sel=null;
+  const inp=host.firstChild,dd=host.lastChild;let cur=[],hi=-1,sel=null,wait=false;
   const close=()=>{dd.style.display='none';hi=-1};
-  function draw(q){const tk=words(q);cur=o.list().filter(x=>tk.every(w=>x.text.toLowerCase().includes(w))).slice(0,80);
-    dd.innerHTML=cur.length?cur.map((x,i)=>`<div class="di${i===hi?' hi':''}" data-i="${i}">${esc(x.text)}</div>`).join(''):'<div class="di mute">No matching names for this Type</div>';
+  function draw(q){const tk=words(q),all=o.list(),t=String(q||'').trim().replace(/\s+/g,' ');
+    cur=all.filter(x=>tk.every(w=>x.text.toLowerCase().includes(w))).slice(0,80);
+    if(o.add&&t&&!all.some(x=>norm(x.text)===norm(t)))cur.push({add:true,text:t});
+    dd.innerHTML=cur.length?cur.map((x,i)=>x.add?`<div class="di add${i===hi?' hi':''}" data-i="${i}"><i class="ti ti-plus"></i><span>Add “${esc(x.text)}” as new ${esc(o.addLabel||'entry')}</span></div>`
+      :`<div class="di${i===hi?' hi':''}" data-i="${i}">${esc(x.text)}</div>`).join(''):`<div class="di mute">${esc(o.empty||'No matching names for this Type')}</div>`;
     dd.style.display='block';}
   function set(it){sel=it;inp.value=it?it.text:'';close();o.onPick(it);}
+  async function choose(x){
+    if(!x)return;
+    if(!x.add)return set(x);
+    if(wait)return;wait=true;inp.disabled=true;
+    try{const r=await o.add(x.text);if(r)set(r);}finally{wait=false;inp.disabled=false;inp.focus();}
+  }
   inp.onfocus=()=>{inp.select();draw('');};
   inp.oninput=()=>{if(sel&&inp.value!==sel.text){sel=null;o.onPick(null);}hi=-1;draw(inp.value);};
-  inp.onblur=()=>setTimeout(()=>{close();inp.value=sel?sel.text:'';},150);
+  inp.onblur=()=>setTimeout(()=>{if(wait)return;close();inp.value=sel?sel.text:'';},150);
   inp.onkeydown=e=>{
     if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(dd.style.display!=='block')draw(sel?'':inp.value);hi=Math.max(0,Math.min(cur.length-1,hi+(e.key==='ArrowDown'?1:-1)));draw(sel?'':inp.value);const h=dd.querySelector('.hi');h&&h.scrollIntoView({block:'nearest'});}
-    else if(e.key==='Enter'){e.preventDefault();e.stopPropagation();const c=cur[hi>=0?hi:0];if(c)set(c);}
+    else if(e.key==='Enter'){e.preventDefault();e.stopPropagation();choose(cur[hi>=0?hi:0]);}
     else if(e.key==='Escape'&&dd.style.display==='block'){e.stopPropagation();close();}};
-  dd.onmousedown=e=>{e.preventDefault();const d=e.target.closest('.di');if(d&&d.dataset.i!=null)set(cur[+d.dataset.i]);};
+  dd.onmousedown=e=>{e.preventDefault();const d=e.target.closest('.di');if(d&&d.dataset.i!=null)choose(cur[+d.dataset.i]);};
   return{set,get:()=>sel,focus:()=>inp.focus(),input:inp};
+}
+
+/* New supplier → written to Specs Settings (same row format Master uses: ID | Specs | Item | Description | Status) */
+async function addSupplier(name){
+  name=String(name||'').trim().replace(/\s+/g,' ');if(!name)return null;
+  const ex=suppliers.find(x=>norm(x.name)===norm(name));if(ex)return{text:ex.name,sid:ex.sid};
+  const id=tsId(Date.now());
+  try{
+    const j=await post('addSpecsSetting',{rows:[{id,specs:supplierKind,item:name,description:'',status:'Active'}]});
+    const a=(j&&j.added&&j.added[0])||{},sid=String(a.id||id);
+    suppliers.push({sid,name});suppliers.sort((x,y)=>x.name.localeCompare(y.name));
+    try{if(cache.requestRefresh)cache.requestRefresh(true);}catch(e){}
+    showToast('Supplier added: '+name,'success');
+    return{text:name,sid};
+  }catch(e){showToast('Supplier not added: '+errText(e.message),'error');return null;}
 }
 
 /* ═══ FORM ═══ */
@@ -266,7 +346,7 @@ function openForm(t,id){
   picked=new Set();
   if(o){
     const pk=norm(o.partyType);
-    draft={id:o.id,no:o.no,ptype:pk,ptypeLabel:o.partyType,party:(o.party?{text:o.party,sid:o.partyId,type:pk}:null),lines:o.lines.map(l=>({...l})),storeName:o.storeName};
+    draft={id:o.id,no:o.no,ptype:o.type==='out'?pk:'',ptypeLabel:o.type==='out'?o.partyType:'',party:(o.party?{text:o.party,sid:o.partyId,type:pk}:null),lines:o.lines.map(l=>({...l})),storeName:o.storeName};
   }else{
     const dflt=types.some(x=>x.k===lastPType)?lastPType:(types.length===1?types[0].k:'');
     draft={id:null,no:'',ptype:dflt,ptypeLabel:'',party:null,lines:[],storeName:''};
@@ -274,34 +354,37 @@ function openForm(t,id){
   const out=formType==='out',edit=!!o;
   $('m-ico').className='ti '+(out?'ti-arrow-up-right':'ti-arrow-down-left');
   $('m-title').textContent=(edit?'Edit ':'New ')+(out?'Order — Outgoing':'Items — Incoming')+(edit?' '+o.no:'');
-  $('m-save-t').textContent=edit?'Update':'Save';
-  $('f-out').style.display=out?'':'none';
-  $('f-in').style.display=out?'none':'';
+  $('m-save').title=$('m-save').ariaLabel=edit?'Update':'Save';
+  $('f-types').style.display=out?'':'none';
   const opts=stores.slice();if(o&&!opts.some(s=>s.id===o.storeId))opts.push({id:o.storeId,name:o.storeName||o.storeId});
   $('f-store').innerHTML=opts.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
   $('f-store').value=o?o.storeId:opts[0].id;
   $('f-store').onchange=renderLines;
   $('f-date').value=o?o.date:new Date().toISOString().slice(0,10);
-  $('f-party').value=o&&!out?o.party:'';
   $('f-note').value=o?o.note:'';
   $('f-search').value='';$('dd').style.display='none';
-  if(out)drawPartyBlock();
+  drawPartyBlock();
   renderLines();$('ov').classList.add('open');
 }
 function closeForm(){$('ov').classList.remove('open');$('dd').style.display='none';draft=null;}
 
-/* Type chips → Name drop-down: changing the Type clears the Name and reloads the list for that Type */
+/* OUTGOING: Type chips → Name drop-down (changing the Type clears the Name).
+   INCOMING: Supplier drop-down (Specs Settings → Supplier) with "add as new". */
 function drawPartyBlock(){
-  const d=draft;
+  const d=draft,out=formType==='out';
   const TL=(!d.ptype||types.some(t=>t.k===d.ptype))?types:types.concat({k:d.ptype,l:d.ptypeLabel||d.ptype});
   $('f-types').classList.remove('bad');$('f-pcb').classList.remove('bad');
-  $('f-types').innerHTML=TL.length?TL.map(t=>`<button type="button" class="chip${d.ptype===t.k?' on':''}" data-v="${esc(t.k)}"><i class="ti ${typeIcon(t.k)}"></i>${esc(t.l)}</button>`).join('')
+  $('f-plbl').innerHTML=out?'<i class="ti ti-user"></i>Name <span class="req">*</span>':'<i class="ti ti-truck-delivery"></i>Supplier <span class="req">*</span>';
+  if(out)$('f-types').innerHTML=TL.length?TL.map(t=>`<button type="button" class="chip${d.ptype===t.k?' on':''}" data-v="${esc(t.k)}"><i class="ti ${typeIcon(t.k)}"></i>${esc(t.l)}</button>`).join('')
     :'<span class="dim" style="font-size:12px">No entries with Description “Customer” found in the Master sheet yet.</span>';
-  pcomb=combo($('f-pcb'),{ph:d.ptype?'Search name…':'Choose a Type first',
-    list:()=>d.ptype?parties.filter(p=>p.type===d.ptype).map(p=>({text:p.name,sid:p.sid,type:p.type})):[],
-    onPick:p=>{d.party=p;$('f-pcb').classList.remove('bad');}});
+  pcomb=combo($('f-pcb'),out?{ph:d.ptype?'Search name…':'Choose a Type first',
+      list:()=>d.ptype?parties.filter(p=>p.type===d.ptype).map(p=>({text:p.name,sid:p.sid,type:p.type})):[],
+      onPick:p=>{d.party=p;$('f-pcb').classList.remove('bad');}}
+    :{ph:'Search or add supplier…',empty:'No suppliers yet — type a name to add one',addLabel:'supplier',
+      list:()=>suppliers.map(x=>({text:x.name,sid:x.sid,type:'supplier'})),add:addSupplier,
+      onPick:p=>{d.party=p;$('f-pcb').classList.remove('bad');}});
   if(d.party)pcomb.set(d.party);
-  pcomb.input.disabled=!d.ptype;
+  pcomb.input.disabled=out&&!d.ptype;
 }
 $('f-types').onclick=e=>{const b=e.target.closest('.chip');if(!b||!draft)return;
   draft.ptype=b.dataset.v;draft.ptypeLabel='';draft.party=null;lastPType=draft.ptype;drawPartyBlock();pcomb.focus();};
@@ -312,7 +395,7 @@ function showDD(){
   const dd=$('dd'),keep=dd.scrollTop,q=$('f-search').value;
   const res=items.filter(i=>match(q,i.domain+' '+i.label)&&!draft.lines.some(l=>l.itemId===i.id)).slice(0,80);
   dd.innerHTML=(res.length?res.map(i=>`<div class="opt" data-id="${esc(i.id)}"><input type="checkbox" tabindex="-1" ${picked.has(i.id)?'checked':''}/><span><span class="dim">${esc(i.domain)} ·</span> ${esc(i.label)}</span></div>`).join(''):'<div class="di mute">No matching items</div>')
-    +`<div class="ddf"><span class="dim" style="font-size:12px">${picked.size} selected</span><button type="button" class="btn pri sm" data-add="1" ${picked.size?'':'disabled'}><i class="ti ti-plus"></i>Add selected</button></div>`;
+    +`<div class="ddf"><span class="dim" style="font-size:12px">${picked.size} selected</span><button type="button" class="btn pri sm" data-add="1" title="Add selected" aria-label="Add selected" ${picked.size?'':'disabled'}><i class="ti ti-plus"></i>${picked.size||''}</button></div>`;
   dd.style.display='block';dd.scrollTop=keep;
 }
 $('dd').onmousedown=e=>{
@@ -330,18 +413,28 @@ function addSelected(){
 function renderLines(){
   if(!draft)return;
   const sm=stockMap(draft.id),store=$('f-store').value;
-  $('lines').innerHTML=draft.lines.length?draft.lines.map((l,n)=>`<tr><td>${esc(l.label)}<div class="dim" style="font-size:11px">${esc(l.domain)}</div></td>
-    <td class="n">${sm[stockKey(store,l.itemId)]||0}</td>
-    <td><input type="number" min="1" step="1" value="${l.qty}" class="n" oninput="draft.lines[${n}].qty=Math.floor(+this.value)||0;checkWarn()"/></td>
-    <td><button class="btn sm" onclick="draft.lines.splice(${n},1);renderLines()"><i class="ti ti-x"></i></button></td></tr>`).join('')
-    :'<tr><td colspan="4" class="dim" style="text-align:center">Search above and tick the items to add</td></tr>';
+  $('lines').innerHTML=draft.lines.length?`<div class="ln hd"><span>Item</span><span style="text-align:right">In stock</span><span>Qty</span><span></span></div>`
+    +draft.lines.map((l,n)=>`<div class="ln">
+      <div class="it"><b>${esc(l.label)}</b><small>${esc(l.domain)}</small></div>
+      <div class="stk"><span class="sl">In stock</span>${sm[stockKey(store,l.itemId)]||0}</div>
+      <div class="qc"><input type="number" inputmode="numeric" min="1" step="1" value="${l.qty}" data-n="${n}" aria-label="Quantity" onwheel="this.blur()"/></div>
+      <button type="button" class="ib rm" data-rm="${n}" title="Remove" aria-label="Remove"><i class="ti ti-x"></i></button></div>`).join('')
+    :'<div class="ln none">Search above and tick the items to add</div>';
   checkWarn();
 }
+$('lines').addEventListener('input',e=>{const i=e.target.closest('input[data-n]');if(!i||!draft)return;draft.lines[+i.dataset.n].qty=Math.floor(+i.value)||0;checkWarn();});
+$('lines').addEventListener('focusin',e=>{if(e.target.matches('input[data-n]'))e.target.select();});
+$('lines').addEventListener('click',e=>{const b=e.target.closest('[data-rm]');if(!b||!draft)return;draft.lines.splice(+b.dataset.rm,1);renderLines();});
 function checkWarn(){
-  const w=$('m-warn');w.textContent='';if(formType!=='out'||!draft)return;
+  const w=$('m-warn');w.textContent='';
+  if(!draft){$('m-sum').textContent='';return;}
+  $('m-sum').textContent=draft.lines.length?draft.lines.length+' item'+(draft.lines.length>1?'s':'')+' · '+draft.lines.reduce((a,l)=>a+(l.qty||0),0)+' qty':'';
+  $('lines').querySelectorAll('input[data-n]').forEach(i=>i.classList.remove('bad'));
+  if(formType!=='out')return;
   const sm=stockMap(draft.id),store=$('f-store').value;
   const bad=draft.lines.filter(l=>l.qty>(sm[stockKey(store,l.itemId)]||0));
-  if(bad.length)w.textContent='⚠ Quantity exceeds stock for: '+bad.map(l=>l.label).join(', ')+' — you can still save.';
+  draft.lines.forEach((l,n)=>{if(bad.includes(l)){const i=$('lines').querySelector('input[data-n="'+n+'"]');i&&i.classList.add('bad');}});
+  if(bad.length){w.textContent='⚠ Quantity exceeds stock for '+bad.length+' item'+(bad.length>1?'s':'')+' — you can still save.';w.title=bad.map(l=>l.label).join(', ');}
 }
 
 /* ═══ SAVE / DELETE → Google Sheet ═══ */
@@ -350,14 +443,14 @@ async function saveOrder(){
   const d=draft,out=formType==='out',storeId=$('f-store').value,date=$('f-date').value;
   if(!storeId||!date)return showToast('Store and date are required','error');
   if(out&&!d.ptype){$('f-types').classList.add('bad');return showToast('Choose a Type','error');}
-  if(out&&!d.party){$('f-pcb').classList.add('bad');return showToast('Choose a name','error');}
+  if(!d.party){$('f-pcb').classList.add('bad');return showToast(out?'Choose a name':'Choose or add a supplier','error');}
   if(!d.lines.length)return showToast('Add at least one item','error');
   if(d.lines.some(l=>!(l.qty>0)))return showToast('Every quantity must be 1 or more','error');
   const st=stores.find(s=>s.id===storeId);
   const tl=out?(types.find(t=>t.k===d.ptype)||{l:d.ptypeLabel||d.ptype}).l:'';
   const order={
     id:d.id||tsId(Date.now()),type:formType,date,storeId,storeName:st?st.name:(d.storeName||storeId),
-    partyType:tl,partyId:out?d.party.sid:'',party:out?d.party.text:$('f-party').value.trim(),
+    partyType:out?tl:supplierKind,partyId:d.party.sid||'',party:d.party.text,
     note:$('f-note').value.trim(),lines:d.lines.map(l=>({itemId:l.itemId,label:l.label,domain:l.domain,qty:l.qty}))};
   busy=true;$('m-save').disabled=true;
   try{
