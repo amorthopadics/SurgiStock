@@ -8,6 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheWatcher.js?v=1"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/api.js?v=1"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/cacheSync.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/auth.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/accessGuard.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/dataLayer.js"></script>
@@ -581,49 +583,6 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 <script>
 'use strict';
 
-/* ── Cache layer: shared watcher with safe local fallback (unchanged from structure) ── */
-const _IDB_NAME  = 'ap2_fleet_cache';
-const _IDB_STORE = 'datasets';
-
-if (typeof window.AP2CacheWatcher === 'undefined') {
-  console.warn('[module] cacheWatcher.js did not load — using local fallback');
-  window.AP2CacheWatcher = (function () {
-    let _conn = null;
-    function _open() {
-      if (_conn) return Promise.resolve(_conn);
-      return new Promise((res, rej) => {
-        let done = false;
-        const req = indexedDB.open(_IDB_NAME);
-        const t = setTimeout(() => { if (!done) { done = true; rej(new Error('idb-open-timeout')); } }, 2000);
-        req.onsuccess = e => { if (!done) { done = true; clearTimeout(t); _conn = e.target.result; res(_conn); } };
-        req.onerror   = e => { if (!done) { done = true; clearTimeout(t); rej(e.target.error); } };
-      });
-    }
-    return {
-      init() {},
-      subscribe() { return () => {}; },
-      notifyNow() {},
-      getStatus() { return { healthy: false, mode: 'local-fallback', lastError: 'cacheWatcher.js not loaded' }; },
-      async readKey(key) {
-        try {
-          const db  = await _open();
-          if (!db.objectStoreNames.contains(_IDB_STORE)) return null;
-          const rec = await new Promise((res, rej) => {
-            const r = db.transaction(_IDB_STORE, 'readonly').objectStore(_IDB_STORE).get(key);
-            r.onsuccess = () => res(r.result || null);
-            r.onerror   = () => rej(r.error);
-          });
-          return (rec && rec.data) ? rec.data : null;
-        } catch (e) {
-          if (e && e.name === 'NotFoundError') return null;
-          console.warn('[module] fallback read failed:', e.message);
-          return null;
-        }
-      }
-    };
-  })();
-}
-
 /* ═══════════════════════════════════════════════════════
  *  MODULE CONFIG — add / rename fields here, UI follows
  *  field types: text · textarea · status
@@ -719,35 +678,12 @@ function persist(){
   publishCatalog();
 }
 /* ── Specs Settings → Google Sheet: ID | Specs | Item | Description | Status ── */
-const SPECS_API   = 'https://script.google.com/macros/s/AKfycbwCnVKZkbWPLa-3YK0x_HiCI_IpINs5A1pfumst72EIpId6NAbbtlI1F4E8MA8T5XlHhQ/exec';
 const SPECS_SHEET = 'Specs Settings';
 const SPECS_SNAP_KEY = 'master_specs_snapshot_v1';   // last state known to be in the sheet: { sid: [ID,Specs,Item,Description,Status] }
 const specsLoadSnap = () => { try { return JSON.parse(localStorage.getItem(SPECS_SNAP_KEY) || 'null'); } catch(e){ return null; } };
 const specsSaveSnap = m => { try { localStorage.setItem(SPECS_SNAP_KEY, JSON.stringify(m)); } catch(e){} };
-/* session → { sessionId, token } for the backend (adjust here if your portal stores them differently) */
-let AP2_SESSION = null;   // parent-frame handshake, same as accLog
-window.addEventListener('message', e => { if (e.data && e.data.type === 'ap-session-ready') AP2_SESSION = { sessionId:e.data.sessionId, token:e.data.token, email:e.data.email }; });
-try { window.parent.postMessage({ type:'ap-session-request' }, '*'); } catch(e){}
-function specsSession(){
-  let sid = '', tok = '';
-  try {
-    const raw = sessionStorage.getItem('ap_session') || localStorage.getItem('ap_session') || '';
-    if (raw){ try { const o = JSON.parse(raw); sid = o.sessionId || o.id || ''; tok = o.token || ''; } catch(e){ sid = raw; } }
-    sid = sid || sessionStorage.getItem('ap_sessionId') || localStorage.getItem('ap_sessionId') || '';
-    tok = tok || sessionStorage.getItem('ap_token') || localStorage.getItem('ap_token') || '';
-  } catch(e){}
-  if (!sid && !tok && AP2_SESSION){ sid = AP2_SESSION.sessionId || ''; tok = AP2_SESSION.token || ''; }
-  return { sessionId:sid, token:tok };
-}
-async function specsPost(action, payload){
-  const sess = specsSession();
-  if (!sess.sessionId && !sess.token) throw new Error('Not logged in');   // blocked before sending, like accLog
-  const res = await fetch(SPECS_API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify(Object.assign({ action }, sess, payload)) });
-  const j = await res.json();
-  if (!j || j.success === false) throw new Error((j && j.error) || (action + ' failed'));
-  return j;
-}
+/* backend calls live in shared/api.js (AP2Api) — endpoint, session and error texts are defined there once */
+const specsPost = (action, payload) => AP2Api.post(action, payload);
 /* every row of the sheet as the portal sees it:  sid → [ID, Specs, Item, Description, Status] */
 function specsCurrentMap(){
   assignSids();
@@ -760,17 +696,8 @@ function specsCurrentMap(){
 const toRowObj = r => ({ id:r[0], specs:r[1], item:r[2], description:r[3], status:r[4] });
 let _specsRun = null, _specsResync = false;
 /* sends only what changed since the last sync:  addSpecsSetting · updateSpecsSetting · deleteSpecsSetting */
-function specsErrText(m){
-  m = String(m || '');
-  if (/not logged in/i.test(m))          return 'You must be logged in to save changes';
-  if (/unauthori[sz]ed/i.test(m))        return 'Session expired — please log in again';
-  if (/forbidden/i.test(m))              return 'You do not have permission for this action';
-  if (/failed to fetch|network|load failed/i.test(m)) return 'Network error — check your connection';
-  return m || 'Unknown error';
-}
-function requestSpecsRefresh(){
-  try { window.parent.postMessage({ type:'ap-cache-request', key:_AP2_CACHE_KEY, force:true }, '*'); } catch(e){}
-}
+const specsErrText = m => AP2Api.errText(m);
+function requestSpecsRefresh(){ cache.requestRefresh(true); }
 function specsRunSync(){
   if (_specsRun){ _specsResync = true; return _specsRun; }
   _specsRun = (async () => {
@@ -809,7 +736,7 @@ async function syncSpecsSheet(opts){
     updateSyncInd(res.error);
     if (res.fatal && !(opts && opts.silent)){
       showToast(res.error, 'error');
-      try { localStorage.removeItem(PENDING_KEY); localStorage.removeItem(FAILED_KEY); localStorage.removeItem(SIG_KEY); } catch(e){}
+      try { localStorage.removeItem(PENDING_KEY); localStorage.removeItem(FAILED_KEY); cache.forgetSig(); } catch(e){}
       refreshFromCache();                      // drop the refused change, show what the sheet really has
     }
   } else {
@@ -820,12 +747,11 @@ async function syncSpecsSheet(opts){
   return res;
 }
 function startSpecsRetry(){
-  const retry = () => { if (specsPendingCount()) syncSpecsSheet({ silent:true }); };
-  window.addEventListener('online', retry);
-  setInterval(() => { if (navigator.onLine !== false) retry(); }, 10000);
+  /* waits for the network: retries when the browser comes back online and every 10 s while changes are pending */
+  AP2Api.startRetry(() => syncSpecsSheet({ silent:true }), specsPendingCount);
   const b = document.getElementById('sync-ind'); if (b) b.addEventListener('click', () => syncSpecsSheet());
   if (specsPendingCount()){ try { localStorage.setItem(FAILED_KEY, '1'); } catch(e){} }   // left over from last session → confirm when it goes through
-  updateSyncInd(); retry();
+  updateSyncInd();
 }
 async function specsSyncOnce(){
   const cur = specsCurrentMap(), snap = specsLoadSnap();
@@ -859,7 +785,7 @@ async function specsSyncOnce(){
     specsSaveSnap(next);
     try { localStorage.removeItem(PENDING_KEY); } catch(e){}
     requestSpecsRefresh();
-    if (rejected){ try { localStorage.removeItem(SIG_KEY); } catch(e){} }  // next cache poll reloads the sheet and drops rejected rows
+    if (rejected){ try { cache.forgetSig(); } catch(e){} }  // next cache poll reloads the sheet and drops rejected rows
     return { ok:true };
   } catch(e){
     specsSaveSnap(next);
@@ -880,54 +806,26 @@ async function specsSyncOnce(){
  * ═══════════════════════════════════════════════════════ */
 const PENDING_KEY  = 'master_setup_pending_sync';
 const SIG_KEY = 'master_setup_cache_sig_v3';
-const CACHE_POLL_MS = 4000;
-const CACHE = { timer:null, busy:false, count:0, loaded:false };
 /* nothing can be added / edited / deleted until the cache has been read once (otherwise the sheet could be overwritten with stale data) */
 const LOCKED_ACTS = new Set(['add','edit','add-list','toggle','del','ss-toggle','ss-del','ss-deltype','save','sm-save','sm-save-new','modal-save','modal-save-new','upload']);
-function cacheReady(){
-  if (CACHE.loaded) return true;
-  showToast('Cache not loaded yet — please wait before making changes','error');
-  return false;
-}
-function applyCacheLock(){ document.body.classList.toggle('cache-off', !CACHE.loaded); }
 
-function idbOpen(){
-  return new Promise((res, rej) => {
-    let done = false;
-    const req = indexedDB.open(_IDB_NAME);
-    const t = setTimeout(() => { if (!done){ done = true; rej(new Error('idb-open-timeout')); } }, 2500);
-    req.onsuccess = e => { if (!done){ done = true; clearTimeout(t); res(e.target.result); } };
-    req.onerror   = e => { if (!done){ done = true; clearTimeout(t); rej(e.target.error); } };
-  });
-}
-/* the Specs array inside a cache payload ({Specs:[…]}), or null */
-function pickSpecs(d){
-  if (!d || typeof d !== 'object' || Array.isArray(d)) return null;
-  const k = Object.keys(d).find(x => /^specs$/i.test(x) && Array.isArray(d[x]));
-  return k ? d[k] : null;
-}
-/* Same method as allEmp: AP2CacheWatcher.readKey(KEY) → payload.  allEmp has a fixed key ('ap2_employee');
-   for this dataset the key name is found once (record whose data has a "Specs" array), then reused.
-   To fix it by hand:  localStorage.master_cache_key = '<key>'  */
-let _AP2_CACHE_KEY = 'ap2_specsData'; try { _AP2_CACHE_KEY = localStorage.getItem('master_cache_key') || 'ap2_specsData'; } catch(e){}   // IndexedDB record that holds { Specs:[[…]] }
-async function discoverCacheKey(){
-  const db = await idbOpen();
-  if (!db.objectStoreNames.contains(_IDB_STORE)) return null;
-  return new Promise((res, rej) => {
-    const r = db.transaction(_IDB_STORE, 'readonly').objectStore(_IDB_STORE).openCursor();
-    r.onsuccess = () => { const c = r.result; if (!c) return res(null); if (c.value && pickSpecs(c.value.data)) return res(c.key); c.continue(); };
-    r.onerror = () => rej(r.error);
-  });
-}
-async function _readCache(){
-  if (!_AP2_CACHE_KEY) _AP2_CACHE_KEY = await discoverCacheKey();
-  if (!_AP2_CACHE_KEY) return null;
-  return AP2CacheWatcher.readKey(_AP2_CACHE_KEY);          // → { Specs:[[…]] } or null
-}
-function setCacheInd(state, title){
-  const el = document.getElementById('cache-ind'); if (!el) return;
-  el.className = 'ib cache-ind ' + state; el.title = title;
-}
+/* the cache button itself (IndexedDB read · portal push · polling · lock · colours) is shared/cacheSync.js.
+   Only what is specific to Master lives here: how rows become the portal's lists. */
+const cache = AP2Cache.create({
+  indicator : 'cache-ind',
+  sigKey    : SIG_KEY,
+  toast     : (m, t) => showToast(m, t),
+  hasPending: () => { try { return localStorage.getItem(PENDING_KEY) === '1'; } catch(e){ return false; } },
+  onPending : () => syncSpecsSheet({ silent:true }),
+  hasLocalData: () => specRows().length,
+  onLoaded  : () => applyCacheLock(),
+  onRows    : rows => { const n = applySpecsRows(rows); persist(); specsSaveSnap(specsCurrentMap()); updateSyncInd(); renderAll(); return n; }
+});
+const cacheReady = () => cache.requireReady();
+const applyCacheLock = () => document.body.classList.toggle('cache-off', !cache.isLoaded());
+const refreshFromCache = m => cache.refresh(m);
+const startCache = () => cache.start();
+
 /* cache rows → per-type lists (ids kept when the sheet ID matches an existing record, so Item List links survive) */
 function applySpecsRows(rows){
   const have = new Map();
@@ -969,63 +867,6 @@ function applySpecsRows(rows){
   };
   (data.itemlist||[]).forEach(e => { relink(e,'medbranchId','medbranchName','medbranch'); relink(e,'itemId','itemName','item'); relink(e,'specsId','specsName','specs'); });
   return count;
-}
-const sigOf = rows => { try { return String(rows.length) + ':' + JSON.stringify(rows); } catch(e){ return ''; } };
-let _emptyReadStreak = 0;                                  // one flaky empty read must not wipe good data
-function applyCachePayload(payload, manual){
-  const rows = pickSpecs(payload);
-  if (Array.isArray(rows) && !CACHE.loaded){ CACHE.loaded = true; applyCacheLock(); }      // cache was read (even if the sheet is still empty)
-  if (!rows || !rows.length) return false;
-  _emptyReadStreak = 0;
-  let pending = false, lastSig = ''; try { pending = localStorage.getItem(PENDING_KEY)==='1'; lastSig = localStorage.getItem(SIG_KEY)||''; } catch(e){}
-  if (pending){ setCacheInd('warn','Local changes waiting to sync — cache not applied'); syncSpecsSheet({ silent:true }); if (manual) showToast('Local changes are still syncing','info'); return true; }
-  const sig = sigOf(rows);
-  if (!manual && sig === lastSig){ setCacheInd('ok','Cache loaded · ' + (CACHE.count||rows.length) + ' rows'); return true; }   // nothing new
-  const n = applySpecsRows(rows);
-  CACHE.count = n; try { localStorage.setItem(SIG_KEY, sig); } catch(e){}
-  persist(); specsSaveSnap(specsCurrentMap()); updateSyncInd(); renderAll();
-  setCacheInd('ok','Cache loaded · ' + n + ' rows · ' + new Date().toLocaleTimeString('en-GB'));
-  if (manual) showToast('Loaded ' + n + ' rows from cache','success');
-  return true;
-}
-async function refreshFromCache(manual){
-  if (CACHE.busy) return; CACHE.busy = true;
-  if (manual) setCacheInd('warn busy','Reading cache…');
-  try {
-    const payload = await _readCache();
-    if (!applyCachePayload(payload, manual)){
-      const have = specRows().length;
-      if (have && ++_emptyReadStreak < 2) { /* ignore a single empty read */ }
-      else setCacheInd('warn','Cache: no Specs data yet — showing local data');
-      if (manual) showToast('Cache has no Specs data yet','error');
-    }
-  } catch(e){
-    console.warn('[cache] read failed', e.message); setCacheInd('err','Cache error: ' + e.message);
-    if (manual) showToast('Cache read failed','error');
-  } finally { CACHE.busy = false; }
-}
-function startCache(){
-  try { AP2CacheWatcher.init(); AP2CacheWatcher.subscribe(() => { refreshFromCache(); }); }
-  catch(e){ console.warn('[master] cacheWatcher wiring failed, continuing without live updates:', e.message); }
-  const btn = document.getElementById('cache-ind'); if (btn) btn.addEventListener('click', () => refreshFromCache(true));
-  window.addEventListener('ap-cache-status', e => { if (e.detail && e.detail.healthy === false) setCacheInd('err','Cache unavailable: ' + (e.detail.lastError||'')); });
-
-  /* Parent shell push (same messages allEmp uses) — fastest path when running inside the app */
-  const fromDatasets = ds => { if (!ds || typeof ds !== 'object') return;
-    const k = _AP2_CACHE_KEY && ds[_AP2_CACHE_KEY] ? _AP2_CACHE_KEY : Object.keys(ds).find(x => pickSpecs(ds[x]));
-    if (k){ _AP2_CACHE_KEY = k; applyCachePayload(ds[k]); } };
-  window.addEventListener('message', e => {
-    const m = e.data; if (!m) return;
-    if (m.type === 'ap-cache-preload' && m.datasets) fromDatasets(m.datasets);
-    if (m.type === 'ap-cache-ready' && pickSpecs(m.data)){ if (!_AP2_CACHE_KEY) _AP2_CACHE_KEY = m.key; applyCachePayload(m.data); }
-    if (m.type === 'ap-cache-updated'){
-      if (_AP2_CACHE_KEY){ try { window.parent.postMessage({ type:'ap-cache-request', key:_AP2_CACHE_KEY }, '*'); } catch(err){} }
-      refreshFromCache();
-    }
-  });
-  refreshFromCache();                                       // first paint straight from IndexedDB
-  if (_AP2_CACHE_KEY){ try { window.parent.postMessage({ type:'ap-cache-request', key:_AP2_CACHE_KEY }, '*'); } catch(e){} }
-  CACHE.timer = setInterval(refreshFromCache, CACHE_POLL_MS);   // safety net if no notification arrives
 }
 /* ═══════════════════════════════════════════════════════
  *  BUILD UI (tabs · selectors · panels) from MODULES

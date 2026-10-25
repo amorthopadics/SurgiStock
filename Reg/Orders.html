@@ -7,6 +7,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheWatcher.js?v=1"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/api.js?v=1"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/cacheSync.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/auth.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/accessGuard.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/dataLayer.js"></script>
@@ -65,7 +67,7 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
   <div class="tabs" id="tabs"></div>
   <button class="btn out" onclick="openForm('out')"><i class="ti ti-arrow-up-right"></i>New Order (Outgoing)</button>
   <button class="btn in" onclick="openForm('in')"><i class="ti ti-arrow-down-left"></i>Add Items (Incoming)</button>
-  <span class="ib" id="cache-ind" title="Cache" onclick="refreshFromCache(true)"><i class="ti ti-database"></i></span>
+  <button class="ib cache-ind warn" id="cache-ind" type="button" title="Cache: waiting…"><i class="ti ti-database"></i></button>
 </div>
 <main>
   <div class="tools"><input id="q" placeholder="Search order no, store, party, item…" oninput="render()"/></div>
@@ -97,26 +99,13 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
 
 <script>
 'use strict';
-/* ═══ CACHE: same method as the Master module — ap2_fleet_cache / datasets / ap2_specsData ═══ */
-const _IDB_NAME='ap2_fleet_cache', _IDB_STORE='datasets';
-let CACHE_KEY='ap2_specsData'; try{CACHE_KEY=localStorage.getItem('master_cache_key')||'ap2_specsData';}catch(e){}
-if(typeof window.AP2CacheWatcher==='undefined'){
-  window.AP2CacheWatcher={init(){},subscribe(){return()=>{}},async readKey(key){
-    try{
-      const db=await new Promise((res,rej)=>{const r=indexedDB.open(_IDB_NAME);r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e.target.error);setTimeout(()=>rej(new Error('timeout')),2500);});
-      if(!db.objectStoreNames.contains(_IDB_STORE))return null;
-      const rec=await new Promise((res,rej)=>{const r=db.transaction(_IDB_STORE,'readonly').objectStore(_IDB_STORE).get(key);r.onsuccess=()=>res(r.result||null);r.onerror=()=>rej(r.error);});
-      return rec&&rec.data?rec.data:null;
-    }catch(e){return null;}
-  }};
-}
-const pickSpecs=d=>{if(!d||typeof d!=='object'||Array.isArray(d))return null;const k=Object.keys(d).find(x=>/^specs$/i.test(x)&&Array.isArray(d[x]));return k?d[k]:null;};
+/* cache button: shared/cacheSync.js (same behaviour as Master) */
 
 /* ═══ DATA ═══
    items  ← Item List rows:  [ID, "Item List", Medical Domain, label, Status]
    stores ← Store rows:      [ID, "Store", Name, Description, Status]
    orders ← localStorage now; swap loadOrders()/saveOrders() for your backend */
-let items=[], stores=[], orders=[], tab='all', cacheLoaded=false, lines=[], formType='out';
+let items=[], stores=[], orders=[], tab='all', lines=[], formType='out';
 const ORD_KEY='orders_v1';
 function loadOrders(){try{orders=JSON.parse(localStorage.getItem(ORD_KEY)||'[]');}catch(e){orders=[];}}
 function saveOrders(){try{localStorage.setItem(ORD_KEY,JSON.stringify(orders));}catch(e){showToast('Storage write failed','error');}}
@@ -133,24 +122,13 @@ function applyRows(rows){
   });
   items=it;stores=st;
 }
-function setInd(cls,t){const e=document.getElementById('cache-ind');e.className='ib '+cls;e.title=t;}
-async function refreshFromCache(manual){
-  try{
-    const p=await AP2CacheWatcher.readKey(CACHE_KEY), rows=pickSpecs(p);
-    if(!rows){setInd('err','Cache: no Specs data yet');if(manual)showToast('Cache has no Specs data yet','error');return;}
-    cacheLoaded=true;applyRows(rows);setInd('ok','Cache loaded · '+items.length+' items · '+stores.length+' stores');
-    render();if(manual)showToast('Loaded '+items.length+' items','success');
-  }catch(e){setInd('err','Cache error: '+e.message);}
-}
-function startCache(){
-  try{AP2CacheWatcher.init();AP2CacheWatcher.subscribe(()=>refreshFromCache());}catch(e){}
-  window.addEventListener('message',e=>{const m=e.data;if(!m)return;
-    if(m.type==='ap-cache-preload'&&m.datasets&&m.datasets[CACHE_KEY]){const r=pickSpecs(m.datasets[CACHE_KEY]);if(r){cacheLoaded=true;applyRows(r);render();}}
-    if(m.type==='ap-cache-ready'&&pickSpecs(m.data)){cacheLoaded=true;applyRows(pickSpecs(m.data));render();}
-    if(m.type==='ap-cache-updated')refreshFromCache();});
-  refreshFromCache();setInterval(refreshFromCache,4000);
-  try{window.parent.postMessage({type:'ap-cache-request',key:CACHE_KEY},'*');}catch(e){}
-}
+const cache=AP2Cache.create({
+  indicator:'cache-ind',
+  toast:(m,t)=>showToast(m,t),
+  title:()=>'Cache loaded · '+items.length+' items · '+stores.length+' stores',
+  onRows:rows=>{applyRows(rows);render();return items.length;}
+});
+const startCache=()=>cache.start();
 
 /* ═══ STOCK = incoming − outgoing, per store + item ═══ */
 const stockKey=(s,i)=>s+'|'+i;
@@ -188,7 +166,7 @@ const findLine=id=>{for(const o of orders){const l=o.lines.find(x=>x.itemId===id
 
 /* ═══ FORM ═══ */
 function openForm(t){
-  if(!cacheLoaded)return showToast('Cache not loaded yet — please wait','error');
+  if(!cache.requireReady('Cache not loaded yet — please wait'))return;
   if(!stores.length)return showToast('No active Store found in Specs Settings','error');
   formType=t;lines=[];
   document.getElementById('m-ico').className='ti '+(t==='out'?'ti-arrow-up-right':'ti-arrow-down-left');
