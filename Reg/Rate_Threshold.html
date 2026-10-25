@@ -134,7 +134,7 @@ body{display:flex;flex-direction:column}
 'use strict';
 /* Master sheet: same endpoint + same cache record as Master Setup */
 const API='https://script.google.com/macros/s/AKfycbwCnVKZkbWPLa-3YK0x_HiCI_IpINs5A1pfumst72EIpId6NAbbtlI1F4E8MA8T5XlHhQ/exec';
-const PK='rate_pending_rows_v1',TK='rate_thresholds_v2',IDB='ap2_fleet_cache',ST='datasets';
+const PK='rate_pending_rows_v1',TK='rate_thresholds_v3',IDB='ap2_fleet_cache',ST='datasets';
 let KEY='ap2_specsData';try{KEY=localStorage.getItem('master_cache_key')||KEY}catch(e){}
 const $=id=>document.getElementById(id);
 const rd=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
@@ -155,7 +155,7 @@ let cacheRows=[],loaded=false,lastSig='',pending=rd(PK,[]),synced=[],SES=null;
 function apply(payload){const r=pick(payload);if(!Array.isArray(r))return;loaded=true;const s=r.length+':'+JSON.stringify(r);if(s!==lastSig){lastSig=s;cacheRows=r;derive();refreshUI()}else setInd()}
 async function refresh(){apply(await readCache())}
 window.addEventListener('message',e=>{const m=e.data;if(!m)return;
-  if(m.type==='ap-session-ready')SES={sessionId:m.sessionId,token:m.token};
+  if(m.type==='ap-session-ready'){SES={sessionId:m.sessionId,token:m.token};loadRules()}
   if(m.type==='ap-cache-preload'&&m.datasets){const k=m.datasets[KEY]?KEY:Object.keys(m.datasets).find(x=>pick(m.datasets[x]));if(k){KEY=k;apply(m.datasets[k])}}
   if(m.type==='ap-cache-ready'&&pick(m.data))apply(m.data);
   if(m.type==='ap-cache-updated')refresh()});
@@ -204,7 +204,7 @@ async function sync(manual){
   if(busy||!pending.length)return;busy=true;setInd();
   try{
     const sent=pending.slice(),j=await post('addSpecsSetting',{rows:sent.map(r=>({id:r[0],specs:r[1],item:r[2],description:r[3],status:r[4]}))});
-    sent.forEach(r=>{const n=j.idMap&&j.idMap[r[0]];if(n!=null&&String(n)!==String(r[0])){rules.forEach(x=>{if(String(x.pSid)===String(r[0]))x.pSid=n;if(String(x.iSid)===String(r[0]))x.iSid=n});wr(TK,rules);r[0]=n}});
+    sent.forEach(r=>{const n=j.idMap&&j.idMap[r[0]];if(n!=null&&String(n)!==String(r[0]))r[0]=n});
     pending=pending.filter(r=>!sent.includes(r));synced.push(...sent);wr(PK,pending);
     try{parent.postMessage({type:'ap-cache-request',key:KEY,force:true},'*')}catch(e){}
     if(manual)toast('Saved to Master sheet','success');
@@ -249,44 +249,53 @@ function combo(host,o){
 }
 
 /* ── thresholds ── */
-let rules=rd(TK,[]),armed=null;
+/* Rate Thresholds sheet: ID | Type | Name | Item | Min | Max | Status | Updated | Updated By  (loaded via doGet, saved via doPost) */
+let rules=rd(TK,[]),armed=null,rtLoaded=false;
 const ui={q:'',type:'',sortKey:'p',asc:true};
-const findRule=(p,i)=>rules.find(x=>String(x.pSid)===String(p)&&String(x.iSid)===String(i));
-window.RateThreshold={get:(p,i)=>{const r=findRule(p,i);return r?{min:r.min,max:r.max}:null},
-  check:(p,i,rate)=>{const r=findRule(p,i);return r?{found:true,ok:rate>=r.min&&rate<=r.max,min:r.min,max:r.max}:{found:false,ok:true}}};
+const rk=(t,n,i)=>norm(t)+'|'+norm(n)+'|'+norm(i);
+const findRule=(t,n,i)=>rules.find(x=>rk(x.type,x.name,x.item)===rk(t,n,i));
+window.RateThreshold={get:(t,n,i)=>{const r=findRule(t,n,i);return r&&r.status!=='Inactive'?{min:r.min,max:r.max}:null},
+  check:(t,n,i,rate)=>{const r=window.RateThreshold.get(t,n,i);return r?{found:true,ok:rate>=r.min&&rate<=r.max,min:r.min,max:r.max}:{found:false,ok:true}}};
 const tName=k=>(types.find(t=>t.k===k)||{l:k}).l;
-const live=r=>{const p=parties.find(x=>String(x.sid)===String(r.pSid)),i=items.find(x=>String(x.sid)===String(r.iSid));return{p:p?p.name:r.pName,i:i?i.label:r.iLabel}};
+const mapRow=a=>({id:String(a[0]),type:String(a[1]||''),name:String(a[2]||''),item:String(a[3]||''),min:+a[4],max:+a[5],status:/^inactive$/i.test(String(a[6]))?'Inactive':'Active',ts:String(a[7]||''),by:String(a[8]||'')});
+async function loadRules(){
+  const s=session();if(!s.sessionId&&!s.token)return false;
+  try{const u=API+'?type=rateThreshold&sessionId='+encodeURIComponent(s.sessionId)+'&token='+encodeURIComponent(s.token);
+    const j=await(await fetch(u)).json();if(!j||j.success===false)throw new Error((j&&j.error)||'Load failed');
+    rules=(j.RateThreshold||[]).filter(a=>a&&String(a[0])&&String(a[0])!=='ID').map(mapRow);rtLoaded=true;wr(TK,rules);renderTable();return true}
+  catch(e){if(!loadRules._w){loadRules._w=1;toast('Could not load thresholds: '+errText(e.message),'error')}return false}}
 
 function renderTable(){
-  const tk=toks(ui.q),all=rules;
-  const tcount=k=>all.filter(r=>r.pType===k).length,used=types.filter(t=>tcount(t.k));
-  $('flt').innerHTML=all.length?`<button class="chip${!ui.type?' on':''}" data-t="">All <b>${all.length}</b></button>`+used.map(t=>`<button class="chip${ui.type===t.k?' on':''}" data-t="${t.k}"><i class="ti ${typeIcon(t.k)}"></i>${esc(t.l)} <b>${tcount(t.k)}</b></button>`).join(''):'';
-  const rs=all.filter(r=>{const l=live(r);return(!ui.type||r.pType===ui.type)&&tk.every(w=>(l.p+' '+l.i+' '+tName(r.pType)).toLowerCase().includes(w))});
-  const val=r=>{const l=live(r);return ui.sortKey==='p'?l.p:ui.sortKey==='t'?tName(r.pType):ui.sortKey==='i'?l.i:ui.sortKey==='min'?r.min:ui.sortKey==='max'?r.max:r.ts};
-  rs.sort((a,b)=>{const x=val(a),y=val(b),d=ui.asc?1:-1;return(typeof x==='number'?x-y:String(x).localeCompare(String(y),undefined,{sensitivity:'base'}))*d||live(a).i.localeCompare(live(b).i)});
+  const tk=toks(ui.q),all=rules,TL=new Map();
+  all.forEach(r=>{const k=norm(r.type);if(!TL.has(k))TL.set(k,{k,l:r.type,n:0});TL.get(k).n++});
+  $('flt').innerHTML=all.length?`<button class="chip${!ui.type?' on':''}" data-t="">All <b>${all.length}</b></button>`+[...TL.values()].sort((a,b)=>a.l.localeCompare(b.l)).map(t=>`<button class="chip${ui.type===t.k?' on':''}" data-t="${esc(t.k)}"><i class="ti ${typeIcon(t.k)}"></i>${esc(t.l)} <b>${t.n}</b></button>`).join(''):'';
+  const rs=all.filter(r=>(!ui.type||norm(r.type)===ui.type)&&tk.every(w=>(r.name+' '+r.item+' '+r.type).toLowerCase().includes(w)));
+  const val=r=>ui.sortKey==='p'?r.name:ui.sortKey==='t'?r.type:ui.sortKey==='i'?r.item:ui.sortKey==='min'?r.min:ui.sortKey==='max'?r.max:ui.sortKey==='s'?r.status:r.ts;
+  rs.sort((a,b)=>{const x=val(a),y=val(b),d=ui.asc?1:-1;return(typeof x==='number'?x-y:String(x).localeCompare(String(y),undefined,{sensitivity:'base'}))*d||a.item.localeCompare(b.item)});
   $('cnt').textContent=rs.length+(rs.length!==all.length?' / '+all.length:'');
-  if(!rs.length){$('tbl').innerHTML=`<div class="doc-center-placeholder"><i class="ti ${all.length?'ti-search-off':'ti-adjustments-dollar'}"></i><span>${all.length?'No records match your filter':'No rate thresholds added yet'}</span>${all.length?'':'<button class="btn btn-primary btn-sm" data-a="new"><i class="ti ti-plus"></i> Add Threshold</button>'}</div>`;return}
+  if(!rs.length){$('tbl').innerHTML=`<div class="doc-center-placeholder"><i class="ti ${all.length?'ti-search-off':'ti-adjustments-dollar'}"></i><span>${all.length?'No records match your filter':rtLoaded?'No rate thresholds added yet':'Loading rate thresholds…'}</span>${all.length||!rtLoaded?'':'<button class="btn btn-primary btn-sm" data-a="new"><i class="ti ti-plus"></i> Add Threshold</button>'}</div>`;return}
   const th=(k,l,c)=>`<th class="${c||''}" data-s="${k}">${l}${ui.sortKey===k?`<i class="ti ti-chevron-${ui.asc?'up':'down'}" style="font-size:11px;margin-left:3px"></i>`:''}</th>`;
-  $('tbl').innerHTML=`<table class="log-table"><thead><tr><th style="cursor:default">#</th>${th('p','Name')}${th('t','Type')}${th('i','Item')}${th('min','Min','r')}${th('max','Max','r')}${th('ts','Updated')}<th style="cursor:default"></th></tr></thead><tbody>${rs.map((r,n)=>{const l=live(r),a=armed===r.id;
-    return`<tr><td class="mono">${n+1}</td><td><strong>${esc(l.p)}</strong></td><td><span class="spec-chip"><i class="ti ${typeIcon(r.pType)}"></i>${esc(tName(r.pType))}</span></td><td>${esc(l.i)}</td><td class="r num">${f2(r.min)}</td><td class="r num">${f2(r.max)}</td><td class="mono">${fmtDate(r.ts)}</td>
-    <td class="acts"><div class="act-btns"><button class="ib sm" title="Edit" data-e="${r.id}"><i class="ti ti-pencil"></i></button><button class="ib sm danger ${a?'armed':''}" title="${a?'Click again to confirm':'Delete'}" data-d="${r.id}"><i class="ti ti-${a?'check':'trash'}"></i></button></div></td></tr>`}).join('')}</tbody></table>`}
+  $('tbl').innerHTML=`<table class="log-table"><thead><tr><th style="cursor:default">#</th>${th('p','Name')}${th('t','Type')}${th('i','Item')}${th('min','Min','r')}${th('max','Max','r')}${th('s','Status')}${th('ts','Updated')}<th style="cursor:default"></th></tr></thead><tbody>${rs.map((r,n)=>{const a=armed===r.id,off=r.status==='Inactive';
+    return`<tr${off?' style="opacity:.55"':''}><td class="mono">${n+1}</td><td><strong>${esc(r.name)}</strong></td><td><span class="spec-chip"><i class="ti ${typeIcon(norm(r.type))}"></i>${esc(r.type)}</span></td><td>${esc(r.item)}</td><td class="r num">${f2(r.min)}</td><td class="r num">${f2(r.max)}</td>
+    <td><button class="spec-chip" data-st="${r.id}" title="Click to set ${off?'Active':'Inactive'}" style="cursor:pointer;${off?'background:var(--amber-dim);color:var(--amber);border-color:var(--amber)':'background:var(--teal-dim);color:var(--teal);border-color:var(--teal)'}">${r.status}</button></td><td class="mono" title="${esc(r.by)}">${esc(r.ts)}</td>
+    <td class="acts"><div class="act-btns"><button class="ib sm" title="Edit" data-e="${r.id}"><i class="ti ti-pencil"></i></button><button class="ib sm danger ${a?'armed':''}" title="${a?'Click again to confirm delete':'Delete'}" data-d="${r.id}"><i class="ti ti-${a?'check':'trash'}"></i></button></div></td></tr>`}).join('')}</tbody></table>`}
 
 /* ── side window ── */
 let draft=null,pcomb=null,rcombs=[];
 const blank=type=>({id:null,type:type||'',party:null,rows:[{item:null,min:'',max:''}],errs:null});
 function openPanel(id){
-  if(id){const r=rules.find(x=>x.id===id);if(!r)return;const l=live(r);
-    draft={id,type:r.pType,party:{text:l.p,sid:r.pSid,type:r.pType},rows:[{item:{text:l.i,sid:r.iSid},min:r.min,max:r.max}],errs:null}}
+  if(id){const r=rules.find(x=>x.id===id);if(!r)return;const k=norm(r.type);
+    draft={id,type:k,typeLabel:r.type,party:{text:r.name,type:k},rows:[{item:{text:r.item},min:r.min,max:r.max}],errs:null}}
   else draft=blank(ui.type&&types.some(t=>t.k===ui.type)?ui.type:'');
   renderPanel();$('panel').classList.add('open');
   setTimeout(()=>{if(draft&&draft.type&&!draft.id&&pcomb)pcomb.focus()},280)}
 function closePanel(){$('panel').classList.remove('open');draft=null}
 function renderPanel(){
-  const d=draft,edit=!!d.id,E=d.errs||{rows:{}},t=types.find(x=>x.k===d.type);
+  const d=draft,edit=!!d.id,E=d.errs||{rows:{}},TL=(types.some(x=>x.k===d.type)||!d.type)?types:types.concat({k:d.type,l:d.typeLabel||d.type});
   const chip=m=>`<button type="button" class="chip${d.type===m.k?' on':''}${edit&&d.type!==m.k?' dis':''}" data-v="${m.k}"${edit?' disabled':''}><i class="ti ${typeIcon(m.k)}"></i>${esc(m.l)}</button>`;
   $('panel').innerHTML=`<div class="pph"><h3><i class="ti ti-forms"></i><span>${edit?'Edit Rate Threshold':'Add Rate Threshold'}</span></h3><button class="pph-close" data-a="close" title="Close"><i class="ti ti-x"></i></button></div>
   <div class="ppb"><div class="form-stack">
-    <div class="field"><label>Type <span class="req">*</span></label><div class="chips${E.t?' bad':''}">${types.length?types.map(chip).join(''):'<span style="font-size:12px;color:var(--text3)">No entries with Description “Customer” found in the sheet yet.</span>'}</div></div>
+    <div class="field"><label>Type <span class="req">*</span></label><div class="chips${E.t?' bad':''}">${TL.length?TL.map(chip).join(''):'<span style="font-size:12px;color:var(--text3)">No entries with Description “Customer” found in the sheet yet.</span>'}</div></div>
     <div class="field"><label>Name <span class="req">*</span></label><div class="cb${E.p?' bad':''}" id="pcb"></div></div>
     <div class="field"><div class="fgrp-lbl"><i class="ti ti-package"></i>Items &amp; amounts <span class="req">*</span>${edit?'':'<button class="btn btn-ghost btn-sm" type="button" data-a="addrow" style="margin-left:auto"><i class="ti ti-plus"></i> Add item</button>'}</div>
       <div class="form-stack" style="gap:8px">${d.rows.map((r,i)=>{const e=E.rows[i]||{};return`<div class="trow">
@@ -307,24 +316,31 @@ function renderPanel(){
 }
 function prefill(i){
   const d=draft,r=d.rows[i],n=$('note-'+i);if(!n)return;n.textContent='';
-  if(!d.party||!r.item)return;const ex=findRule(d.party.sid,r.item.sid);if(!ex||ex.id===d.id)return;
+  if(!d.party||!r.item)return;const ex=findRule(d.type,d.party.text,r.item.text);if(!ex||ex.id===d.id)return;
   r.min=ex.min;r.max=ex.max;document.querySelectorAll('input[data-ri="'+i+'"]').forEach(x=>x.value=ex[x.dataset.f]);
   n.textContent='Existing threshold loaded — saving will update it.'}
-function saveDraft(another){
-  if(!ready())return;const d=draft,E={t:!d.type,p:!!d.type&&!d.party,rows:{}};let msg='';
+async function saveDraft(another){
+  const d=draft,E={t:!d.type,p:!!d.type&&!d.party,rows:{}};let msg='';
   const rows=d.rows.map((r,i)=>({i,r})).filter(x=>x.r.item||x.r.min!==''||x.r.max!==''||d.rows.length===1);
   const seen=new Set();
   rows.forEach(({i,r})=>{const e={};
-    if(!r.item)e.item=1;else{const k=String(r.item.sid);if(seen.has(k)){e.item=1;msg='Same item added twice'}seen.add(k);
-      if(d.party){const ex=findRule(d.party.sid,r.item.sid);if(d.id&&ex&&ex.id!==d.id){e.item=1;msg='A threshold for this name and item already exists'}}}
+    if(!r.item)e.item=1;else{const k=norm(r.item.text);if(seen.has(k)){e.item=1;msg='Same item added twice'}seen.add(k);
+      if(d.party){const ex=findRule(d.type,d.party.text,r.item.text);if(d.id&&ex&&ex.id!==d.id){e.item=1;msg='A threshold for this name and item already exists'}}}
     const mn=r.min,mx=r.max;if(mn===''||isNaN(+mn)||+mn<0)e.min=1;if(mx===''||isNaN(+mx)||+mx<0)e.max=1;
     if(!e.min&&!e.max&&+mn>+mx){e.min=e.max=1;msg='Minimum cannot be more than maximum'}
     if(Object.keys(e).length)E.rows[i]=e});
   if(E.t||E.p||Object.keys(E.rows).length){d.errs=E;renderPanel();toast(msg||(E.t?'Choose a Type':E.p?'Choose a name':'Fill the highlighted fields'),'error');return}
-  const now=Date.now();let n=0;
-  rows.forEach(({r})=>{const rec={id:d.id||String(now)+'_'+n,pSid:d.party.sid,pType:d.party.type||d.type,pName:d.party.text,iSid:r.item.sid,iLabel:r.item.text,min:+r.min,max:+r.max,ts:now};
-    if(d.id){rules[rules.findIndex(x=>x.id===d.id)]=rec}else{const old=findRule(rec.pSid,rec.iSid);if(old){rec.id=old.id;rules[rules.indexOf(old)]=rec}else rules.push(rec)}n++});
-  wr(TK,rules);renderTable();toast(n+' threshold'+(n>1?'s':'')+' saved','success');
+  const tl=(types.find(x=>x.k===d.type)||{l:d.typeLabel||d.type}).l,add=[],upd=[];
+  rows.forEach(({r})=>{const o={type:tl,name:d.party.text,item:r.item.text,min:+r.min,max:+r.max,status:'Active'};
+    if(d.id)upd.push(Object.assign({id:d.id},o));
+    else{const old=findRule(tl,o.name,o.item);if(old)upd.push(Object.assign({id:old.id},o));else add.push(o)}});
+  const btns=[...document.querySelectorAll('#panel [data-a="save"],#panel [data-a="saveadd"]')];btns.forEach(b=>b.disabled=true);
+  try{
+    if(add.length){const used=new Set(rules.map(x=>x.id));let t=Date.now();add.forEach(o=>{let id=tsId(t++);while(used.has(id))id=tsId(t++);used.add(id);o.id=id});await post('addRateThreshold',{rows:add})}
+    if(upd.length)await post('updateRateThreshold',{rows:upd});
+  }catch(e){btns.forEach(b=>b.disabled=false);toast('Not saved: '+errText(e.message),'error');return}
+  await loadRules();const n=add.length+upd.length;
+  toast(n+' threshold'+(n>1?'s':'')+(d.id||upd.length?' saved / updated':' saved')+' in the sheet','success');
   if(another){const t=d.type;draft=blank(t);renderPanel();pcomb.focus()}else closePanel()}
 
 /* ── UI wiring ── */
@@ -334,12 +350,16 @@ function refreshUI(){setInd();renderTable()}
 $('add').onclick=()=>openPanel();
 $('q').oninput=e=>{ui.q=e.target.value;renderTable()};
 $('flt').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;ui.type=b.dataset.t;renderTable()};
-$('tbl').onclick=e=>{
+$('tbl').onclick=async e=>{
   const th=e.target.closest('th[data-s]');if(th){ui.asc=ui.sortKey===th.dataset.s?!ui.asc:true;ui.sortKey=th.dataset.s;return renderTable()}
   if(e.target.closest('[data-a="new"]'))return openPanel();
   const b=e.target.closest('button');if(!b)return;
   if(b.dataset.e)openPanel(b.dataset.e);
-  if(b.dataset.d){if(armed===b.dataset.d){rules=rules.filter(x=>x.id!==armed);armed=null;wr(TK,rules);toast('Threshold deleted','success')}else{armed=b.dataset.d;clearTimeout(renderTable._t);renderTable._t=setTimeout(()=>{armed=null;renderTable()},2800)}renderTable()}};
+  if(b.dataset.st){const r=rules.find(x=>x.id===b.dataset.st);if(!r)return;
+    try{await post('setRateThresholdStatus',{ids:[r.id],status:r.status==='Active'?'Inactive':'Active'});await loadRules();toast('Status updated','success')}catch(er){toast('Not updated: '+errText(er.message),'error')}return}
+  if(b.dataset.d){const id=b.dataset.d;
+    if(armed===id){armed=null;try{await post('deleteRateThreshold',{ids:[id]});await loadRules();toast('Threshold deleted from the sheet','success')}catch(er){toast('Not deleted: '+errText(er.message),'error')}}
+    else{armed=id;clearTimeout(renderTable._t);renderTable._t=setTimeout(()=>{armed=null;renderTable()},2800)}renderTable()}};
 $('panel').addEventListener('click',e=>{
   const c=e.target.closest('.chip[data-v]');if(c&&!c.disabled){draft.type=c.dataset.v;draft.party=null;draft.errs=null;renderPanel();pcomb.focus();return}
   const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;
@@ -354,6 +374,7 @@ window.addEventListener('online',()=>sync(false));setInterval(()=>{if(navigator.
 derive();refreshUI();
 try{AP2CacheWatcher.init();AP2CacheWatcher.subscribe(()=>refresh())}catch(e){}
 refresh();setInterval(refresh,4000);
+loadRules();setInterval(loadRules,30000);
 </script>
 </body>
 </html>
