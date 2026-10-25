@@ -50,6 +50,7 @@ th{background:var(--bg3);color:var(--text2);font-weight:600;font-size:12px}
 .mb{padding:14px 16px;overflow:auto;display:flex;flex-direction:column;gap:12px;flex:1;min-height:0}.mb>*{flex-shrink:0}
 .fg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
 label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
+.ib.ok{color:var(--teal)}.ib.err{color:var(--red)}.ib.warn{color:var(--amber)}
 .ib{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer}
 .ol{border:1px solid var(--border);border-radius:var(--radius-lg);max-height:260px;overflow:auto}
 .opt{display:flex;gap:9px;align-items:flex-start;padding:8px 12px;border-bottom:1px solid var(--border);cursor:pointer;font-size:13px}.opt:last-child{border-bottom:0}
@@ -73,6 +74,7 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
 <div class="bar">
   <h1><i class="ti ti-receipt"></i>Bills &amp; Payments</h1>
   <div class="tabs" id="tabs"></div>
+  <button class="ib cache-ind warn" id="cache-ind" type="button" title="Cache: waiting…"><i class="ti ti-database"></i></button>
   <button class="btn out" onclick="openForm('out')"><i class="ti ti-arrow-up-right"></i><span class="lbl">New Bill (Outgoing)</span></button>
   <button class="btn in" onclick="openForm('in')"><i class="ti ti-arrow-down-left"></i><span class="lbl">New Bill (Incoming)</span></button>
 </div>
@@ -136,12 +138,41 @@ function showToast(m,t){const e=$('toast');e.textContent=m;e.className='toast '+
 const session=AP2Api.session,post=AP2Api.post,errText=m=>AP2Api.errText(m);
 
 let orders=[],bills=[],pays=[],tab='all',busy=false,vid=null;
+let items=[],stores=[],parties=[],types=[],suppliers=[];     // from the cache (Master / Specs Settings)
+
+/* ═══ CACHE → customer-type parties · suppliers · items · stores (same rules as Orders)
+   cache row = [ID, Specs, Item, Description, Status] */
+const IGN=/^(item\s*names?|item\s*lists?|item\s*categor(y|ies)|stores?(\s*branch)?|medical\s*domains?|material\s*sources?|specs)$/i;
+const cap=t=>t.charAt(0).toUpperCase()+t.slice(1);
+function applyRows(rows){
+  const it=[],st=[],pa=[],su=[],T=new Map();
+  rows.forEach(r=>{
+    if(!Array.isArray(r)||String(r[0]).toLowerCase()==='id')return;
+    const id=String(r[0]).trim(),kind=String(r[1]??'').trim(),a=String(r[2]??'').trim(),b=String(r[3]??'').trim(),stv=String(r[4]??'').trim();
+    if(!id||!kind||!a)return;
+    const strict=/^active$/i.test(stv),lenient=!/^(inactive|in-active|no|0|false|disabled)$/i.test(stv);
+    if(/^item\s*lists?$/i.test(kind)){if(strict&&b)it.push({id,domain:a,label:b});return;}
+    if(/^stores?(\s*branch)?$/i.test(kind)){if(strict)st.push({id,name:a});return;}
+    if(/^suppliers?$/i.test(kind)){if(lenient&&!su.some(x=>norm(x)===norm(a)))su.push(a);return;}
+    if(IGN.test(kind)||norm(b)!=='customer'||!lenient)return;
+    const k=norm(kind),t=T.get(k);
+    if(!t)T.set(k,{k,l:cap(kind)});else if(/^[a-z]/.test(t.l)&&/^[A-Z]/.test(kind))t.l=kind;
+    pa.push({name:a,type:k,label:(T.get(k)||{}).l});
+  });
+  items=it;stores=st;parties=pa;suppliers=su.sort((x,y)=>x.localeCompare(y));types=[...T.values()].sort((a,b)=>a.l.localeCompare(b.l));
+}
+const cache=AP2Cache.create({
+  indicator:'cache-ind',
+  toast:(m,t)=>showToast(m,t),
+  title:()=>'Cache loaded · '+items.length+' items · '+parties.length+' names · '+suppliers.length+' suppliers',
+  onRows:rows=>{applyRows(rows);render();if($('ov').classList.contains('open')){fillTypes();fillNames();rOrders();}return items.length;}
+});
 const f={dir:'out',ptype:'',party:'',sel:new Set(),rates:{},disc:0,dt:'amt',vat:0};
 
 /* ═══ DATA ═══ */
 function groupOrders(rows){const m=new Map();
   rows.forEach(a=>{if(!Array.isArray(a)||!String(a[0])||String(a[0])==='ID')return;const id=String(a[0]);let o=m.get(id);
-    if(!o){o={id,no:String(a[1]||''),type:String(a[2]||''),date:String(a[3]||''),partyType:String(a[6]||''),party:String(a[8]||''),note:String(a[9]||''),lines:[]};m.set(id,o);}
+    if(!o){o={id,no:String(a[1]||''),type:String(a[2]||''),date:String(a[3]||''),store:String(a[5]||''),partyType:String(a[6]||''),party:String(a[8]||''),note:String(a[9]||''),lines:[]};m.set(id,o);}
     o.lines.push({itemId:String(a[10]||''),label:String(a[11]||''),qty:Math.floor(+a[13])||0});});
   return [...m.values()];}
 /* bill row = [ID,Bill No,Dir,Date,PartyType,Party,Note,OrderIDs,Disc,DiscType,VAT,ItemID,Item,OrdQty,RetQty,Rate,Updated] */
@@ -186,7 +217,7 @@ function render(){
   $('tabs').innerHTML=TABS.map(([k,l])=>`<button class="tab${tab===k?' on':''}" onclick="tab='${k}';render()">${l}</button>`).join('');
   const bal=d=>r2(bills.filter(b=>b.dir===d).reduce((a,b)=>a+tb(b).total-paidOf(b),0));
   $('kpi').innerHTML=`<div>To receive (outgoing)<b>${CUR} ${money(bal('out'))}</b></div><div>To pay (incoming)<b>${CUR} ${money(bal('in'))}</b></div><div>Bills<b>${bills.length}</b></div>`;
-  const q=$('q').value,L=bills.filter(b=>(tab==='all'||b.dir===tab)&&match(q,[b.no,b.party,b.ptype,b.note,b.oids.map(i=>(orders.find(o=>o.id===i)||{}).no).join(' ')].join(' ')));
+  const q=$('q').value,L=bills.filter(b=>(tab==='all'||b.dir===tab)&&match(q,[b.no,b.party,b.ptype,b.note,b.oids.map(i=>(orders.find(o=>o.id===i)||{}).no).join(' '),b.lines.map(l=>l.label).join(' ')].join(' ')));
   $('view').innerHTML=L.length?`<table><thead><tr><th>Bill No</th><th>Date</th><th>Party</th><th class="n">Orders</th><th class="n">Total</th><th class="n">Paid</th><th class="n">Balance</th><th>Status</th><th></th></tr></thead><tbody>${L.map(b=>{
     const t=tb(b).total,p=paidOf(b),s=stOf(b),dr=drift(b).length;
     return `<tr><td class="mono">${esc(b.no)} <span class="badge ${b.dir}">${b.dir==='out'?'Out':'In'}</span></td><td>${esc(b.date)}</td>
@@ -202,27 +233,31 @@ function render(){
 /* ═══ NEW BILL ═══ */
 const elig=()=>orders.filter(o=>kd(o,f.dir)&&(!f.ptype||norm(o.partyType)===norm(f.ptype))&&(!f.party||norm(o.party)===norm(f.party))).sort((a,b)=>a.date.localeCompare(b.date)||a.no.localeCompare(b.no));
 function openForm(dir){
+  if(!cache.requireReady('Cache not loaded yet — please wait'))return;
+  try{if(cache.requestRefresh)cache.requestRefresh(true);}catch(e){}
   Object.assign(f,{dir,ptype:'',party:'',sel:new Set(),rates:{},disc:0,dt:'amt',vat:0});
   $('m-title').textContent=dir==='out'?'New Bill — Outgoing (customer)':'New Bill — Incoming (supplier)';
   $('l-party').textContent=dir==='out'?'Name':'Supplier';$('w-type').style.display=dir==='out'?'':'none';
   $('f-date').value=today();$('f-note').value='';$('f-q').value='';$('f-disc').value=0;$('f-dt').value='amt';$('f-vat').value=0;
-  const base=orders.filter(o=>kd(o,dir)),T=[...new Map(base.map(o=>[norm(o.partyType),o.partyType])).values()].sort();
-  $('f-type').innerHTML='<option value="">All types</option>'+T.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');
-  fillNames();rOrders();$('ov').classList.add('open');
+  fillTypes();fillNames();rOrders();$('ov').classList.add('open');
 }
-function fillNames(){const N=[...new Set(orders.filter(o=>kd(o,f.dir)&&(!f.ptype||norm(o.partyType)===norm(f.ptype))).map(o=>o.party))].sort();
+function fillTypes(){const m=new Map(types.map(t=>[t.k,t.l]));orders.filter(o=>kd(o,'out')).forEach(o=>{if(!m.has(norm(o.partyType)))m.set(norm(o.partyType),o.partyType);});
+  const cur=f.ptype;$('f-type').innerHTML='<option value="">All types</option>'+[...m].filter(([k,l])=>k&&l).sort((a,b)=>a[1].localeCompare(b[1])).map(([k,l])=>`<option value="${esc(l)}">${esc(l)}</option>`).join('');$('f-type').value=cur;}
+function fillNames(){const fromOrders=orders.filter(o=>kd(o,f.dir)&&(!f.ptype||norm(o.partyType)===norm(f.ptype))).map(o=>o.party);
+  const fromCache=f.dir==='in'?suppliers:parties.filter(p=>!f.ptype||p.type===norm(f.ptype)).map(p=>p.name);
+  const N=[...new Map([...fromCache,...fromOrders].filter(Boolean).map(n=>[norm(n),n])).values()].sort((a,b)=>a.localeCompare(b));
   $('f-party').innerHTML=`<option value="">All ${f.dir==='out'?'names':'suppliers'}</option>`+N.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');$('f-party').value=f.party;}
 function closeForm(){$('ov').classList.remove('open');}
 function rOrders(){
-  const bb=billedBy(),q=$('f-q').value,L=elig().filter(o=>match(q,[o.no,o.party,o.note,o.lines.map(l=>l.label).join(' ')].join(' ')));
+  const bb=billedBy(),q=$('f-q').value,L=elig().filter(o=>match(q,[o.no,o.party,o.partyType,o.store,o.date,o.note,o.lines.map(l=>l.label).join(' ')].join(' ')));
   [...f.sel].forEach(i=>{if(!L.some(o=>o.id===i))f.sel.delete(i);});
   $('f-orders').innerHTML=L.length?L.map(o=>{const k=kd(o,f.dir),b=bb[o.id];
-    return `<div class="opt${b?' off':''}" data-id="${o.id}"><input type="checkbox" ${f.sel.has(o.id)?'checked':''} ${b?'disabled':''}/><div class="b"><b class="mono">${esc(o.no)}</b> <span class="dim">· ${esc(o.date)} · ${esc(o.party)}</span>
+    return `<div class="opt${b?' off':''}" data-id="${o.id}"><input type="checkbox" ${f.sel.has(o.id)?'checked':''} ${b?'disabled':''}/><div class="b"><b class="mono">${esc(o.no)}</b> <span class="dim">· ${esc(o.date)} · ${esc(o.party)}${o.store?' · '+esc(o.store):''}</span>
       ${k==='r'?`<span class="badge out">${f.dir==='out'?'Returned':'Claim / Damaged'} (credit)</span>`:''}${b?`<span class="badge in">Billed ${esc(b.no)}</span>`:''}
       <div class="dim" style="font-size:12px">${o.lines.map(l=>esc(l.label)+' × '+l.qty).join(' · ')}</div></div></div>`;}).join(''):'<div class="empty">No orders match</div>';
   $('o-cnt').textContent='· '+f.sel.size+' selected of '+L.length;rItems();
 }
-function selAll(on){const bb=billedBy(),q=$('f-q').value;f.sel.clear();if(on)elig().filter(o=>!bb[o.id]&&match(q,[o.no,o.party,o.note,o.lines.map(l=>l.label).join(' ')].join(' '))).forEach(o=>f.sel.add(o.id));rOrders();}
+function selAll(on){const bb=billedBy(),q=$('f-q').value;f.sel.clear();if(on)elig().filter(o=>!bb[o.id]&&match(q,[o.no,o.party,o.partyType,o.store,o.date,o.note,o.lines.map(l=>l.label).join(' ')].join(' '))).forEach(o=>f.sel.add(o.id));rOrders();}
 $('f-orders').addEventListener('click',e=>{const d=e.target.closest('.opt');if(!d||d.classList.contains('off'))return;const id=d.dataset.id;f.sel.has(id)?f.sel.delete(id):f.sel.add(id);rOrders();});
 function curLines(){const a=agg([...f.sel],f.dir);Object.keys(a).forEach(k=>{if(f.rates[k]===undefined)f.rates[k]=lastRate(k,f.dir);});
   return Object.entries(a).sort((x,y)=>x[1].label.localeCompare(y[1].label)).map(([itemId,x])=>({itemId,...x,rate:f.rates[itemId]}));}
@@ -279,7 +314,7 @@ async function addPay(){const b=bills.find(x=>x.id===vid);if(!b||busy)return;con
   catch(e){showToast('Not saved: '+errText(e.message),'error');}busy=false;}
 async function delPay(id){if(!confirm('Delete this payment?'))return;try{await post('deletePayment',{ids:[id]});await loadAll();}catch(e){showToast('Not deleted: '+errText(e.message),'error');}}
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if($('ov2').classList.contains('open'))closeView();else closeForm();});
-render();loadAll();setInterval(loadAll,30000);
+render();cache.start();loadAll();setInterval(loadAll,30000);
 </script>
 </body>
 </html>
