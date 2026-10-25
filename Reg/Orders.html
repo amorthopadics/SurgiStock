@@ -88,7 +88,10 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
 .ib.lg{width:40px;height:40px;font-size:18px}
 .ib.pri{background:var(--accent);color:#fff;border-color:var(--accent)}.ib.pri:hover{color:#fff;filter:brightness(1.1)}
 .ib.dng:hover{border-color:var(--red);color:var(--red)}
-.modal{max-width:860px;max-height:calc(100dvh - 24px);overflow:hidden}
+.ov{overflow:hidden}
+.modal{max-width:860px;max-height:100%;min-height:0;overflow:hidden}
+.mh,.mf{flex:none}
+.mb{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain}
 .mh{flex-wrap:wrap;row-gap:8px}
 .mh .ttl{display:flex;align-items:center;gap:8px;font-size:15px;min-width:0}
 .mh .ttl i{font-size:18px;color:var(--accent)}
@@ -103,7 +106,7 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
 .di.add{color:var(--teal);font-weight:600;display:flex;align-items:center;gap:6px}
 .di.add i{font-size:15px}
 .lines{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;background:var(--bg2)}
-.ln{display:grid;grid-template-columns:minmax(0,1fr) 84px 104px 34px;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border)}
+.ln{display:grid;grid-template-columns:minmax(0,1fr) 84px 104px 34px;grid-template-areas:"it stk qty x";gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border)}
 .ln:last-child{border-bottom:0}
 .ln.hd{background:var(--bg3);color:var(--text2);font-size:12px;font-weight:600;padding:10px 12px}
 .ln .it{min-width:0;grid-area:it}.ln .it b{display:block;font-weight:500;overflow-wrap:anywhere}
@@ -115,6 +118,8 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
 .ln.none{display:block;text-align:center;color:var(--text2)}
 .mf{gap:10px}.mf .sum{margin-right:auto;font-size:12px;color:var(--text2)}
 .mf .warn{flex:1;min-width:0}
+.dd,.dd2{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.dd.up,.dd2.up{top:auto;bottom:calc(100% + 3px)}
 @media(max-width:760px){
   .fg{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.fg .w2{grid-column:1/-1}
 }
@@ -124,7 +129,7 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
 }
 @media(max-width:560px){
   .ov{padding:0;align-items:stretch}
-  .modal{max-width:none;width:100%;height:100dvh;max-height:none;border-radius:0;border:0}
+  .modal{max-width:none;width:100%;height:100%;max-height:none;border-radius:0;border:0}
   .mh,.mf{padding:10px 12px}.mb{padding:12px}
   .mh .chips{order:3;flex-basis:100%;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}
   .mh .chip{white-space:nowrap}
@@ -167,7 +172,7 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
 
       <div class="pick">
         <label><i class="ti ti-packages"></i>Add items (from Item List) — tick as many as you need <span class="req">*</span></label>
-        <div class="sbox"><i class="ti ti-search"></i><input id="f-search" placeholder="Type to search items…" autocomplete="off" oninput="showDD()" onfocus="showDD()"/></div>
+        <div class="sbox"><i class="ti ti-search"></i><input id="f-search" placeholder="Type to search items…" autocomplete="off" oninput="showDD()" onfocus="pullLatest();revealSearch();showDD()"/></div>
         <div class="dd" id="dd"></div>
       </div>
       <div class="lines" id="lines"></div>
@@ -202,7 +207,7 @@ function showToast(m,t){const e=$('toast');e.textContent=m;e.className='toast '+
 const session=AP2Api.session,post=AP2Api.post,errText=m=>AP2Api.errText(m);
 
 /* ═══ STATE ═══ */
-let items=[],stores=[],parties=[],types=[],suppliers=[],supplierKind='Supplier';     // from the cache
+let items=[],stores=[],parties=[],types=[],suppliers=[],supplierKind='Supplier',pendingSup=[];     // from the cache
 let orders=rd(OK,[]),ordersLoaded=false;          // from the sheet
 let tab='all',formType='out',draft=null,pcomb=null,picked=new Set(),busy=false,lastPType='';
 
@@ -233,13 +238,18 @@ function applyRows(rows){
     if(!t)T.set(k,{k,l:cap(kind)});else if(/^[a-z]/.test(t.l)&&/^[A-Z]/.test(kind))t.l=kind;
     pa.push({sid:id,name:a,type:k});
   });
-  items=it;stores=st;parties=pa;suppliers=su.sort((x,y)=>x.name.localeCompare(y.name));types=[...T.values()].sort((a,b)=>a.l.localeCompare(b.l));
+  items=it;stores=st;parties=pa;pendingSup=pendingSup.filter(p=>!su.some(x=>norm(x.name)===norm(p.name)));su.push(...pendingSup);   /* a supplier just added here stays listed until the cache shows it */
+  suppliers=su.sort((x,y)=>x.name.localeCompare(y.name));types=[...T.values()].sort((a,b)=>a.l.localeCompare(b.l));
 }
 const cache=AP2Cache.create({
   indicator:'cache-ind',
   toast:(m,t)=>showToast(m,t),
   title:()=>'Cache loaded · '+items.length+' items · '+stores.length+' stores · '+parties.length+' names · '+suppliers.length+' suppliers',
-  onRows:rows=>{applyRows(rows);render();return items.length;}
+  onRows:rows=>{
+    const sig=()=>[items.length,stores.length,parties.length,suppliers.length,types.length].join();
+    const before=sig();applyRows(rows);render();
+    if(draft)refreshOpenForm(before!==sig());      // form is open → drop-downs show the new entries right away
+    return items.length;}
 });
 
 /* ═══ ORDERS ← sheet ═══
@@ -292,6 +302,34 @@ function render(){
     :`<div class="empty">${ordersLoaded?'No orders yet. Use the buttons above to create one.':'Loading orders…'}</div>`;
 }
 
+/* ═══ ask the portal for the newest cache data (new Items / Suppliers / Names / Stores added in Master).
+   Silent + throttled; when the cache changes, onRows → refreshOpenForm updates whatever is open. ═══ */
+let lastPull=0;
+function pullLatest(force){
+  const n=Date.now();if(!force&&n-lastPull<8000)return;lastPull=n;
+  try{if(cache.requestRefresh)cache.requestRefresh(true);}catch(e){}
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&draft)pullLatest(true);});
+window.addEventListener('focus',()=>{if(draft)pullLatest();});
+
+/* keep a drop-down inside the visible part of the window: height = free space (scrolls inside),
+   and it opens upwards when there is clearly more room above than below */
+function placeDD(dd,anchor){
+  const mb=document.querySelector('.modal .mb');if(!mb||!anchor)return;
+  const a=anchor.getBoundingClientRect(),m=mb.getBoundingClientRect();
+  const bottom=Math.min(m.bottom,window.innerHeight)-8,top=Math.max(m.top,0)+8;
+  const below=bottom-a.bottom-4,above=a.top-top-4;
+  const up=below<150&&above>below;
+  dd.classList.toggle('up',up);
+  dd.style.maxHeight=Math.max(up?90:120,Math.min(320,up?above:below))+'px';
+}
+/* bring the search box near the top of the window when little room is left under it */
+function revealSearch(){
+  const mb=document.querySelector('.modal .mb'),b=document.querySelector('#ov .sbox');if(!mb||!b)return;
+  const m=mb.getBoundingClientRect(),r=b.getBoundingClientRect();
+  if(m.bottom-r.bottom<220)mb.scrollTop+=r.top-m.top-8;
+}
+
 /* ═══ searchable drop-down (same behaviour as Rate Threshold) ═══
    o.add(text) → optional: when the typed text is not in the list, an "Add … as new" row appears (returns the new item or null) */
 function combo(host,o){
@@ -303,7 +341,7 @@ function combo(host,o){
     if(o.add&&t&&!all.some(x=>norm(x.text)===norm(t)))cur.push({add:true,text:t});
     dd.innerHTML=cur.length?cur.map((x,i)=>x.add?`<div class="di add${i===hi?' hi':''}" data-i="${i}"><i class="ti ti-plus"></i><span>Add “${esc(x.text)}” as new ${esc(o.addLabel||'entry')}</span></div>`
       :`<div class="di${i===hi?' hi':''}" data-i="${i}">${esc(x.text)}</div>`).join(''):`<div class="di mute">${esc(o.empty||'No matching names for this Type')}</div>`;
-    dd.style.display='block';}
+    dd.style.display='block';placeDD(dd,host);}
   function set(it){sel=it;inp.value=it?it.text:'';close();o.onPick(it);}
   async function choose(x){
     if(!x)return;
@@ -311,7 +349,7 @@ function combo(host,o){
     if(wait)return;wait=true;inp.disabled=true;
     try{const r=await o.add(x.text);if(r)set(r);}finally{wait=false;inp.disabled=false;inp.focus();}
   }
-  inp.onfocus=()=>{inp.select();draw('');};
+  inp.onfocus=()=>{inp.select();if(o.onOpen)o.onOpen();draw('');};
   inp.oninput=()=>{if(sel&&inp.value!==sel.text){sel=null;o.onPick(null);}hi=-1;draw(inp.value);};
   inp.onblur=()=>setTimeout(()=>{if(wait)return;close();inp.value=sel?sel.text:'';},150);
   inp.onkeydown=e=>{
@@ -319,7 +357,7 @@ function combo(host,o){
     else if(e.key==='Enter'){e.preventDefault();e.stopPropagation();choose(cur[hi>=0?hi:0]);}
     else if(e.key==='Escape'&&dd.style.display==='block'){e.stopPropagation();close();}};
   dd.onmousedown=e=>{e.preventDefault();const d=e.target.closest('.di');if(d&&d.dataset.i!=null)choose(cur[+d.dataset.i]);};
-  return{set,get:()=>sel,focus:()=>inp.focus(),input:inp};
+  return{set,get:()=>sel,focus:()=>inp.focus(),input:inp,redraw:()=>{if(dd.style.display==='block')draw(sel?'':inp.value);}};
 }
 
 /* New supplier → written to Specs Settings (same row format Master uses: ID | Specs | Item | Description | Status) */
@@ -330,7 +368,7 @@ async function addSupplier(name){
   try{
     const j=await post('addSpecsSetting',{rows:[{id,specs:supplierKind,item:name,description:'',status:'Active'}]});
     const a=(j&&j.added&&j.added[0])||{},sid=String(a.id||id);
-    suppliers.push({sid,name});suppliers.sort((x,y)=>x.name.localeCompare(y.name));
+    suppliers.push({sid,name});suppliers.sort((x,y)=>x.name.localeCompare(y.name));pendingSup.push({sid,name});
     try{if(cache.requestRefresh)cache.requestRefresh(true);}catch(e){}
     showToast('Supplier added: '+name,'success');
     return{text:name,sid};
@@ -365,26 +403,46 @@ function openForm(t,id){
   $('f-search').value='';$('dd').style.display='none';
   drawPartyBlock();
   renderLines();$('ov').classList.add('open');
+  $('f-types').dataset.sig=types.map(t=>t.k).join('|');
+  pullLatest(true);
 }
 function closeForm(){$('ov').classList.remove('open');$('dd').style.display='none';draft=null;}
 
 /* OUTGOING: Type chips → Name drop-down (changing the Type clears the Name).
    INCOMING: Supplier drop-down (Specs Settings → Supplier) with "add as new". */
+function drawChips(){
+  const d=draft,TL=(!d.ptype||types.some(t=>t.k===d.ptype))?types:types.concat({k:d.ptype,l:d.ptypeLabel||d.ptype});
+  $('f-types').innerHTML=TL.length?TL.map(t=>`<button type="button" class="chip${d.ptype===t.k?' on':''}" data-v="${esc(t.k)}"><i class="ti ${typeIcon(t.k)}"></i>${esc(t.l)}</button>`).join('')
+    :'<span class="dim" style="font-size:12px">No entries with Description “Customer” found in the Master sheet yet.</span>';
+}
 function drawPartyBlock(){
   const d=draft,out=formType==='out';
-  const TL=(!d.ptype||types.some(t=>t.k===d.ptype))?types:types.concat({k:d.ptype,l:d.ptypeLabel||d.ptype});
   $('f-types').classList.remove('bad');$('f-pcb').classList.remove('bad');
   $('f-plbl').innerHTML=out?'<i class="ti ti-user"></i>Name <span class="req">*</span>':'<i class="ti ti-truck-delivery"></i>Supplier <span class="req">*</span>';
-  if(out)$('f-types').innerHTML=TL.length?TL.map(t=>`<button type="button" class="chip${d.ptype===t.k?' on':''}" data-v="${esc(t.k)}"><i class="ti ${typeIcon(t.k)}"></i>${esc(t.l)}</button>`).join('')
-    :'<span class="dim" style="font-size:12px">No entries with Description “Customer” found in the Master sheet yet.</span>';
-  pcomb=combo($('f-pcb'),out?{ph:d.ptype?'Search name…':'Choose a Type first',
+  if(out)drawChips();
+  pcomb=combo($('f-pcb'),out?{ph:d.ptype?'Search name…':'Choose a Type first',onOpen:()=>pullLatest(),
       list:()=>d.ptype?parties.filter(p=>p.type===d.ptype).map(p=>({text:p.name,sid:p.sid,type:p.type})):[],
       onPick:p=>{d.party=p;$('f-pcb').classList.remove('bad');}}
-    :{ph:'Search or add supplier…',empty:'No suppliers yet — type a name to add one',addLabel:'supplier',
+    :{ph:'Search or add supplier…',empty:'No suppliers yet — type a name to add one',addLabel:'supplier',onOpen:()=>pullLatest(),
       list:()=>suppliers.map(x=>({text:x.name,sid:x.sid,type:'supplier'})),add:addSupplier,
       onPick:p=>{d.party=p;$('f-pcb').classList.remove('bad');}});
   if(d.party)pcomb.set(d.party);
   pcomb.input.disabled=out&&!d.ptype;
+}
+/* the cache changed while the window is open → refresh Store list, Type chips and any open drop-down (nothing typed or selected is lost) */
+function refreshOpenForm(changed){
+  if(!draft)return;
+  const sel=$('f-store'),cur=sel.value,have=[...sel.options].map(o=>({id:o.value,name:o.textContent}));
+  const merged=stores.slice();have.forEach(h=>{if(!merged.some(x=>x.id===h.id)&&h.id===cur)merged.push({id:h.id,name:h.name});});
+  if(merged.map(x=>x.id).join('|')!==have.map(x=>x.id).join('|')){
+    sel.innerHTML=merged.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('');
+    sel.value=merged.some(x=>x.id===cur)?cur:(merged[0]||{}).id;
+  }
+  if(formType==='out'&&$('f-types').dataset.sig!==types.map(t=>t.k).join('|')){drawChips();}
+  $('f-types').dataset.sig=types.map(t=>t.k).join('|');
+  if(pcomb&&pcomb.redraw)pcomb.redraw();
+  if($('dd').style.display==='block')showDD();
+  if(changed)showToast('Lists updated from cache','success');
 }
 $('f-types').onclick=e=>{const b=e.target.closest('.chip');if(!b||!draft)return;
   draft.ptype=b.dataset.v;draft.ptypeLabel='';draft.party=null;lastPType=draft.ptype;drawPartyBlock();pcomb.focus();};
@@ -396,7 +454,7 @@ function showDD(){
   const res=items.filter(i=>match(q,i.domain+' '+i.label)&&!draft.lines.some(l=>l.itemId===i.id)).slice(0,80);
   dd.innerHTML=(res.length?res.map(i=>`<div class="opt" data-id="${esc(i.id)}"><input type="checkbox" tabindex="-1" ${picked.has(i.id)?'checked':''}/><span><span class="dim">${esc(i.domain)} ·</span> ${esc(i.label)}</span></div>`).join(''):'<div class="di mute">No matching items</div>')
     +`<div class="ddf"><span class="dim" style="font-size:12px">${picked.size} selected</span><button type="button" class="btn pri sm" data-add="1" title="Add selected" aria-label="Add selected" ${picked.size?'':'disabled'}><i class="ti ti-plus"></i>${picked.size||''}</button></div>`;
-  dd.style.display='block';dd.scrollTop=keep;
+  dd.style.display='block';placeDD(dd,dd.parentElement.querySelector('.sbox'));dd.scrollTop=keep;
 }
 $('dd').onmousedown=e=>{
   e.preventDefault();
