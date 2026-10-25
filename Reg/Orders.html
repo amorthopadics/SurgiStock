@@ -201,7 +201,7 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
       <div class="pick">
         <label><i class="ti ti-packages"></i>Add items (from Item List) — tick as many as you need <span class="req">*</span></label>
         <div class="sbox fs"><i class="ti ti-search"></i>
-          <select id="f-dom" title="Medical Domain" aria-label="Medical Domain" onchange="showDD()"></select><select id="f-itm" title="Item Name" aria-label="Item Name" onchange="showDD()"></select><select id="f-src" title="Material Source" aria-label="Material Source" onchange="showDD()"></select>
+          <select id="f-dom" title="Medical Domain" aria-label="Medical Domain" onchange="showDD()"></select><select id="f-src" title="Material Source" aria-label="Material Source" onchange="showDD()"></select><select id="f-itm" title="Item Name" aria-label="Item Name" onchange="showDD()"></select>
           <input id="f-search" placeholder="Type to search items…" autocomplete="off" oninput="showDD()" onfocus="pullLatest();showDD()"/></div>
       </div>
       <div class="panel pick" id="panel">
@@ -496,7 +496,7 @@ function updPick(){
 }
 /* filter drop-downs: Medical Domain · Item Name · Material Source — values come from the cache lists of the same name
    (Specs Settings), NOT from the Item List labels. They narrow the Item List; the search box searches within the result. */
-const FS=[['f-dom','Medical Domain',()=>domains.length?domains:[...new Set(items.map(i=>i.domain))]],['f-itm','Item Name',()=>inames],['f-src','Material Source',()=>msources]];
+const FS=[['f-dom','Medical Domain',()=>domains.length?domains:[...new Set(items.map(i=>i.domain))]],['f-src','Material Source',()=>msources],['f-itm','Item Name',()=>inames]];
 function buildFilters(){
   FS.forEach(([id,ph,get])=>{
     const sel=$(id),cur=sel.value,vals=get().slice().sort((x,y)=>x.localeCompare(y,undefined,{numeric:true}));
