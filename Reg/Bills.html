@@ -184,6 +184,26 @@ function groupBills(rows){const m=new Map();
     if(!b){b={id,no:String(a[1]||''),dir:String(a[2]||''),date:String(a[3]||''),ptype:String(a[4]||''),party:String(a[5]||''),note:String(a[6]||''),oids:String(a[7]||'').split(',').filter(Boolean),disc:+a[8]||0,dt:String(a[9]||'amt'),vat:+a[10]||0,lines:[]};m.set(id,b);}
     b.lines.push({itemId:String(a[11]||''),label:String(a[12]||''),oq:+a[13]||0,rq:+a[14]||0,rate:+a[15]||0});});
   return [...m.values()].sort((a,b)=>b.id.localeCompare(a.id));}
+/* ═══ ORDERS ← IndexedDB (same cache dataLayer.js keeps: DB ap2_fleet_cache · store datasets · record {ts,data:{Orders:[…]},fingerprint})
+   Read-only. Opened WITHOUT a version number (no mismatch). The store is scanned for the record that holds data.Orders, so the key name doesn't matter. */
+function idbOrders(){return new Promise(res=>{
+  try{const rq=indexedDB.open('ap2_fleet_cache');
+    rq.onerror=()=>res(null);rq.onblocked=()=>res(null);
+    rq.onupgradeneeded=()=>{try{rq.transaction.abort();}catch(e){}};      // DB missing → don't create an empty one
+    rq.onsuccess=()=>{const db=rq.result;
+      try{if(!db.objectStoreNames.contains('datasets')){db.close();return res(null);}
+        const cur=db.transaction('datasets','readonly').objectStore('datasets').openCursor();let best=null;
+        cur.onsuccess=e=>{const c=e.target.result;
+          if(c){const v=c.value;if(v&&v.data&&Array.isArray(v.data.Orders)&&(!best||(+v.ts||0)>=(+best.ts||0)))best=v;c.continue();}
+          else{db.close();res(best);}};
+        cur.onerror=()=>{db.close();res(null);};
+      }catch(e){try{db.close();}catch(x){}res(null);}};
+  }catch(e){res(null);}});}
+let idbTs=0;
+async function loadIDB(){const r=await idbOrders();if(!r||(+r.ts||0)<=idbTs)return;idbTs=+r.ts||0;
+  orders=groupOrders(r.data.Orders||[]);render();if($('ov').classList.contains('open'))rOrders();}
+window.addEventListener('message',e=>{if(e.data&&/^ap-cache/.test(String(e.data.type||e.data.msg||'')))setTimeout(loadIDB,250);});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadIDB();});
 async function loadAll(){
   const s=session();if(!s.sessionId&&!s.token)return;
   try{const o=await AP2Api.get('orders');orders=groupOrders(o.Orders||[]);}
@@ -350,7 +370,7 @@ async function addPay(){const b=bills.find(x=>x.id===vid);if(!b||busy)return;con
   catch(e){showToast('Not saved: '+errText(e.message),'error');}busy=false;}
 async function delPay(id){if(!confirm('Delete this payment?'))return;try{await post('deletePayment',{ids:[id]});await loadAll();}catch(e){showToast('Not deleted: '+errText(e.message),'error');}}
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if($('ov2').classList.contains('open'))closeView();else closeForm();});
-render();cache.start();loadAll();setInterval(loadAll,30000);
+render();cache.start();loadIDB().then(loadAll);setInterval(loadAll,30000);setInterval(loadIDB,10000);
 </script>
 </body>
 </html>
