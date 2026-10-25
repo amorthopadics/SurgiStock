@@ -57,7 +57,7 @@
 
   // Object-shape datasets that are valid even when every sheet is still empty
   // (e.g. a brand-new Specs database with header rows only).
-  const ALLOW_EMPTY_OBJECT_DATASETS = new Set(['ap2_specsData', 'ap2_rateThreshold']);
+  const ALLOW_EMPTY_OBJECT_DATASETS = new Set(['ap2_specsData', 'ap2_rateThreshold' , 'ap2_orders']);
 
   /* ─────────────────────────────────────────
      LOGOUT CLEANUP
