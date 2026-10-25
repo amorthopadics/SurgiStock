@@ -24,36 +24,55 @@ body{display:flex;flex-direction:column}
 .tab{padding:6px 12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;font:inherit;font-size:13px}
 .tab.on{background:var(--accent-dim);color:var(--accent);border-color:var(--accent)}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font:inherit;font-size:13px}
+.btn:disabled{opacity:.5;pointer-events:none}
 .btn.out{background:var(--orange-dim);color:var(--orange);border-color:var(--orange)}
 .btn.in{background:var(--teal-dim);color:var(--teal);border-color:var(--teal)}
 .btn.pri{background:var(--accent);color:#fff;border-color:var(--accent)}
 .btn.sm{padding:3px 8px;font-size:12px}
+.btn.dng.armed{background:var(--red);color:#fff;border-color:var(--red)}
 .ib{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer}
-.ib.ok{color:var(--teal)}.ib.err{color:var(--red)}
+.ib.ok{color:var(--teal)}.ib.err{color:var(--red)}.ib.warn{color:var(--amber)}
 main{flex:1;min-height:0;overflow:auto;padding:12px 14px}
 input,select,textarea{font:inherit;font-size:13px;padding:7px 9px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg3);color:var(--text);width:100%}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
-.tools{display:flex;gap:8px;margin-bottom:10px}.tools input{max-width:320px}
+input:disabled{opacity:.6}
+.tools{display:flex;gap:8px;margin-bottom:10px;align-items:center}.tools input{max-width:320px}
 table{width:100%;border-collapse:collapse;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
 th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--border);font-size:13px;vertical-align:top}
 th{background:var(--bg3);color:var(--text2);font-weight:600;font-size:12px}
 td.n,th.n{text-align:right;font-family:var(--mono)}
+td.acts{white-space:nowrap;width:1%}
 .badge{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:600}
 .badge.out{background:var(--orange-dim);color:var(--orange)}.badge.in{background:var(--teal-dim);color:var(--teal)}
 .mono{font-family:var(--mono)}.dim{color:var(--text2)}.neg{color:var(--red)}
 .empty{padding:40px;text-align:center;color:var(--text2)}
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:12px;z-index:50}
 .ov.open{display:flex}
-.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);width:100%;max-width:760px;max-height:92vh;display:flex;flex-direction:column}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);width:100%;max-width:780px;max-height:92vh;display:flex;flex-direction:column}
 .mh,.mf{padding:12px 16px;display:flex;align-items:center;gap:8px}
 .mh{border-bottom:1px solid var(--border);font-weight:600}.mf{border-top:1px solid var(--border);justify-content:flex-end}
 .mb{padding:14px 16px;overflow:auto;display:flex;flex-direction:column;gap:12px}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.span2{grid-column:1/-1}
 label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
-.pick{position:relative}
-.dd{position:absolute;left:0;right:0;top:100%;z-index:5;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);max-height:220px;overflow:auto;display:none}
-.dd div{padding:7px 10px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)}
-.dd div:hover{background:var(--accent-dim)}
+.req{color:var(--red)}
+/* Type chips (same idea as Rate Threshold) */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);font:600 12px var(--font);cursor:pointer}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.chips.bad,.cb.bad input{border-color:var(--red);box-shadow:0 0 0 3px var(--red-dim)}
+.chips.bad{padding:6px;border:1px solid var(--red);border-radius:var(--radius-lg)}
+/* searchable name drop-down */
+.cb,.pick{position:relative}
+.dd2,.dd{position:absolute;left:0;right:0;top:calc(100% + 3px);z-index:5;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);max-height:240px;overflow:auto;display:none;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.di{padding:7px 10px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)}
+.di:hover,.di.hi{background:var(--accent-dim)}.di.mute{color:var(--text2);cursor:default}
+/* multi-select item picker */
+.opt{display:flex;align-items:center;gap:9px;padding:7px 10px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)}
+.opt:hover{background:var(--accent-dim)}
+.opt input{width:auto;padding:0;pointer-events:none}
+.ddf{position:sticky;bottom:0;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px;background:var(--bg3);border-top:1px solid var(--border2)}
 .lines td{padding:6px 8px}.lines input{padding:4px 7px}
 .warn{color:var(--amber);font-size:12px}
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border2);padding:9px 16px;border-radius:var(--radius);z-index:99;display:none;font-size:13px}
@@ -70,7 +89,7 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
   <button class="ib cache-ind warn" id="cache-ind" type="button" title="Cache: waiting…"><i class="ti ti-database"></i></button>
 </div>
 <main>
-  <div class="tools"><input id="q" placeholder="Search order no, store, party, item…" oninput="render()"/></div>
+  <div class="tools"><input id="q" placeholder="Search order no, store, party, item…" oninput="render()"/><span class="dim" id="ldg" style="font-size:12px"></span></div>
   <div id="view"></div>
 </main>
 
@@ -79,147 +98,288 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
     <div class="mh"><i class="ti" id="m-ico"></i><span id="m-title"></span></div>
     <div class="mb">
       <div class="g2">
-        <div><label>Store *</label><select id="f-store"></select></div>
-        <div><label>Date *</label><input type="date" id="f-date"/></div>
-        <div><label id="f-party-l">Party</label><input id="f-party"/></div>
-        <div><label>Reference / Note</label><input id="f-note"/></div>
+        <div><label>Store <span class="req">*</span></label><select id="f-store"></select></div>
+        <div><label>Date <span class="req">*</span></label><input type="date" id="f-date"/></div>
+
+        <!-- OUTGOING: Type chips → Name drop-down, both from the cache -->
+        <div class="span2" id="f-out">
+          <label>Customer / Hospital / Department — Type <span class="req">*</span></label>
+          <div class="chips" id="f-types"></div>
+          <label style="margin-top:10px">Name <span class="req">*</span></label>
+          <div class="cb" id="f-pcb"></div>
+        </div>
+        <!-- INCOMING: supplier, free text -->
+        <div class="span2" id="f-in"><label>Supplier</label><input id="f-party"/></div>
+
+        <div class="span2"><label>Reference / Note</label><input id="f-note"/></div>
       </div>
+
       <div class="pick">
-        <label>Add item (from Item List) *</label>
+        <label>Add items (from Item List) — tick as many as you need <span class="req">*</span></label>
         <input id="f-search" placeholder="Type to search items…" autocomplete="off" oninput="showDD()" onfocus="showDD()"/>
         <div class="dd" id="dd"></div>
       </div>
       <table class="lines"><thead><tr><th>Item</th><th class="n" style="width:90px">In stock</th><th class="n" style="width:100px">Qty</th><th style="width:36px"></th></tr></thead><tbody id="lines"></tbody></table>
       <div class="warn" id="m-warn"></div>
     </div>
-    <div class="mf"><button class="btn" onclick="closeForm()">Cancel</button><button class="btn pri" onclick="saveOrder()"><i class="ti ti-check"></i>Save</button></div>
+    <div class="mf"><button class="btn" onclick="closeForm()">Cancel</button><button class="btn pri" id="m-save" onclick="saveOrder()"><i class="ti ti-check"></i><span id="m-save-t">Save</span></button></div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
 'use strict';
-/* cache button: shared/cacheSync.js (same behaviour as Master) */
+/* cache button: shared/cacheSync.js · endpoint/session/post → shared/api.js
+   Orders are saved in the Google Sheet "Orders" (doPost: addOrder / updateOrder / deleteOrder,
+   doGet: type=orders). Parties, items and stores come from the Master cache (IDB). */
 
-/* ═══ DATA ═══
-   items  ← Item List rows:  [ID, "Item List", Medical Domain, label, Status]
-   stores ← Store rows:      [ID, "Store", Name, Description, Status]
-   orders ← localStorage now; swap loadOrders()/saveOrders() for your backend */
-let items=[], stores=[], orders=[], tab='all', lines=[], formType='out';
-const ORD_KEY='orders_v1';
-function loadOrders(){try{orders=JSON.parse(localStorage.getItem(ORD_KEY)||'[]');}catch(e){orders=[];}}
-function saveOrders(){try{localStorage.setItem(ORD_KEY,JSON.stringify(orders));}catch(e){showToast('Storage write failed','error');}}
+const $=id=>document.getElementById(id);
+const rd=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
+const wr=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const OK='orders_sheet_cache_v2';
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s==null?'':s).trim().replace(/\s+/g,' ').toLowerCase();
+const words=q=>String(q||'').toLowerCase().split(/[\s\-\u2013\u2014\/,;|]+/).filter(Boolean);
+const match=(q,h)=>{h=String(h).toLowerCase();return words(q).every(w=>h.includes(w));};
+const p2=n=>String(n).padStart(2,'0');
+const tsId=t=>{const d=new Date(t);return''+d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate())+p2(d.getHours())+p2(d.getMinutes())+p2(d.getSeconds())+String(d.getMilliseconds()).padStart(3,'0')};
+function showToast(m,t){const e=$('toast');e.textContent=m;e.className='toast '+(t||'');e.style.display='block';clearTimeout(showToast.t);showToast.t=setTimeout(()=>e.style.display='none',3200);}
 
+const session=AP2Api.session,post=AP2Api.post,errText=m=>AP2Api.errText(m);
+
+/* ═══ STATE ═══ */
+let items=[],stores=[],parties=[],types=[];     // from the cache
+let orders=rd(OK,[]),ordersLoaded=false;          // from the sheet
+let tab='all',formType='out',draft=null,pcomb=null,picked=new Set(),busy=false,lastPType='';
+
+/* ═══ CACHE → items / stores / customer-type parties ═══
+   cache row = [ID, Specs, Item, Description, Status]
+   Item List : [id,"Item List",<Medical Domain>,<item label>,Active]
+   Store     : [id,"Store",<name>,…,Active]
+   Party     : [id,<Type e.g. Hospital|Doctor|Department>,<Name>,"Customer",Active]   ← same rule as Rate Threshold */
+const ELIGIBLE='customer';
+const ICONS={customer:'ti-user',vendor:'ti-truck-delivery',hospital:'ti-building-hospital',doctor:'ti-stethoscope',department:'ti-building'};
+const typeIcon=k=>ICONS[k]||'ti-tag';
+const cap=t=>t.charAt(0).toUpperCase()+t.slice(1);
+const IGN=/^(item\s*names?|item\s*lists?|item\s*categor(y|ies)|stores?(\s*branch)?|medical\s*domains?|material\s*sources?|specs)$/i;
 function applyRows(rows){
-  const it=[],st=[];
+  const it=[],st=[],pa=[],T=new Map();
   rows.forEach(r=>{
     if(!Array.isArray(r)||String(r[0]).toLowerCase()==='id')return;
     const id=String(r[0]).trim(),kind=String(r[1]??'').trim(),a=String(r[2]??'').trim(),b=String(r[3]??'').trim();
-    const active=/^active$/i.test(String(r[4]??'').trim());
-    if(!id||!active)return;
-    if(/^item\s*lists?$/i.test(kind)&&b) it.push({id,domain:a,label:b});
-    else if(/^stores?(\s*branch)?$/i.test(kind)&&a) st.push({id,name:a});
+    if(!id||!kind||!a)return;
+    const strict=/^active$/i.test(String(r[4]??'').trim());
+    const lenient=!/^(inactive|in-active|no|0|false|disabled)$/i.test(String(r[4]??'').trim());
+    if(/^item\s*lists?$/i.test(kind)){if(strict&&b)it.push({id,domain:a,label:b});return;}
+    if(/^stores?(\s*branch)?$/i.test(kind)){if(strict)st.push({id,name:a});return;}
+    if(IGN.test(kind)||norm(b)!==ELIGIBLE||!lenient)return;
+    const k=norm(kind),t=T.get(k);
+    if(!t)T.set(k,{k,l:cap(kind)});else if(/^[a-z]/.test(t.l)&&/^[A-Z]/.test(kind))t.l=kind;
+    pa.push({sid:id,name:a,type:k});
   });
-  items=it;stores=st;
+  items=it;stores=st;parties=pa;types=[...T.values()].sort((a,b)=>a.l.localeCompare(b.l));
 }
 const cache=AP2Cache.create({
   indicator:'cache-ind',
   toast:(m,t)=>showToast(m,t),
-  title:()=>'Cache loaded · '+items.length+' items · '+stores.length+' stores',
+  title:()=>'Cache loaded · '+items.length+' items · '+stores.length+' stores · '+parties.length+' names',
   onRows:rows=>{applyRows(rows);render();return items.length;}
 });
-const startCache=()=>cache.start();
 
-/* ═══ STOCK = incoming − outgoing, per store + item ═══ */
+/* ═══ ORDERS ← sheet ═══
+   sheet row = [ID, Order No, Type, Date, Store ID, Store, Party Type, Party ID, Party, Note, Item ID, Item, Domain, Qty, Updated, Updated By] */
+function groupRows(rows){
+  const m=new Map();
+  rows.forEach(a=>{
+    if(!Array.isArray(a)||!String(a[0])||String(a[0])==='ID')return;
+    const id=String(a[0]);let o=m.get(id);
+    if(!o){o={id,no:String(a[1]||''),type:String(a[2]||''),date:String(a[3]||''),storeId:String(a[4]||''),storeName:String(a[5]||''),
+      partyType:String(a[6]||''),partyId:String(a[7]||''),party:String(a[8]||''),note:String(a[9]||''),lines:[],ts:String(a[14]||''),by:String(a[15]||'')};m.set(id,o);}
+    o.lines.push({itemId:String(a[10]||''),label:String(a[11]||''),domain:String(a[12]||''),qty:Math.floor(+a[13])||0});
+  });
+  return [...m.values()].sort((a,b)=>b.id.localeCompare(a.id));
+}
+async function loadOrders(){
+  const s=session();if(!s.sessionId&&!s.token)return false;
+  try{const j=await AP2Api.get('orders');orders=groupRows(j.Orders||[]);ordersLoaded=true;wr(OK,orders);$('ldg').textContent='';render();return true;}
+  catch(e){if(!loadOrders._w){loadOrders._w=1;showToast('Could not load orders: '+errText(e.message),'error');}return false;}
+}
+AP2Api.onSession(()=>loadOrders());
+
+/* ═══ STOCK = incoming − outgoing, per store + item (the order being edited is left out) ═══ */
 const stockKey=(s,i)=>s+'|'+i;
-function stockMap(){const m={};orders.forEach(o=>o.lines.forEach(l=>{const k=stockKey(o.storeId,l.itemId);m[k]=(m[k]||0)+(o.type==='in'?1:-1)*l.qty;}));return m;}
-const nextNo=t=>(t==='out'?'OUT-':'IN-')+String(orders.filter(o=>o.type===t).length+1).padStart(4,'0');
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const words=q=>String(q||'').toLowerCase().split(/[\s\-\/,;|]+/).filter(Boolean);
-const match=(q,h)=>{h=String(h).toLowerCase();return words(q).every(w=>h.includes(w));};
-function showToast(m,t){const e=document.getElementById('toast');e.textContent=m;e.className='toast '+(t||'');e.style.display='block';clearTimeout(showToast.t);showToast.t=setTimeout(()=>e.style.display='none',3000);}
+function stockMap(excludeId){const m={};orders.forEach(o=>{if(o.id===excludeId)return;o.lines.forEach(l=>{const k=stockKey(o.storeId,l.itemId);m[k]=(m[k]||0)+(o.type==='in'?1:-1)*l.qty;});});return m;}
 
 /* ═══ RENDER ═══ */
 const TABS=[['all','All'],['out','Outgoing'],['in','Incoming'],['stock','Stock']];
+const findLine=id=>{for(const o of orders){const l=o.lines.find(x=>x.itemId===id);if(l)return l.label;}return null;};
 function render(){
-  document.getElementById('tabs').innerHTML=TABS.map(([k,l])=>`<button class="tab${tab===k?' on':''}" onclick="tab='${k}';render()">${l}</button>`).join('');
-  const q=document.getElementById('q').value, v=document.getElementById('view');
+  $('tabs').innerHTML=TABS.map(([k,l])=>`<button class="tab${tab===k?' on':''}" onclick="tab='${k}';render()">${l}</button>`).join('');
+  const q=$('q').value,v=$('view');
   if(tab==='stock'){
     const sm=stockMap(),rows=[];
     Object.keys(sm).forEach(k=>{const[s,i]=k.split('|');const it=items.find(x=>x.id===i),st=stores.find(x=>x.id===s);
-      const lbl=(it?it.label:(findLine(i)||i)),sn=st?st.name:s;if(match(q,sn+' '+lbl))rows.push({sn,lbl,qty:sm[k]});});
+      const lbl=(it?it.label:(findLine(i)||i)),sn=st?st.name:(orders.find(o=>o.storeId===s)||{}).storeName||s;if(match(q,sn+' '+lbl))rows.push({sn,lbl,qty:sm[k]});});
     v.innerHTML=rows.length?`<table><thead><tr><th>Store</th><th>Item</th><th class="n">Qty in stock</th></tr></thead><tbody>${rows.sort((a,b)=>a.sn.localeCompare(b.sn)||a.lbl.localeCompare(b.lbl)).map(r=>`<tr><td>${esc(r.sn)}</td><td>${esc(r.lbl)}</td><td class="n ${r.qty<0?'neg':''}">${r.qty}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">No stock yet — add items with an Incoming order.</div>';
     return;
   }
-  const list=orders.filter(o=>(tab==='all'||o.type===tab)&&match(q,[o.no,o.storeName,o.party,o.note,o.lines.map(l=>l.label).join(' ')].join(' '))).sort((a,b)=>b.created-a.created);
+  const list=orders.filter(o=>(tab==='all'||o.type===tab)&&match(q,[o.no,o.storeName,o.party,o.partyType,o.note,o.lines.map(l=>l.label).join(' ')].join(' ')));
   v.innerHTML=list.length?`<table><thead><tr><th>Order No</th><th>Type</th><th>Date</th><th>Store</th><th>Party / Ref</th><th>Items</th><th class="n">Total qty</th><th></th></tr></thead><tbody>${list.map(o=>`
     <tr><td class="mono">${esc(o.no)}</td>
     <td><span class="badge ${o.type}">${o.type==='out'?'Outgoing':'Incoming'}</span></td>
     <td>${esc(o.date)}</td><td>${esc(o.storeName)}</td>
-    <td>${esc(o.party)}${o.note?`<div class="dim" style="font-size:12px">${esc(o.note)}</div>`:''}</td>
+    <td>${esc(o.party)}${o.partyType?` <span class="dim" style="font-size:11px">· ${esc(o.partyType)}</span>`:''}${o.note?`<div class="dim" style="font-size:12px">${esc(o.note)}</div>`:''}</td>
     <td>${o.lines.map(l=>`<div>${esc(l.label)} <span class="mono dim">× ${l.qty}</span></div>`).join('')}</td>
     <td class="n">${o.lines.reduce((a,l)=>a+l.qty,0)}</td>
-    <td><button class="btn sm" onclick="delOrder('${o.id}')"><i class="ti ti-trash"></i></button></td></tr>`).join('')}</tbody></table>`
-    :'<div class="empty">No orders yet. Use the buttons above to create one.</div>';
+    <td class="acts"><button class="btn sm" title="Edit / add items" onclick="openForm(null,'${esc(o.id)}')"><i class="ti ti-pencil"></i></button>
+      <button class="btn sm dng" id="del-${esc(o.id)}" title="Delete" onclick="delOrder('${esc(o.id)}')"><i class="ti ti-trash"></i></button></td></tr>`).join('')}</tbody></table>`
+    :`<div class="empty">${ordersLoaded?'No orders yet. Use the buttons above to create one.':'Loading orders…'}</div>`;
 }
-const findLine=id=>{for(const o of orders){const l=o.lines.find(x=>x.itemId===id);if(l)return l.label;}return null;};
+
+/* ═══ searchable drop-down (same behaviour as Rate Threshold) ═══ */
+function combo(host,o){
+  host.innerHTML='<input autocomplete="off" placeholder="'+esc(o.ph)+'"/><div class="dd2"></div>';
+  const inp=host.firstChild,dd=host.lastChild;let cur=[],hi=-1,sel=null;
+  const close=()=>{dd.style.display='none';hi=-1};
+  function draw(q){const tk=words(q);cur=o.list().filter(x=>tk.every(w=>x.text.toLowerCase().includes(w))).slice(0,80);
+    dd.innerHTML=cur.length?cur.map((x,i)=>`<div class="di${i===hi?' hi':''}" data-i="${i}">${esc(x.text)}</div>`).join(''):'<div class="di mute">No matching names for this Type</div>';
+    dd.style.display='block';}
+  function set(it){sel=it;inp.value=it?it.text:'';close();o.onPick(it);}
+  inp.onfocus=()=>{inp.select();draw('');};
+  inp.oninput=()=>{if(sel&&inp.value!==sel.text){sel=null;o.onPick(null);}hi=-1;draw(inp.value);};
+  inp.onblur=()=>setTimeout(()=>{close();inp.value=sel?sel.text:'';},150);
+  inp.onkeydown=e=>{
+    if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(dd.style.display!=='block')draw(sel?'':inp.value);hi=Math.max(0,Math.min(cur.length-1,hi+(e.key==='ArrowDown'?1:-1)));draw(sel?'':inp.value);const h=dd.querySelector('.hi');h&&h.scrollIntoView({block:'nearest'});}
+    else if(e.key==='Enter'){e.preventDefault();e.stopPropagation();const c=cur[hi>=0?hi:0];if(c)set(c);}
+    else if(e.key==='Escape'&&dd.style.display==='block'){e.stopPropagation();close();}};
+  dd.onmousedown=e=>{e.preventDefault();const d=e.target.closest('.di');if(d&&d.dataset.i!=null)set(cur[+d.dataset.i]);};
+  return{set,get:()=>sel,focus:()=>inp.focus(),input:inp};
+}
 
 /* ═══ FORM ═══ */
-function openForm(t){
+function openForm(t,id){
   if(!cache.requireReady('Cache not loaded yet — please wait'))return;
   if(!stores.length)return showToast('No active Store found in Specs Settings','error');
-  formType=t;lines=[];
-  document.getElementById('m-ico').className='ti '+(t==='out'?'ti-arrow-up-right':'ti-arrow-down-left');
-  document.getElementById('m-title').textContent=(t==='out'?'New Order — Outgoing ':'Add Items — Incoming ')+nextNo(t);
-  document.getElementById('f-party-l').textContent=t==='out'?'Customer / Hospital / Department':'Supplier';
-  document.getElementById('f-store').innerHTML=stores.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
-  document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
-  ['f-party','f-note','f-search'].forEach(i=>document.getElementById(i).value='');
-  document.getElementById('f-store').onchange=renderLines;
-  renderLines();document.getElementById('ov').classList.add('open');
+  const o=id?orders.find(x=>x.id===id):null;if(id&&!o)return;
+  formType=o?o.type:t;
+  picked=new Set();
+  if(o){
+    const pk=norm(o.partyType);
+    draft={id:o.id,no:o.no,ptype:pk,ptypeLabel:o.partyType,party:(o.party?{text:o.party,sid:o.partyId,type:pk}:null),lines:o.lines.map(l=>({...l})),storeName:o.storeName};
+  }else{
+    const dflt=types.some(x=>x.k===lastPType)?lastPType:(types.length===1?types[0].k:'');
+    draft={id:null,no:'',ptype:dflt,ptypeLabel:'',party:null,lines:[],storeName:''};
+  }
+  const out=formType==='out',edit=!!o;
+  $('m-ico').className='ti '+(out?'ti-arrow-up-right':'ti-arrow-down-left');
+  $('m-title').textContent=(edit?'Edit ':'New ')+(out?'Order — Outgoing':'Items — Incoming')+(edit?' '+o.no:'');
+  $('m-save-t').textContent=edit?'Update':'Save';
+  $('f-out').style.display=out?'':'none';
+  $('f-in').style.display=out?'none':'';
+  const opts=stores.slice();if(o&&!opts.some(s=>s.id===o.storeId))opts.push({id:o.storeId,name:o.storeName||o.storeId});
+  $('f-store').innerHTML=opts.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
+  $('f-store').value=o?o.storeId:opts[0].id;
+  $('f-store').onchange=renderLines;
+  $('f-date').value=o?o.date:new Date().toISOString().slice(0,10);
+  $('f-party').value=o&&!out?o.party:'';
+  $('f-note').value=o?o.note:'';
+  $('f-search').value='';$('dd').style.display='none';
+  if(out)drawPartyBlock();
+  renderLines();$('ov').classList.add('open');
 }
-function closeForm(){document.getElementById('ov').classList.remove('open');}
+function closeForm(){$('ov').classList.remove('open');$('dd').style.display='none';draft=null;}
+
+/* Type chips → Name drop-down: changing the Type clears the Name and reloads the list for that Type */
+function drawPartyBlock(){
+  const d=draft;
+  const TL=(!d.ptype||types.some(t=>t.k===d.ptype))?types:types.concat({k:d.ptype,l:d.ptypeLabel||d.ptype});
+  $('f-types').classList.remove('bad');$('f-pcb').classList.remove('bad');
+  $('f-types').innerHTML=TL.length?TL.map(t=>`<button type="button" class="chip${d.ptype===t.k?' on':''}" data-v="${esc(t.k)}"><i class="ti ${typeIcon(t.k)}"></i>${esc(t.l)}</button>`).join('')
+    :'<span class="dim" style="font-size:12px">No entries with Description “Customer” found in the Master sheet yet.</span>';
+  pcomb=combo($('f-pcb'),{ph:d.ptype?'Search name…':'Choose a Type first',
+    list:()=>d.ptype?parties.filter(p=>p.type===d.ptype).map(p=>({text:p.name,sid:p.sid,type:p.type})):[],
+    onPick:p=>{d.party=p;$('f-pcb').classList.remove('bad');}});
+  if(d.party)pcomb.set(d.party);
+  pcomb.input.disabled=!d.ptype;
+}
+$('f-types').onclick=e=>{const b=e.target.closest('.chip');if(!b||!draft)return;
+  draft.ptype=b.dataset.v;draft.ptypeLabel='';draft.party=null;lastPType=draft.ptype;drawPartyBlock();pcomb.focus();};
+
+/* multi-select item picker */
 function showDD(){
-  const q=document.getElementById('f-search').value,dd=document.getElementById('dd');
-  const res=items.filter(i=>match(q,i.domain+' '+i.label)&&!lines.some(l=>l.itemId===i.id)).slice(0,40);
-  dd.innerHTML=res.length?res.map(i=>`<div onclick="addLine('${esc(i.id)}')"><span class="dim">${esc(i.domain)} ·</span> ${esc(i.label)}</div>`).join(''):'<div class="dim">No matching items</div>';
-  dd.style.display='block';
+  if(!draft)return;
+  const dd=$('dd'),keep=dd.scrollTop,q=$('f-search').value;
+  const res=items.filter(i=>match(q,i.domain+' '+i.label)&&!draft.lines.some(l=>l.itemId===i.id)).slice(0,80);
+  dd.innerHTML=(res.length?res.map(i=>`<div class="opt" data-id="${esc(i.id)}"><input type="checkbox" tabindex="-1" ${picked.has(i.id)?'checked':''}/><span><span class="dim">${esc(i.domain)} ·</span> ${esc(i.label)}</span></div>`).join(''):'<div class="di mute">No matching items</div>')
+    +`<div class="ddf"><span class="dim" style="font-size:12px">${picked.size} selected</span><button type="button" class="btn pri sm" data-add="1" ${picked.size?'':'disabled'}><i class="ti ti-plus"></i>Add selected</button></div>`;
+  dd.style.display='block';dd.scrollTop=keep;
 }
-document.addEventListener('click',e=>{if(!e.target.closest('.pick'))document.getElementById('dd').style.display='none';});
-function addLine(id){const i=items.find(x=>x.id===id);if(!i)return;lines.push({itemId:i.id,label:i.label,domain:i.domain,qty:1});
-  document.getElementById('f-search').value='';document.getElementById('dd').style.display='none';renderLines();}
+$('dd').onmousedown=e=>{
+  e.preventDefault();
+  if(e.target.closest('[data-add]')){addSelected();return;}
+  const o=e.target.closest('.opt');if(!o)return;
+  const id=o.dataset.id;picked.has(id)?picked.delete(id):picked.add(id);showDD();
+};
+document.addEventListener('click',e=>{if(!e.target.closest('.pick'))$('dd').style.display='none';});
+function addSelected(){
+  if(!draft)return;
+  items.filter(i=>picked.has(i.id)&&!draft.lines.some(l=>l.itemId===i.id)).forEach(i=>draft.lines.push({itemId:i.id,label:i.label,domain:i.domain,qty:1}));
+  picked=new Set();$('f-search').value='';$('dd').style.display='none';renderLines();
+}
 function renderLines(){
-  const sm=stockMap(),store=document.getElementById('f-store').value;
-  document.getElementById('lines').innerHTML=lines.length?lines.map((l,n)=>`<tr><td>${esc(l.label)}<div class="dim" style="font-size:11px">${esc(l.domain)}</div></td>
+  if(!draft)return;
+  const sm=stockMap(draft.id),store=$('f-store').value;
+  $('lines').innerHTML=draft.lines.length?draft.lines.map((l,n)=>`<tr><td>${esc(l.label)}<div class="dim" style="font-size:11px">${esc(l.domain)}</div></td>
     <td class="n">${sm[stockKey(store,l.itemId)]||0}</td>
-    <td><input type="number" min="1" step="1" value="${l.qty}" class="n" oninput="lines[${n}].qty=Math.floor(+this.value)||0;checkWarn()"/></td>
-    <td><button class="btn sm" onclick="lines.splice(${n},1);renderLines()"><i class="ti ti-x"></i></button></td></tr>`).join('')
-    :'<tr><td colspan="4" class="dim" style="text-align:center">Search above to add items</td></tr>';
+    <td><input type="number" min="1" step="1" value="${l.qty}" class="n" oninput="draft.lines[${n}].qty=Math.floor(+this.value)||0;checkWarn()"/></td>
+    <td><button class="btn sm" onclick="draft.lines.splice(${n},1);renderLines()"><i class="ti ti-x"></i></button></td></tr>`).join('')
+    :'<tr><td colspan="4" class="dim" style="text-align:center">Search above and tick the items to add</td></tr>';
   checkWarn();
 }
 function checkWarn(){
-  const w=document.getElementById('m-warn');w.textContent='';if(formType!=='out')return;
-  const sm=stockMap(),store=document.getElementById('f-store').value;
-  const bad=lines.filter(l=>l.qty>(sm[stockKey(store,l.itemId)]||0));
+  const w=$('m-warn');w.textContent='';if(formType!=='out'||!draft)return;
+  const sm=stockMap(draft.id),store=$('f-store').value;
+  const bad=draft.lines.filter(l=>l.qty>(sm[stockKey(store,l.itemId)]||0));
   if(bad.length)w.textContent='⚠ Quantity exceeds stock for: '+bad.map(l=>l.label).join(', ')+' — you can still save.';
 }
-function saveOrder(){
-  const storeId=document.getElementById('f-store').value,date=document.getElementById('f-date').value;
-  if(!storeId||!date)return showToast('Store and date are required','error');
-  if(!lines.length)return showToast('Add at least one item','error');
-  if(lines.some(l=>!(l.qty>0)))return showToast('Every quantity must be 1 or more','error');
-  const st=stores.find(s=>s.id===storeId);
-  orders.unshift({id:'o'+Date.now(),no:nextNo(formType),type:formType,date,storeId,storeName:st?st.name:storeId,
-    party:document.getElementById('f-party').value.trim(),note:document.getElementById('f-note').value.trim(),
-    lines:lines.map(l=>({...l})),created:Date.now()});
-  saveOrders();closeForm();render();showToast(formType==='out'?'Outgoing order saved':'Items added to store','success');
-}
-function delOrder(id){
-  const o=orders.find(x=>x.id===id);if(!o||!confirm('Delete '+o.no+'? Stock will be recalculated.'))return;
-  orders=orders.filter(x=>x.id!==id);saveOrders();render();
-}
 
-loadOrders();render();startCache();
+/* ═══ SAVE / DELETE → Google Sheet ═══ */
+async function saveOrder(){
+  if(busy||!draft)return;
+  const d=draft,out=formType==='out',storeId=$('f-store').value,date=$('f-date').value;
+  if(!storeId||!date)return showToast('Store and date are required','error');
+  if(out&&!d.ptype){$('f-types').classList.add('bad');return showToast('Choose a Type','error');}
+  if(out&&!d.party){$('f-pcb').classList.add('bad');return showToast('Choose a name','error');}
+  if(!d.lines.length)return showToast('Add at least one item','error');
+  if(d.lines.some(l=>!(l.qty>0)))return showToast('Every quantity must be 1 or more','error');
+  const st=stores.find(s=>s.id===storeId);
+  const tl=out?(types.find(t=>t.k===d.ptype)||{l:d.ptypeLabel||d.ptype}).l:'';
+  const order={
+    id:d.id||tsId(Date.now()),type:formType,date,storeId,storeName:st?st.name:(d.storeName||storeId),
+    partyType:tl,partyId:out?d.party.sid:'',party:out?d.party.text:$('f-party').value.trim(),
+    note:$('f-note').value.trim(),lines:d.lines.map(l=>({itemId:l.itemId,label:l.label,domain:l.domain,qty:l.qty}))};
+  busy=true;$('m-save').disabled=true;
+  try{
+    const j=await post(d.id?'updateOrder':'addOrder',{order});
+    const no=(j&&j.order&&j.order.no)||d.no;
+    await loadOrders();
+    closeForm();render();
+    showToast((d.id?'Order updated: ':'Order saved: ')+no,'success');
+  }catch(e){showToast('Not saved: '+errText(e.message),'error');}
+  busy=false;$('m-save').disabled=false;
+}
+let armed=null;
+async function delOrder(id){
+  if(armed!==id){armed=id;const b=$('del-'+id);if(b){b.classList.add('armed');b.title='Click again to confirm delete';}
+    clearTimeout(delOrder.t);delOrder.t=setTimeout(()=>{armed=null;render();},2800);return;}
+  armed=null;
+  try{await post('deleteOrder',{ids:[id]});await loadOrders();showToast('Order deleted — stock recalculated','success');}
+  catch(e){showToast('Not deleted: '+errText(e.message),'error');render();}
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('ov').classList.contains('open'))closeForm();});
+
+render();cache.start();
+loadOrders();setInterval(loadOrders,30000);
 </script>
 </body>
 </html>
