@@ -42,8 +42,11 @@
   /* ─────────────────────────────────────────
      CONFIG — endpoint is defined once in shared/api.js
   ───────────────────────────────────────── */
-  if (!window.AP2Api) throw new Error('[DataLayer] shared/api.js must be loaded before dataLayer.js');
-  const API_BASE = window.AP2Api.ENDPOINT;   // single source: shared/api.js
+  /* TRANSITION FALLBACK: pages without the api.js tag keep working on the previous built-in URL.
+     Once every page loads api.js, delete the fallback string below. */
+  const API_BASE = (window.AP2Api && window.AP2Api.ENDPOINT)
+    || (console.warn('[DataLayer] shared/api.js not loaded on this page — using built-in fallback endpoint'),
+        'https://script.google.com/macros/s/AKfycbwCnVKZkbWPLa-3YK0x_HiCI_IpINs5A1pfumst72EIpId6NAbbtlI1F4E8MA8T5XlHhQ/exec');
 
   const CACHE_PREFIX = 'ap2_';
 

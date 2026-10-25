@@ -39,8 +39,11 @@
   const SERVER_CHECK_INT = 5  * 60 * 1000;    // server ping every 5 min
   const ALLOWED_ORIGIN   = 'https://amorthopadics.github.io/SurgiStock/';
   /* endpoint comes from shared/api.js (the one place it is defined) — api.js must load BEFORE auth.js */
-  if (!window.AP2Api) throw new Error('[Auth] shared/api.js must be loaded before auth.js');
-  const API_BASE = window.AP2Api.ENDPOINT;
+  /* TRANSITION FALLBACK: if a page has not been given the api.js tag yet, use the previous built-in URL so nothing breaks.
+     Once every page loads api.js, delete the fallback string below. */
+  const API_BASE = (window.AP2Api && window.AP2Api.ENDPOINT)
+    || (console.warn('[Auth] shared/api.js not loaded on this page — using built-in fallback endpoint'),
+        'https://script.google.com/macros/s/AKfycbwCnVKZkbWPLa-3YK0x_HiCI_IpINs5A1pfumst72EIpId6NAbbtlI1F4E8MA8T5XlHhQ/exec');
    
 
      
