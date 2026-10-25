@@ -125,7 +125,15 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
 .sbox.fs{display:flex;align-items:center;border:1px solid var(--border2);border-radius:var(--radius);background:var(--bg3)}
 .sbox.fs:focus-within{border-color:var(--accent)}
 .sbox.fs select,.sbox.fs input{border:0!important;background:transparent!important;box-shadow:none!important;outline:0;margin:0}
-.sbox.fs select{flex:none;width:auto;max-width:44%;margin-left:32px;padding:9px 22px 9px 6px;font-size:12px;color:var(--text2);border-right:1px solid var(--border2)!important;border-radius:0!important;cursor:pointer}
+.sbox.fs select{flex:0 1 auto;width:auto;min-width:0;max-width:24%;padding:9px 18px 9px 6px;font-size:12px;color:var(--text2);border-right:1px solid var(--border2)!important;border-radius:0!important;cursor:pointer;text-overflow:ellipsis}
+.sbox.fs select:first-of-type{margin-left:32px}
+.sbox.fs select.on{color:var(--accent);font-weight:600}
+.panel.lock{pointer-events:none}
+@media(max-width:700px){
+  .sbox.fs{flex-wrap:wrap}.sbox.fs>i{display:none}
+  .sbox.fs select,.sbox.fs select:first-of-type{flex:1 1 30%;max-width:none;margin-left:0;border-bottom:1px solid var(--border2)!important}
+  .sbox.fs input{flex:1 1 100%}
+}
 .sbox.fs input{flex:1 1 auto;min-width:0;padding-left:10px}
 .pw{position:relative;flex:none;display:inline-flex}
 .pw .cnt{position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--orange,#f0883e);color:#fff;font:700 10px/16px var(--font);text-align:center;pointer-events:none}
@@ -193,7 +201,7 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
       <div class="pick">
         <label><i class="ti ti-packages"></i>Add items (from Item List) — tick as many as you need <span class="req">*</span></label>
         <div class="sbox fs"><i class="ti ti-search"></i>
-          <select id="f-field" title="Search in" aria-label="Search in" onchange="showDD()"><option value="all">All</option><option value="domain">Medical Domain</option><option value="label">Item Name</option><option value="source">Material Source</option></select>
+          <select id="f-dom" title="Medical Domain" aria-label="Medical Domain" onchange="showDD()"></select><select id="f-itm" title="Item Name" aria-label="Item Name" onchange="showDD()"></select><select id="f-src" title="Material Source" aria-label="Material Source" onchange="showDD()"></select>
           <input id="f-search" placeholder="Type to search items…" autocomplete="off" oninput="showDD()" onfocus="pullLatest();showDD()"/></div>
       </div>
       <div class="panel pick" id="panel">
@@ -381,8 +389,8 @@ function combo(host,o){
     if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(dd.style.display!=='block')draw(sel?'':inp.value);hi=Math.max(0,Math.min(cur.length-1,hi+(e.key==='ArrowDown'?1:-1)));draw(sel?'':inp.value);const h=dd.querySelector('.hi');h&&h.scrollIntoView({block:'nearest'});}
     else if(e.key==='Enter'){e.preventDefault();e.stopPropagation();choose(cur[hi>=0?hi:0]);}
     else if(e.key==='Escape'&&dd.style.display==='block'){e.stopPropagation();close();}};
-  dd.addEventListener('touchstart',()=>{window.__cbT=Date.now();},{passive:true});
-  dd.onmousedown=e=>{window.__cbT=Date.now();e.preventDefault();const d=e.target.closest('.di');if(d&&d.dataset.i!=null)choose(cur[+d.dataset.i]);};
+  dd.addEventListener('touchstart',()=>lockPanel(),{passive:true});
+  dd.onmousedown=e=>{lockPanel();e.preventDefault();const d=e.target.closest('.di');if(d&&d.dataset.i!=null)choose(cur[+d.dataset.i]);};
   return{set,get:()=>sel,focus:()=>inp.focus(),input:inp,redraw:()=>{if(dd.style.display==='block')draw(sel?'':inp.value);}};
 }
 
@@ -426,7 +434,7 @@ function openForm(t,id){
   $('f-store').onchange=renderLines;
   $('f-date').value=o?o.date:new Date().toISOString().slice(0,10);
   $('f-note').value=o?o.note:'';
-  $('f-search').value='';$('f-field').value='all';
+  $('f-search').value='';resetFilters();
   drawPartyBlock();
   renderLines();$('ov').classList.add('open');if(draft.lines.length)setMode('lines');else showDD();updPick();
   $('f-types').dataset.sig=types.map(t=>t.k).join('|');
@@ -482,19 +490,34 @@ function updPick(){
   const n=picked.size,c=$('p-cnt');c.style.display=n?'block':'none';c.textContent=n;
   const ed=draft&&draft.id;$('m-save').title=$('m-save').ariaLabel=n?'Add '+n+' selected item'+(n>1?'s':''):(ed?'Update':'Save');
 }
-const FLD={all:i=>i.domain+' '+i.label+' '+(i.source||''),domain:i=>i.domain,label:i=>i.label,source:i=>i.source||''};
+/* filter drop-downs: Medical Domain · Item Name · Material Source (each narrows the others); the search box searches within the result */
+const FS=[['f-dom','Medical Domain','domain'],['f-itm','Item Name','label'],['f-src','Material Source','source']];
+function buildFilters(){
+  const cur={};FS.forEach(([id,,k])=>cur[k]=$(id).value);
+  FS.forEach(([id,ph,k])=>{
+    const sel=$(id),pool=items.filter(i=>FS.every(([,,o])=>o===k||!cur[o]||i[o]===cur[o]));
+    const vals=[...new Set(pool.map(i=>i[k]).filter(Boolean))].sort((x,y)=>x.localeCompare(y,undefined,{numeric:true}));
+    if(cur[k]&&!vals.includes(cur[k]))vals.push(cur[k]);
+    const sig=ph+'|'+vals.join('\u0001');
+    if(sel.dataset.sig!==sig){sel.dataset.sig=sig;sel.innerHTML='<option value="">'+esc(ph)+'</option>'+vals.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');}
+    sel.value=cur[k]||'';sel.classList.toggle('on',!!cur[k]);
+  });
+}
+function resetFilters(){FS.forEach(([id])=>$(id).value='');buildFilters();}
 function showDD(){
   if(!draft)return;
-  const dd=$('dd'),keep=dd.scrollTop,q=$('f-search').value,fk=$('f-field').value,fn=FLD[fk]||FLD.all;
-  const res=items.filter(i=>match(q,fn(i))&&!draft.lines.some(l=>l.itemId===i.id));
+  buildFilters();
+  const dd=$('dd'),keep=dd.scrollTop,q=$('f-search').value,F={};FS.forEach(([id,,k])=>F[k]=$(id).value);
+  const res=items.filter(i=>FS.every(([,,k])=>!F[k]||i[k]===F[k])&&match(q,i.domain+' '+i.label+' '+(i.source||''))&&!draft.lines.some(l=>l.itemId===i.id));
   dd.innerHTML=res.length?res.map(i=>`<div class="opt" data-id="${esc(i.id)}"><input type="checkbox" tabindex="-1" ${picked.has(i.id)?'checked':''}/><span><span class="dim">${esc(i.domain)} ·</span> ${esc(i.label)}${i.source?` <span class="dim">· ${esc(i.source)}</span>`:''}</span></div>`).join('')
-    :'<div class="di mute">'+(fk==='source'&&!items.some(i=>i.source)?'No Material Source data found for items':'No matching items')+'</div>';
+    :'<div class="di mute">'+(F.source&&!items.some(i=>i.source)?'No Material Source data found for items':'No matching items')+'</div>';
   setMode('pick');updPick();dd.scrollTop=keep;
 }
+/* while a Name/Supplier drop-down is being used, the item panel under it cannot receive the click that follows */
+function lockPanel(){const p=$('panel');p.classList.add('lock');clearTimeout(lockPanel.t);lockPanel.t=setTimeout(()=>p.classList.remove('lock'),700);}
 /* ignore the click that "falls through" a Name drop-down that just closed (it used to tick the item underneath) */
 $('dd').addEventListener('mousedown',e=>e.preventDefault());
 $('dd').addEventListener('click',e=>{
-  if(Date.now()-(window.__cbT||0)<700)return;
   const o=e.target.closest('.opt');if(!o||!draft)return;
   const id=o.dataset.id;picked.has(id)?picked.delete(id):picked.add(id);showDD();
 });
