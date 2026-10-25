@@ -120,6 +120,21 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
 .mf .warn{flex:1;min-width:0}
 .dd,.dd2{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .dd.up,.dd2.up{top:auto;bottom:calc(100% + 3px)}
+/* ═══ item picker = full-height panel under the search row (no floating drop-down) ═══ */
+.modal{height:100%}
+.prow{display:flex;gap:10px;align-items:center}
+.prow .sbox{flex:1;min-width:0}
+.prow .ib.lg{width:44px;height:44px}
+.prow .ib.pri:disabled{opacity:.45}
+.prow .cnt{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--orange,#f0883e);color:#fff;font:700 11px/18px var(--font);text-align:center}
+.prow .pw{position:relative;flex:none}
+.panel{flex:1 1 auto!important;min-height:220px;display:flex;flex-direction:column;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg2);overflow:hidden}
+.panel .dd,.panel .lines{flex:1 1 auto;min-height:0;overflow-y:auto;border:0;border-radius:0;box-shadow:none;background:transparent;position:static;max-height:none}
+.panel .dd{display:none}
+.panel.pick .dd{display:block}.panel.pick .lines{display:none}
+.panel .lines{display:block}
+.panel .opt{padding:10px 14px}
+.panel .ln.none{padding:30px 12px}
 @media(max-width:760px){
   .fg{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.fg .w2{grid-column:1/-1}
 }
@@ -172,10 +187,16 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
 
       <div class="pick">
         <label><i class="ti ti-packages"></i>Add items (from Item List) — tick as many as you need <span class="req">*</span></label>
-        <div class="sbox"><i class="ti ti-search"></i><input id="f-search" placeholder="Type to search items…" autocomplete="off" oninput="showDD()" onfocus="pullLatest();revealSearch();showDD()"/></div>
-        <div class="dd" id="dd"></div>
+        <div class="prow">
+          <div class="sbox"><i class="ti ti-search"></i><input id="f-search" placeholder="Type to search items…" autocomplete="off" oninput="showDD()" onfocus="pullLatest();showDD()"/></div>
+          <button type="button" class="ib lg" id="p-clear" title="Clear / back to order" aria-label="Clear" onclick="cancelPick()"><i class="ti ti-x"></i></button>
+          <span class="pw"><button type="button" class="ib lg pri" id="p-add" title="Add selected" aria-label="Add selected" onclick="addSelected()" disabled><i class="ti ti-check"></i></button><span class="cnt" id="p-cnt" style="display:none"></span></span>
+        </div>
       </div>
-      <div class="lines" id="lines"></div>
+      <div class="panel pick" id="panel">
+        <div class="dd" id="dd"></div>
+        <div class="lines" id="lines"></div>
+      </div>
     </div>
     <div class="mf">
       <span class="sum" id="m-sum"></span><span class="warn" id="m-warn"></span>
@@ -400,13 +421,13 @@ function openForm(t,id){
   $('f-store').onchange=renderLines;
   $('f-date').value=o?o.date:new Date().toISOString().slice(0,10);
   $('f-note').value=o?o.note:'';
-  $('f-search').value='';$('dd').style.display='none';
+  $('f-search').value='';
   drawPartyBlock();
-  renderLines();$('ov').classList.add('open');
+  renderLines();$('ov').classList.add('open');if(!draft.lines.length)showDD();
   $('f-types').dataset.sig=types.map(t=>t.k).join('|');
   pullLatest(true);
 }
-function closeForm(){$('ov').classList.remove('open');$('dd').style.display='none';draft=null;}
+function closeForm(){$('ov').classList.remove('open');draft=null;}
 
 /* OUTGOING: Type chips → Name drop-down (changing the Type clears the Name).
    INCOMING: Supplier drop-down (Specs Settings → Supplier) with "add as new". */
@@ -441,32 +462,39 @@ function refreshOpenForm(changed){
   if(formType==='out'&&$('f-types').dataset.sig!==types.map(t=>t.k).join('|')){drawChips();}
   $('f-types').dataset.sig=types.map(t=>t.k).join('|');
   if(pcomb&&pcomb.redraw)pcomb.redraw();
-  if($('dd').style.display==='block')showDD();
+  if($('panel').classList.contains('pick'))showDD();
   if(changed)showToast('Lists updated from cache','success');
 }
 $('f-types').onclick=e=>{const b=e.target.closest('.chip');if(!b||!draft)return;
   draft.ptype=b.dataset.v;draft.ptypeLabel='';draft.party=null;lastPType=draft.ptype;drawPartyBlock();pcomb.focus();};
 
 /* multi-select item picker */
+function setMode(m){$('panel').classList.toggle('pick',m==='pick');}
+function updPick(){
+  const n=picked.size;$('p-add').disabled=!n;
+  $('p-cnt').style.display=n?'block':'none';$('p-cnt').textContent=n;
+}
 function showDD(){
   if(!draft)return;
   const dd=$('dd'),keep=dd.scrollTop,q=$('f-search').value;
-  const res=items.filter(i=>match(q,i.domain+' '+i.label)&&!draft.lines.some(l=>l.itemId===i.id)).slice(0,80);
-  dd.innerHTML=(res.length?res.map(i=>`<div class="opt" data-id="${esc(i.id)}"><input type="checkbox" tabindex="-1" ${picked.has(i.id)?'checked':''}/><span><span class="dim">${esc(i.domain)} ·</span> ${esc(i.label)}</span></div>`).join(''):'<div class="di mute">No matching items</div>')
-    +`<div class="ddf"><span class="dim" style="font-size:12px">${picked.size} selected</span><button type="button" class="btn pri sm" data-add="1" title="Add selected" aria-label="Add selected" ${picked.size?'':'disabled'}><i class="ti ti-plus"></i>${picked.size||''}</button></div>`;
-  dd.style.display='block';placeDD(dd,dd.parentElement.querySelector('.sbox'));dd.scrollTop=keep;
+  const res=items.filter(i=>match(q,i.domain+' '+i.label)&&!draft.lines.some(l=>l.itemId===i.id));
+  dd.innerHTML=res.length?res.map(i=>`<div class="opt" data-id="${esc(i.id)}"><input type="checkbox" tabindex="-1" ${picked.has(i.id)?'checked':''}/><span><span class="dim">${esc(i.domain)} ·</span> ${esc(i.label)}</span></div>`).join(''):'<div class="di mute">No matching items</div>';
+  setMode('pick');updPick();dd.scrollTop=keep;
 }
 $('dd').onmousedown=e=>{
   e.preventDefault();
-  if(e.target.closest('[data-add]')){addSelected();return;}
   const o=e.target.closest('.opt');if(!o)return;
   const id=o.dataset.id;picked.has(id)?picked.delete(id):picked.add(id);showDD();
 };
-document.addEventListener('click',e=>{if(!e.target.closest('.pick'))$('dd').style.display='none';});
+/* ✕ : drop the search text + ticks and go back to the order lines (if there are any) */
+function cancelPick(){
+  picked=new Set();$('f-search').value='';updPick();
+  if(draft&&draft.lines.length){setMode('lines');$('f-search').blur();}else showDD();
+}
 function addSelected(){
   if(!draft)return;
   items.filter(i=>picked.has(i.id)&&!draft.lines.some(l=>l.itemId===i.id)).forEach(i=>draft.lines.push({itemId:i.id,label:i.label,domain:i.domain,qty:1}));
-  picked=new Set();$('f-search').value='';$('dd').style.display='none';renderLines();
+  picked=new Set();$('f-search').value='';updPick();setMode('lines');renderLines();
 }
 function renderLines(){
   if(!draft)return;
@@ -479,6 +507,7 @@ function renderLines(){
       <button type="button" class="ib rm" data-rm="${n}" title="Remove" aria-label="Remove"><i class="ti ti-x"></i></button></div>`).join('')
     :'<div class="ln none">Search above and tick the items to add</div>';
   checkWarn();
+  if(!draft.lines.length)showDD();
 }
 $('lines').addEventListener('input',e=>{const i=e.target.closest('input[data-n]');if(!i||!draft)return;draft.lines[+i.dataset.n].qty=Math.floor(+i.value)||0;checkWarn();});
 $('lines').addEventListener('focusin',e=>{if(e.target.matches('input[data-n]'))e.target.select();});
