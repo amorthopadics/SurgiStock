@@ -80,7 +80,7 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
 </div>
 <main>
   <div class="kpi" id="kpi"></div>
-  <div class="tools"><input id="q" placeholder="Search bill no, party, order no…" oninput="render()"/></div>
+  <div class="tools"><input id="q" placeholder="Search doctor, hospital, vendor, date, order no, item…" oninput="render()"/></div>
   <div class="tw" id="view"></div>
 </main>
 
@@ -94,9 +94,10 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
       <div><label id="l-party">Name</label><select id="f-party" onchange="f.party=this.value;rOrders()"></select></div>
       <div><label>Reference / note</label><input id="f-note" autocomplete="off"/></div>
     </div>
+    <div class="fg" style="grid-template-columns:2fr 1fr 1fr"><div><label>Search — doctor, hospital, vendor, order no, date, item</label><input id="f-q" autocomplete="off" oninput="rOrders()"/></div><div><label>From date</label><input type="date" id="f-from" onchange="f.from=this.value;rOrders()"/></div><div><label>To date</label><input type="date" id="f-to" onchange="f.to=this.value;rOrders()"/></div></div>
     <div class="sec">Orders to bill <span class="dim" id="o-cnt"></span>
-      <input id="f-q" placeholder="Filter orders…" style="max-width:200px;margin-left:auto" oninput="rOrders()"/>
-      <button class="btn sm" style="margin-left:0" onclick="selAll(1)">All</button><button class="btn sm" style="margin-left:0" onclick="selAll(0)">None</button></div>
+      
+      <button class="btn sm" style="margin-left:auto" onclick="selAll(1)">All</button><button class="btn sm" style="margin-left:0" onclick="selAll(0)">None</button></div>
     <div class="ol" id="f-orders"></div>
     <div class="sec">Items &amp; rates <span class="dim">(net qty = ordered − returned/claimed; edits already included)</span></div>
     <div class="tw" id="f-items"></div>
@@ -137,7 +138,9 @@ const today=()=>new Date().toISOString().slice(0,10);
 function showToast(m,t){const e=$('toast');e.textContent=m;e.className='toast '+(t||'');e.style.display='block';clearTimeout(showToast.t);showToast.t=setTimeout(()=>e.style.display='none',t==='error'?9000:3000);}
 const session=AP2Api.session,post=AP2Api.post,errText=m=>AP2Api.errText(m);
 
-let orders=[],bills=[],pays=[],tab='all',busy=false,vid=null;
+const OK='orders_sheet_cache_v2';   // same local cache Orders.html writes → orders show instantly, even offline
+const fixO=a=>(a||[]).map(o=>({...o,store:o.store||o.storeName||''}));
+let orders=(()=>{try{return fixO(JSON.parse(localStorage.getItem(OK)))}catch(e){return[]}})(),bills=[],pays=[],tab='orders',busy=false,vid=null;
 let items=[],stores=[],parties=[],types=[],suppliers=[];     // from the cache (Master / Specs Settings)
 
 /* ═══ CACHE → customer-type parties · suppliers · items · stores (same rules as Orders)
@@ -167,7 +170,7 @@ const cache=AP2Cache.create({
   title:()=>'Cache loaded · '+items.length+' items · '+parties.length+' names · '+suppliers.length+' suppliers',
   onRows:rows=>{applyRows(rows);render();if($('ov').classList.contains('open')){fillTypes();fillNames();rOrders();}return items.length;}
 });
-const f={dir:'out',ptype:'',party:'',sel:new Set(),rates:{},disc:0,dt:'amt',vat:0};
+const f={dir:'out',from:'',to:'',ptype:'',party:'',sel:new Set(),rates:{},disc:0,dt:'amt',vat:0};
 
 /* ═══ DATA ═══ */
 function groupOrders(rows){const m=new Map();
@@ -183,11 +186,13 @@ function groupBills(rows){const m=new Map();
   return [...m.values()].sort((a,b)=>b.id.localeCompare(a.id));}
 async function loadAll(){
   const s=session();if(!s.sessionId&&!s.token)return;
-  try{const[o,b]=await Promise.all([AP2Api.get('orders'),AP2Api.get('bills')]);
-    orders=groupOrders(o.Orders||[]);bills=groupBills(b.Bills||[]);
+  try{const o=await AP2Api.get('orders');orders=groupOrders(o.Orders||[]);}
+  catch(e){if(!loadAll._o){loadAll._o=1;showToast('Orders not refreshed (showing cached): '+errText(e.message),'error');}}
+  try{const b=await AP2Api.get('bills');
+    bills=groupBills(b.Bills||[]);
     pays=(b.Payments||[]).filter(a=>Array.isArray(a)&&String(a[0])!=='ID'&&a[0]!=='').map(a=>({id:String(a[0]),billId:String(a[1]),date:String(a[2]||''),amount:+a[3]||0,mode:String(a[4]||''),ref:String(a[5]||'')}));
-    render();if(vid&&$('ov2').classList.contains('open'))viewBill(vid);
-  }catch(e){if(!loadAll._w){loadAll._w=1;showToast('Could not load: '+errText(e.message),'error');}}
+  }catch(e){if(!loadAll._b){loadAll._b=1;showToast('Bills sheet not reachable — add the Bills backend actions: '+errText(e.message),'error');}}
+  render();if($('ov').classList.contains('open'))rOrders();if(vid&&$('ov2').classList.contains('open'))viewBill(vid);
 }
 AP2Api.onSession(()=>loadAll());
 
@@ -212,12 +217,14 @@ function drift(b){const cur=agg(b.oids,b.dir),out=[];
   return [...new Set(out)];}
 
 /* ═══ LIST ═══ */
-const TABS=[['all','All'],['out','Outgoing (receivable)'],['in','Incoming (payable)']];
+const TABS=[['orders','Unbilled orders'],['all','All bills'],['out','Outgoing bills'],['in','Incoming bills']];
 function render(){
   $('tabs').innerHTML=TABS.map(([k,l])=>`<button class="tab${tab===k?' on':''}" onclick="tab='${k}';render()">${l}</button>`).join('');
   const bal=d=>r2(bills.filter(b=>b.dir===d).reduce((a,b)=>a+tb(b).total-paidOf(b),0));
   $('kpi').innerHTML=`<div>To receive (outgoing)<b>${CUR} ${money(bal('out'))}</b></div><div>To pay (incoming)<b>${CUR} ${money(bal('in'))}</b></div><div>Bills<b>${bills.length}</b></div>`;
-  const q=$('q').value,L=bills.filter(b=>(tab==='all'||b.dir===tab)&&match(q,[b.no,b.party,b.ptype,b.note,b.oids.map(i=>(orders.find(o=>o.id===i)||{}).no).join(' '),b.lines.map(l=>l.label).join(' ')].join(' ')));
+  const q=$('q').value;
+  if(tab==='orders')return renderOrders(q);
+  const L=bills.filter(b=>(tab==='all'||b.dir===tab)&&match(q,[b.no,b.party,b.ptype,b.note,b.oids.map(i=>(orders.find(o=>o.id===i)||{}).no).join(' '),b.lines.map(l=>l.label).join(' ')].join(' ')));
   $('view').innerHTML=L.length?`<table><thead><tr><th>Bill No</th><th>Date</th><th>Party</th><th class="n">Orders</th><th class="n">Total</th><th class="n">Paid</th><th class="n">Balance</th><th>Status</th><th></th></tr></thead><tbody>${L.map(b=>{
     const t=tb(b).total,p=paidOf(b),s=stOf(b),dr=drift(b).length;
     return `<tr><td class="mono">${esc(b.no)} <span class="badge ${b.dir}">${b.dir==='out'?'Out':'In'}</span></td><td>${esc(b.date)}</td>
@@ -230,15 +237,35 @@ function render(){
     :'<div class="empty">No bills yet. Use the buttons above to create one.</div>';
 }
 
+/* ═══ UNBILLED ORDERS (search here → bill them) ═══ */
+const otxt=o=>[o.no,o.party,o.partyType,o.store,o.date,o.note,o.lines.map(l=>l.label).join(' ')].join(' ');
+const odir=o=>kd(o,'out')?'out':kd(o,'in')?'in':null;
+function oAmt(o){const d=odir(o),sg=kd(o,d)==='r'?-1:1;let a=0,ok=true;
+  const L=o.lines.map(l=>{const r=lastRate(l.itemId,d);if(!r)ok=false;a+=sg*l.qty*(+r||0);return{...l,r,amt:sg*l.qty*(+r||0)};});return{L,a:r2(a),ok,sg};}
+function renderOrders(q){const bb=billedBy(),L=orders.filter(o=>odir(o)&&!bb[o.id]&&match(q,otxt(o))).sort((a,b)=>b.date.localeCompare(a.date)||b.no.localeCompare(a.no));
+  const dirs=[...new Set(L.map(odir))];
+  $('view').innerHTML=(L.length?`<div class="tools"><span class="dim" style="font-size:12px">${L.length} unbilled order${L.length>1?'s':''}</span>${dirs.length==1?`<button class="btn sm pri" onclick="billThese()"><i class="ti ti-receipt"></i>Bill these ${L.length}</button>`:'<span class="warn">Narrow to Outgoing or Incoming to bill them together</span>'}</div>`:'')
+  +(L.length?`<table><thead><tr><th>Order No</th><th>Date</th><th>Party</th><th>Items · qty × rate</th><th class="n">Amount</th><th></th></tr></thead><tbody>${L.map(o=>{const x=oAmt(o),d=odir(o);
+    return `<tr><td class="mono">${esc(o.no)}<div><span class="badge ${d}">${d==='out'?'Out':'In'}</span>${x.sg<0?' <span class="badge out">'+(d==='out'?'Returned':'Claim')+'</span>':''}</div></td><td>${esc(o.date)}</td>
+    <td>${esc(o.party)}<div class="dim" style="font-size:11px">${esc(o.partyType)}${o.store?' · '+esc(o.store):''}</div></td>
+    <td>${x.L.map(l=>`<div>${esc(l.label)} <span class="mono dim">× ${l.qty}${l.r?' @ '+money(l.r)+' = '+money(l.amt):' · no rate yet'}</span></div>`).join('')}</td>
+    <td class="n">${x.ok?money(x.a):'<span class="dim" title="Some items have no rate yet">≥ '+money(x.a)+'</span>'}</td>
+    <td class="acts"><button class="btn sm" onclick="billOne('${o.id}')"><i class="ti ti-receipt"></i>Bill</button></td></tr>`;}).join('')}</tbody></table>`
+  :'<div class="empty">No unbilled orders match. Rates shown come from your previous bills.</div>');}
+function preset(L){const ps=[...new Set(L.map(o=>o.party))],pt=[...new Set(L.map(o=>o.partyType))];return{ptype:pt.length==1?pt[0]:'',party:ps.length==1?ps[0]:'',ids:L.map(o=>o.id)};}
+function billOne(id){const o=orders.find(x=>x.id===id);if(o)openForm(odir(o),preset([o]));}
+function billThese(){const bb=billedBy(),q=$('q').value,L=orders.filter(o=>odir(o)&&!bb[o.id]&&match(q,otxt(o)));if(L.length)openForm(odir(L[0]),preset(L));}
+
 /* ═══ NEW BILL ═══ */
-const elig=()=>orders.filter(o=>kd(o,f.dir)&&(!f.ptype||norm(o.partyType)===norm(f.ptype))&&(!f.party||norm(o.party)===norm(f.party))).sort((a,b)=>a.date.localeCompare(b.date)||a.no.localeCompare(b.no));
-function openForm(dir){
+const inRange=o=>(!f.from||o.date>=f.from)&&(!f.to||o.date<=f.to);
+const elig=()=>orders.filter(o=>kd(o,f.dir)&&(!f.ptype||norm(o.partyType)===norm(f.ptype))&&(!f.party||norm(o.party)===norm(f.party))&&inRange(o)&&match($('f-q').value,otxt(o))).sort((a,b)=>a.date.localeCompare(b.date)||a.no.localeCompare(b.no));
+function openForm(dir,pre){
   if(!cache.requireReady('Cache not loaded yet — please wait'))return;
   try{if(cache.requestRefresh)cache.requestRefresh(true);}catch(e){}
-  Object.assign(f,{dir,ptype:'',party:'',sel:new Set(),rates:{},disc:0,dt:'amt',vat:0});
+  Object.assign(f,{dir,from:'',to:'',ptype:pre?pre.ptype:'',party:pre?pre.party:'',sel:new Set(pre?pre.ids:[]),rates:{},disc:0,dt:'amt',vat:0});
   $('m-title').textContent=dir==='out'?'New Bill — Outgoing (customer)':'New Bill — Incoming (supplier)';
   $('l-party').textContent=dir==='out'?'Name':'Supplier';$('w-type').style.display=dir==='out'?'':'none';
-  $('f-date').value=today();$('f-note').value='';$('f-q').value='';$('f-disc').value=0;$('f-dt').value='amt';$('f-vat').value=0;
+  $('f-date').value=today();$('f-note').value='';$('f-q').value='';$('f-from').value='';$('f-to').value='';$('f-disc').value=0;$('f-dt').value='amt';$('f-vat').value=0;
   fillTypes();fillNames();rOrders();$('ov').classList.add('open');
 }
 function fillTypes(){const m=new Map(types.map(t=>[t.k,t.l]));orders.filter(o=>kd(o,'out')).forEach(o=>{if(!m.has(norm(o.partyType)))m.set(norm(o.partyType),o.partyType);});
@@ -249,23 +276,32 @@ function fillNames(){const fromOrders=orders.filter(o=>kd(o,f.dir)&&(!f.ptype||n
   $('f-party').innerHTML=`<option value="">All ${f.dir==='out'?'names':'suppliers'}</option>`+N.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');$('f-party').value=f.party;}
 function closeForm(){$('ov').classList.remove('open');}
 function rOrders(){
-  const bb=billedBy(),q=$('f-q').value,L=elig().filter(o=>match(q,[o.no,o.party,o.partyType,o.store,o.date,o.note,o.lines.map(l=>l.label).join(' ')].join(' ')));
+  const bb=billedBy(),L=elig();
   [...f.sel].forEach(i=>{if(!L.some(o=>o.id===i))f.sel.delete(i);});
-  $('f-orders').innerHTML=L.length?L.map(o=>{const k=kd(o,f.dir),b=bb[o.id];
+  $('f-orders').innerHTML=L.length?L.map(o=>{const k=kd(o,f.dir),b=bb[o.id],x=oAmt(o);
     return `<div class="opt${b?' off':''}" data-id="${o.id}"><input type="checkbox" ${f.sel.has(o.id)?'checked':''} ${b?'disabled':''}/><div class="b"><b class="mono">${esc(o.no)}</b> <span class="dim">· ${esc(o.date)} · ${esc(o.party)}${o.store?' · '+esc(o.store):''}</span>
       ${k==='r'?`<span class="badge out">${f.dir==='out'?'Returned':'Claim / Damaged'} (credit)</span>`:''}${b?`<span class="badge in">Billed ${esc(b.no)}</span>`:''}
-      <div class="dim" style="font-size:12px">${o.lines.map(l=>esc(l.label)+' × '+l.qty).join(' · ')}</div></div></div>`;}).join(''):'<div class="empty">No orders match</div>';
+      <div class="dim" style="font-size:12px">${x.L.map(l=>esc(l.label)+' × '+l.qty+(l.r?' @ '+money(l.r):'')).join(' · ')}</div></div><div class="mono">${x.ok?money(x.a):'–'}</div></div>`;}).join(''):'<div class="empty">No orders match — clear the search, dates or name filter</div>';
   $('o-cnt').textContent='· '+f.sel.size+' selected of '+L.length;rItems();
 }
-function selAll(on){const bb=billedBy(),q=$('f-q').value;f.sel.clear();if(on)elig().filter(o=>!bb[o.id]&&match(q,[o.no,o.party,o.partyType,o.store,o.date,o.note,o.lines.map(l=>l.label).join(' ')].join(' '))).forEach(o=>f.sel.add(o.id));rOrders();}
+function selAll(on){const bb=billedBy();f.sel.clear();if(on)elig().filter(o=>!bb[o.id]).forEach(o=>f.sel.add(o.id));rOrders();}
 $('f-orders').addEventListener('click',e=>{const d=e.target.closest('.opt');if(!d||d.classList.contains('off'))return;const id=d.dataset.id;f.sel.has(id)?f.sel.delete(id):f.sel.add(id);rOrders();});
 function curLines(){const a=agg([...f.sel],f.dir);Object.keys(a).forEach(k=>{if(f.rates[k]===undefined)f.rates[k]=lastRate(k,f.dir);});
   return Object.entries(a).sort((x,y)=>x[1].label.localeCompare(y[1].label)).map(([itemId,x])=>({itemId,...x,rate:f.rates[itemId]}));}
-function rItems(){const L=curLines();
-  $('f-items').innerHTML=L.length?`<table><thead><tr><th>Item</th><th class="n">Ordered</th><th class="n">Returned</th><th class="n">Net qty</th><th class="n">Rate (${CUR})</th><th class="n">Amount</th></tr></thead><tbody>${L.map(l=>`<tr data-net="${l.oq-l.rq}"><td>${esc(l.label)}</td><td class="n">${l.oq}</td><td class="n">${l.rq||'–'}</td><td class="n">${l.oq-l.rq}</td>
-    <td><input class="rt" type="number" min="0" step="any" data-i="${esc(l.itemId)}" value="${l.rate}" placeholder="0.00"/></td><td class="n amt">${money((l.oq-l.rq)*(+l.rate||0))}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">Tick orders above to build the bill</div>';
-  tot();}
-$('f-items').addEventListener('input',e=>{const i=e.target.closest('.rt');if(!i)return;f.rates[i.dataset.i]=i.value;const tr=i.closest('tr');tr.querySelector('.amt').textContent=money(+tr.dataset.net*(+i.value||0));tot();});
+function rItems(){
+  const os=[...f.sel].map(i=>orders.find(o=>o.id===i)).filter(Boolean).sort((a,b)=>a.date.localeCompare(b.date)||a.no.localeCompare(b.no));
+  os.forEach(o=>o.lines.forEach(l=>{if(f.rates[l.itemId]===undefined)f.rates[l.itemId]=lastRate(l.itemId,f.dir);}));
+  $('f-items').innerHTML=os.length?`<table><thead><tr><th>Item</th><th class="n">Qty</th><th class="n">Rate (${CUR}) — same item, same rate</th><th class="n">Amount</th></tr></thead><tbody>${os.map(o=>{const sg=kd(o,f.dir)==='r'?-1:1;
+    return `<tr><td colspan="4" style="background:var(--bg3)"><b class="mono">${esc(o.no)}</b> <span class="dim">· ${esc(o.date)} · ${esc(o.party)}</span>${sg<0?' <span class="badge out">'+(f.dir==='out'?'Returned':'Claim / Damaged')+' — deducted</span>':''}</td></tr>`
+    +o.lines.map(l=>`<tr data-o="${o.id}" data-q="${sg*l.qty}"><td>${esc(l.label)}</td><td class="n">${sg<0?'−':''}${l.qty}</td>
+      <td><input class="rt" type="number" min="0" step="any" data-i="${esc(l.itemId)}" value="${f.rates[l.itemId]}" placeholder="0.00"/></td><td class="n amt"></td></tr>`).join('')
+    +`<tr><td colspan="3" class="n dim">Order ${esc(o.no)} subtotal</td><td class="n osub" data-o="${o.id}"></td></tr>`;}).join('')}</tbody></table>`:'<div class="empty">Tick orders above to build the bill</div>';
+  amts();}
+function amts(){const sub={};
+  $('f-items').querySelectorAll('tr[data-q]').forEach(tr=>{const r=+f.rates[tr.querySelector('.rt').dataset.i]||0,a=r2(+tr.dataset.q*r);tr.querySelector('.amt').textContent=money(a);sub[tr.dataset.o]=(sub[tr.dataset.o]||0)+a;});
+  $('f-items').querySelectorAll('.osub').forEach(c=>c.textContent=money(sub[c.dataset.o]||0));tot();}
+$('f-items').addEventListener('input',e=>{const i=e.target.closest('.rt');if(!i)return;f.rates[i.dataset.i]=i.value;
+  $('f-items').querySelectorAll('.rt').forEach(x=>{if(x!==i&&x.dataset.i===i.dataset.i)x.value=i.value;});amts();});
 function tot(){const t=calc(curLines(),f.disc,f.dt,f.vat);
   $('f-tot').innerHTML=`<div><span>Subtotal</span><span class="mono">${money(t.sub)}</span></div><div><span>Discount</span><span class="mono">− ${money(t.d)}</span></div><div><span>VAT</span><span class="mono">${money(t.v)}</span></div><div class="g"><span>Total ${CUR}</span><span>${money(t.total)}</span></div>`;
   $('m-sum').textContent=f.sel.size+' order'+(f.sel.size==1?'':'s');}
