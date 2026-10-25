@@ -129,6 +129,14 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
 .sbox.fs select:first-of-type{margin-left:32px}
 .sbox.fs select.on{color:var(--accent);font-weight:600}
 .panel.lock{pointer-events:none}
+/* edit window: everything locked except quantities (✎) */
+.modal.locked .pick,.modal.locked .ptabs{display:none}
+.modal.locked .chips{pointer-events:none;opacity:.6}
+.modal.locked input:disabled,.modal.locked select:disabled{opacity:.7;cursor:not-allowed}
+.ln .qc input[readonly]{opacity:.65;cursor:default}
+.lnhint{padding:8px 12px;font-size:12px;color:var(--text2);background:var(--bg3);border-bottom:1px solid var(--border);display:flex;gap:6px;align-items:center}
+.lnch{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 12px;background:var(--bg3);border-bottom:1px solid var(--border);font-size:12px;color:var(--text2)}
+.ln .it .badge{margin-left:6px}
 @media(max-width:700px){
   .sbox.fs{flex-wrap:wrap}.sbox.fs>i{display:none}
   .sbox.fs select,.sbox.fs select:first-of-type{flex:1 1 30%;max-width:none;margin-left:0;border-bottom:1px solid var(--border2)!important}
@@ -235,7 +243,7 @@ const words=q=>String(q||'').toLowerCase().split(/[\s\-\u2013\u2014\/,;|]+/).fil
 const match=(q,h)=>{h=String(h).toLowerCase();return words(q).every(w=>h.includes(w));};
 const p2=n=>String(n).padStart(2,'0');
 const tsId=t=>{const d=new Date(t);return''+d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate())+p2(d.getHours())+p2(d.getMinutes())+p2(d.getSeconds())+String(d.getMilliseconds()).padStart(3,'0')};
-function showToast(m,t){const e=$('toast');e.textContent=m;e.className='toast '+(t||'');e.style.display='block';clearTimeout(showToast.t);showToast.t=setTimeout(()=>e.style.display='none',3200);}
+function showToast(m,t){const e=$('toast');e.textContent=m;e.className='toast '+(t||'');e.style.display='block';clearTimeout(showToast.t);showToast.t=setTimeout(()=>e.style.display='none',t==='error'?10000:3200);}
 
 const session=AP2Api.session,post=AP2Api.post,errText=m=>AP2Api.errText(m);
 
@@ -422,7 +430,7 @@ function openForm(t,id){
   picked=new Set();
   if(o){
     const pk=norm(o.partyType);
-    draft={id:o.id,no:o.no,ptype:o.type==='out'?pk:'',ptypeLabel:o.type==='out'?o.partyType:'',party:(o.party?{text:o.party,sid:o.partyId,type:pk}:null),lines:o.lines.map(l=>({...l})),storeName:o.storeName};
+    draft={id:o.id,no:o.no,ptype:o.type==='out'?pk:'',ptypeLabel:o.type==='out'?o.partyType:'',party:(o.party?{text:o.party,sid:o.partyId,type:pk}:null),lines:o.lines.map(l=>({...l,orig:l.qty,mode:null,pick:false})),storeName:o.storeName,src:o};
   }else{
     const dflt=types.some(x=>x.k===lastPType)?lastPType:(types.length===1?types[0].k:'');
     draft={id:null,no:'',ptype:dflt,ptypeLabel:'',party:null,lines:[],storeName:''};
@@ -440,6 +448,9 @@ function openForm(t,id){
   $('f-note').value=o?o.note:'';
   $('f-search').value='';resetFilters();
   drawPartyBlock();
+  $('ov').querySelector('.modal').classList.toggle('locked',edit);
+  ['f-store','f-date','f-note'].forEach(id=>$(id).disabled=edit);
+  if(pcomb&&pcomb.input)pcomb.input.disabled=edit||(out&&!draft.ptype);
   renderLines();$('ov').classList.add('open');if(draft.lines.length)setMode('lines');else showDD();updPick();
   $('f-types').dataset.sig=types.map(t=>t.k).join('|');
   pullLatest(true);
@@ -533,38 +544,92 @@ function addSelected(){
   items.filter(i=>picked.has(i.id)&&!draft.lines.some(l=>l.itemId===i.id)).forEach(i=>draft.lines.push({itemId:i.id,label:i.label,domain:i.domain,qty:1}));
   picked=new Set();$('f-search').value='';updPick();setMode('lines');renderLines();
 }
+const isRec=o=>!!o&&/^(returned|claim\s*\/\s*damaged)$/i.test(String(o.note||'').trim());
+const retLabel=()=>formType==='out'?'Returned':'Claim / Damaged';
 function renderLines(){
   if(!draft)return;
-  const sm=stockMap(draft.id),store=$('f-store').value;
-  $('lines').innerHTML=draft.lines.length?`<div class="ln hd"><span>Item</span><span style="text-align:right">In stock</span><span>Qty</span><span></span></div>`
+  const ed=!!draft.id,sm=stockMap(draft.id),sa=ed?stockMap():sm,store=$('f-store').value,canRet=ed&&!isRec(draft.src);
+  const tag=l=>l.mode==='edit'?'<span class="badge out">Editing</span>':l.mode==='ret'?'<span class="badge in">'+retLabel()+'</span>':'';
+  $('lines').innerHTML=draft.lines.length?(ed?'<div class="lnhint"><i class="ti ti-lock"></i>Locked — tap ✎ beside a quantity to edit the order'+(canRet?' or record '+(formType==='out'?'a return':'a claim / damaged')+'.':'.')+'</div>':'')
+    +`<div class="ln hd"><span>Item</span><span style="text-align:right">In stock</span><span>Qty</span><span></span></div>`
     +draft.lines.map((l,n)=>`<div class="ln">
-      <div class="it"><b>${esc(l.label)}</b><small>${esc(l.domain)}</small></div>
-      <div class="stk"><span class="sl">In stock</span>${sm[stockKey(store,l.itemId)]||0}</div>
-      <div class="qc"><input type="number" inputmode="numeric" min="1" step="1" value="${l.qty}" data-n="${n}" aria-label="Quantity" onwheel="this.blur()"/></div>
-      <button type="button" class="ib rm" data-rm="${n}" title="Remove" aria-label="Remove"><i class="ti ti-x"></i></button></div>`).join('')
+      <div class="it"><b>${esc(l.label)}</b><small>${esc(l.domain)}</small>${tag(l)}</div>
+      <div class="stk"><span class="sl">In stock</span>${((formType==='in'&&ed)?sa:sm)[stockKey(store,l.itemId)]||0}</div>
+      <div class="qc"><input type="number" inputmode="numeric" min="1" step="1" value="${l.qty}" data-n="${n}" aria-label="Quantity" onwheel="this.blur()" ${ed&&!l.mode?'readonly tabindex="-1"':''}/></div>
+      ${ed?`<button type="button" class="ib rm" data-pe="${n}" title="${l.mode?'Cancel change':'Edit'}" aria-label="${l.mode?'Cancel change':'Edit'}"><i class="ti ${l.mode?'ti-x':'ti-pencil'}"></i></button>`
+          :`<button type="button" class="ib rm" data-rm="${n}" title="Remove" aria-label="Remove"><i class="ti ti-x"></i></button>`}</div>`
+      +(l.pick?`<div class="lnch"><span>Choose:</span><button type="button" class="btn sm" data-ch="edit" data-n="${n}"><i class="ti ti-pencil"></i>Edit order</button>${canRet?`<button type="button" class="btn sm" data-ch="ret" data-n="${n}"><i class="ti ti-arrow-back-up"></i>${retLabel()}</button>`:''}</div>`:'')).join('')
     :'<div class="ln none">Search above and tick the items to add</div>';
   checkWarn();
   $('t-lines').textContent='Order ('+draft.lines.length+')';
   if(!draft.lines.length)showDD();
 }
-$('lines').addEventListener('input',e=>{const i=e.target.closest('input[data-n]');if(!i||!draft)return;draft.lines[+i.dataset.n].qty=Math.floor(+i.value)||0;checkWarn();});
+$('lines').addEventListener('input',e=>{const i=e.target.closest('input[data-n]');if(!i||!draft)return;const l=draft.lines[+i.dataset.n];
+  l.qty=Math.floor(+i.value)||0;
+  if(l.mode==='ret'&&l.qty>l.orig){l.qty=l.orig;i.value=l.orig;showToast('Cannot exceed the original quantity ('+l.orig+')','error');}
+  checkWarn();});
 $('lines').addEventListener('focusin',e=>{if(e.target.matches('input[data-n]'))e.target.select();});
-$('lines').addEventListener('click',e=>{const b=e.target.closest('[data-rm]');if(!b||!draft)return;draft.lines.splice(+b.dataset.rm,1);renderLines();});
+$('lines').addEventListener('click',e=>{
+  if(!draft)return;
+  const b=e.target.closest('[data-rm]');if(b){draft.lines.splice(+b.dataset.rm,1);renderLines();return;}
+  const pe=e.target.closest('[data-pe]');
+  if(pe){const l=draft.lines[+pe.dataset.pe];
+    if(l.mode){l.mode=null;l.qty=l.orig;l.pick=false;}else{draft.lines.forEach(x=>x.pick=false);l.pick=true;}
+    renderLines();return;}
+  const ch=e.target.closest('[data-ch]');
+  if(ch){const n=+ch.dataset.n,l=draft.lines[n];l.mode=ch.dataset.ch;l.pick=false;l.qty=l.orig;renderLines();
+    const i=$('lines').querySelector('input[data-n="'+n+'"]');if(i)i.focus();}
+});
 function checkWarn(){
   const w=$('m-warn');w.textContent='';
   if(!draft){$('m-sum').textContent='';return;}
   $('m-sum').textContent=draft.lines.length?draft.lines.length+' item'+(draft.lines.length>1?'s':'')+' · '+draft.lines.reduce((a,l)=>a+(l.qty||0),0)+' qty':'';
   $('lines').querySelectorAll('input[data-n]').forEach(i=>i.classList.remove('bad'));
-  if(formType!=='out')return;
-  const sm=stockMap(draft.id),store=$('f-store').value;
-  const bad=draft.lines.filter(l=>l.qty>(sm[stockKey(store,l.itemId)]||0));
+  const ed=!!draft.id,sm=stockMap(draft.id),sa=stockMap(),store=$('f-store').value,k=l=>stockKey(store,l.itemId);
+  let bad;
+  if(ed)bad=draft.lines.filter(l=>formType==='out'?(l.mode==='edit'&&l.qty>(sm[k(l)]||0)):(l.mode==='ret'&&l.qty>(sa[k(l)]||0)));
+  else if(formType==='out')bad=draft.lines.filter(l=>l.qty>(sm[k(l)]||0));
+  else return;
   draft.lines.forEach((l,n)=>{if(bad.includes(l)){const i=$('lines').querySelector('input[data-n="'+n+'"]');i&&i.classList.add('bad');}});
   if(bad.length){w.textContent='⚠ Quantity exceeds stock for '+bad.length+' item'+(bad.length>1?'s':'')+' — you can still save.';w.title=bad.map(l=>l.label).join(', ');}
+}
+
+/* EDIT window: only quantities change.
+   · Edit order  → same order row is updated (updateOrder)
+   · Returned (outgoing) → NEW order, type Incoming, Note "Returned"  → adds back to stock
+   · Claim / Damaged (incoming) → NEW order, type Outgoing, Note "Claim/Damaged" → minus from stock (goes back to the supplier) */
+async function saveEdit(){
+  if(busy||!draft)return;
+  const d=draft,o=d.src,out=o.type==='out';
+  const ed=d.lines.filter(l=>l.mode==='edit'),rt=d.lines.filter(l=>l.mode==='ret');
+  if(d.lines.some(l=>l.mode&&!(l.qty>0)))return showToast('Every quantity must be 1 or more','error');
+  const changed=ed.filter(l=>l.qty!==l.orig);
+  if(!changed.length&&!rt.length)return showToast('No changes to save','error');
+  const L=l=>({itemId:l.itemId,label:l.label,domain:l.domain,qty:l.qty});
+  busy=true;$('m-save').disabled=true;
+  let step='',msg=[];
+  try{
+    if(changed.length){step='update';
+      await post('updateOrder',{order:{id:o.id,type:o.type,date:o.date,storeId:o.storeId,storeName:o.storeName,partyType:o.partyType,partyId:o.partyId,party:o.party,note:o.note,
+        lines:d.lines.map(l=>({itemId:l.itemId,label:l.label,domain:l.domain,qty:l.mode==='edit'?l.qty:l.orig}))}});
+      msg.push('Order '+o.no+' updated');}
+    if(rt.length){step='return';
+      const j=await post('addOrder',{order:{id:tsId(Date.now()+1),type:out?'in':'out',date:new Date().toISOString().slice(0,10),storeId:o.storeId,storeName:o.storeName,
+        partyType:o.partyType,partyId:o.partyId,party:o.party,note:out?'Returned':'Claim/Damaged',lines:rt.map(L)}});
+      msg.push((out?'Returned':'Claim/Damaged')+' saved'+((j&&j.order&&j.order.no)?': '+j.order.no:''));}
+    await loadOrders();closeForm();render();showToast(msg.join(' · '),'success');
+  }catch(e){
+    if(msg.length){await loadOrders();render();}
+    console.error('saveEdit failed at',step,e);
+    showToast((step==='return'?'Return/claim not saved: ':'Not saved: ')+errText(e.message)+(msg.length?' ('+msg[0]+')':''),'error');
+  }
+  busy=false;$('m-save').disabled=false;
 }
 
 /* ═══ SAVE / DELETE → Google Sheet ═══ */
 async function saveOrder(){
   if(busy||!draft)return;
+  if(draft.id)return saveEdit();
   const d=draft,out=formType==='out',storeId=$('f-store').value,date=$('f-date').value;
   if(!storeId||!date)return showToast('Store and date are required','error');
   if(out&&!d.ptype){$('f-types').classList.add('bad');return showToast('Choose a Type','error');}
