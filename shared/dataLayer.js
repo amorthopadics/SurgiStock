@@ -30,6 +30,7 @@
                → cache MISS → fetch → store → return
 
    LOAD ORDER:
+     0. shared/api.js (endpoint + session helpers)
      1. auth.js      (session guard + permissions)
      2. dataLayer.js (this file)
      3. page JS
@@ -39,10 +40,10 @@
 (function () {
 
   /* ─────────────────────────────────────────
-     CONFIG — must match auth.js API_BASE
+     CONFIG — endpoint is defined once in shared/api.js
   ───────────────────────────────────────── */
-  const API_BASE = 'https://script.google.com/macros/s/AKfycbwCnVKZkbWPLa-3YK0x_HiCI_IpINs5A1pfumst72EIpId6NAbbtlI1F4E8MA8T5XlHhQ/exec';
-   // const API_BASE = 'https://script.google.com/macros/s/AKfycbwjG9K0SJSv5kcUmbQBNnejmyqSg4zdVhX7VudnCyrL2Xa69yhrpjkcNaRY63xe7FZN/exec';
+  if (!window.AP2Api) throw new Error('[DataLayer] shared/api.js must be loaded before dataLayer.js');
+  const API_BASE = window.AP2Api.ENDPOINT;   // single source: shared/api.js
 
   const CACHE_PREFIX = 'ap2_';
 
