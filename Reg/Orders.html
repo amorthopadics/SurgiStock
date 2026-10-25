@@ -240,7 +240,7 @@ function showToast(m,t){const e=$('toast');e.textContent=m;e.className='toast '+
 const session=AP2Api.session,post=AP2Api.post,errText=m=>AP2Api.errText(m);
 
 /* ═══ STATE ═══ */
-let items=[],stores=[],parties=[],types=[],suppliers=[],supplierKind='Supplier',pendingSup=[];     // from the cache
+let items=[],domains=[],inames=[],msources=[],stores=[],parties=[],types=[],suppliers=[],supplierKind='Supplier',pendingSup=[];     // from the cache
 let orders=rd(OK,[]),ordersLoaded=false;          // from the sheet
 let tab='all',formType='out',draft=null,pcomb=null,picked=new Set(),busy=false,lastPType='';
 
@@ -255,14 +255,18 @@ const typeIcon=k=>ICONS[k]||'ti-tag';
 const cap=t=>t.charAt(0).toUpperCase()+t.slice(1);
 const IGN=/^(item\s*names?|item\s*lists?|item\s*categor(y|ies)|stores?(\s*branch)?|medical\s*domains?|material\s*sources?|specs)$/i;
 function applyRows(rows){
-  const it=[],st=[],pa=[],su=[],T=new Map();
+  const it=[],st=[],pa=[],su=[],dm=[],nm=[],ms=[],T=new Map();
   rows.forEach(r=>{
     if(!Array.isArray(r)||String(r[0]).toLowerCase()==='id')return;
     const id=String(r[0]).trim(),kind=String(r[1]??'').trim(),a=String(r[2]??'').trim(),b=String(r[3]??'').trim();
     if(!id||!kind||!a)return;
     const strict=/^active$/i.test(String(r[4]??'').trim());
     const lenient=!/^(inactive|in-active|no|0|false|disabled)$/i.test(String(r[4]??'').trim());
-    if(/^item\s*lists?$/i.test(kind)){if(strict&&b)it.push({id,domain:a,label:b,source:String(r[5]??'').trim()});return;}
+    if(/^item\s*lists?$/i.test(kind)){if(strict&&b)it.push({id,domain:a,label:b});return;}
+    /* Specs Settings lists used by the item filters: Medical Domain · Item Name · Material Source (Item column = the value) */
+    if(/^medical\s*domains?$/i.test(kind)){if(lenient&&!dm.some(x=>norm(x)===norm(a)))dm.push(a);return;}
+    if(/^item\s*names?$/i.test(kind)){if(lenient&&!nm.some(x=>norm(x)===norm(a)))nm.push(a);return;}
+    if(/^material\s*sources?$/i.test(kind)){if(lenient&&!ms.some(x=>norm(x)===norm(a)))ms.push(a);return;}
     if(/^stores?(\s*branch)?$/i.test(kind)){if(strict)st.push({id,name:a});return;}
     /* Specs Settings → Specs = "Supplier": Item column = supplier name (used by Incoming orders) */
     if(/^suppliers?$/i.test(kind)){supplierKind=kind;if(lenient&&!su.some(x=>norm(x.name)===norm(a)))su.push({sid:id,name:a});return;}
@@ -271,7 +275,7 @@ function applyRows(rows){
     if(!t)T.set(k,{k,l:cap(kind)});else if(/^[a-z]/.test(t.l)&&/^[A-Z]/.test(kind))t.l=kind;
     pa.push({sid:id,name:a,type:k});
   });
-  items=it;stores=st;parties=pa;pendingSup=pendingSup.filter(p=>!su.some(x=>norm(x.name)===norm(p.name)));su.push(...pendingSup);   /* a supplier just added here stays listed until the cache shows it */
+  items=it;domains=dm;inames=nm;msources=ms;stores=st;parties=pa;pendingSup=pendingSup.filter(p=>!su.some(x=>norm(x.name)===norm(p.name)));su.push(...pendingSup);   /* a supplier just added here stays listed until the cache shows it */
   suppliers=su.sort((x,y)=>x.name.localeCompare(y.name));types=[...T.values()].sort((a,b)=>a.l.localeCompare(b.l));
 }
 const cache=AP2Cache.create({
@@ -279,7 +283,7 @@ const cache=AP2Cache.create({
   toast:(m,t)=>showToast(m,t),
   title:()=>'Cache loaded · '+items.length+' items · '+stores.length+' stores · '+parties.length+' names · '+suppliers.length+' suppliers',
   onRows:rows=>{
-    const sig=()=>[items.length,stores.length,parties.length,suppliers.length,types.length].join();
+    const sig=()=>[items.length,domains.length,inames.length,msources.length,stores.length,parties.length,suppliers.length,types.length].join();
     const before=sig();applyRows(rows);render();
     if(draft)refreshOpenForm(before!==sig());      // form is open → drop-downs show the new entries right away
     return items.length;}
@@ -490,27 +494,28 @@ function updPick(){
   const n=picked.size,c=$('p-cnt');c.style.display=n?'block':'none';c.textContent=n;
   const ed=draft&&draft.id;$('m-save').title=$('m-save').ariaLabel=n?'Add '+n+' selected item'+(n>1?'s':''):(ed?'Update':'Save');
 }
-/* filter drop-downs: Medical Domain · Item Name · Material Source (each narrows the others); the search box searches within the result */
-const FS=[['f-dom','Medical Domain','domain'],['f-itm','Item Name','label'],['f-src','Material Source','source']];
+/* filter drop-downs: Medical Domain · Item Name · Material Source — values come from the cache lists of the same name
+   (Specs Settings), NOT from the Item List labels. They narrow the Item List; the search box searches within the result. */
+const FS=[['f-dom','Medical Domain',()=>domains.length?domains:[...new Set(items.map(i=>i.domain))]],['f-itm','Item Name',()=>inames],['f-src','Material Source',()=>msources]];
 function buildFilters(){
-  const cur={};FS.forEach(([id,,k])=>cur[k]=$(id).value);
-  FS.forEach(([id,ph,k])=>{
-    const sel=$(id),pool=items.filter(i=>FS.every(([,,o])=>o===k||!cur[o]||i[o]===cur[o]));
-    const vals=[...new Set(pool.map(i=>i[k]).filter(Boolean))].sort((x,y)=>x.localeCompare(y,undefined,{numeric:true}));
-    if(cur[k]&&!vals.includes(cur[k]))vals.push(cur[k]);
-    const sig=ph+'|'+vals.join('\u0001');
-    if(sel.dataset.sig!==sig){sel.dataset.sig=sig;sel.innerHTML='<option value="">'+esc(ph)+'</option>'+vals.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');}
-    sel.value=cur[k]||'';sel.classList.toggle('on',!!cur[k]);
+  FS.forEach(([id,ph,get])=>{
+    const sel=$(id),cur=sel.value,vals=get().slice().sort((x,y)=>x.localeCompare(y,undefined,{numeric:true}));
+    if(cur&&!vals.includes(cur))vals.push(cur);
+    const sig=vals.join('\u0001');
+    if(sel.dataset.sig!==sig||!sel.options.length){sel.dataset.sig=sig;sel.innerHTML='<option value="">'+esc(ph)+'</option>'+vals.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');}
+    sel.value=cur||'';sel.classList.toggle('on',!!cur);
   });
 }
 function resetFilters(){FS.forEach(([id])=>$(id).value='');buildFilters();}
+/* an Item Name / Material Source value is found inside the item label as a whole word(s), e.g. "Plate" in "Gujrat - Plate - 400mmx20mm" */
+const rxFor=v=>v?new RegExp('(?<![\\p{L}\\p{N}])'+v.trim().replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/\s+/g,'\\s+')+'(?![\\p{L}\\p{N}])','iu'):null;
 function showDD(){
   if(!draft)return;
   buildFilters();
-  const dd=$('dd'),keep=dd.scrollTop,q=$('f-search').value,F={};FS.forEach(([id,,k])=>F[k]=$(id).value);
-  const res=items.filter(i=>FS.every(([,,k])=>!F[k]||i[k]===F[k])&&match(q,i.domain+' '+i.label+' '+(i.source||''))&&!draft.lines.some(l=>l.itemId===i.id));
-  dd.innerHTML=res.length?res.map(i=>`<div class="opt" data-id="${esc(i.id)}"><input type="checkbox" tabindex="-1" ${picked.has(i.id)?'checked':''}/><span><span class="dim">${esc(i.domain)} ·</span> ${esc(i.label)}${i.source?` <span class="dim">· ${esc(i.source)}</span>`:''}</span></div>`).join('')
-    :'<div class="di mute">'+(F.source&&!items.some(i=>i.source)?'No Material Source data found for items':'No matching items')+'</div>';
+  const dd=$('dd'),keep=dd.scrollTop,q=$('f-search').value,fd=norm($('f-dom').value),rn=rxFor($('f-itm').value),rs=rxFor($('f-src').value);
+  const res=items.filter(i=>(!fd||norm(i.domain)===fd)&&(!rn||rn.test(i.label))&&(!rs||rs.test(i.label))&&match(q,i.domain+' '+i.label)&&!draft.lines.some(l=>l.itemId===i.id));
+  dd.innerHTML=res.length?res.map(i=>`<div class="opt" data-id="${esc(i.id)}"><input type="checkbox" tabindex="-1" ${picked.has(i.id)?'checked':''}/><span><span class="dim">${esc(i.domain)} ·</span> ${esc(i.label)}</span></div>`).join('')
+    :'<div class="di mute">No matching items</div>';
   setMode('pick');updPick();dd.scrollTop=keep;
 }
 /* while a Name/Supplier drop-down is being used, the item panel under it cannot receive the click that follows */
