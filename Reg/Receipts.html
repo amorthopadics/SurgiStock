@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Receipts &amp; Payments</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/cacheWatcher.js?v=1"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/api.js?v=1"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/cacheSync.js?v=1"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/auth.js"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/accessGuard.js"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/dataLayer.js"></script>
+<style>
+:root,[data-theme="dark"]{color-scheme:dark;--bg:#0d1117;--bg2:#161b22;--bg3:#1c2333;--surface:#21262d;--border:#30363d;--border2:#444c56;--text:#e6edf3;--text2:#8b949e;--accent:#58a6ff;--accent-dim:rgba(88,166,255,.12);--teal:#39d353;--teal-dim:rgba(57,211,83,.12);--amber:#e3b341;--red:#f85149;--orange:#f0883e;--orange-dim:rgba(240,136,62,.12);--radius:8px;--radius-lg:12px;--font:'Sora',sans-serif;--mono:'JetBrains Mono',monospace}
+[data-theme="light"]{color-scheme:light;--bg:#f0f2f5;--bg2:#fff;--bg3:#e8ecf0;--surface:#fff;--border:#c8d0d9;--border2:#9aa5b1;--text:#0d1117;--text2:#3d454f;--accent:#0550ae;--accent-dim:rgba(5,80,174,.12);--teal:#116329;--teal-dim:rgba(17,99,41,.13);--amber:#7d4e00;--red:#a8111b;--orange:#953800;--orange-dim:rgba(149,56,0,.13)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px}
+body{display:flex;flex-direction:column}
+.bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;background:var(--bg2);border-bottom:1px solid var(--border)}
+.bar h1{font-size:15px;display:flex;align-items:center;gap:8px;margin-right:auto}
+.tabs{display:flex;gap:4px}
+.tab,.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font:inherit;font-size:13px}
+.tab{background:var(--bg3);color:var(--text2)}.tab.on{background:var(--accent-dim);color:var(--accent);border-color:var(--accent)}
+.btn:disabled{opacity:.5;pointer-events:none}
+.btn.out{background:var(--orange-dim);color:var(--orange);border-color:var(--orange)}.btn.in{background:var(--teal-dim);color:var(--teal);border-color:var(--teal)}
+.btn.pri{background:var(--accent);color:#fff;border-color:var(--accent)}.btn.sm{padding:3px 8px;font-size:12px}
+.btn.dng.armed{background:var(--red);color:#fff;border-color:var(--red)}
+main{flex:1;min-height:0;overflow:auto;padding:12px 14px}
+input,select{font:inherit;font-size:13px;padding:7px 9px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg3);color:var(--text);width:100%}
+input:focus,select:focus{outline:none;border-color:var(--accent)}
+input[type=number]{-moz-appearance:textfield;appearance:textfield}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.tools{display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap}.tools input{max-width:320px}
+.kpi{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}.kpi div{flex:1;min-width:150px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:9px 12px;font-size:12px;color:var(--text2)}.kpi b{display:block;font:600 16px var(--mono);color:var(--text);margin-top:2px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;background:var(--bg2);border:1px solid var(--border);font-size:13px}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}
+th{background:var(--bg3);color:var(--text2);font-weight:600;font-size:12px}
+.n{text-align:right!important;font-family:var(--mono)}td.acts{white-space:nowrap;width:1%}
+.badge{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:600;background:var(--bg3);color:var(--text2)}
+.badge.out,.badge.part{background:var(--orange-dim);color:var(--orange)}.badge.in,.badge.paid{background:var(--teal-dim);color:var(--teal)}.badge.unpaid{background:rgba(248,81,73,.12);color:var(--red)}
+.mono{font-family:var(--mono)}.dim{color:var(--text2)}.neg{color:var(--red)}.warn{color:var(--amber);font-size:12px}
+.empty{padding:36px;text-align:center;color:var(--text2)}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:12px;z-index:50}.ov.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);width:100%;max-width:900px;height:100%;display:flex;flex-direction:column;overflow:hidden}
+.mh,.mf{padding:12px 16px;display:flex;align-items:center;gap:8px;flex:none}.mh{border-bottom:1px solid var(--border);font-weight:600}.mf{border-top:1px solid var(--border);justify-content:flex-end;flex-wrap:wrap}
+.mh .x{margin-left:auto}.mf .sum{margin-right:auto;font:500 13px var(--mono)}
+.mb{padding:14px 16px;overflow:auto;display:flex;flex-direction:column;gap:12px;flex:1;min-height:0}.mb>*{flex-shrink:0}
+.fg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
+.ib.ok{color:var(--teal)}.ib.err{color:var(--red)}.ib.warn{color:var(--amber)}
+.ib{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer}
+.ol{border:1px solid var(--border);border-radius:var(--radius-lg);max-height:260px;overflow:auto}
+.opt{display:flex;gap:9px;align-items:flex-start;padding:8px 12px;border-bottom:1px solid var(--border);cursor:pointer;font-size:13px}.opt:last-child{border-bottom:0}
+.opt:hover{background:var(--accent-dim)}.opt.off{opacity:.5;cursor:not-allowed}.opt input{width:auto;margin-top:3px}.opt .b{flex:1;min-width:0}
+.sec{font-size:12px;color:var(--text2);font-weight:600;display:flex;align-items:center;gap:8px}.sec .btn{margin-left:auto}
+.rt{max-width:110px;margin-left:auto;font-family:var(--mono);text-align:right}
+.tot{margin-left:auto;width:min(340px,100%);font-size:13px}.tot div{display:flex;justify-content:space-between;padding:3px 0}.tot .g{font:700 15px var(--mono);border-top:1px solid var(--border2);margin-top:4px;padding-top:6px}
+.pr-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) auto;gap:8px;align-items:end}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border2);padding:9px 16px;border-radius:var(--radius);z-index:99;display:none;font-size:13px}.toast.error{border-color:var(--red);color:var(--red)}.toast.success{border-color:var(--teal)}
+#pr{display:none}
+@media(max-width:700px){.fg,.pr-row{grid-template-columns:1fr 1fr}.modal{border-radius:0;border:0}.ov{padding:0}.bar .btn .lbl{display:none}}
+/* ── print: only the bill ── */
+#pr,#pr *,#pv,#pv *{color:#000!important;background:#fff!important;font-family:Arial,sans-serif}
+#pr{padding:8mm;font-size:12px}#pr h2{font-size:20px}#pr .hd{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:10px}
+#pr table,#pv table{border:1px solid #000;margin:8px 0}#pr th,#pr td,#pv th,#pv td{border:1px solid #888;padding:5px 7px;font-size:12px}#pr th,#pv th{background:#eee!important}#pv .hd{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:10px}#pv .tot{width:300px}#pv h2{font-size:20px}#pv{font-size:12px}
+#pr .tot{width:300px}#pr .sig{display:flex;justify-content:space-between;margin-top:50px}#pr .sig span{border-top:1px solid #000;padding-top:4px;width:30%;text-align:center}
+@media print{@page{margin:8mm}body>*:not(#pr){display:none!important}html,body{height:auto;overflow:visible}#pr{display:block}}
+.nav a{text-decoration:none}.vh{display:none}
+</style>
+</head>
+<body>
+<div class="bar"><h1><i class="ti ti-cash"></i>Receipts &amp; Payments</h1>
+<div class="tabs"><a class="tab" href="Bills.html">Bills</a><a class="tab on" href="Receipts.html">Receipts</a><a class="tab" href="Allocation.html">Allocation</a><a class="tab" href="Reports.html">Reports</a></div>
+<button class="btn in" onclick="openF('out')"><i class="ti ti-arrow-down-left"></i>Receive</button><button class="btn out" onclick="openF('in')"><i class="ti ti-arrow-up-right"></i>Pay</button><button class="btn" onclick="openC()"><i class="ti ti-plus"></i>Add charge</button></div>
+<main><div class="kpi" id="kpi"></div><div class="tools"><input id="q" placeholder="Search party, receipt no, reference, comments…" oninput="render()"/></div><div class="tw" id="view"></div></main>
+<div class="ov" id="ov"><div class="modal" style="max-width:560px;height:auto;max-height:100%">
+<div class="mh"><span id="m-title"></span><button class="btn sm x" onclick="$('ov').classList.remove('open')"><i class="ti ti-x"></i></button></div>
+<div class="mb"><div class="fg" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+<div><label>Party type</label><input id="f-pt" list="dl-t" autocomplete="off"/></div>
+<div><label id="l-p">Party</label><input id="f-p" list="dl-p" autocomplete="off" oninput="pick()"/></div>
+<div><label>Date</label><input id="f-d" type="date"/></div>
+<div><label>Amount (<span id="cur"></span>)</label><input id="f-a" type="number" min="0" step="any"/></div>
+<div><label>Mode</label><select id="f-m"><option>Cash</option><option>Bank transfer</option><option>Cheque</option><option>Card</option><option>Other</option></select></div>
+<div><label>Entry type</label><select id="f-ty"><option value="Receipt">Normal</option><option value="Opening">Opening advance</option></select></div>
+<div style="grid-column:1/-1"><label>Reference (cheque / transfer no.)</label><input id="f-r" autocomplete="off"/></div>
+<div style="grid-column:1/-1"><label>Comments</label><input id="f-c" autocomplete="off"/></div></div>
+<datalist id="dl-t"></datalist><datalist id="dl-p"></datalist>
+<div class="dim" style="font-size:12px">This only records the money. Match it to orders in the Allocation module (FIFO or manual). Unallocated money stays as the party's advance.</div></div>
+<div class="mf"><button class="btn" onclick="$('ov').classList.remove('open')">Cancel</button><button class="btn pri" id="sv" onclick="save()"><i class="ti ti-device-floppy"></i>Save</button></div></div></div>
+<div class="ov" id="ov2"><div class="modal" style="max-width:560px;height:auto;max-height:100%">
+<div class="mh"><span>Add charge — opening balance / manual / credit</span><button class="btn sm x" onclick="$('ov2').classList.remove('open')"><i class="ti ti-x"></i></button></div>
+<div class="mb"><div class="fg" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+<div><label>Party type</label><input id="c-pt" list="dl-t" autocomplete="off"/></div><div><label>Party</label><input id="c-p" list="dl-p" autocomplete="off"/></div>
+<div><label>Customer / supplier</label><select id="c-dir"><option value="out">Customer (they owe us)</option><option value="in">Supplier (we owe them)</option></select></div>
+<div><label>Entry type</label><select id="c-ty"><option value="Opening">Opening balance</option><option value="Manual">Manual charge</option><option value="Credit">Credit (reduces balance)</option></select></div>
+<div><label>Date</label><input id="c-d" type="date"/></div><div><label>Amount (<span class="cu"></span>)</label><input id="c-a" type="number" min="0" step="any"/></div>
+<div style="grid-column:1/-1"><label>Description (e.g. Balance from old register, Fuel)</label><input id="c-ds" autocomplete="off"/></div>
+<div style="grid-column:1/-1"><label>Comments / reference</label><input id="c-c" autocomplete="off"/></div></div></div>
+<div class="mf"><button class="btn" onclick="$('ov2').classList.remove('open')">Cancel</button><button class="btn pri" id="sv2" onclick="saveC()"><i class="ti ti-device-floppy"></i>Save</button></div></div></div>
+<div class="toast" id="toast"></div>
+<script>
+'use strict';
+const CUR='AED',$=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=n=>(+n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),r2=n=>Math.round((+n||0)*100)/100,p2=n=>String(n).padStart(2,'0');
+const tsId=t=>{const d=new Date(t);return''+d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate())+p2(d.getHours())+p2(d.getMinutes())+p2(d.getSeconds())+String(d.getMilliseconds()).padStart(3,'0')};
+const today=()=>new Date().toISOString().slice(0,10),post=AP2Api.post,errText=m=>AP2Api.errText(m);
+function showToast(m,t){const e=$('toast');e.textContent=m;e.className='toast '+(t||'');e.style.display='block';clearTimeout(showToast.t);showToast.t=setTimeout(()=>e.style.display='none',t==='error'?9000:3000);}
+let L={Charges:[],Receipts:[],Allocations:[]},dir='out',busy=false,PM=new Map();
+const rw=(a,h)=>(a||[]).filter(r=>Array.isArray(r)&&r[0]!==''&&String(r[0])!==h);
+function loadParties(){try{JSON.parse(localStorage.getItem('orders_sheet_cache_v2')||'[]').forEach(a=>{if(Array.isArray(a)&&a[8])PM.set(String(a[8]),String(a[6]||''));});}catch(e){}
+  rw(L.Charges,'ChargeID').forEach(c=>{if(c[7]&&!PM.has(String(c[7])))PM.set(String(c[7]),String(c[6]||''));});
+  rw(L.Receipts,'PaymentID').forEach(c=>{if(c[4]&&!PM.has(String(c[4])))PM.set(String(c[4]),String(c[3]||''));});
+  $('dl-p').innerHTML=[...PM.keys()].sort().map(n=>`<option value="${esc(n)}">`).join('');
+  $('dl-t').innerHTML=[...new Set([...PM.values()].filter(Boolean))].sort().map(n=>`<option value="${esc(n)}">`).join('');}
+async function load(){try{const j=await AP2Api.get('ledger');L={Charges:j.Charges||[],Receipts:j.Receipts||[],Allocations:j.Allocations||[]};}
+  catch(e){showToast('Ledger not reachable — add the Accounts backend: '+errText(e.message),'error');}loadParties();render();}
+AP2Api.onSession(()=>load());
+function recs(){const al={};rw(L.Allocations,'AllocID').forEach(a=>al[a[1]]=r2((al[a[1]]||0)+(+a[11]||0)));
+  return rw(L.Receipts,'PaymentID').map(r=>({id:String(r[0]),no:r[1],dir:r[2],ptype:r[3],party:r[4],date:r[5],mode:r[6],ref:r[7],amt:+r[8]||0,note:r[9],type:r[10],alloc:al[r[0]]||0})).map(r=>({...r,un:r2(r.amt-r.alloc)})).sort((a,b)=>b.id.localeCompare(a.id));}
+function render(){const R=recs(),q=$('q').value.toLowerCase().split(/\s+/).filter(Boolean);
+  const S=(d,k)=>r2(R.filter(r=>r.dir===d).reduce((a,r)=>a+r[k],0));
+  $('kpi').innerHTML=`<div>Received<b>${CUR} ${money(S('out','amt'))}</b></div><div>Paid out<b>${CUR} ${money(S('in','amt'))}</b></div><div>Unallocated (advance) in<b>${CUR} ${money(S('out','un'))}</b></div><div>Unallocated out<b>${CUR} ${money(S('in','un'))}</b></div>`;
+  const V=R.filter(r=>{const h=[r.no,r.party,r.ptype,r.ref,r.note,r.mode,r.date].join(' ').toLowerCase();return q.every(w=>h.includes(w));});
+  $('view').innerHTML=V.length?`<table><thead><tr><th>No</th><th>Date</th><th>Party</th><th>Mode · Ref</th><th class="n">Amount</th><th class="n">Allocated</th><th class="n">Unallocated</th><th>Status</th><th>Comments</th></tr></thead><tbody>${V.map(r=>{const s=r.un<=.005?['paid','Allocated']:r.alloc>0?['part','Partial']:['unpaid','Unallocated'];
+   return `<tr><td class="mono">${esc(r.no)} <span class="badge ${r.dir}">${r.dir==='out'?'In':'Out'}</span>${r.type==='Opening'?' <span class="badge">Opening</span>':''}</td><td>${esc(r.date)}</td><td>${esc(r.party)}<div class="dim" style="font-size:11px">${esc(r.ptype)}</div></td><td>${esc(r.mode)}${r.ref?' · '+esc(r.ref):''}</td><td class="n">${money(r.amt)}</td><td class="n">${money(r.alloc)}</td><td class="n ${r.un>.005?'neg':''}">${money(r.un)}</td><td><span class="badge ${s[0]}">${s[1]}</span></td><td>${esc(r.note)}</td></tr>`;}).join('')}</tbody></table>`:'<div class="empty">No receipts yet. Use Receive or Pay above.</div>';}
+function openF(d){dir=d;$('m-title').textContent=d==='out'?'Receive money from customer':'Pay money to supplier';$('l-p').textContent=d==='out'?'Customer name':'Supplier';$('cur').textContent=CUR;
+  ['f-pt','f-p','f-a','f-r','f-c'].forEach(i=>$(i).value='');$('f-d').value=today();$('f-ty').value='Receipt';$('ov').classList.add('open');}
+function pick(){const t=PM.get($('f-p').value);if(t!==undefined&&!$('f-pt').value)$('f-pt').value=t;}
+async function save(){if(busy)return;const party=$('f-p').value.trim(),amount=r2($('f-a').value);
+  if(!party)return showToast('Enter the party name','error');if(!(amount>0))return showToast('Enter an amount above zero','error');
+  busy=true;$('sv').disabled=true;
+  try{const j=await post('addReceipt',{receipt:{id:tsId(Date.now()),dir,ptype:$('f-pt').value.trim(),party,date:$('f-d').value||today(),mode:$('f-m').value,ref:$('f-r').value.trim(),amount,comments:$('f-c').value.trim(),type:$('f-ty').value}});
+    $('ov').classList.remove('open');await load();showToast('Saved '+((j&&j.receipt&&j.receipt.no)||''),'success');}
+  catch(e){showToast('Not saved: '+errText(e.message),'error');}
+  busy=false;$('sv').disabled=false;}
+function openC(){['c-pt','c-p','c-a','c-ds','c-c'].forEach(i=>$(i).value='');$('c-d').value=today();document.querySelectorAll('.cu').forEach(e=>e.textContent=CUR);$('ov2').classList.add('open');}
+async function saveC(){if(busy)return;const party=$('c-p').value.trim(),a=r2($('c-a').value),ty=$('c-ty').value;
+  if(!party)return showToast('Enter the party name','error');if(!(a>0))return showToast('Enter an amount above zero','error');
+  busy=true;$('sv2').disabled=true;
+  try{await post('addCharges',{rows:[{type:ty,dir:$('c-dir').value,date:$('c-d').value||today(),ptype:$('c-pt').value.trim(),party,desc:$('c-ds').value.trim()||ty,amount:ty==='Credit'?-a:a,comments:$('c-c').value.trim()}]});
+    $('ov2').classList.remove('open');await load();showToast('Charge recorded','success');}
+  catch(e){showToast('Not saved: '+errText(e.message),'error');}
+  busy=false;$('sv2').disabled=false;}
+</script>
+</body>
+</html>
