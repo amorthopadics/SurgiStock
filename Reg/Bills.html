@@ -207,7 +207,7 @@ window.addEventListener('message',e=>{if(e.data&&/^ap-cache/.test(String(e.data.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadIDB();});
 
 /* ═══ BILLS STORE — local-cache mode (no backend). Row shapes = the Bills / Payments sheets, so the backend can take over later. ═══ */
-const USE_BACKEND=false;
+const USE_BACKEND=true;
 const BillsApi=USE_BACKEND?{get:()=>AP2Api.get('bills'),post:(a,p)=>AP2Api.post(a,p)}:(()=>{
  const KEY='bills_local_v1',now=()=>new Date().toISOString();
  const rd=()=>{try{const j=JSON.parse(localStorage.getItem(KEY));if(j&&j.Bills&&j.Payments)return j;}catch(e){}return{seq:0,Bills:[],Payments:[]};};
