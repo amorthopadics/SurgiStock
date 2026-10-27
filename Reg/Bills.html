@@ -145,6 +145,7 @@ const fixO=a=>(a||[]).map(o=>({...o,store:o.store||o.storeName||''}));
 let orders=(()=>{try{return fixO(JSON.parse(localStorage.getItem(OK)))}catch(e){return[]}})(),bills=[],pays=[],tab='orders',busy=false,vid=null;
 const BILLS_KEY='ap2_bills';
 const BILLS_BACKEND=true;   // true: bills come from the ap2_bills cache, writes go to the API · false: old local-only mode (localStorage)
+const LS={ts:0,fp:'',painted:false,err:'',by:{},list:{}};   // ledger mirror (ap2_ledger) — allocations per bill
 const S={ts:0,fp:'',painted:false,state:'loading',err:'',src:'',booting:false,raw:{Bills:[],Payments:[]}};
 let items=[],stores=[],parties=[],types=[],suppliers=[];     // from the cache (Master / Specs Settings)
 
@@ -208,7 +209,7 @@ let idbTs=0;
 async function loadIDB(){const r=await idbOrders();if(!r||(+r.ts||0)<=idbTs)return;idbTs=+r.ts||0;
   orders=groupOrders(r.data.Orders||[]);render();if($('ov').classList.contains('open'))rOrders();}
 window.addEventListener('message',e=>onCacheMessage(e));
-document.addEventListener('visibilitychange',()=>{if(document.hidden)return;loadIDB();if(BILLS_BACKEND){if(!S.painted&&!S.booting)bootBills();else applyFromIDB();}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)return;loadIDB();if(BILLS_BACKEND){if(!allReady()&&!S.booting)bootBills();else{applyFromIDB();if(LEDGER_BACKEND)applyLedgerFromIDB();}}});
 
 /* ═══ BILLS DATA — cache dataset "ap2_bills" (same three-path loader as userPortal.html)
    1. parent push   : post ap-cache-request to index.html → it answers ap-cache-ready / ap-cache-preload
@@ -235,7 +236,7 @@ function applyBills(r,src){
   const fp=JSON.stringify([u.data.Bills,u.data.Payments||[]]);
   if(S.painted&&fp===S.fp)return true;                // identical data → no re-render
   S.fp=fp;S.raw={Bills:u.data.Bills.slice(),Payments:(u.data.Payments||[]).slice()};rebuild();
-  S.painted=true;S.state='ready';S.err='';
+  S.painted=true;if(allReady()){S.state='ready';S.err='';}
   render();refreshOpen();return true;}
 async function readBillsIDB(){
   try{if(window.AP2CacheWatcher&&typeof AP2CacheWatcher.readKey==='function')return await AP2CacheWatcher.readKey(BILLS_KEY);}catch(e){}
@@ -253,7 +254,7 @@ async function forceRefresh(){                       // after a write: pull the 
     const r=await fn.call(AdminPro,BILLS_KEY,{force:true});
     if(r&&unpack(r))applyBills(r,'live');else{await sleep(500);await applyFromIDB();}
   }catch(e){}}
-function askParent(){if(window.parent===window)return;try{window.parent.postMessage({type:'ap-cache-request',key:BILLS_KEY,keys:[BILLS_KEY]},location.origin);}catch(e){}}
+function askParent(){if(window.parent===window)return;try{window.parent.postMessage({type:'ap-cache-request',key:BILLS_KEY,keys:[BILLS_KEY,LEDGER_KEY]},location.origin);}catch(e){}}
 function pickPayload(m){
   for(const bag of [m,m.data,m.datasets,m.payload,m.caches])if(bag&&typeof bag==='object'&&bag[BILLS_KEY]!==undefined&&unpack(bag[BILLS_KEY]))return bag[BILLS_KEY];
   if(m.key===BILLS_KEY||m.name===BILLS_KEY||m.dataset===BILLS_KEY){const v=m.data!==undefined?m.data:m.value;if(unpack(v))return v;}
@@ -264,25 +265,79 @@ function onCacheMessage(e){                          // same-origin parent only 
   const t=String(m.type||m.msg||'');if(!/^ap-cache/.test(t))return;
   setTimeout(loadIDB,250);                           // orders cache (unchanged)
   if(!BILLS_BACKEND)return;
-  let got=false;if(/^ap-cache-(ready|preload)$/.test(t)){const d=pickPayload(m);if(d)got=applyBills(d,'parent');}
-  if(!got)setTimeout(applyFromIDB,250);}
+  const push=/^ap-cache-(ready|preload)$/.test(t);let got=false,gotL=false;
+  if(push){const d=pickPayload(m);if(d)got=applyBills(d,'parent');if(LEDGER_BACKEND){const l=pickLedger(m);if(l)gotL=applyLedger(l,'parent');}}
+  if(!got)setTimeout(applyFromIDB,250);if(LEDGER_BACKEND&&!gotL)setTimeout(applyLedgerFromIDB,250);}
 function watchBills(){
   const W=window.AP2CacheWatcher;if(!W||typeof W.subscribe!=='function')return;
-  const cb=k=>{const key=(k&&k.key)||k;if(typeof key==='string'&&key!==BILLS_KEY)return;applyFromIDB();};
-  try{W.subscribe(cb);}catch(e){try{W.subscribe(BILLS_KEY,cb);}catch(x){}}}
-async function bootBills(){
-  if(S.booting)return;S.booting=true;S.state='loading';S.err='';render();
-  askParent();
+  const cb=k=>{const key=(k&&k.key)||k,any=typeof key!=='string';if(any||key===BILLS_KEY)applyFromIDB();if(LEDGER_BACKEND&&(any||key===LEDGER_KEY))applyLedgerFromIDB();};
+  try{W.subscribe(cb);}catch(e){try{W.subscribe(BILLS_KEY,cb);if(LEDGER_BACKEND)W.subscribe(LEDGER_KEY,cb);}catch(x){}}}
+async function bootBillsData(){
   let ok=await applyFromIDB();
-  for(const d of [300,500,800,1200,2000,3000]){if(ok||S.painted)break;await sleep(d);ok=await applyFromIDB();}
-  if(!ok&&!S.painted)await fetchBillsLive();
+  for(const d of DELAYS){if(ok||S.painted)break;await sleep(d);ok=await applyFromIDB();}
+  if(!ok&&!S.painted)await fetchBillsLive();}
+async function bootBills(){
+  if(S.booting)return;S.booting=true;S.state='loading';S.err='';LS.err='';render();
+  askParent();
+  await Promise.all([S.painted?0:bootBillsData(),LS.painted?0:(LEDGER_BACKEND?bootLedger():loadLocalLedger())]);
   S.booting=false;
-  if(!S.painted){S.state='error';render();showToast('Bills cache not available: '+(S.err||'no data'),'error');}}
+  if(!allReady()){const p=[];if(!S.painted)p.push('Bills ('+BILLS_KEY+')'+(S.err?': '+S.err:''));if(!LS.painted)p.push('Ledger ('+LEDGER_KEY+')'+(LS.err?': '+LS.err:''));
+    S.state='error';S.err=p.join(' · ');render();showToast('Not loaded — '+S.err,'error');}}
 function retryBills(){S.booting=false;bootBills();}
-const billsReady=()=>{if(S.painted)return true;showToast(S.state==='error'?'Bills data not loaded — press Retry':'Bills are still loading — please wait','error');return false;};
+function allReady(){return S.painted&&LS.painted;}
+const billsReady=()=>{if(allReady())return true;showToast(S.state==='error'?'Bills / ledger data not loaded — press Retry':'Still loading — please wait','error');return false;};
 const stateHTML=()=>S.state==='error'
-  ?`<div class="empty">Bills data isn’t available yet.<div class="dim" style="margin:6px 0 10px;font-size:12px">${esc(S.err||'The ap2_bills cache is empty and the server could not be reached.')}</div><button class="btn pri" onclick="retryBills()"><i class="ti ti-refresh"></i>Retry</button></div>`
+  ?`<div class="empty">Bills / ledger data isn’t available yet.<div class="dim" style="margin:6px 0 10px;font-size:12px">${esc(S.err||'The cache is empty and the server could not be reached.')}</div><button class="btn pri" onclick="retryBills()"><i class="ti ti-refresh"></i>Retry</button></div>`
   :'<div class="sk"></div>'.repeat(6);
+
+/* ═══ LEDGER (read here, written by Allocation / Receipts) — dataset "ap2_ledger"
+   Money allocated to a bill in Allocation.html lives in the ledger's Allocations sheet (col D = BillID, col L = amount; reversals are negative rows).
+   Bills & Payments adds it to the payments recorded here, so Paid / Balance / Status (Paid · Partial · Unpaid) follow the allocations.
+   Allocations against "Extra" charges (fuel, delivery…) are ignored: those are not part of the bill total.
+   Same three-path loader as ap2_bills. ⚠ dataLayer.js: add 'ap2_ledger' to ALLOW_EMPTY_OBJECT_DATASETS too. */
+const LEDGER_KEY='ap2_ledger',LEDGER_BACKEND=true;      // false → read the old local ledger (acc_ledger_v1)
+const DELAYS=[300,500,800,1200,2000,3000];
+const isLedger=d=>!!d&&typeof d==='object'&&Array.isArray(d.Charges)&&Array.isArray(d.Receipts)&&Array.isArray(d.Allocations);
+function unpackLg(r){if(!r||typeof r!=='object')return null;if(isLedger(r))return{data:r,ts:0};if(isLedger(r.data))return{data:r.data,ts:+r.ts||0};return null;}
+function setLedger(d){
+  const typ={};(d.Charges||[]).forEach(c=>{if(Array.isArray(c))typ[String(c[0])]=String(c[1]);});
+  const by={},list={};
+  (d.Allocations||[]).forEach(a=>{if(!Array.isArray(a)||a[0]===''||String(a[0])==='AllocID')return;
+    if(typ[String(a[5])]==='Extra')return;
+    const bid=String(a[3]||'');if(!bid)return;
+    by[bid]=r2((by[bid]||0)+(+a[11]||0));
+    (list[bid]=list[bid]||[]).push({id:String(a[0]),rno:String(a[2]||''),date:String(a[10]||''),amount:+a[11]||0,orderNo:String(a[7]||''),note:String(a[12]||''),rev:String(a[13]||'')});});
+  LS.by=by;LS.list=list;LS.painted=true;}
+function applyLedger(r,src,force){
+  const u=unpackLg(r);if(!u)return false;
+  if(!force&&LS.painted&&u.ts&&u.ts<=LS.ts)return true;
+  LS.ts=force?Date.now():(u.ts||Math.max(LS.ts,Date.now()));
+  const fp=JSON.stringify([u.data.Charges,u.data.Allocations]);   // receipts alone don't change a bill
+  if(!force&&LS.painted&&fp===LS.fp)return true;
+  LS.fp=fp;LS.err='';setLedger(u.data);
+  if(allReady()){S.state='ready';S.err='';}
+  render();refreshOpen();return true;}
+async function readLedgerIDB(){try{if(window.AP2CacheWatcher&&typeof AP2CacheWatcher.readKey==='function')return await AP2CacheWatcher.readKey(LEDGER_KEY);}catch(e){}return null;}
+async function applyLedgerFromIDB(){const r=await readLedgerIDB();return r?applyLedger(r,'idb'):false;}
+async function fetchLedgerLive(){
+  try{if(!(window.AdminPro&&typeof AdminPro.get==='function'))throw new Error('AdminPro is not available');
+    const r=await AdminPro.get(LEDGER_KEY);if(!applyLedger(r,'live')&&!LS.painted)throw new Error('unexpected data from server');}
+  catch(e){LS.err=String((e&&e.message)||e);}}
+async function bootLedger(){
+  let ok=await applyLedgerFromIDB();
+  for(const d of DELAYS){if(ok||LS.painted)break;await sleep(d);ok=await applyLedgerFromIDB();}
+  if(!ok&&!LS.painted)await fetchLedgerLive();}
+async function freshLedger(){                         // after a ledger write: force-pull, fall back to the endpoint
+  let r=null;
+  try{if(window.AdminPro){const fn=typeof AdminPro.refresh==='function'?AdminPro.refresh:AdminPro.get;r=await fn.call(AdminPro,LEDGER_KEY,{force:true});}}catch(e){}
+  if(!unpackLg(r))r=await AP2Api.get('ledger');
+  if(!applyLedger(r,'live',true))throw new Error('Ledger returned unexpected data');}
+async function loadLocalLedger(){try{setLedger(await Ledger.get());}catch(e){LS.err=errText(e.message);}}
+function pickLedger(m){
+  for(const bag of [m,m.data,m.datasets,m.payload,m.caches])if(bag&&typeof bag==='object'&&bag[LEDGER_KEY]!==undefined&&unpackLg(bag[LEDGER_KEY]))return bag[LEDGER_KEY];
+  if(m.key===LEDGER_KEY||m.name===LEDGER_KEY||m.dataset===LEDGER_KEY){const v=m.data!==undefined?m.data:m.value;if(unpackLg(v))return v;}
+  return null;}
+const allocOf=b=>LS.by[b.id]||0,allocList=b=>LS.list[b.id]||[];
 
 /* ═══ BILLS WRITES ═══ */
 function mutateRaw(j,a,p,res){const now=new Date().toISOString();      // optimistic update of the in-memory rows; forceRefresh() then replaces them with the server copy
@@ -306,7 +361,7 @@ const LocalBills=(()=>{
 const BillsApi={
  get:()=>BILLS_BACKEND?Promise.resolve(S.raw):LocalBills.get(),
  async post(a,p){
-  if(a==='deleteBill'&&!USE_BACKEND)for(const id of p.ids.map(String))await Ledger.post('reverseBill',{billId:id});   // ledger is still local → reverse first (throws if payments are allocated)
+  if(a==='deleteBill'){for(const id of p.ids.map(String))await Ledger.post('reverseBill',{billId:id});if(LEDGER_BACKEND)await freshLedger().catch(()=>{});}   // reverse the charges first (the ledger refuses if payments are allocated to this bill)
   if(!BILLS_BACKEND)return LocalBills.post(a,p);
   const res=await AP2Api.post(a,p);mutateRaw(S.raw,a,p,res);rebuild();forceRefresh();return res||{};}};
 const USE_BACKEND=false;                             // ledger store (below) — separate from the bills cache
@@ -315,7 +370,7 @@ async function loadAll(){
   if(USE_BACKEND)try{const o=await AP2Api.get('orders');orders=groupOrders(o.Orders||[]);}
   catch(e){if(!loadAll._o){loadAll._o=1;showToast('Orders not refreshed (showing cached): '+errText(e.message),'error');}}
   if(!BILLS_BACKEND){                                // local mode only — in cache mode the data arrives through applyBills()
-    try{const b=await BillsApi.get();S.raw={Bills:b.Bills||[],Payments:b.Payments||[]};rebuild();S.painted=true;S.state='ready';}
+    try{const b=await BillsApi.get();S.raw={Bills:b.Bills||[],Payments:b.Payments||[]};rebuild();S.painted=true;if(!LEDGER_BACKEND)await loadLocalLedger();S.state='ready';}
     catch(e){S.state='error';S.err=errText(e.message);if(!loadAll._b){loadAll._b=1;showToast('Bills not loaded: '+errText(e.message),'error');}}}
   render();refreshOpen();}
 
@@ -330,7 +385,7 @@ function agg(ids,dir){const m={};ids.forEach(id=>{const o=orders.find(x=>x.id===
 const lastRate=(itemId,dir)=>{for(const b of bills){if(b.dir!==dir)continue;const l=b.lines.find(x=>x.itemId===itemId);if(l&&l.rate)return l.rate;}return '';};
 const calc=(L,disc,dt,vat)=>{const sub=r2(L.reduce((a,l)=>a+(l.oq-l.rq)*(+l.rate||0),0)),d=r2(dt==='pct'?sub*disc/100:disc),net=r2(sub-d),v=r2(net*vat/100);return{sub,d,net,v,total:r2(net+v)};};
 const tb=b=>calc(b.lines,b.disc,b.dt,b.vat);
-const paidOf=b=>r2(pays.filter(p=>p.billId===b.id).reduce((a,p)=>a+p.amount,0));
+const paidOf=b=>r2(pays.filter(p=>p.billId===b.id).reduce((a,p)=>a+p.amount,0)+allocOf(b));   // payments recorded here + money allocated in Allocation
 const stOf=b=>{const t=tb(b).total,p=paidOf(b);return p>=t-.005?['paid','Paid']:p>0?['part','Partial']:['unpaid','Unpaid'];};
 /* orders edited / deleted / returned after billing → snapshot no longer matches */
 function drift(b){const cur=agg(b.oids,b.dir),out=[];
@@ -343,7 +398,7 @@ function drift(b){const cur=agg(b.oids,b.dir),out=[];
 const TABS=[['orders','Unbilled orders'],['all','All bills'],['out','Outgoing bills'],['in','Incoming bills']];
 function render(){
   $('tabs').innerHTML=TABS.map(([k,l])=>`<button class="tab${tab===k?' on':''}" onclick="tab='${k}';render()">${l}</button>`).join('');
-  if(!S.painted){$('kpi').innerHTML='';$('view').innerHTML=stateHTML();return;}
+  if(!allReady()){$('kpi').innerHTML='';$('view').innerHTML=stateHTML();return;}
   const bal=d=>r2(bills.filter(b=>b.dir===d).reduce((a,b)=>a+tb(b).total-paidOf(b),0));
   $('kpi').innerHTML=`<div>To receive (outgoing)<b>${CUR} ${money(bal('out'))}</b></div><div>To pay (incoming)<b>${CUR} ${money(bal('in'))}</b></div><div>Bills<b>${bills.length}</b></div>`;
   const q=$('q').value;
@@ -433,7 +488,7 @@ function tot(){const t=calc(curLines(),f.disc,f.dt,f.vat);
 
 /* ═══ LEDGER STORE — local-cache mode (no backend). Same data shape as the Apps Script backend,
    so going live later = set USE_BACKEND=true (and re-enable the shared scripts in <head>). ═══ */
-const Ledger=USE_BACKEND?{get:()=>AP2Api.get('ledger'),post:(a,p)=>AP2Api.post(a,p)}:(()=>{
+const Ledger=LEDGER_BACKEND?{get:async()=>{await freshLedger();return{};},post:(a,p)=>AP2Api.post(a,p).then(r=>r||{})}:(()=>{
  const KEY='acc_ledger_v1',H={
   Charges:['ChargeID','Type','BillID','BillNo','OrderID','OrderNo','PartyType','Party','Dir','Date','Description','Amount','Comments','Created'],
   Receipts:['PaymentID','ReceiptNo','Dir','PartyType','Party','Date','Mode','Ref','Amount','Comments','Type','Created'],
@@ -481,7 +536,7 @@ async function postCharges(b,no){
   const base={billId:b.id,billNo:no,dir:b.dir,date:b.date,comments:b.note};
   const rows=os.map((o,i)=>{const a=i===os.length-1?r2(t.total-used):r2(sub[i]*k);used=r2(used+a);return{...base,type:'Order',orderId:o.id,orderNo:o.no,ptype:o.partyType,party:String(o.party||'').trim(),desc:'Order '+o.no,amount:a};});
   f.extras.filter(x=>+x.amt).forEach(x=>rows.push({...base,type:'Extra',orderId:'',orderNo:'',ptype:os[0].partyType,party:String(os[0].party||'').trim(),desc:x.desc||'Other charge',amount:r2(+x.amt)}));
-  await Ledger.post('addCharges',{rows});}
+  await Ledger.post('addCharges',{rows});if(LEDGER_BACKEND)freshLedger().catch(()=>{});}
 async function saveBill(pr){
   if(busy)return;const L=curLines();
   if(!f.sel.size)return showToast('Select at least one order','error');
@@ -501,21 +556,22 @@ async function delBill(id){
 }
 
 /* ═══ VIEW + PAYMENTS ═══ */
-const docHTML=b=>{const t=tb(b),p=paidOf(b),os=b.oids.map(i=>orders.find(o=>o.id===i)).filter(Boolean),ps=pays.filter(x=>x.billId===b.id),out=b.dir==='out';
+const docHTML=b=>{const t=tb(b),p=paidOf(b),os=b.oids.map(i=>orders.find(o=>o.id===i)).filter(Boolean),ps=pays.filter(x=>x.billId===b.id),out=b.dir==='out',al=allocList(b);
   return `<div class="hd"><div><h2>${esc(CO)}</h2><div>${out?'SALES INVOICE':'PURCHASE BILL'}</div></div><div style="text-align:right"><b>${esc(b.no)}</b><br>Date: ${esc(b.date)}</div></div>
   <div><b>${out?'Bill to':'Supplier'}:</b> ${esc(b.party)}${b.ptype?' ('+esc(b.ptype)+')':''}${b.note?'<br><b>Ref:</b> '+esc(b.note):''}</div>
   <table><thead><tr><th>Order No</th><th>Date</th><th>Party</th><th>Type</th></tr></thead><tbody>${os.map(o=>`<tr><td>${esc(o.no)}</td><td>${esc(o.date)}</td><td>${esc(o.party)}</td><td>${kd(o,b.dir)==='r'?(out?'Returned (credit)':'Claim / Damaged (credit)'):(out?'Outgoing':'Incoming')}</td></tr>`).join('')}</tbody></table>
   <table><thead><tr><th>#</th><th>Item</th><th class="n">Ordered</th><th class="n">Returned</th><th class="n">Net qty</th><th class="n">Rate</th><th class="n">Amount</th></tr></thead><tbody>${b.lines.map((l,i)=>`<tr><td>${i+1}</td><td>${esc(l.label)}</td><td class="n">${l.oq}</td><td class="n">${l.rq||''}</td><td class="n">${l.oq-l.rq}</td><td class="n">${money(l.rate)}</td><td class="n">${money((l.oq-l.rq)*l.rate)}</td></tr>`).join('')}</tbody></table>
   <div class="tot"><div><span>Subtotal</span><span>${money(t.sub)}</span></div>${t.d?`<div><span>Discount${b.dt==='pct'?' ('+b.disc+'%)':''}</span><span>− ${money(t.d)}</span></div>`:''}${b.vat?`<div><span>VAT (${b.vat}%)</span><span>${money(t.v)}</span></div>`:''}
   <div class="g"><span>Total ${CUR}</span><span>${money(t.total)}</span></div><div><span>Paid</span><span>${money(p)}</span></div><div><b>Balance</b><b>${money(t.total-p)}</b></div></div>
-  ${ps.length?`<div style="margin-top:8px"><b>Payments</b>${ps.map(x=>`<div>${esc(x.date)} · ${esc(x.mode)}${x.ref?' · '+esc(x.ref):''} · ${money(x.amount)}</div>`).join('')}</div>`:''}`;};
+  ${(ps.length||al.length)?`<div style="margin-top:8px"><b>Payments</b>${ps.map(x=>`<div>${esc(x.date)} · ${esc(x.mode)}${x.ref?' · '+esc(x.ref):''} · ${money(x.amount)}</div>`).join('')}${al.map(x=>`<div>${esc(x.date)} · Receipt ${esc(x.rno)}${x.orderNo?' · '+esc(x.orderNo):''} · ${money(x.amount)}</div>`).join('')}</div>`:''}`;};
 function printBill(id){const b=bills.find(x=>x.id===id);if(!b)return;$('pr').innerHTML=docHTML(b)+'<div class="sig"><span>Prepared by</span><span>Checked by</span><span>Received by</span></div>';setTimeout(()=>window.print(),80);}
-function viewBill(id){const b=bills.find(x=>x.id===id);if(!b)return;vid=id;const t=tb(b),p=paidOf(b),dr=drift(b),ps=pays.filter(x=>x.billId===id),s=stOf(b);
+function viewBill(id){const b=bills.find(x=>x.id===id);if(!b)return;vid=id;const t=tb(b),p=paidOf(b),dr=drift(b),ps=pays.filter(x=>x.billId===id),s=stOf(b),al=allocList(b);
   $('v-title').innerHTML=esc(b.no)+' <span class="badge '+s[0]+'">'+s[1]+'</span>';
   $('v-body').innerHTML=(dr.length?`<div class="warn" style="border:1px solid var(--amber);border-radius:var(--radius);padding:8px 10px">⚠ Orders changed since this bill was made (edit / return / delete):<br>${dr.map(esc).join('<br>')}<br>Delete and re-create the bill to apply the changes.</div>`:'')
    +`<div style="background:#fff;border-radius:var(--radius);padding:12px" id="pv">${docHTML(b)}</div>`
    +`<div class="sec">Payments · balance <span class="mono ${t.total-p>.005?'neg':''}">${CUR} ${money(t.total-p)}</span></div>`
    +(ps.length?`<table><tbody>${ps.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.mode)}</td><td>${esc(x.ref)}</td><td class="n">${money(x.amount)}</td><td class="acts"><button class="btn sm dng" onclick="delPay('${x.id}')"><i class="ti ti-trash"></i></button></td></tr>`).join('')}</tbody></table>`:'')
+   +(al.length?`<div class="sec">Allocated from receipts <span class="dim">(read-only — change in Allocation)</span></div><table><tbody>${al.map(x=>`<tr><td>${esc(x.date)}</td><td class="mono">${esc(x.rno)}</td><td>${esc(x.orderNo)}</td><td class="n ${x.amount<0?'neg':''}">${money(x.amount)}</td><td>${esc(x.note)}${x.rev?' (reversal)':''}</td></tr>`).join('')}</tbody></table>`:'')
    +`<div class="pr-row"><div><label>Date</label><input type="date" id="p-d" value="${today()}"/></div><div><label>Amount</label><input type="number" id="p-a" min="0" step="any" value="${Math.max(0,r2(t.total-p))}"/></div>
      <div><label>Mode</label><select id="p-m"><option>Cash</option><option>Bank transfer</option><option>Cheque</option><option>Card</option></select></div><div style="grid-column:span 2"><label>Reference</label><input id="p-r" autocomplete="off"/></div>
      <button class="btn pri" onclick="addPay()"><i class="ti ti-plus"></i>Add payment</button></div>`;
@@ -528,7 +584,7 @@ async function addPay(){const b=bills.find(x=>x.id===vid);if(!b||busy)return;con
 async function delPay(id){if(!confirm('Delete this payment?'))return;try{await post('deletePayment',{ids:[id]});await loadAll();}catch(e){showToast('Not deleted: '+errText(e.message),'error');}}
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if($('ov2').classList.contains('open'))closeView();else closeForm();});
 render();cache.start();loadIDB();
-if(BILLS_BACKEND){watchBills();bootBills();setInterval(applyFromIDB,15000);}   // safety net behind the subscription
+if(BILLS_BACKEND){watchBills();bootBills();setInterval(()=>{if(allReady()){applyFromIDB();if(LEDGER_BACKEND)applyLedgerFromIDB();}},15000);}   // safety net behind the subscription
 else{loadAll();setInterval(loadAll,30000);}
 setInterval(loadIDB,10000);
 </script>
