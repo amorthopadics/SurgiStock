@@ -6,13 +6,14 @@
 <title>Allocation</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
-<!-- Backend/auth scripts disabled while running on local cache. Re-enable when USE_BACKEND=true: -->
+<!-- Backend/auth scripts disabled while running on local cache. Re-enable when USE_BACKEND=true:
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheWatcher.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/api.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheSync.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/auth.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/accessGuard.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/dataLayer.js"></script>
+-->
 <style>
 :root,[data-theme="dark"]{color-scheme:dark;--bg:#0d1117;--bg2:#161b22;--bg3:#1c2333;--surface:#21262d;--border:#30363d;--border2:#444c56;--text:#e6edf3;--text2:#8b949e;--accent:#58a6ff;--accent-dim:rgba(88,166,255,.12);--teal:#39d353;--teal-dim:rgba(57,211,83,.12);--amber:#e3b341;--red:#f85149;--orange:#f0883e;--orange-dim:rgba(240,136,62,.12);--radius:8px;--radius-lg:12px;--font:'Sora',sans-serif;--mono:'JetBrains Mono',monospace}
 [data-theme="light"]{color-scheme:light;--bg:#f0f2f5;--bg2:#fff;--bg3:#e8ecf0;--surface:#fff;--border:#c8d0d9;--border2:#9aa5b1;--text:#0d1117;--text2:#3d454f;--accent:#0550ae;--accent-dim:rgba(5,80,174,.12);--teal:#116329;--teal-dim:rgba(17,99,41,.13);--amber:#7d4e00;--red:#a8111b;--orange:#953800;--orange-dim:rgba(149,56,0,.13)}
@@ -85,7 +86,7 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
 'use strict';
 /* ═══ LEDGER STORE — local-cache mode (no backend). Same data shape as the Apps Script backend,
    so going live later = set USE_BACKEND=true (and re-enable the shared scripts in <head>). ═══ */
-const USE_BACKEND=true;
+const USE_BACKEND=false;
 const Ledger=USE_BACKEND?{get:()=>AP2Api.get('ledger'),post:(a,p)=>AP2Api.post(a,p)}:(()=>{
  const KEY='acc_ledger_v1',H={
   Charges:['ChargeID','Type','BillID','BillNo','OrderID','OrderNo','PartyType','Party','Dir','Date','Description','Amount','Comments','Created'],
@@ -131,13 +132,13 @@ const rw=(a,h)=>(a||[]).filter(r=>Array.isArray(r)&&r[0]!==''&&String(r[0])!==h)
 function data(){
  const al=rw(L.Allocations,'AllocID').map(a=>({id:String(a[0]),pid:String(a[1]),rno:a[2],billNo:a[4],cid:String(a[5]),orderNo:a[7],party:a[9],date:String(a[10]),amt:+a[11]||0,note:a[12],rev:String(a[13]||'')}));
  const rvC={};rw(L.Charges,'ChargeID').forEach(c=>{if(c[1]==='Reversal')rvC[String(c[12]).replace('rev:','')]=+c[11]||0;});const bC={},bP={};al.forEach(a=>{bC[a.cid]=r2((bC[a.cid]||0)+a.amt);bP[a.pid]=r2((bP[a.pid]||0)+a.amt);});
- const ch=rw(L.Charges,'ChargeID').map(c=>({id:String(c[0]),type:c[1],billNo:String(c[3]||''),orderNo:String(c[5]||''),ptype:c[6],party:String(c[7]),dir:c[8],date:String(c[9]),desc:c[10],amt:+c[11]||0,note:c[12]})).map(c=>({...c,paid:bC[c.id]||0,due:r2(c.amt-(bC[c.id]||0)+(rvC[c.id]||0))}));
- const rc=rw(L.Receipts,'PaymentID').map(r=>({id:String(r[0]),no:r[1],dir:r[2],party:String(r[4]),date:String(r[5]),mode:r[6],ref:r[7],amt:+r[8]||0,note:r[9],type:r[10]})).map(r=>({...r,alloc:bP[r.id]||0,un:r2(r.amt-(bP[r.id]||0))}));
+ const ch=rw(L.Charges,'ChargeID').map(c=>({id:String(c[0]),type:c[1],billNo:String(c[3]||''),orderNo:String(c[5]||''),ptype:c[6],party:String(c[7]).trim(),dir:c[8],date:String(c[9]),desc:c[10],amt:+c[11]||0,note:c[12]})).map(c=>({...c,paid:bC[c.id]||0,due:r2(c.amt-(bC[c.id]||0)+(rvC[c.id]||0))}));
+ const rc=rw(L.Receipts,'PaymentID').map(r=>({id:String(r[0]),no:r[1],dir:r[2],party:String(r[4]).trim(),date:String(r[5]),mode:r[6],ref:r[7],amt:+r[8]||0,note:r[9],type:r[10]})).map(r=>({...r,alloc:bP[r.id]||0,un:r2(r.amt-(bP[r.id]||0))}));
  return{al,ch,rc};}
 const fifo=(a,b)=>a.date.localeCompare(b.date)||((b.type==='Opening')-(a.type==='Opening'))||a.billNo.localeCompare(b.billNo)||a.id.localeCompare(b.id);
 async function load(){try{const j=await Ledger.get();L={Charges:j.Charges||[],Receipts:j.Receipts||[],Allocations:j.Allocations||[]};}
  catch(e){showToast('Ledger not reachable — add the Accounts backend: '+errText(e.message),'error');}after();}
-load();
+USE_BACKEND?AP2Api.onSession(()=>load()):load();   // backend: wait for the login session
 
 let party='',rid=null,mode='auto',amts={},busy=false;
 const D=()=>data();
@@ -146,6 +147,10 @@ function setParty(v){party=v.trim();rid=null;amts={};render();}
 function setMode(m){mode=m;if(m==='auto')fill();render();}
 function cur(){const d=D();return{d,r:d.rc.find(x=>x.id===rid&&x.party===party),R:d.rc.filter(r=>r.party===party&&r.un>.005)};}
 function open_(d,r){return d.ch.filter(c=>c.party===party&&r&&c.dir===r.dir&&c.due>.005).sort(fifo);}
+function why(d,r){const mine=d.ch.filter(c=>c.party===party),same=mine.filter(c=>c.dir===r.dir);
+ if(same.length)return `All ${same.length} charge(s) for “${esc(party)}” are already fully allocated.`;
+ if(mine.length)return `“${esc(party)}” only has ${r.dir==='out'?'supplier':'customer'} charges — this receipt is a ${r.dir==='out'?'customer receipt':'supplier payment'}.`;
+ return `No charges recorded for “${esc(party)}”. Check the spelling of the name, or note that bills saved before the ledger (or when charges failed to save) have no charges — use Receipts → Add charge → Opening balance, or delete and re-save the bill.`;}
 function fill(){const{d,r}=cur();amts={};if(!r)return;let rem=r.un;open_(d,r).forEach(c=>{const a=Math.min(c.due,rem);if(a>.005){amts[c.id]=r2(a);rem=r2(rem-a);}});}
 function pickR(id){rid=id;if(mode==='auto')fill();else amts={};render();}
 function sum(){return r2(Object.values(amts).reduce((a,x)=>a+(+x||0),0));}
@@ -154,7 +159,7 @@ function render(){const{d,r,R}=cur();
  $('m-auto').classList.toggle('on',mode==='auto');$('m-man').classList.toggle('on',mode==='man');
  $('rc').innerHTML=!party?'<div class="empty">Enter a party name</div>':R.length?R.map(x=>`<div class="rcp${x.id===rid?' on':''}" onclick="pickR('${x.id}')"><input type="radio" ${x.id===rid?'checked':''}/><div><b class="mono">${esc(x.no)}</b> <span class="badge ${x.dir}">${x.dir==='out'?'In':'Out'}</span><div class="dim" style="font-size:12px">${esc(x.date)} · ${esc(x.mode||'')} ${esc(x.note||'')}</div></div><div class="mono" style="margin-left:auto">${money(x.un)}</div></div>`).join(''):'<div class="empty">No unallocated receipts for this party</div>';
  const I=open_(d,r),ro=mode==='auto'?'readonly':'';
- $('items').innerHTML=!r?'<div class="empty">Select a receipt</div>':I.length?`<table><thead><tr><th>Date</th><th>Bill</th><th>Order / item</th><th class="n">Charge</th><th class="n">Due</th><th class="n">Allocate</th></tr></thead><tbody>${I.map(c=>`<tr><td>${esc(c.date)}</td><td class="mono">${esc(c.billNo)||'–'} ${c.type!=='Order'?`<span class="badge">${esc(c.type)}</span>`:''}</td><td>${esc(c.orderNo||c.desc)}</td><td class="n">${money(c.amt)}</td><td class="n">${money(c.due)}</td><td><input type="number" min="0" step="any" ${ro} value="${amts[c.id]||''}" oninput="amts['${c.id}']=Math.min(+this.value||0,${c.due});ctr()" onchange="if(+this.value>${c.due})this.value=${c.due}"/></td></tr>`).join('')}</tbody></table>`:'<div class="empty">No open charges for this party</div>';
+ $('items').innerHTML=!r?'<div class="empty">Select a receipt</div>':I.length?`<table><thead><tr><th>Date</th><th>Bill</th><th>Order / item</th><th class="n">Charge</th><th class="n">Due</th><th class="n">Allocate</th></tr></thead><tbody>${I.map(c=>`<tr><td>${esc(c.date)}</td><td class="mono">${esc(c.billNo)||'–'} ${c.type!=='Order'?`<span class="badge">${esc(c.type)}</span>`:''}</td><td>${esc(c.orderNo||c.desc)}</td><td class="n">${money(c.amt)}</td><td class="n">${money(c.due)}</td><td><input type="number" min="0" step="any" ${ro} value="${amts[c.id]||''}" oninput="amts['${c.id}']=Math.min(+this.value||0,${c.due});ctr()" onchange="if(+this.value>${c.due})this.value=${c.due}"/></td></tr>`).join('')}</tbody></table>`:`<div class="empty">${why(d,r)}</div>`;
  ctr();
  const rv=new Set(d.al.filter(a=>a.rev).map(a=>a.rev)),H=d.al.filter(a=>a.party===party).sort((a,b)=>b.id.localeCompare(a.id));
  $('hist').innerHTML=!party?'':H.length?`<table><thead><tr><th>Date</th><th>Receipt</th><th>Bill</th><th>Order</th><th class="n">Amount</th><th>Note</th><th></th></tr></thead><tbody>${H.map(a=>`<tr><td>${esc(a.date)}</td><td class="mono">${esc(a.rno)}</td><td class="mono">${esc(a.billNo)}</td><td>${esc(a.orderNo)}</td><td class="n ${a.amt<0?'neg':''}">${money(a.amt)}</td><td>${esc(a.note)}${a.rev?' <span class="badge unpaid">Reversal</span>':rv.has(a.id)?' <span class="badge">Reversed</span>':''}</td><td class="acts">${a.amt>0&&!rv.has(a.id)?`<button class="btn sm dng" onclick="rev('${a.id}')">Reverse</button>`:''}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">No allocations yet</div>';}

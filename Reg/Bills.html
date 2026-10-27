@@ -207,7 +207,7 @@ window.addEventListener('message',e=>{if(e.data&&/^ap-cache/.test(String(e.data.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadIDB();});
 
 /* ═══ BILLS STORE — local-cache mode (no backend). Row shapes = the Bills / Payments sheets, so the backend can take over later. ═══ */
-const USE_BACKEND=true;
+const USE_BACKEND=false;
 const BillsApi=USE_BACKEND?{get:()=>AP2Api.get('bills'),post:(a,p)=>AP2Api.post(a,p)}:(()=>{
  const KEY='bills_local_v1',now=()=>new Date().toISOString();
  const rd=()=>{try{const j=JSON.parse(localStorage.getItem(KEY));if(j&&j.Bills&&j.Payments)return j;}catch(e){}return{seq:0,Bills:[],Payments:[]};};
@@ -231,7 +231,7 @@ async function loadAll(){
   }catch(e){if(!loadAll._b){loadAll._b=1;showToast('Bills sheet not reachable — add the Bills backend actions: '+errText(e.message),'error');}}
   render();if($('ov').classList.contains('open'))rOrders();if(vid&&$('ov2').classList.contains('open'))viewBill(vid);
 }
-loadAll();
+USE_BACKEND?AP2Api.onSession(()=>loadAll()):loadAll();   // backend: wait for the login session
 
 /* ═══ RULES ═══
    Outgoing bill (customer): charge = Outgoing orders; credit = Incoming orders with note "Returned"
@@ -391,8 +391,8 @@ async function postCharges(b,no){
   const sub=os.map(o=>{const sg=kd(o,b.dir)==='r'?-1:1;return r2(o.lines.reduce((a,l)=>a+sg*l.qty*(+f.rates[l.itemId]||0),0));});
   const t=calc(curLines(),b.disc,b.dt,b.vat),k=t.sub?t.total/t.sub:1;let used=0;
   const base={billId:b.id,billNo:no,dir:b.dir,date:b.date,comments:b.note};
-  const rows=os.map((o,i)=>{const a=i===os.length-1?r2(t.total-used):r2(sub[i]*k);used=r2(used+a);return{...base,type:'Order',orderId:o.id,orderNo:o.no,ptype:o.partyType,party:o.party,desc:'Order '+o.no,amount:a};});
-  f.extras.filter(x=>+x.amt).forEach(x=>rows.push({...base,type:'Extra',orderId:'',orderNo:'',ptype:os[0].partyType,party:os[0].party,desc:x.desc||'Other charge',amount:r2(+x.amt)}));
+  const rows=os.map((o,i)=>{const a=i===os.length-1?r2(t.total-used):r2(sub[i]*k);used=r2(used+a);return{...base,type:'Order',orderId:o.id,orderNo:o.no,ptype:o.partyType,party:String(o.party||'').trim(),desc:'Order '+o.no,amount:a};});
+  f.extras.filter(x=>+x.amt).forEach(x=>rows.push({...base,type:'Extra',orderId:'',orderNo:'',ptype:os[0].partyType,party:String(os[0].party||'').trim(),desc:x.desc||'Other charge',amount:r2(+x.amt)}));
   await Ledger.post('addCharges',{rows});}
 async function saveBill(pr){
   if(busy)return;const L=curLines();
