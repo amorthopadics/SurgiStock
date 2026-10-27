@@ -6,14 +6,12 @@
 <title>Allocation</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
-<!-- Backend/auth scripts disabled while running on local cache. Re-enable when USE_BACKEND=true:
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheWatcher.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/api.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheSync.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/auth.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/accessGuard.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/dataLayer.js"></script>
--->
 <style>
 :root,[data-theme="dark"]{color-scheme:dark;--bg:#0d1117;--bg2:#161b22;--bg3:#1c2333;--surface:#21262d;--border:#30363d;--border2:#444c56;--text:#e6edf3;--text2:#8b949e;--accent:#58a6ff;--accent-dim:rgba(88,166,255,.12);--teal:#39d353;--teal-dim:rgba(57,211,83,.12);--amber:#e3b341;--red:#f85149;--orange:#f0883e;--orange-dim:rgba(240,136,62,.12);--radius:8px;--radius-lg:12px;--font:'Sora',sans-serif;--mono:'JetBrains Mono',monospace}
 [data-theme="light"]{color-scheme:light;--bg:#f0f2f5;--bg2:#fff;--bg3:#e8ecf0;--surface:#fff;--border:#c8d0d9;--border2:#9aa5b1;--text:#0d1117;--text2:#3d454f;--accent:#0550ae;--accent-dim:rgba(5,80,174,.12);--teal:#116329;--teal-dim:rgba(17,99,41,.13);--amber:#7d4e00;--red:#a8111b;--orange:#953800;--orange-dim:rgba(149,56,0,.13)}
@@ -71,6 +69,8 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
 #pr .tot{width:300px}#pr .sig{display:flex;justify-content:space-between;margin-top:50px}#pr .sig span{border-top:1px solid #000;padding-top:4px;width:30%;text-align:center}
 @media print{@page{margin:8mm}body>*:not(#pr){display:none!important}html,body{height:auto;overflow:visible}#pr{display:block}}
 .seg{display:inline-flex}.seg .tab{border-radius:0}.seg .tab:first-child{border-radius:8px 0 0 8px}.seg .tab:last-child{border-radius:0 8px 8px 0}.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:12px}@media(max-width:800px){.cols{grid-template-columns:1fr}}.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:10px}.rcp{display:flex;gap:8px;align-items:center;padding:7px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;cursor:pointer}.rcp.on{border-color:var(--accent);background:var(--accent-dim)}td input{max-width:120px;text-align:right}
+
+.sk{height:34px;border-radius:6px;margin-bottom:8px;background:linear-gradient(90deg,var(--bg3),var(--surface),var(--bg3));background-size:200% 100%;animation:sk 1.2s linear infinite}@keyframes sk{to{background-position:-200% 0}}
 </style>
 </head>
 <body>
@@ -86,8 +86,8 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
 'use strict';
 /* ═══ LEDGER STORE — local-cache mode (no backend). Same data shape as the Apps Script backend,
    so going live later = set USE_BACKEND=true (and re-enable the shared scripts in <head>). ═══ */
-const USE_BACKEND=false;
-const Ledger=USE_BACKEND?{get:()=>AP2Api.get('ledger'),post:(a,p)=>AP2Api.post(a,p)}:(()=>{
+const USE_BACKEND=true;   // true: ledger + bills are read from the ap2_ledger / ap2_bills caches, ledger writes go to the API · false: old local-only mode (localStorage)
+const Ledger=USE_BACKEND?{get:()=>freshLedger(),post:(a,p)=>AP2Api.post(a,p).then(r=>r||{})}:(()=>{
  const KEY='acc_ledger_v1',H={
   Charges:['ChargeID','Type','BillID','BillNo','OrderID','OrderNo','PartyType','Party','Dir','Date','Description','Amount','Comments','Created'],
   Receipts:['PaymentID','ReceiptNo','Dir','PartyType','Party','Date','Mode','Ref','Amount','Comments','Type','Created'],
@@ -137,16 +137,84 @@ function data(){
  return{al,ch,rc};}
 const fifo=(a,b)=>a.date.localeCompare(b.date)||((b.type==='Opening')-(a.type==='Opening'))||a.billNo.localeCompare(b.billNo)||a.id.localeCompare(b.id);
 let BL={Bills:[],Payments:[]};
+/* ═══ CACHE SOURCES — "ap2_ledger" + "ap2_bills" (same three-path loader as userPortal.html / Bills.html)
+   1. parent push   : ap-cache-request → index.html answers ap-cache-ready / ap-cache-preload (same-origin only)
+   2. IndexedDB read: AP2CacheWatcher.readKey(key), 6 retries (300 · 500 · 800 · 1200 · 2000 · 3000 ms)
+   3. live updates  : AP2CacheWatcher.subscribe → re-read on any change (+15 s poll, + on tab focus)
+   Newest record wins (ts). All empty → AdminPro.get(key). Still nothing → error panel + Retry (never an endless skeleton).
+   Both datasets are needed to build the open-items list, so the page paints once BOTH have arrived.
+   ⚠ dataLayer.js: add 'ap2_ledger' and 'ap2_bills' to ALLOW_EMPTY_OBJECT_DATASETS (a fresh system has no rows). */
+const sleep=ms=>new Promise(r=>setTimeout(r,ms)),DELAYS=[300,500,800,1200,2000,3000];
+const isObj=d=>!!d&&typeof d==='object';
+const SRC={
+ ledger:{key:'ap2_ledger',label:'Ledger',shape:d=>isObj(d)&&Array.isArray(d.Charges)&&Array.isArray(d.Receipts)&&Array.isArray(d.Allocations),
+  set:d=>{L={Charges:d.Charges,Receipts:d.Receipts,Allocations:d.Allocations};}},
+ bills:{key:'ap2_bills',label:'Bills',shape:d=>isObj(d)&&Array.isArray(d.Bills)&&(d.Payments===undefined||Array.isArray(d.Payments)),
+  set:d=>{BL={Bills:d.Bills,Payments:d.Payments||[]};}}};
+const SV=Object.values(SRC);SV.forEach(s=>Object.assign(s,{ts:0,fp:'',painted:false,err:''}));
+const S={state:'loading',err:'',booting:false};
+const ready=()=>SV.every(s=>s.painted);
+function unpackS(s,r){if(!isObj(r))return null;if(s.shape(r))return{data:r,ts:0};if(s.shape(r.data))return{data:r.data,ts:+r.ts||0};return null;}
+function applySrc(s,r,from,force){
+ const u=unpackS(s,r);if(!u)return false;
+ if(!force&&s.painted&&u.ts&&u.ts<=s.ts)return true;           // not newer than what is on screen
+ s.ts=force?Date.now():(u.ts||Math.max(s.ts,Date.now()));
+ const fp=JSON.stringify(u.data);
+ if(!force&&s.painted&&fp===s.fp)return true;                   // identical → no re-render
+ s.fp=fp;s.set(u.data);s.painted=true;s.err='';
+ if(ready()){S.state='ready';S.err='';after();}else render();
+ return true;}
+async function readIDB(s){try{if(window.AP2CacheWatcher&&typeof AP2CacheWatcher.readKey==='function')return await AP2CacheWatcher.readKey(s.key);}catch(e){}return null;}
+async function applyFromIDB(s){const r=await readIDB(s);return r?applySrc(s,r,'idb'):false;}
+async function fetchLive(s){
+ try{if(!(window.AdminPro&&typeof AdminPro.get==='function'))throw new Error('AdminPro is not available');
+  const r=await AdminPro.get(s.key);if(!applySrc(s,r,'live')&&!s.painted)throw new Error('unexpected data from server');}
+ catch(e){s.err=String((e&&e.message)||e);}}
+async function freshLedger(){                                   // after a write: force-pull the ledger (updates IndexedDB too), fall back to the endpoint
+ const s=SRC.ledger;let r=null;
+ try{if(window.AdminPro){const fn=typeof AdminPro.refresh==='function'?AdminPro.refresh:AdminPro.get;r=await fn.call(AdminPro,s.key,{force:true});}}catch(e){}
+ if(!unpackS(s,r))r=await AP2Api.get('ledger');
+ if(!applySrc(s,r,'live',true))throw new Error('Ledger returned unexpected data');
+ return L;}
+function askParent(){if(window.parent===window)return;try{window.parent.postMessage({type:'ap-cache-request',keys:SV.map(s=>s.key)},location.origin);}catch(e){}}
+function pickPayload(m,s){
+ for(const bag of [m,m.data,m.datasets,m.payload,m.caches])if(isObj(bag)&&bag[s.key]!==undefined&&unpackS(s,bag[s.key]))return bag[s.key];
+ if(m.key===s.key||m.name===s.key||m.dataset===s.key){const v=m.data!==undefined?m.data:m.value;if(unpackS(s,v))return v;}
+ return null;}
+function onCacheMessage(e){                                     // same-origin parent only
+ if(e.origin!==location.origin||(e.source!==window.parent&&e.source!==window))return;
+ const m=e.data;if(!isObj(m))return;const t=String(m.type||m.msg||'');if(!/^ap-cache/.test(t))return;
+ SV.forEach(s=>{let got=false;if(/^ap-cache-(ready|preload)$/.test(t)){const d=pickPayload(m,s);if(d)got=applySrc(s,d,'parent');}
+  if(!got)setTimeout(()=>applyFromIDB(s),250);});}
+function watchSrc(){
+ const W=window.AP2CacheWatcher;if(!W||typeof W.subscribe!=='function')return;
+ const cb=k=>{const key=(k&&k.key)||k;const hit=typeof key==='string'?SV.filter(s=>s.key===key):SV;hit.forEach(applyFromIDB);};
+ try{W.subscribe(cb);}catch(e){SV.forEach(s=>{try{W.subscribe(s.key,()=>applyFromIDB(s));}catch(x){}});}}
+async function bootSrc(s){
+ let ok=await applyFromIDB(s);
+ for(const d of DELAYS){if(ok||s.painted)break;await sleep(d);ok=await applyFromIDB(s);}
+ if(!ok&&!s.painted)await fetchLive(s);}
+async function bootAll(){
+ if(S.booting)return;S.booting=true;S.state='loading';S.err='';render();askParent();
+ await Promise.all(SV.filter(s=>!s.painted).map(bootSrc));
+ S.booting=false;
+ if(!ready()){S.state='error';S.err=SV.filter(s=>!s.painted).map(s=>s.label+' ('+s.key+')'+(s.err?': '+s.err:'')).join(' · ');render();showToast('Not loaded — '+S.err,'error');}}
+function retryAll(){S.booting=false;bootAll();}
+const stateHTML=()=>S.state==='error'
+ ?`<div class="empty">Ledger / bills data isn’t available yet.<div class="dim" style="margin:6px 0 10px;font-size:12px">${esc(S.err||'The cache is empty and the server could not be reached.')}</div><button class="btn pri" onclick="retryAll()"><i class="ti ti-refresh"></i>Retry</button></div>`
+ :'<div class="sk"></div>'.repeat(5);
+const notReady=()=>{if(USE_BACKEND&&!ready()){showToast(S.state==='error'?'Data not loaded — press Retry':'Still loading — please wait','error');return true;}return false;};
+
 async function load(){
+ if(USE_BACKEND){try{await freshLedger();}catch(e){showToast('Ledger not reachable: '+errText(e.message),'error');}after();return;}   // bills come from the cache; only the ledger changes through this page
  try{const j=await Ledger.get();L={Charges:j.Charges||[],Receipts:j.Receipts||[],Allocations:j.Allocations||[]};}
  catch(e){showToast('Ledger not reachable: '+errText(e.message),'error');}
  try{const b=await BillsApi.get();BL={Bills:b.Bills||[],Payments:b.Payments||[]};}
  catch(e){showToast('Bills not reachable: '+errText(e.message),'error');}
  after();}
-USE_BACKEND?AP2Api.onSession(()=>load()):load();   // backend: wait for the login session
 
 /* ═══ BILLS STORE — local-cache mode (no backend). Row shapes = the Bills / Payments sheets, so the backend can take over later. ═══ */
-const BillsApi=USE_BACKEND?{get:()=>AP2Api.get('bills'),post:(a,p)=>AP2Api.post(a,p)}:(()=>{
+const BillsApi=USE_BACKEND?{get:async()=>BL,post:(a,p)=>AP2Api.post(a,p)}:(()=>{
  const KEY='bills_local_v1',now=()=>new Date().toISOString();
  const rd=()=>{try{const j=JSON.parse(localStorage.getItem(KEY));if(j&&j.Bills&&j.Payments)return j;}catch(e){}return{seq:0,Bills:[],Payments:[]};};
  const wr=j=>{try{localStorage.setItem(KEY,JSON.stringify(j));}catch(e){throw new Error('Browser storage is full or blocked');}};
@@ -169,7 +237,7 @@ function virt(d){const m=new Map(),have=new Set(d.ch.map(c=>c.billId));
  return[...m.values()].filter(b=>!have.has(b.id)).map(b=>{const tot=calcB(b.lines,b.disc,b.dt,b.vat),due=r2(tot-(pay[b.id]||0));
   return{id:'V'+b.id,virtual:true,billId:b.id,type:'Bill',billNo:b.no,orderNo:'',desc:'Bill '+b.no+(pay[b.id]?' (net of earlier payments)':''),ptype:'',party:b.party,dir:b.dir,date:b.date,amt:due,due,note:'Auto-created from Bills when allocating'};}).filter(v=>v.due>.005);}
 const chargeRow=v=>({type:'Bill',billId:v.billId,billNo:v.billNo,orderId:'',orderNo:'',ptype:v.ptype,party:v.party,dir:v.dir,date:v.date,desc:v.desc,amount:v.amt,comments:v.note});
-async function syncBills(){const V=virt(D());if(!V.length)return showToast('Every bill already has charges','success');
+async function syncBills(){if(notReady())return;const V=virt(D());if(!V.length)return showToast('Every bill already has charges','success');
  if(!confirm('Create bill-level charges for '+V.length+' bill(s) that have none yet? (They then appear in Reports too.)'))return;
  try{await post('addCharges',{rows:V.map(chargeRow)});await load();showToast(V.length+' bill(s) synced','success');}catch(e){showToast('Not synced: '+errText(e.message),'error');}}
 let party='',rid=null,mode='auto',amts={},busy=false;
@@ -187,7 +255,9 @@ function fill(){const{d,r}=cur();amts={};if(!r)return;let rem=r.un;open_(d,r).fo
 function pickR(id){rid=id;if(mode==='auto')fill();else amts={};render();}
 function sum(){return r2(Object.values(amts).reduce((a,x)=>a+(+x||0),0));}
 function ctr(){const{r}=cur();if(!r){$('ctr').textContent='';return;}const u=r2(r.un-sum());$('ctr').innerHTML=`Allocating ${money(sum())} of ${money(r.un)} · <span class="${u<-.005?'neg':''}">Left (advance): ${money(u)}</span>`;}
-function render(){const{d,r,R}=cur();
+function render(){
+ if(USE_BACKEND&&!ready()){$('rc').innerHTML=stateHTML();$('items').innerHTML='';$('hist').innerHTML='';$('ctr').textContent='';return;}
+ const{d,r,R}=cur();
  $('m-auto').classList.toggle('on',mode==='auto');$('m-man').classList.toggle('on',mode==='man');
  $('rc').innerHTML=!party?'<div class="empty">Enter a party name</div>':R.length?R.map(x=>`<div class="rcp${x.id===rid?' on':''}" onclick="pickR('${x.id}')"><input type="radio" ${x.id===rid?'checked':''}/><div><b class="mono">${esc(x.no)}</b> <span class="badge ${x.dir}">${x.dir==='out'?'In':'Out'}</span><div class="dim" style="font-size:12px">${esc(x.date)} · ${esc(x.mode||'')} ${esc(x.note||'')}</div></div><div class="mono" style="margin-left:auto">${money(x.un)}</div></div>`).join(''):'<div class="empty">No unallocated receipts for this party</div>';
  const I=open_(d,r),ro=mode==='auto'?'readonly':'';
@@ -195,7 +265,7 @@ function render(){const{d,r,R}=cur();
  ctr();
  const rv=new Set(d.al.filter(a=>a.rev).map(a=>a.rev)),H=d.al.filter(a=>a.party===party).sort((a,b)=>b.id.localeCompare(a.id));
  $('hist').innerHTML=!party?'':H.length?`<table><thead><tr><th>Date</th><th>Receipt</th><th>Bill</th><th>Order</th><th class="n">Amount</th><th>Note</th><th></th></tr></thead><tbody>${H.map(a=>`<tr><td>${esc(a.date)}</td><td class="mono">${esc(a.rno)}</td><td class="mono">${esc(a.billNo)}</td><td>${esc(a.orderNo)}</td><td class="n ${a.amt<0?'neg':''}">${money(a.amt)}</td><td>${esc(a.note)}${a.rev?' <span class="badge unpaid">Reversal</span>':rv.has(a.id)?' <span class="badge">Reversed</span>':''}</td><td class="acts">${a.amt>0&&!rv.has(a.id)?`<button class="btn sm dng" onclick="rev('${a.id}')">Reverse</button>`:''}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">No allocations yet</div>';}
-async function save(){if(busy)return;const{r}=cur();if(!r)return showToast('Select a receipt','error');
+async function save(){if(busy||notReady())return;const{r}=cur();if(!r)return showToast('Select a receipt','error');
  const rows=Object.entries(amts).filter(([k,v])=>+v>0).map(([k,v])=>({chargeId:k,amount:r2(v),comments:$('cm').value.trim()}));
  if(!rows.length)return showToast('Nothing to allocate','error');if(sum()>r.un+.005)return showToast('More than the receipt balance','error');
  busy=true;try{
@@ -204,8 +274,15 @@ async function save(){if(busy)return;const{r}=cur();if(!r)return showToast('Sele
    await post('addCharges',{rows:pick.map(chargeRow)});const j=await Ledger.get();
    vs.forEach(x=>{const bid=x.chargeId.slice(1),c=rw(j.Charges,'ChargeID').find(c=>String(c[2])===bid&&c[1]==='Bill');if(!c)throw new Error('Charge not created for bill '+bid);x.chargeId=String(c[0]);});}
   await post('addAllocations',{paymentId:r.id,date:today(),rows});amts={};rid=null;await load();showToast('Allocation saved','success');}catch(e){showToast('Not saved: '+errText(e.message),'error');}busy=false;}
-async function rev(id){const a=D().al.find(x=>x.id===id);if(!a||!confirm('Reverse this allocation of '+money(a.amt)+'? A negative row is added; the original stays.'))return;
+async function rev(id){if(notReady())return;const a=D().al.find(x=>x.id===id);if(!a||!confirm('Reverse this allocation of '+money(a.amt)+'? A negative row is added; the original stays.'))return;
  try{await post('addAllocations',{paymentId:a.pid,date:today(),rows:[{chargeId:a.cid,amount:-a.amt,reverses:a.id,comments:'Reversal of '+a.id}]});await load();showToast('Reversed','success');}catch(e){showToast('Not reversed: '+errText(e.message),'error');}}
+
+/* ═══ BOOT ═══ */
+if(USE_BACKEND){
+ window.addEventListener('message',onCacheMessage);
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)return;if(!ready()&&!S.booting)bootAll();else SV.forEach(applyFromIDB);});
+ watchSrc();bootAll();setInterval(()=>{if(ready())SV.forEach(applyFromIDB);},15000);   // safety net behind the subscription
+}else load();
 </script>
 </body>
 </html>
