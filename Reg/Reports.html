@@ -82,7 +82,7 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
 'use strict';
 /* ═══ LEDGER STORE — local-cache mode (no backend). Same data shape as the Apps Script backend,
    so going live later = set USE_BACKEND=true (and re-enable the shared scripts in <head>). ═══ */
-const USE_BACKEND=false;
+const USE_BACKEND=true;
 const Ledger=USE_BACKEND?{get:()=>AP2Api.get('ledger'),post:(a,p)=>AP2Api.post(a,p)}:(()=>{
  const KEY='acc_ledger_v1',H={
   Charges:['ChargeID','Type','BillID','BillNo','OrderID','OrderNo','PartyType','Party','Dir','Date','Description','Amount','Comments','Created'],
