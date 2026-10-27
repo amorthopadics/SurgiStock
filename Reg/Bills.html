@@ -64,9 +64,40 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
 @media(max-width:700px){.fg,.pr-row{grid-template-columns:1fr 1fr}.modal{border-radius:0;border:0}.ov{padding:0}.bar .btn .lbl{display:none}}
 /* ── print: only the bill ── */
 #pr,#pr *,#pv,#pv *{color:#000!important;background:#fff!important;font-family:Arial,sans-serif}
-#pr{padding:8mm;font-size:12px}#pr h2{font-size:20px}#pr .hd{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:10px}
-#pr table,#pv table{border:1px solid #000;margin:8px 0}#pr th,#pr td,#pv th,#pv td{border:1px solid #888;padding:5px 7px;font-size:12px}#pr th,#pv th{background:#eee!important}#pv .hd{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:10px}#pv .tot{width:300px}#pv h2{font-size:20px}#pv{font-size:12px}
-#pr .tot{width:300px}#pr .sig{display:flex;justify-content:space-between;margin-top:50px}#pr .sig span{border-top:1px solid #000;padding-top:4px;width:30%;text-align:center}
+#pr{padding:6mm 8mm;font-size:12px}
+:is(#pr,#pv) .inv{font-size:12px;line-height:1.45}
+:is(#pr,#pv) .inv .ihd{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:3px solid #000;padding-bottom:10px;margin-bottom:12px}
+:is(#pr,#pv) .inv .ico{display:flex;gap:12px;align-items:center}
+:is(#pr,#pv) .inv .ilogo{max-height:64px;max-width:120px;object-fit:contain}
+:is(#pr,#pv) .inv .icn{font-size:22px;font-weight:700;letter-spacing:.3px}
+:is(#pr,#pv) .inv .itag{font-size:10px;margin-top:2px}
+:is(#pr,#pv) .inv .itt{text-align:right}
+:is(#pr,#pv) .inv .ititle{font-size:28px;font-weight:700;letter-spacing:3px}
+:is(#pr,#pv) .inv .ist{display:inline-block;margin-top:4px;padding:2px 14px;border:1.5px solid #000;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:1px}
+:is(#pr,#pv) .inv .imeta{display:flex;gap:12px;margin-bottom:12px}
+:is(#pr,#pv) .inv .ibox{flex:1;border:1px solid #888;border-radius:6px;padding:8px 10px}
+:is(#pr,#pv) .inv .ilb{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #ccc;padding-bottom:3px;margin-bottom:5px}
+:is(#pr,#pv) .inv .ipn{font-size:15px;font-weight:700}
+:is(#pr,#pv) .inv table{width:100%;border-collapse:collapse;margin:0}
+:is(#pr,#pv) .inv table.mt{border:0}
+:is(#pr,#pv) .inv table.mt td{border:0;padding:2px 0;font-size:12px}
+:is(#pr,#pv) .inv table.mt td:first-child{width:38%;font-weight:700}
+:is(#pr,#pv) .inv table.it{border:1px solid #000;margin-bottom:10px}
+:is(#pr,#pv) .inv table.it th,:is(#pr,#pv) .inv table.it td{border:1px solid #888;padding:6px 8px;font-size:12px;text-align:left}
+:is(#pr,#pv) .inv table.it th{background:#e9e9e9!important;font-size:11px;text-transform:uppercase;letter-spacing:.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+:is(#pr,#pv) .inv table.it td.n,:is(#pr,#pv) .inv table.it th.n{text-align:right!important}
+:is(#pr,#pv) .inv table.it tr{page-break-inside:avoid}
+:is(#pr,#pv) .inv .ibot{display:flex;gap:16px;align-items:flex-start;page-break-inside:avoid}
+:is(#pr,#pv) .inv .iwords{flex:1}
+:is(#pr,#pv) .inv .iwords .w{border:1px solid #888;border-radius:6px;padding:8px 10px;margin-bottom:8px}
+:is(#pr,#pv) .inv .iwords .w b{display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px}
+:is(#pr,#pv) .inv .tot{width:300px;border:1px solid #000;border-radius:6px;padding:6px 10px}
+:is(#pr,#pv) .inv .tot .g{font-size:15px;border-top:2px solid #000;margin-top:4px;padding-top:6px}
+:is(#pr,#pv) .inv .pay{font-size:11px}
+:is(#pr,#pv) .inv .sig{display:flex;justify-content:space-between;align-items:flex-end;margin-top:34px;page-break-inside:avoid}
+:is(#pr,#pv) .inv .sig span{border-top:1px solid #000;padding-top:4px;width:30%;text-align:center;font-size:11px}
+:is(#pr,#pv) .inv .sig img{max-height:90px;max-width:150px}
+:is(#pr,#pv) .inv .ift{margin-top:18px;padding-top:8px;border-top:1px solid #000;text-align:center;font-size:10.5px}
 @media print{@page{margin:8mm}body>*:not(#pr){display:none!important}html,body{height:auto;overflow:visible}#pr{display:block}}
 .sk{height:34px;border-radius:6px;margin-bottom:8px;background:linear-gradient(90deg,var(--bg3),var(--surface),var(--bg3));background-size:200% 100%;animation:sk 1.2s linear infinite}@keyframes sk{to{background-position:-200% 0}}
 </style>
@@ -128,6 +159,8 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
    Backend: doGet type=bills → {Bills:[…],Payments:[…]} · doPost: addBill / deleteBill / addPayment / deletePayment (see Bills_backend.gs).
    Orders are read from the existing type=orders endpoint. Parties/types come from the orders themselves. */
 const CUR='AED',CO='SurgiStock';           // ← change company name for the printout
+/* invoice header/footer details — leave a value '' to hide it */
+const CO_TAG='',CO_ADDR='',CO_PHONE='',CO_EMAIL='',CO_TRN='',CO_LOGO='',CO_STAMP='';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s==null?'':s).trim().replace(/\s+/g,' ').toLowerCase();
@@ -556,15 +589,24 @@ async function delBill(id){
 }
 
 /* ═══ VIEW + PAYMENTS ═══ */
-const docHTML=b=>{const t=tb(b),p=paidOf(b),os=b.oids.map(i=>orders.find(o=>o.id===i)).filter(Boolean),ps=pays.filter(x=>x.billId===b.id),out=b.dir==='out',al=allocList(b);
-  return `<div class="hd"><div><h2>${esc(CO)}</h2><div>${out?'SALES INVOICE':'PURCHASE BILL'}</div></div><div style="text-align:right"><b>${esc(b.no)}</b><br>Date: ${esc(b.date)}</div></div>
-  <div><b>${out?'Bill to':'Supplier'}:</b> ${esc(b.party)}${b.ptype?' ('+esc(b.ptype)+')':''}${b.note?'<br><b>Ref:</b> '+esc(b.note):''}</div>
-  <table><thead><tr><th>Order No</th><th>Date</th><th>Party</th><th>Type</th></tr></thead><tbody>${os.map(o=>`<tr><td>${esc(o.no)}</td><td>${esc(o.date)}</td><td>${esc(o.party)}</td><td>${kd(o,b.dir)==='r'?(out?'Returned (credit)':'Claim / Damaged (credit)'):(out?'Outgoing':'Incoming')}</td></tr>`).join('')}</tbody></table>
-  <table><thead><tr><th>#</th><th>Item</th><th class="n">Ordered</th><th class="n">Returned</th><th class="n">Net qty</th><th class="n">Rate</th><th class="n">Amount</th></tr></thead><tbody>${b.lines.map((l,i)=>`<tr><td>${i+1}</td><td>${esc(l.label)}</td><td class="n">${l.oq}</td><td class="n">${l.rq||''}</td><td class="n">${l.oq-l.rq}</td><td class="n">${money(l.rate)}</td><td class="n">${money((l.oq-l.rq)*l.rate)}</td></tr>`).join('')}</tbody></table>
+const ONES=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'],TENS=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'],SCL=['','Thousand','Million','Billion'];
+const w3=x=>x<20?ONES[x]:x<100?TENS[Math.floor(x/10)]+(x%10?' '+ONES[x%10]:''):ONES[Math.floor(x/100)]+' Hundred'+(x%100?' '+w3(x%100):'');
+const words=n=>{if(!n)return'Zero';let r='',i=0;while(n>0){const c=n%1000;if(c)r=w3(c)+(SCL[i]?' '+SCL[i]:'')+(r?' '+r:'');n=Math.floor(n/1000);i++;}return r;};
+const amtWords=v=>{v=r2(Math.abs(v));const i=Math.floor(v),f=Math.round((v-i)*100);return 'UAE Dirhams '+words(i)+(f?' and '+words(f)+' Fils':'')+' Only';};
+const invNo=(b,os)=>os.length?os.map(o=>o.no).join(', '):b.no;   // invoice number = order number(s)
+const docHTML=b=>{const t=tb(b),p=paidOf(b),os=b.oids.map(i=>orders.find(o=>o.id===i)).filter(Boolean),ps=pays.filter(x=>x.billId===b.id),out=b.dir==='out',al=allocList(b),hr=b.lines.some(l=>l.rq),st=stOf(b),no=invNo(b,os);
+  const contact=[CO_ADDR,[CO_PHONE&&'Tel: '+CO_PHONE,CO_EMAIL].filter(Boolean).join(' · '),CO_TRN&&'TRN: '+CO_TRN].filter(Boolean).map(esc).join('<br>');
+  return `<div class="inv"><div class="ihd"><div class="ico">${CO_LOGO?`<img class="ilogo" src="${esc(CO_LOGO)}" alt="">`:''}<div><div class="icn">${esc(CO)}</div>${CO_TAG?`<div class="itag">${esc(CO_TAG)}</div>`:''}${contact?`<div class="itag">${contact}</div>`:''}</div></div>
+  <div class="itt"><div class="ititle">${out?'INVOICE':'PURCHASE BILL'}</div><div class="ist">${esc(st[1].toUpperCase())}</div></div></div>
+  <div class="imeta"><div class="ibox"><div class="ilb">${out?'Bill to':'Supplier'}</div><div class="ipn">${esc(b.party)}</div>${b.ptype?`<div>${esc(b.ptype)}</div>`:''}${b.note?`<div><b>Ref:</b> ${esc(b.note)}</div>`:''}</div>
+  <div class="ibox"><table class="mt"><tr><td>Invoice No</td><td><b>${esc(no)}</b></td></tr><tr><td>Date</td><td>${esc(b.date)}</td></tr>${b.no&&b.no!==no?`<tr><td>Bill Ref</td><td>${esc(b.no)}</td></tr>`:''}<tr><td>Currency</td><td>${esc(CUR)}</td></tr></table></div></div>
+  <table class="it"><thead><tr><th style="width:32px">#</th><th>Description</th>${hr?'<th class="n">Ordered</th><th class="n">Returned</th>':''}<th class="n">Qty</th><th class="n">Rate</th><th class="n">Amount</th></tr></thead><tbody>${b.lines.map((l,i)=>`<tr><td>${i+1}</td><td>${esc(l.label)}</td>${hr?`<td class="n">${l.oq}</td><td class="n">${l.rq||''}</td>`:''}<td class="n">${l.oq-l.rq}</td><td class="n">${money(l.rate)}</td><td class="n">${money((l.oq-l.rq)*l.rate)}</td></tr>`).join('')}</tbody></table>
+  <div class="ibot"><div class="iwords"><div class="w"><b>Amount in words</b>${esc(amtWords(t.total))}</div>
+  ${(ps.length||al.length)?`<div class="pay"><b>Payments received</b>${ps.map(x=>`<div>${esc(x.date)} · ${esc(x.mode)}${x.ref?' · '+esc(x.ref):''} · ${money(x.amount)}</div>`).join('')}${al.map(x=>`<div>${esc(x.date)} · Receipt ${esc(x.rno)}${x.orderNo?' · '+esc(x.orderNo):''} · ${money(x.amount)}</div>`).join('')}</div>`:''}</div>
   <div class="tot"><div><span>Subtotal</span><span>${money(t.sub)}</span></div>${t.d?`<div><span>Discount${b.dt==='pct'?' ('+b.disc+'%)':''}</span><span>− ${money(t.d)}</span></div>`:''}${b.vat?`<div><span>VAT (${b.vat}%)</span><span>${money(t.v)}</span></div>`:''}
-  <div class="g"><span>Total ${CUR}</span><span>${money(t.total)}</span></div><div><span>Paid</span><span>${money(p)}</span></div><div><b>Balance</b><b>${money(t.total-p)}</b></div></div>
-  ${(ps.length||al.length)?`<div style="margin-top:8px"><b>Payments</b>${ps.map(x=>`<div>${esc(x.date)} · ${esc(x.mode)}${x.ref?' · '+esc(x.ref):''} · ${money(x.amount)}</div>`).join('')}${al.map(x=>`<div>${esc(x.date)} · Receipt ${esc(x.rno)}${x.orderNo?' · '+esc(x.orderNo):''} · ${money(x.amount)}</div>`).join('')}</div>`:''}`;};
-function printBill(id){const b=bills.find(x=>x.id===id);if(!b)return;$('pr').innerHTML=docHTML(b)+'<div class="sig"><span>Prepared by</span><span>Checked by</span><span>Received by</span></div>';setTimeout(()=>window.print(),80);}
+  <div class="g"><span>Total ${CUR}</span><span>${money(t.total)}</span></div><div><span>Paid</span><span>${money(p)}</span></div><div><b>Balance Due</b><b>${money(t.total-p)}</b></div></div></div></div>`;};
+function printBill(id){const b=bills.find(x=>x.id===id);if(!b)return;const ft=[CO,CO_ADDR,[CO_PHONE&&'Tel: '+CO_PHONE,CO_EMAIL].filter(Boolean).join(' · ')].filter(Boolean).map(esc).join(' &nbsp;|&nbsp; ');
+  $('pr').innerHTML=docHTML(b).replace(/<\/div>$/,'')+`<div class="sig"><span>Prepared by</span><span>Received by</span><span>${CO_STAMP?`<img src="${esc(CO_STAMP)}" alt=""><br>`:''}Authorized Signature &amp; Stamp</span></div><div class="ift">Thank you for your business.<br>${ft}</div></div>`;setTimeout(()=>window.print(),80);}
 function viewBill(id){const b=bills.find(x=>x.id===id);if(!b)return;vid=id;const t=tb(b),p=paidOf(b),dr=drift(b),ps=pays.filter(x=>x.billId===id),s=stOf(b),al=allocList(b);
   $('v-title').innerHTML=esc(b.no)+' <span class="badge '+s[0]+'">'+s[1]+'</span>';
   $('v-body').innerHTML=(dr.length?`<div class="warn" style="border:1px solid var(--amber);border-radius:var(--radius);padding:8px 10px">⚠ Orders changed since this bill was made (edit / return / delete):<br>${dr.map(esc).join('<br>')}<br>Delete and re-create the bill to apply the changes.</div>`:'')
