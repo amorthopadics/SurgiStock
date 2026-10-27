@@ -68,6 +68,7 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
 #pr table,#pv table{border:1px solid #000;margin:8px 0}#pr th,#pr td,#pv th,#pv td{border:1px solid #888;padding:5px 7px;font-size:12px}#pr th,#pv th{background:#eee!important}#pv .hd{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:10px}#pv .tot{width:300px}#pv h2{font-size:20px}#pv{font-size:12px}
 #pr .tot{width:300px}#pr .sig{display:flex;justify-content:space-between;margin-top:50px}#pr .sig span{border-top:1px solid #000;padding-top:4px;width:30%;text-align:center}
 @media print{@page{margin:8mm}body>*:not(#pr){display:none!important}html,body{height:auto;overflow:visible}#pr{display:block}}
+.sk{height:34px;border-radius:6px;margin-bottom:8px;background:linear-gradient(90deg,var(--bg3),var(--surface),var(--bg3));background-size:200% 100%;animation:sk 1.2s linear infinite}@keyframes sk{to{background-position:-200% 0}}
 </style>
 </head>
 <body>
@@ -142,6 +143,9 @@ const session=AP2Api.session,errText=m=>String(m),post=(a,p)=>BillsApi.post(a,p)
 const OK='orders_sheet_cache_v2';   // same local cache Orders.html writes → orders show instantly, even offline
 const fixO=a=>(a||[]).map(o=>({...o,store:o.store||o.storeName||''}));
 let orders=(()=>{try{return fixO(JSON.parse(localStorage.getItem(OK)))}catch(e){return[]}})(),bills=[],pays=[],tab='orders',busy=false,vid=null;
+const BILLS_KEY='ap2_bills';
+const BILLS_BACKEND=true;   // true: bills come from the ap2_bills cache, writes go to the API · false: old local-only mode (localStorage)
+const S={ts:0,fp:'',painted:false,state:'loading',err:'',src:'',booting:false,raw:{Bills:[],Payments:[]}};
 let items=[],stores=[],parties=[],types=[],suppliers=[];     // from the cache (Master / Specs Settings)
 
 /* ═══ CACHE → customer-type parties · suppliers · items · stores (same rules as Orders)
@@ -203,12 +207,91 @@ function idbOrders(){return new Promise(res=>{
 let idbTs=0;
 async function loadIDB(){const r=await idbOrders();if(!r||(+r.ts||0)<=idbTs)return;idbTs=+r.ts||0;
   orders=groupOrders(r.data.Orders||[]);render();if($('ov').classList.contains('open'))rOrders();}
-window.addEventListener('message',e=>{if(e.data&&/^ap-cache/.test(String(e.data.type||e.data.msg||'')))setTimeout(loadIDB,250);});
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadIDB();});
+window.addEventListener('message',e=>onCacheMessage(e));
+document.addEventListener('visibilitychange',()=>{if(document.hidden)return;loadIDB();if(BILLS_BACKEND){if(!S.painted&&!S.booting)bootBills();else applyFromIDB();}});
 
-/* ═══ BILLS STORE — local-cache mode (no backend). Row shapes = the Bills / Payments sheets, so the backend can take over later. ═══ */
-const USE_BACKEND=false;
-const BillsApi=USE_BACKEND?{get:()=>AP2Api.get('bills'),post:(a,p)=>AP2Api.post(a,p)}:(()=>{
+/* ═══ BILLS DATA — cache dataset "ap2_bills" (same three-path loader as userPortal.html)
+   1. parent push   : post ap-cache-request to index.html → it answers ap-cache-ready / ap-cache-preload
+   2. IndexedDB read: AP2CacheWatcher.readKey('ap2_bills'), 6 retries (300 · 500 · 800 · 1200 · 2000 · 3000 ms)
+   3. live updates  : AP2CacheWatcher.subscribe → re-read on any change
+   Whichever answers first wins; older records (ts) never overwrite newer ones.
+   If all three come back empty → AdminPro.get('ap2_bills') fetches it directly. If that fails → error panel with Retry (never an endless skeleton).
+   Dataset shape = {Bills:[…rows], Payments:[…rows]}; empty arrays are VALID (fresh system).
+   ⚠ dataLayer.js: add 'ap2_bills' to ALLOW_EMPTY_OBJECT_DATASETS, otherwise an empty database throws "empty or invalid data" and nothing is cached. */
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const isShape=d=>!!d&&typeof d==='object'&&Array.isArray(d.Bills)&&(d.Payments===undefined||Array.isArray(d.Payments));
+function unpack(r){                                  // accepts the IDB record {ts,data,fingerprint} or the bare dataset
+  if(!r||typeof r!=='object')return null;
+  if(isShape(r))return{data:r,ts:0};
+  if(isShape(r.data))return{data:r.data,ts:+r.ts||0};
+  return null;}
+const normPays=rows=>(rows||[]).filter(a=>Array.isArray(a)&&String(a[0])!=='ID'&&a[0]!=='').map(a=>({id:String(a[0]),billId:String(a[1]),date:String(a[2]||''),amount:+a[3]||0,mode:String(a[4]||''),ref:String(a[5]||'')}));
+function rebuild(){bills=groupBills(S.raw.Bills);pays=normPays(S.raw.Payments);}
+function refreshOpen(){if($('ov').classList.contains('open'))rOrders();if(vid&&$('ov2').classList.contains('open'))viewBill(vid);}
+function applyBills(r,src){
+  const u=unpack(r);if(!u)return false;
+  if(S.painted&&u.ts&&u.ts<=S.ts)return true;         // not newer than what is on screen
+  S.ts=u.ts||Math.max(S.ts,Date.now());S.src=src;
+  const fp=JSON.stringify([u.data.Bills,u.data.Payments||[]]);
+  if(S.painted&&fp===S.fp)return true;                // identical data → no re-render
+  S.fp=fp;S.raw={Bills:u.data.Bills.slice(),Payments:(u.data.Payments||[]).slice()};rebuild();
+  S.painted=true;S.state='ready';S.err='';
+  render();refreshOpen();return true;}
+async function readBillsIDB(){
+  try{if(window.AP2CacheWatcher&&typeof AP2CacheWatcher.readKey==='function')return await AP2CacheWatcher.readKey(BILLS_KEY);}catch(e){}
+  return null;}
+async function applyFromIDB(){const r=await readBillsIDB();return r?applyBills(r,'idb'):false;}
+async function fetchBillsLive(){
+  try{if(!(window.AdminPro&&typeof AdminPro.get==='function'))throw new Error('AdminPro is not available');
+    const r=await AdminPro.get(BILLS_KEY);
+    if(!applyBills(r,'live')&&!S.painted)throw new Error('Server returned unexpected data for '+BILLS_KEY);
+    return true;}
+  catch(e){S.err=String((e&&e.message)||e);return false;}}
+async function forceRefresh(){                       // after a write: pull the fresh dataset (also updates IndexedDB)
+  try{if(!window.AdminPro)return;
+    const fn=typeof AdminPro.refresh==='function'?AdminPro.refresh:AdminPro.get;
+    const r=await fn.call(AdminPro,BILLS_KEY,{force:true});
+    if(r&&unpack(r))applyBills(r,'live');else{await sleep(500);await applyFromIDB();}
+  }catch(e){}}
+function askParent(){if(window.parent===window)return;try{window.parent.postMessage({type:'ap-cache-request',key:BILLS_KEY,keys:[BILLS_KEY]},location.origin);}catch(e){}}
+function pickPayload(m){
+  for(const bag of [m,m.data,m.datasets,m.payload,m.caches])if(bag&&typeof bag==='object'&&bag[BILLS_KEY]!==undefined&&unpack(bag[BILLS_KEY]))return bag[BILLS_KEY];
+  if(m.key===BILLS_KEY||m.name===BILLS_KEY||m.dataset===BILLS_KEY){const v=m.data!==undefined?m.data:m.value;if(unpack(v))return v;}
+  return null;}
+function onCacheMessage(e){                          // same-origin parent only (all pages share one origin, so IndexedDB is shared too)
+  if(e.origin!==location.origin||(e.source!==window.parent&&e.source!==window))return;
+  const m=e.data;if(!m||typeof m!=='object')return;
+  const t=String(m.type||m.msg||'');if(!/^ap-cache/.test(t))return;
+  setTimeout(loadIDB,250);                           // orders cache (unchanged)
+  if(!BILLS_BACKEND)return;
+  let got=false;if(/^ap-cache-(ready|preload)$/.test(t)){const d=pickPayload(m);if(d)got=applyBills(d,'parent');}
+  if(!got)setTimeout(applyFromIDB,250);}
+function watchBills(){
+  const W=window.AP2CacheWatcher;if(!W||typeof W.subscribe!=='function')return;
+  const cb=k=>{const key=(k&&k.key)||k;if(typeof key==='string'&&key!==BILLS_KEY)return;applyFromIDB();};
+  try{W.subscribe(cb);}catch(e){try{W.subscribe(BILLS_KEY,cb);}catch(x){}}}
+async function bootBills(){
+  if(S.booting)return;S.booting=true;S.state='loading';S.err='';render();
+  askParent();
+  let ok=await applyFromIDB();
+  for(const d of [300,500,800,1200,2000,3000]){if(ok||S.painted)break;await sleep(d);ok=await applyFromIDB();}
+  if(!ok&&!S.painted)await fetchBillsLive();
+  S.booting=false;
+  if(!S.painted){S.state='error';render();showToast('Bills cache not available: '+(S.err||'no data'),'error');}}
+function retryBills(){S.booting=false;bootBills();}
+const billsReady=()=>{if(S.painted)return true;showToast(S.state==='error'?'Bills data not loaded — press Retry':'Bills are still loading — please wait','error');return false;};
+const stateHTML=()=>S.state==='error'
+  ?`<div class="empty">Bills data isn’t available yet.<div class="dim" style="margin:6px 0 10px;font-size:12px">${esc(S.err||'The ap2_bills cache is empty and the server could not be reached.')}</div><button class="btn pri" onclick="retryBills()"><i class="ti ti-refresh"></i>Retry</button></div>`
+  :'<div class="sk"></div>'.repeat(6);
+
+/* ═══ BILLS WRITES ═══ */
+function mutateRaw(j,a,p,res){const now=new Date().toISOString();      // optimistic update of the in-memory rows; forceRefresh() then replaces them with the server copy
+  if(a==='addBill'){const b=p.bill,no=(res&&res.bill&&res.bill.no)||'';b.lines.forEach(l=>j.Bills.push([b.id,no,b.dir,b.date,b.ptype,b.party,b.note,b.oids.join(','),b.disc,b.dt,b.vat,l.itemId,l.label,l.oq,l.rq,l.rate,now]));return;}
+  if(a==='deleteBill'){const ids=new Set(p.ids.map(String));j.Bills=j.Bills.filter(r=>!ids.has(String(r[0])));j.Payments=j.Payments.filter(r=>!ids.has(String(r[1])));return;}
+  if(a==='addPayment'){const x=p.payment;j.Payments.push([x.id,x.billId,x.date,x.amount,x.mode,x.ref]);return;}
+  if(a==='deletePayment'){const ids=new Set(p.ids.map(String));j.Payments=j.Payments.filter(r=>!ids.has(String(r[0])));}}
+/* local-only store (BILLS_BACKEND=false) — row shapes = the Bills / Payments sheets */
+const LocalBills=(()=>{
  const KEY='bills_local_v1',now=()=>new Date().toISOString();
  const rd=()=>{try{const j=JSON.parse(localStorage.getItem(KEY));if(j&&j.Bills&&j.Payments)return j;}catch(e){}return{seq:0,Bills:[],Payments:[]};};
  const wr=j=>{try{localStorage.setItem(KEY,JSON.stringify(j));}catch(e){throw new Error('Browser storage is full or blocked');}};
@@ -216,22 +299,25 @@ const BillsApi=USE_BACKEND?{get:()=>AP2Api.get('bills'),post:(a,p)=>AP2Api.post(
   async post(a,p){const j=rd();
    if(a==='addBill'){const b=p.bill;j.seq=(j.seq||0)+1;const no=String(j.seq).padStart(4,'0');
     b.lines.forEach(l=>j.Bills.push([b.id,no,b.dir,b.date,b.ptype,b.party,b.note,b.oids.join(','),b.disc,b.dt,b.vat,l.itemId,l.label,l.oq,l.rq,l.rate,now()]));wr(j);return{bill:{id:b.id,no}};}
-   if(a==='deleteBill'){const ids=new Set(p.ids.map(String));for(const id of ids)await Ledger.post('reverseBill',{billId:id});
-    j.Bills=j.Bills.filter(r=>!ids.has(String(r[0])));j.Payments=j.Payments.filter(r=>!ids.has(String(r[1])));wr(j);return{};}
+   if(a==='deleteBill'){const ids=new Set(p.ids.map(String));j.Bills=j.Bills.filter(r=>!ids.has(String(r[0])));j.Payments=j.Payments.filter(r=>!ids.has(String(r[1])));wr(j);return{};}
    if(a==='addPayment'){const x=p.payment;j.Payments.push([x.id,x.billId,x.date,x.amount,x.mode,x.ref]);wr(j);return{};}
    if(a==='deletePayment'){const ids=new Set(p.ids.map(String));j.Payments=j.Payments.filter(r=>!ids.has(String(r[0])));wr(j);return{};}
    throw new Error('Unknown action');}};})();
+const BillsApi={
+ get:()=>BILLS_BACKEND?Promise.resolve(S.raw):LocalBills.get(),
+ async post(a,p){
+  if(a==='deleteBill'&&!USE_BACKEND)for(const id of p.ids.map(String))await Ledger.post('reverseBill',{billId:id});   // ledger is still local → reverse first (throws if payments are allocated)
+  if(!BILLS_BACKEND)return LocalBills.post(a,p);
+  const res=await AP2Api.post(a,p);mutateRaw(S.raw,a,p,res);rebuild();forceRefresh();return res||{};}};
+const USE_BACKEND=false;                             // ledger store (below) — separate from the bills cache
 async function loadAll(){
   if(USE_BACKEND){const s=session();if(!s.sessionId&&!s.token)return;}
   if(USE_BACKEND)try{const o=await AP2Api.get('orders');orders=groupOrders(o.Orders||[]);}
   catch(e){if(!loadAll._o){loadAll._o=1;showToast('Orders not refreshed (showing cached): '+errText(e.message),'error');}}
-  try{const b=await BillsApi.get();
-    bills=groupBills(b.Bills||[]);
-    pays=(b.Payments||[]).filter(a=>Array.isArray(a)&&String(a[0])!=='ID'&&a[0]!=='').map(a=>({id:String(a[0]),billId:String(a[1]),date:String(a[2]||''),amount:+a[3]||0,mode:String(a[4]||''),ref:String(a[5]||'')}));
-  }catch(e){if(!loadAll._b){loadAll._b=1;showToast('Bills sheet not reachable — add the Bills backend actions: '+errText(e.message),'error');}}
-  render();if($('ov').classList.contains('open'))rOrders();if(vid&&$('ov2').classList.contains('open'))viewBill(vid);
-}
-USE_BACKEND?AP2Api.onSession(()=>loadAll()):loadAll();   // backend: wait for the login session
+  if(!BILLS_BACKEND){                                // local mode only — in cache mode the data arrives through applyBills()
+    try{const b=await BillsApi.get();S.raw={Bills:b.Bills||[],Payments:b.Payments||[]};rebuild();S.painted=true;S.state='ready';}
+    catch(e){S.state='error';S.err=errText(e.message);if(!loadAll._b){loadAll._b=1;showToast('Bills not loaded: '+errText(e.message),'error');}}}
+  render();refreshOpen();}
 
 /* ═══ RULES ═══
    Outgoing bill (customer): charge = Outgoing orders; credit = Incoming orders with note "Returned"
@@ -257,6 +343,7 @@ function drift(b){const cur=agg(b.oids,b.dir),out=[];
 const TABS=[['orders','Unbilled orders'],['all','All bills'],['out','Outgoing bills'],['in','Incoming bills']];
 function render(){
   $('tabs').innerHTML=TABS.map(([k,l])=>`<button class="tab${tab===k?' on':''}" onclick="tab='${k}';render()">${l}</button>`).join('');
+  if(!S.painted){$('kpi').innerHTML='';$('view').innerHTML=stateHTML();return;}
   const bal=d=>r2(bills.filter(b=>b.dir===d).reduce((a,b)=>a+tb(b).total-paidOf(b),0));
   $('kpi').innerHTML=`<div>To receive (outgoing)<b>${CUR} ${money(bal('out'))}</b></div><div>To pay (incoming)<b>${CUR} ${money(bal('in'))}</b></div><div>Bills<b>${bills.length}</b></div>`;
   const q=$('q').value;
@@ -297,6 +384,7 @@ function billThese(){const bb=billedBy(),q=$('q').value,L=orders.filter(o=>odir(
 const inRange=o=>(!f.from||o.date>=f.from)&&(!f.to||o.date<=f.to);
 const elig=()=>orders.filter(o=>kd(o,f.dir)&&(!f.ptype||norm(o.partyType)===norm(f.ptype))&&(!f.party||norm(o.party)===norm(f.party))&&inRange(o)&&match($('f-q').value,otxt(o))).sort((a,b)=>a.date.localeCompare(b.date)||a.no.localeCompare(b.no));
 function openForm(dir,pre){
+  if(!billsReady())return;
   if(!cache.requireReady('Cache not loaded yet — please wait'))return;
   try{if(cache.requestRefresh)cache.requestRefresh(true);}catch(e){}
   Object.assign(f,{dir,from:'',to:'',ptype:pre?pre.ptype:'',party:pre?pre.party:'',sel:new Set(pre?pre.ids:[]),extras:[],rates:{},disc:0,dt:'amt',vat:0});
@@ -439,7 +527,10 @@ async function addPay(){const b=bills.find(x=>x.id===vid);if(!b||busy)return;con
   catch(e){showToast('Not saved: '+errText(e.message),'error');}busy=false;}
 async function delPay(id){if(!confirm('Delete this payment?'))return;try{await post('deletePayment',{ids:[id]});await loadAll();}catch(e){showToast('Not deleted: '+errText(e.message),'error');}}
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if($('ov2').classList.contains('open'))closeView();else closeForm();});
-render();cache.start();loadIDB().then(loadAll);setInterval(loadAll,30000);setInterval(loadIDB,10000);
+render();cache.start();loadIDB();
+if(BILLS_BACKEND){watchBills();bootBills();setInterval(applyFromIDB,15000);}   // safety net behind the subscription
+else{loadAll();setInterval(loadAll,30000);}
+setInterval(loadIDB,10000);
 </script>
 </body>
 </html>
