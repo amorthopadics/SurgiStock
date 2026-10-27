@@ -21,7 +21,7 @@
   'use strict';
   if (global.AP2Api) return;
 
-  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbwq0N32KxOjuWZbiP_86tYgl9tmxGFpvSZiJLfR-a7_spVG4DafsAeBIJoGuN1NtGq3_Q/exec';
+  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzSrWvI80IzHNBNuZbtl4LNN5k81OkKGVc1bWQ5EZ1Y_uD2lUYRb8L2eXET_jQ0tHtvkg/exec';
 
   /* ── session: same lookup order every module used before ── */
   let SES = null;
