@@ -158,9 +158,10 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
 /* Bills are saved in Google Sheet "Bills" (one row per item line) and "Payments".
    Backend: doGet type=bills → {Bills:[…],Payments:[…]} · doPost: addBill / deleteBill / addPayment / deletePayment (see Bills_backend.gs).
    Orders are read from the existing type=orders endpoint. Parties/types come from the orders themselves. */
-const CUR='AED',CO='SurgiStock';           // ← change company name for the printout
+const CUR='AED',CO='AM Traders';           // ← change company name for the printout
 /* invoice header/footer details — leave a value '' to hide it */
-const CO_TAG='',CO_ADDR='',CO_PHONE='',CO_EMAIL='',CO_TRN='',CO_LOGO='',CO_STAMP='';
+const CO_TAG='',CO_ADDR='Al Kareem Medical Complex - 1A Justice Hameed Colony, Nishtar Road, Multan.',CO_PHONE='0300-6355782',CO_EMAIL='amtraders40@gmail.com',CO_TRN='5260719-3',
+  CO_LOGO='https://amorthopadics.github.io/SurgiStock/shared/logo.png',CO_STAMP='https://amorthopadics.github.io/SurgiStock/shared/stamp.png';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s==null?'':s).trim().replace(/\s+/g,' ').toLowerCase();
@@ -595,7 +596,7 @@ const words=n=>{if(!n)return'Zero';let r='',i=0;while(n>0){const c=n%1000;if(c)r
 const amtWords=v=>{v=r2(Math.abs(v));const i=Math.floor(v),f=Math.round((v-i)*100);return 'UAE Dirhams '+words(i)+(f?' and '+words(f)+' Fils':'')+' Only';};
 const invNo=(b,os)=>os.length?os.map(o=>o.no).join(', '):b.no;   // invoice number = order number(s)
 const docHTML=b=>{const t=tb(b),p=paidOf(b),os=b.oids.map(i=>orders.find(o=>o.id===i)).filter(Boolean),ps=pays.filter(x=>x.billId===b.id),out=b.dir==='out',al=allocList(b),hr=b.lines.some(l=>l.rq),st=stOf(b),no=invNo(b,os);
-  const contact=[CO_ADDR,[CO_PHONE&&'Tel: '+CO_PHONE,CO_EMAIL].filter(Boolean).join(' · '),CO_TRN&&'TRN: '+CO_TRN].filter(Boolean).map(esc).join('<br>');
+  const contact=[CO_ADDR,[CO_PHONE&&'Ph: '+CO_PHONE,CO_EMAIL&&'Email: '+CO_EMAIL].filter(Boolean).join(' '),CO_TRN&&'NTN NO: '+CO_TRN].filter(Boolean).map(esc).join('<br>');
   return `<div class="inv"><div class="ihd"><div class="ico">${CO_LOGO?`<img class="ilogo" src="${esc(CO_LOGO)}" alt="">`:''}<div><div class="icn">${esc(CO)}</div>${CO_TAG?`<div class="itag">${esc(CO_TAG)}</div>`:''}${contact?`<div class="itag">${contact}</div>`:''}</div></div>
   <div class="itt"><div class="ititle">${out?'INVOICE':'PURCHASE BILL'}</div><div class="ist">${esc(st[1].toUpperCase())}</div></div></div>
   <div class="imeta"><div class="ibox"><div class="ilb">${out?'Bill to':'Supplier'}</div><div class="ipn">${esc(b.party)}</div>${b.ptype?`<div>${esc(b.ptype)}</div>`:''}${b.note?`<div><b>Ref:</b> ${esc(b.note)}</div>`:''}</div>
@@ -605,8 +606,8 @@ const docHTML=b=>{const t=tb(b),p=paidOf(b),os=b.oids.map(i=>orders.find(o=>o.id
   ${(ps.length||al.length)?`<div class="pay"><b>Payments received</b>${ps.map(x=>`<div>${esc(x.date)} · ${esc(x.mode)}${x.ref?' · '+esc(x.ref):''} · ${money(x.amount)}</div>`).join('')}${al.map(x=>`<div>${esc(x.date)} · Receipt ${esc(x.rno)}${x.orderNo?' · '+esc(x.orderNo):''} · ${money(x.amount)}</div>`).join('')}</div>`:''}</div>
   <div class="tot"><div><span>Subtotal</span><span>${money(t.sub)}</span></div>${t.d?`<div><span>Discount${b.dt==='pct'?' ('+b.disc+'%)':''}</span><span>− ${money(t.d)}</span></div>`:''}${b.vat?`<div><span>VAT (${b.vat}%)</span><span>${money(t.v)}</span></div>`:''}
   <div class="g"><span>Total ${CUR}</span><span>${money(t.total)}</span></div><div><span>Paid</span><span>${money(p)}</span></div><div><b>Balance Due</b><b>${money(t.total-p)}</b></div></div></div></div>`;};
-function printBill(id){const b=bills.find(x=>x.id===id);if(!b)return;const ft=[CO,CO_ADDR,[CO_PHONE&&'Tel: '+CO_PHONE,CO_EMAIL].filter(Boolean).join(' · ')].filter(Boolean).map(esc).join(' &nbsp;|&nbsp; ');
-  $('pr').innerHTML=docHTML(b).replace(/<\/div>$/,'')+`<div class="sig"><span>Prepared by</span><span>Received by</span><span>${CO_STAMP?`<img src="${esc(CO_STAMP)}" alt=""><br>`:''}Authorized Signature &amp; Stamp</span></div><div class="ift">Thank you for your business.<br>${ft}</div></div>`;setTimeout(()=>window.print(),80);}
+function printBill(id){const b=bills.find(x=>x.id===id);if(!b)return;const ft=[CO_ADDR,[CO_PHONE&&'Ph: '+CO_PHONE,CO_EMAIL&&'Email: '+CO_EMAIL].filter(Boolean).join(' ')].filter(Boolean).map(esc).join('<br>');
+  $('pr').innerHTML=docHTML(b).replace(/<\/div>$/,'')+`<div class="sig"><span>Prepared by</span><span>Received by</span><span>${CO_STAMP?`<img src="${esc(CO_STAMP)}" alt=""><br>`:''}Authorized Signature &amp; Stamp</span></div><div class="ift"><b>Thank you for your business. ${esc(CO)}</b><br>${ft}</div></div>`;setTimeout(()=>window.print(),80);}
 function viewBill(id){const b=bills.find(x=>x.id===id);if(!b)return;vid=id;const t=tb(b),p=paidOf(b),dr=drift(b),ps=pays.filter(x=>x.billId===id),s=stOf(b),al=allocList(b);
   $('v-title').innerHTML=esc(b.no)+' <span class="badge '+s[0]+'">'+s[1]+'</span>';
   $('v-body').innerHTML=(dr.length?`<div class="warn" style="border:1px solid var(--amber);border-radius:var(--radius);padding:8px 10px">⚠ Orders changed since this bill was made (edit / return / delete):<br>${dr.map(esc).join('<br>')}<br>Delete and re-create the bill to apply the changes.</div>`:'')
