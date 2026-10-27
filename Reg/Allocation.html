@@ -76,7 +76,7 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
 <body>
 <div class="bar"><h1><i class="ti ti-arrows-split"></i>Amount Allocation</h1></div>
 <main><div class="tools"><input id="party" list="dl" placeholder="Party name (customer / supplier)…" oninput="setParty(this.value)"/><datalist id="dl"></datalist>
-<span class="seg"><button class="tab on" id="m-auto" onclick="setMode('auto')">Automatic (FIFO)</button><button class="tab" id="m-man" onclick="setMode('man')">Manual</button></span></div>
+<span class="seg"><button class="tab on" id="m-auto" onclick="setMode('auto')">Automatic (FIFO)</button><button class="tab" id="m-man" onclick="setMode('man')">Manual</button></span><button class="btn" onclick="syncBills()" title="Create charges for bills that have none yet"><i class="ti ti-refresh"></i>Sync bills</button></div>
 <div class="cols"><div class="card"><b>1. Receipt / payment to allocate</b><div id="rc" style="margin-top:8px"></div></div>
 <div class="card"><b>2. Open items <span class="dim" style="font-weight:400">(oldest first)</span></b><div class="tw" id="items" style="margin-top:8px"></div>
 <div class="tools" style="margin-top:10px"><span class="mono" id="ctr"></span><input id="cm" placeholder="Comments (optional)" style="max-width:260px;margin-left:auto"/><button class="btn pri" id="sv" onclick="save()"><i class="ti ti-device-floppy"></i>Save allocation</button></div></div></div>
@@ -132,25 +132,57 @@ const rw=(a,h)=>(a||[]).filter(r=>Array.isArray(r)&&r[0]!==''&&String(r[0])!==h)
 function data(){
  const al=rw(L.Allocations,'AllocID').map(a=>({id:String(a[0]),pid:String(a[1]),rno:a[2],billNo:a[4],cid:String(a[5]),orderNo:a[7],party:a[9],date:String(a[10]),amt:+a[11]||0,note:a[12],rev:String(a[13]||'')}));
  const rvC={};rw(L.Charges,'ChargeID').forEach(c=>{if(c[1]==='Reversal')rvC[String(c[12]).replace('rev:','')]=+c[11]||0;});const bC={},bP={};al.forEach(a=>{bC[a.cid]=r2((bC[a.cid]||0)+a.amt);bP[a.pid]=r2((bP[a.pid]||0)+a.amt);});
- const ch=rw(L.Charges,'ChargeID').map(c=>({id:String(c[0]),type:c[1],billNo:String(c[3]||''),orderNo:String(c[5]||''),ptype:c[6],party:String(c[7]).trim(),dir:c[8],date:String(c[9]),desc:c[10],amt:+c[11]||0,note:c[12]})).map(c=>({...c,paid:bC[c.id]||0,due:r2(c.amt-(bC[c.id]||0)+(rvC[c.id]||0))}));
+ const ch=rw(L.Charges,'ChargeID').map(c=>({id:String(c[0]),type:c[1],billId:String(c[2]||''),billNo:String(c[3]||''),orderNo:String(c[5]||''),ptype:c[6],party:String(c[7]).trim(),dir:c[8],date:String(c[9]),desc:c[10],amt:+c[11]||0,note:c[12]})).map(c=>({...c,paid:bC[c.id]||0,due:r2(c.amt-(bC[c.id]||0)+(rvC[c.id]||0))}));
  const rc=rw(L.Receipts,'PaymentID').map(r=>({id:String(r[0]),no:r[1],dir:r[2],party:String(r[4]).trim(),date:String(r[5]),mode:r[6],ref:r[7],amt:+r[8]||0,note:r[9],type:r[10]})).map(r=>({...r,alloc:bP[r.id]||0,un:r2(r.amt-(bP[r.id]||0))}));
  return{al,ch,rc};}
 const fifo=(a,b)=>a.date.localeCompare(b.date)||((b.type==='Opening')-(a.type==='Opening'))||a.billNo.localeCompare(b.billNo)||a.id.localeCompare(b.id);
-async function load(){try{const j=await Ledger.get();L={Charges:j.Charges||[],Receipts:j.Receipts||[],Allocations:j.Allocations||[]};}
- catch(e){showToast('Ledger not reachable — add the Accounts backend: '+errText(e.message),'error');}after();}
+let BL={Bills:[],Payments:[]};
+async function load(){
+ try{const j=await Ledger.get();L={Charges:j.Charges||[],Receipts:j.Receipts||[],Allocations:j.Allocations||[]};}
+ catch(e){showToast('Ledger not reachable: '+errText(e.message),'error');}
+ try{const b=await BillsApi.get();BL={Bills:b.Bills||[],Payments:b.Payments||[]};}
+ catch(e){showToast('Bills not reachable: '+errText(e.message),'error');}
+ after();}
 USE_BACKEND?AP2Api.onSession(()=>load()):load();   // backend: wait for the login session
 
+/* ═══ BILLS STORE — local-cache mode (no backend). Row shapes = the Bills / Payments sheets, so the backend can take over later. ═══ */
+const BillsApi=USE_BACKEND?{get:()=>AP2Api.get('bills'),post:(a,p)=>AP2Api.post(a,p)}:(()=>{
+ const KEY='bills_local_v1',now=()=>new Date().toISOString();
+ const rd=()=>{try{const j=JSON.parse(localStorage.getItem(KEY));if(j&&j.Bills&&j.Payments)return j;}catch(e){}return{seq:0,Bills:[],Payments:[]};};
+ const wr=j=>{try{localStorage.setItem(KEY,JSON.stringify(j));}catch(e){throw new Error('Browser storage is full or blocked');}};
+ return{async get(){const j=rd();return{Bills:j.Bills,Payments:j.Payments};},
+  async post(a,p){const j=rd();
+   if(a==='addBill'){const b=p.bill;j.seq=(j.seq||0)+1;const no=String(j.seq).padStart(4,'0');
+    b.lines.forEach(l=>j.Bills.push([b.id,no,b.dir,b.date,b.ptype,b.party,b.note,b.oids.join(','),b.disc,b.dt,b.vat,l.itemId,l.label,l.oq,l.rq,l.rate,now()]));wr(j);return{bill:{id:b.id,no}};}
+   if(a==='deleteBill'){const ids=new Set(p.ids.map(String));for(const id of ids)await Ledger.post('reverseBill',{billId:id});
+    j.Bills=j.Bills.filter(r=>!ids.has(String(r[0])));j.Payments=j.Payments.filter(r=>!ids.has(String(r[1])));wr(j);return{};}
+   if(a==='addPayment'){const x=p.payment;j.Payments.push([x.id,x.billId,x.date,x.amount,x.mode,x.ref]);wr(j);return{};}
+   if(a==='deletePayment'){const ids=new Set(p.ids.map(String));j.Payments=j.Payments.filter(r=>!ids.has(String(r[0])));wr(j);return{};}
+   throw new Error('Unknown action');}};})();
+
+/* Bills & Payments → open items. A bill that has no Charge rows yet is listed as ONE bill-level item
+   (total − payments already recorded in Bills & Payments). It becomes a real Charge the moment you allocate to it. */
+const calcB=(L,disc,dt,vat)=>{const sub=r2(L.reduce((a,l)=>a+(l.oq-l.rq)*l.rate,0)),d=r2(dt==='pct'?sub*disc/100:disc),net=r2(sub-d);return r2(net+net*vat/100);};
+function virt(d){const m=new Map(),have=new Set(d.ch.map(c=>c.billId));
+ rw(BL.Bills,'ID').forEach(a=>{const id=String(a[0]);let b=m.get(id);if(!b){b={id,no:String(a[1]),dir:String(a[2]),date:String(a[3]),party:String(a[5]).trim(),disc:+a[8]||0,dt:String(a[9]||'amt'),vat:+a[10]||0,lines:[]};m.set(id,b);}b.lines.push({oq:+a[13]||0,rq:+a[14]||0,rate:+a[15]||0});});
+ const pay={};rw(BL.Payments,'ID').forEach(p=>pay[String(p[1])]=r2((pay[String(p[1])]||0)+(+p[3]||0)));
+ return[...m.values()].filter(b=>!have.has(b.id)).map(b=>{const tot=calcB(b.lines,b.disc,b.dt,b.vat),due=r2(tot-(pay[b.id]||0));
+  return{id:'V'+b.id,virtual:true,billId:b.id,type:'Bill',billNo:b.no,orderNo:'',desc:'Bill '+b.no+(pay[b.id]?' (net of earlier payments)':''),ptype:'',party:b.party,dir:b.dir,date:b.date,amt:due,due,note:'Auto-created from Bills when allocating'};}).filter(v=>v.due>.005);}
+const chargeRow=v=>({type:'Bill',billId:v.billId,billNo:v.billNo,orderId:'',orderNo:'',ptype:v.ptype,party:v.party,dir:v.dir,date:v.date,desc:v.desc,amount:v.amt,comments:v.note});
+async function syncBills(){const V=virt(D());if(!V.length)return showToast('Every bill already has charges','success');
+ if(!confirm('Create bill-level charges for '+V.length+' bill(s) that have none yet? (They then appear in Reports too.)'))return;
+ try{await post('addCharges',{rows:V.map(chargeRow)});await load();showToast(V.length+' bill(s) synced','success');}catch(e){showToast('Not synced: '+errText(e.message),'error');}}
 let party='',rid=null,mode='auto',amts={},busy=false;
 const D=()=>data();
 function after(){const d=D();$('dl').innerHTML=[...new Set([...d.ch.map(c=>c.party),...d.rc.map(r=>r.party)])].sort().map(n=>`<option value="${esc(n)}">`).join('');render();}
 function setParty(v){party=v.trim();rid=null;amts={};render();}
 function setMode(m){mode=m;if(m==='auto')fill();render();}
 function cur(){const d=D();return{d,r:d.rc.find(x=>x.id===rid&&x.party===party),R:d.rc.filter(r=>r.party===party&&r.un>.005)};}
-function open_(d,r){return d.ch.filter(c=>c.party===party&&r&&c.dir===r.dir&&c.due>.005).sort(fifo);}
+function open_(d,r){return d.ch.filter(c=>c.party===party&&r&&c.dir===r.dir&&c.due>.005).concat(virt(d).filter(v=>r&&v.party===party&&v.dir===r.dir)).sort(fifo);}
 function why(d,r){const mine=d.ch.filter(c=>c.party===party),same=mine.filter(c=>c.dir===r.dir);
  if(same.length)return `All ${same.length} charge(s) for “${esc(party)}” are already fully allocated.`;
  if(mine.length)return `“${esc(party)}” only has ${r.dir==='out'?'supplier':'customer'} charges — this receipt is a ${r.dir==='out'?'customer receipt':'supplier payment'}.`;
- return `No charges recorded for “${esc(party)}”. Check the spelling of the name, or note that bills saved before the ledger (or when charges failed to save) have no charges — use Receipts → Add charge → Opening balance, or delete and re-save the bill.`;}
+ return `Nothing open for “${esc(party)}” in Bills &amp; Payments or the ledger. Check the spelling of the name (it must match the party on the bill), and that the bill is in the same direction as this receipt.`;}
 function fill(){const{d,r}=cur();amts={};if(!r)return;let rem=r.un;open_(d,r).forEach(c=>{const a=Math.min(c.due,rem);if(a>.005){amts[c.id]=r2(a);rem=r2(rem-a);}});}
 function pickR(id){rid=id;if(mode==='auto')fill();else amts={};render();}
 function sum(){return r2(Object.values(amts).reduce((a,x)=>a+(+x||0),0));}
@@ -166,7 +198,12 @@ function render(){const{d,r,R}=cur();
 async function save(){if(busy)return;const{r}=cur();if(!r)return showToast('Select a receipt','error');
  const rows=Object.entries(amts).filter(([k,v])=>+v>0).map(([k,v])=>({chargeId:k,amount:r2(v),comments:$('cm').value.trim()}));
  if(!rows.length)return showToast('Nothing to allocate','error');if(sum()>r.un+.005)return showToast('More than the receipt balance','error');
- busy=true;try{await post('addAllocations',{paymentId:r.id,date:today(),rows});amts={};rid=null;await load();showToast('Allocation saved','success');}catch(e){showToast('Not saved: '+errText(e.message),'error');}busy=false;}
+ busy=true;try{
+  const vs=rows.filter(x=>x.chargeId[0]==='V');
+  if(vs.length){const V=virt(D()),pick=vs.map(x=>V.find(v=>v.id===x.chargeId));if(pick.some(v=>!v))throw new Error('A bill changed — reload the page');
+   await post('addCharges',{rows:pick.map(chargeRow)});const j=await Ledger.get();
+   vs.forEach(x=>{const bid=x.chargeId.slice(1),c=rw(j.Charges,'ChargeID').find(c=>String(c[2])===bid&&c[1]==='Bill');if(!c)throw new Error('Charge not created for bill '+bid);x.chargeId=String(c[0]);});}
+  await post('addAllocations',{paymentId:r.id,date:today(),rows});amts={};rid=null;await load();showToast('Allocation saved','success');}catch(e){showToast('Not saved: '+errText(e.message),'error');}busy=false;}
 async function rev(id){const a=D().al.find(x=>x.id===id);if(!a||!confirm('Reverse this allocation of '+money(a.amt)+'? A negative row is added; the original stays.'))return;
  try{await post('addAllocations',{paymentId:a.pid,date:today(),rows:[{chargeId:a.cid,amount:-a.amt,reverses:a.id,comments:'Reversal of '+a.id}]});await load();showToast('Reversed','success');}catch(e){showToast('Not reversed: '+errText(e.message),'error');}}
 </script>
