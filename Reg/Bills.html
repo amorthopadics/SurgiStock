@@ -596,7 +596,7 @@ const words=n=>{if(!n)return'Zero';let r='',i=0;while(n>0){const c=n%1000;if(c)r
 const amtWords=v=>{v=r2(Math.abs(v));const i=Math.floor(v),f=Math.round((v-i)*100);return 'UAE Dirhams '+words(i)+(f?' and '+words(f)+' Fils':'')+' Only';};
 const invNo=(b,os)=>os.length?os.map(o=>o.no).join(', '):b.no;   // invoice number = order number(s)
 const docHTML=b=>{const t=tb(b),p=paidOf(b),os=b.oids.map(i=>orders.find(o=>o.id===i)).filter(Boolean),ps=pays.filter(x=>x.billId===b.id),out=b.dir==='out',al=allocList(b),hr=b.lines.some(l=>l.rq),st=stOf(b),no=invNo(b,os);
-  const contact=[CO_ADDR,[CO_PHONE&&'Ph: '+CO_PHONE,CO_EMAIL&&'Email: '+CO_EMAIL].filter(Boolean).join(' '),CO_TRN&&'NTN NO: '+CO_TRN].filter(Boolean).map(esc).join('<br>');
+  const contact=[CO_ADDR,CO_TRN&&'NTN NO: '+CO_TRN].filter(Boolean).map(esc).join('<br>');
   return `<div class="inv"><div class="ihd"><div class="ico">${CO_LOGO?`<img class="ilogo" src="${esc(CO_LOGO)}" alt="">`:''}<div><div class="icn">${esc(CO)}</div>${CO_TAG?`<div class="itag">${esc(CO_TAG)}</div>`:''}${contact?`<div class="itag">${contact}</div>`:''}</div></div>
   <div class="itt"><div class="ititle">${out?'INVOICE':'PURCHASE BILL'}</div><div class="ist">${esc(st[1].toUpperCase())}</div></div></div>
   <div class="imeta"><div class="ibox"><div class="ilb">${out?'Bill to':'Supplier'}</div><div class="ipn">${esc(b.party)}</div>${b.ptype?`<div>${esc(b.ptype)}</div>`:''}${b.note?`<div><b>Ref:</b> ${esc(b.note)}</div>`:''}</div>
@@ -606,7 +606,7 @@ const docHTML=b=>{const t=tb(b),p=paidOf(b),os=b.oids.map(i=>orders.find(o=>o.id
   ${(ps.length||al.length)?`<div class="pay"><b>Payments received</b>${ps.map(x=>`<div>${esc(x.date)} · ${esc(x.mode)}${x.ref?' · '+esc(x.ref):''} · ${money(x.amount)}</div>`).join('')}${al.map(x=>`<div>${esc(x.date)} · Receipt ${esc(x.rno)}${x.orderNo?' · '+esc(x.orderNo):''} · ${money(x.amount)}</div>`).join('')}</div>`:''}</div>
   <div class="tot"><div><span>Subtotal</span><span>${money(t.sub)}</span></div>${t.d?`<div><span>Discount${b.dt==='pct'?' ('+b.disc+'%)':''}</span><span>− ${money(t.d)}</span></div>`:''}${b.vat?`<div><span>VAT (${b.vat}%)</span><span>${money(t.v)}</span></div>`:''}
   <div class="g"><span>Total ${CUR}</span><span>${money(t.total)}</span></div><div><span>Paid</span><span>${money(p)}</span></div><div><b>Balance Due</b><b>${money(t.total-p)}</b></div></div></div></div>`;};
-function printBill(id){const b=bills.find(x=>x.id===id);if(!b)return;const ft=[CO_ADDR,[CO_PHONE&&'Ph: '+CO_PHONE,CO_EMAIL&&'Email: '+CO_EMAIL].filter(Boolean).join(' ')].filter(Boolean).map(esc).join('<br>');
+function printBill(id){const b=bills.find(x=>x.id===id);if(!b)return;const ft=[[CO_PHONE&&'Ph: '+CO_PHONE,CO_EMAIL&&'Email: '+CO_EMAIL].filter(Boolean).join(' ')].filter(Boolean).map(esc).join('<br>');
   $('pr').innerHTML=docHTML(b).replace(/<\/div>$/,'')+`<div class="sig"><span>Prepared by</span><span>Received by</span><span>${CO_STAMP?`<img src="${esc(CO_STAMP)}" alt=""><br>`:''}Authorized Signature &amp; Stamp</span></div><div class="ift"><b>Thank you for your business. ${esc(CO)}</b><br>${ft}</div></div>`;setTimeout(()=>window.print(),80);}
 function viewBill(id){const b=bills.find(x=>x.id===id);if(!b)return;vid=id;const t=tb(b),p=paidOf(b),dr=drift(b),ps=pays.filter(x=>x.billId===id),s=stOf(b),al=allocList(b);
   $('v-title').innerHTML=esc(b.no)+' <span class="badge '+s[0]+'">'+s[1]+'</span>';
