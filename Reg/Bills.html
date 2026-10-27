@@ -137,7 +137,7 @@ const p2=n=>String(n).padStart(2,'0');
 const tsId=t=>{const d=new Date(t);return''+d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate())+p2(d.getHours())+p2(d.getMinutes())+p2(d.getSeconds())+String(d.getMilliseconds()).padStart(3,'0')};
 const today=()=>new Date().toISOString().slice(0,10);
 function showToast(m,t){const e=$('toast');e.textContent=m;e.className='toast '+(t||'');e.style.display='block';clearTimeout(showToast.t);showToast.t=setTimeout(()=>e.style.display='none',t==='error'?9000:3000);}
-const session=AP2Api.session,post=AP2Api.post,errText=m=>AP2Api.errText(m);
+const session=AP2Api.session,errText=m=>String(m),post=(a,p)=>BillsApi.post(a,p);
 
 const OK='orders_sheet_cache_v2';   // same local cache Orders.html writes → orders show instantly, even offline
 const fixO=a=>(a||[]).map(o=>({...o,store:o.store||o.storeName||''}));
@@ -205,17 +205,33 @@ async function loadIDB(){const r=await idbOrders();if(!r||(+r.ts||0)<=idbTs)retu
   orders=groupOrders(r.data.Orders||[]);render();if($('ov').classList.contains('open'))rOrders();}
 window.addEventListener('message',e=>{if(e.data&&/^ap-cache/.test(String(e.data.type||e.data.msg||'')))setTimeout(loadIDB,250);});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadIDB();});
+
+/* ═══ BILLS STORE — local-cache mode (no backend). Row shapes = the Bills / Payments sheets, so the backend can take over later. ═══ */
+const USE_BACKEND=false;
+const BillsApi=USE_BACKEND?{get:()=>AP2Api.get('bills'),post:(a,p)=>AP2Api.post(a,p)}:(()=>{
+ const KEY='bills_local_v1',now=()=>new Date().toISOString();
+ const rd=()=>{try{const j=JSON.parse(localStorage.getItem(KEY));if(j&&j.Bills&&j.Payments)return j;}catch(e){}return{seq:0,Bills:[],Payments:[]};};
+ const wr=j=>{try{localStorage.setItem(KEY,JSON.stringify(j));}catch(e){throw new Error('Browser storage is full or blocked');}};
+ return{async get(){const j=rd();return{Bills:j.Bills,Payments:j.Payments};},
+  async post(a,p){const j=rd();
+   if(a==='addBill'){const b=p.bill;j.seq=(j.seq||0)+1;const no=String(j.seq).padStart(4,'0');
+    b.lines.forEach(l=>j.Bills.push([b.id,no,b.dir,b.date,b.ptype,b.party,b.note,b.oids.join(','),b.disc,b.dt,b.vat,l.itemId,l.label,l.oq,l.rq,l.rate,now()]));wr(j);return{bill:{id:b.id,no}};}
+   if(a==='deleteBill'){const ids=new Set(p.ids.map(String));for(const id of ids)await Ledger.post('reverseBill',{billId:id});
+    j.Bills=j.Bills.filter(r=>!ids.has(String(r[0])));j.Payments=j.Payments.filter(r=>!ids.has(String(r[1])));wr(j);return{};}
+   if(a==='addPayment'){const x=p.payment;j.Payments.push([x.id,x.billId,x.date,x.amount,x.mode,x.ref]);wr(j);return{};}
+   if(a==='deletePayment'){const ids=new Set(p.ids.map(String));j.Payments=j.Payments.filter(r=>!ids.has(String(r[0])));wr(j);return{};}
+   throw new Error('Unknown action');}};})();
 async function loadAll(){
-  const s=session();if(!s.sessionId&&!s.token)return;
-  try{const o=await AP2Api.get('orders');orders=groupOrders(o.Orders||[]);}
+  if(USE_BACKEND){const s=session();if(!s.sessionId&&!s.token)return;}
+  if(USE_BACKEND)try{const o=await AP2Api.get('orders');orders=groupOrders(o.Orders||[]);}
   catch(e){if(!loadAll._o){loadAll._o=1;showToast('Orders not refreshed (showing cached): '+errText(e.message),'error');}}
-  try{const b=await AP2Api.get('bills');
+  try{const b=await BillsApi.get();
     bills=groupBills(b.Bills||[]);
     pays=(b.Payments||[]).filter(a=>Array.isArray(a)&&String(a[0])!=='ID'&&a[0]!=='').map(a=>({id:String(a[0]),billId:String(a[1]),date:String(a[2]||''),amount:+a[3]||0,mode:String(a[4]||''),ref:String(a[5]||'')}));
   }catch(e){if(!loadAll._b){loadAll._b=1;showToast('Bills sheet not reachable — add the Bills backend actions: '+errText(e.message),'error');}}
   render();if($('ov').classList.contains('open'))rOrders();if(vid&&$('ov2').classList.contains('open'))viewBill(vid);
 }
-AP2Api.onSession(()=>loadAll());
+loadAll();
 
 /* ═══ RULES ═══
    Outgoing bill (customer): charge = Outgoing orders; credit = Incoming orders with note "Returned"
@@ -329,7 +345,6 @@ function tot(){const t=calc(curLines(),f.disc,f.dt,f.vat);
 
 /* ═══ LEDGER STORE — local-cache mode (no backend). Same data shape as the Apps Script backend,
    so going live later = set USE_BACKEND=true (and re-enable the shared scripts in <head>). ═══ */
-const USE_BACKEND=false;
 const Ledger=USE_BACKEND?{get:()=>AP2Api.get('ledger'),post:(a,p)=>AP2Api.post(a,p)}:(()=>{
  const KEY='acc_ledger_v1',H={
   Charges:['ChargeID','Type','BillID','BillNo','OrderID','OrderNo','PartyType','Party','Dir','Date','Description','Amount','Comments','Created'],
@@ -357,6 +372,11 @@ const Ledger=USE_BACKEND?{get:()=>AP2Api.get('ledger'),post:(a,p)=>AP2Api.post(a
      if(amt>0){if(amt>rem+.005)throw new Error('More than receipt balance');if(amt>due+.005)throw new Error('More than due on '+(ch[5]||ch[10]));}
      rem=R(rem-amt);out.push([uid('A',i),rec[0],rec[1],ch[2],ch[3],ch[0],ch[4],ch[5],ch[6],ch[7],p.date,amt,x.comments||'',x.reverses||'',now()]);});
     j.Allocations.push(...out);wr(j);return{count:out.length};}
+   if(action==='reverseBill'){const al=j.Allocations.slice(1),ch=j.Charges.slice(1),done=new Set(ch.filter(c=>c[1]==='Reversal').map(c=>String(c[12]).replace('rev:','')));
+    const t=ch.filter(c=>c[2]==p.billId&&c[1]!=='Reversal'&&!done.has(String(c[0])));
+    t.forEach(c=>{if(Math.abs(sm(al.filter(a=>a[5]==c[0]),a=>+a[11]))>.005)throw new Error('This bill has allocated payments — reverse them in Allocation first');});
+    const rows=t.map((c,i)=>[uid('C',i),'Reversal',c[2],c[3],c[4],c[5],c[6],c[7],c[8],now().slice(0,10),'Reversal: '+(c[10]||''),R(-c[11]),'rev:'+c[0],now()]);
+    j.Charges.push(...rows);wr(j);return{count:rows.length};}
    throw new Error('Unknown action');},
   backup(){return JSON.stringify(rd());},
   restore(t){const j=JSON.parse(t);if(!(j&&j.Charges&&j.Receipts&&j.Allocations))throw new Error('Not a ledger backup');wr(j);}

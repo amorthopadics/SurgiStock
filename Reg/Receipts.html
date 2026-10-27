@@ -135,6 +135,11 @@ const Ledger=USE_BACKEND?{get:()=>AP2Api.get('ledger'),post:(a,p)=>AP2Api.post(a
      if(amt>0){if(amt>rem+.005)throw new Error('More than receipt balance');if(amt>due+.005)throw new Error('More than due on '+(ch[5]||ch[10]));}
      rem=R(rem-amt);out.push([uid('A',i),rec[0],rec[1],ch[2],ch[3],ch[0],ch[4],ch[5],ch[6],ch[7],p.date,amt,x.comments||'',x.reverses||'',now()]);});
     j.Allocations.push(...out);wr(j);return{count:out.length};}
+   if(action==='reverseBill'){const al=j.Allocations.slice(1),ch=j.Charges.slice(1),done=new Set(ch.filter(c=>c[1]==='Reversal').map(c=>String(c[12]).replace('rev:','')));
+    const t=ch.filter(c=>c[2]==p.billId&&c[1]!=='Reversal'&&!done.has(String(c[0])));
+    t.forEach(c=>{if(Math.abs(sm(al.filter(a=>a[5]==c[0]),a=>+a[11]))>.005)throw new Error('This bill has allocated payments — reverse them in Allocation first');});
+    const rows=t.map((c,i)=>[uid('C',i),'Reversal',c[2],c[3],c[4],c[5],c[6],c[7],c[8],now().slice(0,10),'Reversal: '+(c[10]||''),R(-c[11]),'rev:'+c[0],now()]);
+    j.Charges.push(...rows);wr(j);return{count:rows.length};}
    throw new Error('Unknown action');},
   backup(){return JSON.stringify(rd());},
   restore(t){const j=JSON.parse(t);if(!(j&&j.Charges&&j.Receipts&&j.Allocations))throw new Error('Not a ledger backup');wr(j);}

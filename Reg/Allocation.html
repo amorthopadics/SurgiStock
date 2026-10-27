@@ -114,6 +114,11 @@ const Ledger=USE_BACKEND?{get:()=>AP2Api.get('ledger'),post:(a,p)=>AP2Api.post(a
      if(amt>0){if(amt>rem+.005)throw new Error('More than receipt balance');if(amt>due+.005)throw new Error('More than due on '+(ch[5]||ch[10]));}
      rem=R(rem-amt);out.push([uid('A',i),rec[0],rec[1],ch[2],ch[3],ch[0],ch[4],ch[5],ch[6],ch[7],p.date,amt,x.comments||'',x.reverses||'',now()]);});
     j.Allocations.push(...out);wr(j);return{count:out.length};}
+   if(action==='reverseBill'){const al=j.Allocations.slice(1),ch=j.Charges.slice(1),done=new Set(ch.filter(c=>c[1]==='Reversal').map(c=>String(c[12]).replace('rev:','')));
+    const t=ch.filter(c=>c[2]==p.billId&&c[1]!=='Reversal'&&!done.has(String(c[0])));
+    t.forEach(c=>{if(Math.abs(sm(al.filter(a=>a[5]==c[0]),a=>+a[11]))>.005)throw new Error('This bill has allocated payments — reverse them in Allocation first');});
+    const rows=t.map((c,i)=>[uid('C',i),'Reversal',c[2],c[3],c[4],c[5],c[6],c[7],c[8],now().slice(0,10),'Reversal: '+(c[10]||''),R(-c[11]),'rev:'+c[0],now()]);
+    j.Charges.push(...rows);wr(j);return{count:rows.length};}
    throw new Error('Unknown action');},
   backup(){return JSON.stringify(rd());},
   restore(t){const j=JSON.parse(t);if(!(j&&j.Charges&&j.Receipts&&j.Allocations))throw new Error('Not a ledger backup');wr(j);}
@@ -126,8 +131,8 @@ let L={Charges:[],Receipts:[],Allocations:[]};
 const rw=(a,h)=>(a||[]).filter(r=>Array.isArray(r)&&r[0]!==''&&String(r[0])!==h);
 function data(){
  const al=rw(L.Allocations,'AllocID').map(a=>({id:String(a[0]),pid:String(a[1]),rno:a[2],billNo:a[4],cid:String(a[5]),orderNo:a[7],party:a[9],date:String(a[10]),amt:+a[11]||0,note:a[12],rev:String(a[13]||'')}));
- const bC={},bP={};al.forEach(a=>{bC[a.cid]=r2((bC[a.cid]||0)+a.amt);bP[a.pid]=r2((bP[a.pid]||0)+a.amt);});
- const ch=rw(L.Charges,'ChargeID').map(c=>({id:String(c[0]),type:c[1],billNo:String(c[3]||''),orderNo:String(c[5]||''),ptype:c[6],party:String(c[7]),dir:c[8],date:String(c[9]),desc:c[10],amt:+c[11]||0,note:c[12]})).map(c=>({...c,paid:bC[c.id]||0,due:r2(c.amt-(bC[c.id]||0))}));
+ const rvC={};rw(L.Charges,'ChargeID').forEach(c=>{if(c[1]==='Reversal')rvC[String(c[12]).replace('rev:','')]=+c[11]||0;});const bC={},bP={};al.forEach(a=>{bC[a.cid]=r2((bC[a.cid]||0)+a.amt);bP[a.pid]=r2((bP[a.pid]||0)+a.amt);});
+ const ch=rw(L.Charges,'ChargeID').map(c=>({id:String(c[0]),type:c[1],billNo:String(c[3]||''),orderNo:String(c[5]||''),ptype:c[6],party:String(c[7]),dir:c[8],date:String(c[9]),desc:c[10],amt:+c[11]||0,note:c[12]})).map(c=>({...c,paid:bC[c.id]||0,due:r2(c.amt-(bC[c.id]||0)+(rvC[c.id]||0))}));
  const rc=rw(L.Receipts,'PaymentID').map(r=>({id:String(r[0]),no:r[1],dir:r[2],party:String(r[4]),date:String(r[5]),mode:r[6],ref:r[7],amt:+r[8]||0,note:r[9],type:r[10]})).map(r=>({...r,alloc:bP[r.id]||0,un:r2(r.amt-(bP[r.id]||0))}));
  return{al,ch,rc};}
 const fifo=(a,b)=>a.date.localeCompare(b.date)||((b.type==='Opening')-(a.type==='Opening'))||a.billNo.localeCompare(b.billNo)||a.id.localeCompare(b.id);
