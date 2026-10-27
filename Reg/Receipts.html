@@ -6,14 +6,12 @@
 <title>Receipts &amp; Payments</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
-<!-- Backend/auth scripts disabled while running on local cache. Re-enable when USE_BACKEND=true:
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheWatcher.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/api.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheSync.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/auth.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/accessGuard.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/dataLayer.js"></script>
--->
 <style>
 :root,[data-theme="dark"]{color-scheme:dark;--bg:#0d1117;--bg2:#161b22;--bg3:#1c2333;--surface:#21262d;--border:#30363d;--border2:#444c56;--text:#e6edf3;--text2:#8b949e;--accent:#58a6ff;--accent-dim:rgba(88,166,255,.12);--teal:#39d353;--teal-dim:rgba(57,211,83,.12);--amber:#e3b341;--red:#f85149;--orange:#f0883e;--orange-dim:rgba(240,136,62,.12);--radius:8px;--radius-lg:12px;--font:'Sora',sans-serif;--mono:'JetBrains Mono',monospace}
 [data-theme="light"]{color-scheme:light;--bg:#f0f2f5;--bg2:#fff;--bg3:#e8ecf0;--surface:#fff;--border:#c8d0d9;--border2:#9aa5b1;--text:#0d1117;--text2:#3d454f;--accent:#0550ae;--accent-dim:rgba(5,80,174,.12);--teal:#116329;--teal-dim:rgba(17,99,41,.13);--amber:#7d4e00;--red:#a8111b;--orange:#953800;--orange-dim:rgba(149,56,0,.13)}
@@ -71,6 +69,8 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
 #pr .tot{width:300px}#pr .sig{display:flex;justify-content:space-between;margin-top:50px}#pr .sig span{border-top:1px solid #000;padding-top:4px;width:30%;text-align:center}
 @media print{@page{margin:8mm}body>*:not(#pr){display:none!important}html,body{height:auto;overflow:visible}#pr{display:block}}
 .nav a{text-decoration:none}.vh{display:none}
+
+.sk{height:34px;border-radius:6px;margin-bottom:8px;background:linear-gradient(90deg,var(--bg3),var(--surface),var(--bg3));background-size:200% 100%;animation:sk 1.2s linear infinite}@keyframes sk{to{background-position:-200% 0}}
 </style>
 </head>
 <body>
@@ -107,8 +107,8 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
 'use strict';
 /* ═══ LEDGER STORE — local-cache mode (no backend). Same data shape as the Apps Script backend,
    so going live later = set USE_BACKEND=true (and re-enable the shared scripts in <head>). ═══ */
-const USE_BACKEND=false;
-const Ledger=USE_BACKEND?{get:()=>AP2Api.get('ledger'),post:(a,p)=>AP2Api.post(a,p)}:(()=>{
+const USE_BACKEND=true;   // true: ledger is read from the ap2_ledger cache, writes go to the API · false: old local-only mode (localStorage)
+const Ledger=USE_BACKEND?{get:()=>freshLedger(),post:(a,p)=>AP2Api.post(a,p).then(r=>r||{})}:(()=>{
  const KEY='acc_ledger_v1',H={
   Charges:['ChargeID','Type','BillID','BillNo','OrderID','OrderNo','PartyType','Party','Dir','Date','Description','Amount','Comments','Created'],
   Receipts:['PaymentID','ReceiptNo','Dir','PartyType','Party','Date','Mode','Ref','Amount','Comments','Type','Created'],
@@ -156,35 +156,110 @@ function loadParties(){try{JSON.parse(localStorage.getItem('orders_sheet_cache_v
   rw(L.Receipts,'PaymentID').forEach(c=>{if(c[4]&&!PM.has(String(c[4])))PM.set(String(c[4]),String(c[3]||''));});
   $('dl-p').innerHTML=[...PM.keys()].sort().map(n=>`<option value="${esc(n)}">`).join('');
   $('dl-t').innerHTML=[...new Set([...PM.values()].filter(Boolean))].sort().map(n=>`<option value="${esc(n)}">`).join('');}
-async function load(){try{const j=await Ledger.get();L={Charges:j.Charges||[],Receipts:j.Receipts||[],Allocations:j.Allocations||[]};}
+/* ═══ CACHE SOURCE — "ap2_ledger" (same three-path loader as userPortal.html / Bills.html / Allocation.html)
+   1. parent push   : ap-cache-request → index.html answers ap-cache-ready / ap-cache-preload (same-origin only)
+   2. IndexedDB read: AP2CacheWatcher.readKey('ap2_ledger'), 6 retries (300 · 500 · 800 · 1200 · 2000 · 3000 ms)
+   3. live updates  : AP2CacheWatcher.subscribe → re-read on any change (+15 s poll, + on tab focus)
+   Newest record wins (ts). All empty → AdminPro.get(key). Still nothing → error panel + Retry (never an endless skeleton).
+   ⚠ dataLayer.js: add 'ap2_ledger' to ALLOW_EMPTY_OBJECT_DATASETS (a fresh system has no rows). */
+const sleep=ms=>new Promise(r=>setTimeout(r,ms)),DELAYS=[300,500,800,1200,2000,3000];
+const isObj=d=>!!d&&typeof d==='object';
+const SRC={ledger:{key:'ap2_ledger',label:'Ledger',shape:d=>isObj(d)&&Array.isArray(d.Charges)&&Array.isArray(d.Receipts)&&Array.isArray(d.Allocations),
+  set:d=>{L={Charges:d.Charges,Receipts:d.Receipts,Allocations:d.Allocations};}}};
+const SV=Object.values(SRC);SV.forEach(s=>Object.assign(s,{ts:0,fp:'',painted:false,err:''}));
+const ST={state:'loading',err:'',booting:false};
+const ready=()=>SV.every(s=>s.painted);
+function after(){loadParties();render();}
+function unpackS(s,r){if(!isObj(r))return null;if(s.shape(r))return{data:r,ts:0};if(s.shape(r.data))return{data:r.data,ts:+r.ts||0};return null;}
+function applySrc(s,r,from,force){
+ const u=unpackS(s,r);if(!u)return false;
+ if(!force&&s.painted&&u.ts&&u.ts<=s.ts)return true;           // not newer than what is on screen
+ s.ts=force?Date.now():(u.ts||Math.max(s.ts,Date.now()));
+ const fp=JSON.stringify(u.data);
+ if(!force&&s.painted&&fp===s.fp)return true;                   // identical → no re-render
+ s.fp=fp;s.set(u.data);s.painted=true;s.err='';
+ if(ready()){ST.state='ready';ST.err='';after();}else render();
+ return true;}
+async function readIDB(s){try{if(window.AP2CacheWatcher&&typeof AP2CacheWatcher.readKey==='function')return await AP2CacheWatcher.readKey(s.key);}catch(e){}return null;}
+async function applyFromIDB(s){const r=await readIDB(s);return r?applySrc(s,r,'idb'):false;}
+async function fetchLive(s){
+ try{if(!(window.AdminPro&&typeof AdminPro.get==='function'))throw new Error('AdminPro is not available');
+  const r=await AdminPro.get(s.key);if(!applySrc(s,r,'live')&&!s.painted)throw new Error('unexpected data from server');}
+ catch(e){s.err=String((e&&e.message)||e);}}
+async function freshLedger(){                                   // after a write: force-pull the ledger (updates IndexedDB too), fall back to the endpoint
+ const s=SRC.ledger;let r=null;
+ try{if(window.AdminPro){const fn=typeof AdminPro.refresh==='function'?AdminPro.refresh:AdminPro.get;r=await fn.call(AdminPro,s.key,{force:true});}}catch(e){}
+ if(!unpackS(s,r))r=await AP2Api.get('ledger');
+ if(!applySrc(s,r,'live',true))throw new Error('Ledger returned unexpected data');
+ return L;}
+function askParent(){if(window.parent===window)return;try{window.parent.postMessage({type:'ap-cache-request',keys:SV.map(s=>s.key)},location.origin);}catch(e){}}
+function pickPayload(m,s){
+ for(const bag of [m,m.data,m.datasets,m.payload,m.caches])if(isObj(bag)&&bag[s.key]!==undefined&&unpackS(s,bag[s.key]))return bag[s.key];
+ if(m.key===s.key||m.name===s.key||m.dataset===s.key){const v=m.data!==undefined?m.data:m.value;if(unpackS(s,v))return v;}
+ return null;}
+function onCacheMessage(e){                                     // same-origin parent only
+ if(e.origin!==location.origin||(e.source!==window.parent&&e.source!==window))return;
+ const m=e.data;if(!isObj(m))return;const t=String(m.type||m.msg||'');if(!/^ap-cache/.test(t))return;
+ SV.forEach(s=>{let got=false;if(/^ap-cache-(ready|preload)$/.test(t)){const d=pickPayload(m,s);if(d)got=applySrc(s,d,'parent');}
+  if(!got)setTimeout(()=>applyFromIDB(s),250);});}
+function watchSrc(){
+ const W=window.AP2CacheWatcher;if(!W||typeof W.subscribe!=='function')return;
+ const cb=k=>{const key=(k&&k.key)||k;const hit=typeof key==='string'?SV.filter(s=>s.key===key):SV;hit.forEach(applyFromIDB);};
+ try{W.subscribe(cb);}catch(e){SV.forEach(s=>{try{W.subscribe(s.key,()=>applyFromIDB(s));}catch(x){}});}}
+async function bootSrc(s){
+ let ok=await applyFromIDB(s);
+ for(const d of DELAYS){if(ok||s.painted)break;await sleep(d);ok=await applyFromIDB(s);}
+ if(!ok&&!s.painted)await fetchLive(s);}
+async function bootAll(){
+ if(ST.booting)return;ST.booting=true;ST.state='loading';ST.err='';render();askParent();
+ await Promise.all(SV.filter(s=>!s.painted).map(bootSrc));
+ ST.booting=false;
+ if(!ready()){ST.state='error';ST.err=SV.filter(s=>!s.painted).map(s=>s.label+' ('+s.key+')'+(s.err?': '+s.err:'')).join(' · ');render();showToast('Not loaded — '+ST.err,'error');}}
+function retryAll(){ST.booting=false;bootAll();}
+const stateHTML=()=>ST.state==='error'
+ ?`<div class="empty">Ledger data isn’t available yet.<div class="dim" style="margin:6px 0 10px;font-size:12px">${esc(ST.err||'The cache is empty and the server could not be reached.')}</div><button class="btn pri" onclick="retryAll()"><i class="ti ti-refresh"></i>Retry</button></div>`
+ :'<div class="sk"></div>'.repeat(6);
+const notReady=()=>{if(USE_BACKEND&&!ready()){showToast(ST.state==='error'?'Data not loaded — press Retry':'Still loading — please wait','error');return true;}return false;};
+
+async function load(){
+  if(USE_BACKEND){try{await freshLedger();}catch(e){showToast('Ledger not reachable: '+errText(e.message),'error');}after();return;}
+ try{const j=await Ledger.get();L={Charges:j.Charges||[],Receipts:j.Receipts||[],Allocations:j.Allocations||[]};}
   catch(e){showToast('Ledger not reachable — add the Accounts backend: '+errText(e.message),'error');}loadParties();render();}
-USE_BACKEND?AP2Api.onSession(()=>load()):load();   // backend: wait for the login session
 function recs(){const al={};rw(L.Allocations,'AllocID').forEach(a=>al[a[1]]=r2((al[a[1]]||0)+(+a[11]||0)));
   return rw(L.Receipts,'PaymentID').map(r=>({id:String(r[0]),no:r[1],dir:r[2],ptype:r[3],party:r[4],date:r[5],mode:r[6],ref:r[7],amt:+r[8]||0,note:r[9],type:r[10],alloc:al[r[0]]||0})).map(r=>({...r,un:r2(r.amt-r.alloc)})).sort((a,b)=>b.id.localeCompare(a.id));}
-function render(){const R=recs(),q=$('q').value.toLowerCase().split(/\s+/).filter(Boolean);
+function render(){
+  if(USE_BACKEND&&!ready()){$('kpi').innerHTML='';$('view').innerHTML=stateHTML();return;}
+  const R=recs(),q=$('q').value.toLowerCase().split(/\s+/).filter(Boolean);
   const S=(d,k)=>r2(R.filter(r=>r.dir===d).reduce((a,r)=>a+r[k],0));
   $('kpi').innerHTML=`<div>Received<b>${CUR} ${money(S('out','amt'))}</b></div><div>Paid out<b>${CUR} ${money(S('in','amt'))}</b></div><div>Unallocated (advance) in<b>${CUR} ${money(S('out','un'))}</b></div><div>Unallocated out<b>${CUR} ${money(S('in','un'))}</b></div>`;
   const V=R.filter(r=>{const h=[r.no,r.party,r.ptype,r.ref,r.note,r.mode,r.date].join(' ').toLowerCase();return q.every(w=>h.includes(w));});
   $('view').innerHTML=V.length?`<table><thead><tr><th>No</th><th>Date</th><th>Party</th><th>Mode · Ref</th><th class="n">Amount</th><th class="n">Allocated</th><th class="n">Unallocated</th><th>Status</th><th>Comments</th></tr></thead><tbody>${V.map(r=>{const s=r.un<=.005?['paid','Allocated']:r.alloc>0?['part','Partial']:['unpaid','Unallocated'];
    return `<tr><td class="mono">${esc(r.no)} <span class="badge ${r.dir}">${r.dir==='out'?'In':'Out'}</span>${r.type==='Opening'?' <span class="badge">Opening</span>':''}</td><td>${esc(r.date)}</td><td>${esc(r.party)}<div class="dim" style="font-size:11px">${esc(r.ptype)}</div></td><td>${esc(r.mode)}${r.ref?' · '+esc(r.ref):''}</td><td class="n">${money(r.amt)}</td><td class="n">${money(r.alloc)}</td><td class="n ${r.un>.005?'neg':''}">${money(r.un)}</td><td><span class="badge ${s[0]}">${s[1]}</span></td><td>${esc(r.note)}</td></tr>`;}).join('')}</tbody></table>`:'<div class="empty">No receipts yet. Use Receive or Pay above.</div>';}
-function openF(d){dir=d;$('m-title').textContent=d==='out'?'Receive money from customer':'Pay money to supplier';$('l-p').textContent=d==='out'?'Customer name':'Supplier';$('cur').textContent=CUR;
+function openF(d){if(notReady())return;dir=d;$('m-title').textContent=d==='out'?'Receive money from customer':'Pay money to supplier';$('l-p').textContent=d==='out'?'Customer name':'Supplier';$('cur').textContent=CUR;
   ['f-pt','f-p','f-a','f-r','f-c'].forEach(i=>$(i).value='');$('f-d').value=today();$('f-ty').value='Receipt';$('ov').classList.add('open');}
 function pick(){const t=PM.get($('f-p').value);if(t!==undefined&&!$('f-pt').value)$('f-pt').value=t;}
-async function save(){if(busy)return;const party=$('f-p').value.trim(),amount=r2($('f-a').value);
+async function save(){if(busy||notReady())return;const party=$('f-p').value.trim(),amount=r2($('f-a').value);
   if(!party)return showToast('Enter the party name','error');if(!(amount>0))return showToast('Enter an amount above zero','error');
   busy=true;$('sv').disabled=true;
   try{const j=await post('addReceipt',{receipt:{id:tsId(Date.now()),dir,ptype:$('f-pt').value.trim(),party,date:$('f-d').value||today(),mode:$('f-m').value,ref:$('f-r').value.trim(),amount,comments:$('f-c').value.trim(),type:$('f-ty').value}});
     $('ov').classList.remove('open');await load();showToast('Saved '+((j&&j.receipt&&j.receipt.no)||''),'success');}
   catch(e){showToast('Not saved: '+errText(e.message),'error');}
   busy=false;$('sv').disabled=false;}
-function openC(){['c-pt','c-p','c-a','c-ds','c-c'].forEach(i=>$(i).value='');$('c-d').value=today();document.querySelectorAll('.cu').forEach(e=>e.textContent=CUR);$('ov2').classList.add('open');}
-async function saveC(){if(busy)return;const party=$('c-p').value.trim(),a=r2($('c-a').value),ty=$('c-ty').value;
+function openC(){if(notReady())return;['c-pt','c-p','c-a','c-ds','c-c'].forEach(i=>$(i).value='');$('c-d').value=today();document.querySelectorAll('.cu').forEach(e=>e.textContent=CUR);$('ov2').classList.add('open');}
+async function saveC(){if(busy||notReady())return;const party=$('c-p').value.trim(),a=r2($('c-a').value),ty=$('c-ty').value;
   if(!party)return showToast('Enter the party name','error');if(!(a>0))return showToast('Enter an amount above zero','error');
   busy=true;$('sv2').disabled=true;
   try{await post('addCharges',{rows:[{type:ty,dir:$('c-dir').value,date:$('c-d').value||today(),ptype:$('c-pt').value.trim(),party,desc:$('c-ds').value.trim()||ty,amount:ty==='Credit'?-a:a,comments:$('c-c').value.trim()}]});
     $('ov2').classList.remove('open');await load();showToast('Charge recorded','success');}
   catch(e){showToast('Not saved: '+errText(e.message),'error');}
   busy=false;$('sv2').disabled=false;}
+
+/* ═══ BOOT ═══ */
+if(USE_BACKEND){
+ window.addEventListener('message',onCacheMessage);
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)return;if(!ready()&&!ST.booting)bootAll();else SV.forEach(applyFromIDB);});
+ watchSrc();bootAll();setInterval(()=>{if(ready())SV.forEach(applyFromIDB);},15000);   // safety net behind the subscription
+}else load();
 </script>
 </body>
 </html>
