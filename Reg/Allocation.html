@@ -6,12 +6,14 @@
 <title>Allocation</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
+<!-- Backend/auth scripts disabled while running on local cache. Re-enable when USE_BACKEND=true:
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheWatcher.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/api.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheSync.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/auth.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/accessGuard.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/dataLayer.js"></script>
+-->
 <style>
 :root,[data-theme="dark"]{color-scheme:dark;--bg:#0d1117;--bg2:#161b22;--bg3:#1c2333;--surface:#21262d;--border:#30363d;--border2:#444c56;--text:#e6edf3;--text2:#8b949e;--accent:#58a6ff;--accent-dim:rgba(88,166,255,.12);--teal:#39d353;--teal-dim:rgba(57,211,83,.12);--amber:#e3b341;--red:#f85149;--orange:#f0883e;--orange-dim:rgba(240,136,62,.12);--radius:8px;--radius-lg:12px;--font:'Sora',sans-serif;--mono:'JetBrains Mono',monospace}
 [data-theme="light"]{color-scheme:light;--bg:#f0f2f5;--bg2:#fff;--bg3:#e8ecf0;--surface:#fff;--border:#c8d0d9;--border2:#9aa5b1;--text:#0d1117;--text2:#3d454f;--accent:#0550ae;--accent-dim:rgba(5,80,174,.12);--teal:#116329;--teal-dim:rgba(17,99,41,.13);--amber:#7d4e00;--red:#a8111b;--orange:#953800;--orange-dim:rgba(149,56,0,.13)}
@@ -82,9 +84,43 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
 <div class="toast" id="toast"></div>
 <script>
 'use strict';
+/* ═══ LEDGER STORE — local-cache mode (no backend). Same data shape as the Apps Script backend,
+   so going live later = set USE_BACKEND=true (and re-enable the shared scripts in <head>). ═══ */
+const USE_BACKEND=false;
+const Ledger=USE_BACKEND?{get:()=>AP2Api.get('ledger'),post:(a,p)=>AP2Api.post(a,p)}:(()=>{
+ const KEY='acc_ledger_v1',H={
+  Charges:['ChargeID','Type','BillID','BillNo','OrderID','OrderNo','PartyType','Party','Dir','Date','Description','Amount','Comments','Created'],
+  Receipts:['PaymentID','ReceiptNo','Dir','PartyType','Party','Date','Mode','Ref','Amount','Comments','Type','Created'],
+  Allocations:['AllocID','PaymentID','ReceiptNo','BillID','BillNo','ChargeID','OrderID','OrderNo','PartyType','Party','Date','Amount','Comments','Reverses','Created']};
+ const rd=()=>{try{const j=JSON.parse(localStorage.getItem(KEY));if(j&&j.Charges&&j.Receipts&&j.Allocations)return j;}catch(e){}return{Charges:[H.Charges],Receipts:[H.Receipts],Allocations:[H.Allocations]};};
+ const wr=j=>{try{localStorage.setItem(KEY,JSON.stringify(j));}catch(e){throw new Error('Browser storage is full or blocked — export a backup and clear space');}};
+ const R=n=>Math.round((+n||0)*100)/100,now=()=>new Date().toISOString(),uid=(p,i)=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,5)+(i||0);
+ const sm=(a,f)=>R(a.reduce((s,x)=>s+f(x),0));
+ return{
+  async get(){return rd();},
+  async post(action,p){const j=rd();
+   if(action==='addCharges'){
+    const rows=(p.rows||[]).map((c,i)=>{if(!c.party)throw new Error('Party missing');return[uid('C',i),c.type||'Order',c.billId||'',c.billNo||'',c.orderId||'',c.orderNo||'',c.ptype||'',c.party,c.dir||'out',c.date,c.desc||'',R(c.amount),c.comments||'',now()];});
+    j.Charges.push(...rows);wr(j);return{count:rows.length};}
+   if(action==='addReceipt'){const r=p.receipt;if(!r.party||!(+r.amount>0))throw new Error('Party and amount required');
+    const no=(r.dir==='in'?'P-':'R-')+String(j.Receipts.length).padStart(4,'0');
+    j.Receipts.push([r.id||uid('P'),no,r.dir||'out',r.ptype||'',r.party,r.date,r.mode||'',r.ref||'',R(r.amount),r.comments||'',r.type||'Receipt',now()]);wr(j);return{receipt:{id:r.id,no}};}
+   if(action==='addAllocations'){
+    const rec=j.Receipts.slice(1).find(x=>x[0]==p.paymentId);if(!rec)throw new Error('Receipt not found');
+    const al=j.Allocations.slice(1);let rem=R(rec[8]-sm(al.filter(a=>a[1]==rec[0]),a=>+a[11]));const out=[];
+    (p.rows||[]).forEach((x,i)=>{const ch=j.Charges.slice(1).find(c=>c[0]==x.chargeId);if(!ch)throw new Error('Charge not found');
+     if(ch[7]!=rec[4])throw new Error('Charge belongs to another party');
+     const amt=R(x.amount),due=R(ch[11]-sm(al.filter(a=>a[5]==ch[0]),a=>+a[11])-sm(out.filter(o=>o[5]==ch[0]),o=>o[11]));
+     if(amt>0){if(amt>rem+.005)throw new Error('More than receipt balance');if(amt>due+.005)throw new Error('More than due on '+(ch[5]||ch[10]));}
+     rem=R(rem-amt);out.push([uid('A',i),rec[0],rec[1],ch[2],ch[3],ch[0],ch[4],ch[5],ch[6],ch[7],p.date,amt,x.comments||'',x.reverses||'',now()]);});
+    j.Allocations.push(...out);wr(j);return{count:out.length};}
+   throw new Error('Unknown action');},
+  backup(){return JSON.stringify(rd());},
+  restore(t){const j=JSON.parse(t);if(!(j&&j.Charges&&j.Receipts&&j.Allocations))throw new Error('Not a ledger backup');wr(j);}
+ };})();
 const CUR='AED',$=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=n=>(+n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),r2=n=>Math.round((+n||0)*100)/100;
-const today=()=>new Date().toISOString().slice(0,10),post=AP2Api.post,errText=m=>AP2Api.errText(m);
+const today=()=>new Date().toISOString().slice(0,10),post=(a,p)=>Ledger.post(a,p),errText=m=>String(m);
 function showToast(m,t){const e=$('toast');e.textContent=m;e.className='toast '+(t||'');e.style.display='block';clearTimeout(showToast.t);showToast.t=setTimeout(()=>e.style.display='none',t==='error'?9000:3000);}
 let L={Charges:[],Receipts:[],Allocations:[]};
 const rw=(a,h)=>(a||[]).filter(r=>Array.isArray(r)&&r[0]!==''&&String(r[0])!==h);
@@ -95,9 +131,9 @@ function data(){
  const rc=rw(L.Receipts,'PaymentID').map(r=>({id:String(r[0]),no:r[1],dir:r[2],party:String(r[4]),date:String(r[5]),mode:r[6],ref:r[7],amt:+r[8]||0,note:r[9],type:r[10]})).map(r=>({...r,alloc:bP[r.id]||0,un:r2(r.amt-(bP[r.id]||0))}));
  return{al,ch,rc};}
 const fifo=(a,b)=>a.date.localeCompare(b.date)||((b.type==='Opening')-(a.type==='Opening'))||a.billNo.localeCompare(b.billNo)||a.id.localeCompare(b.id);
-async function load(){try{const j=await AP2Api.get('ledger');L={Charges:j.Charges||[],Receipts:j.Receipts||[],Allocations:j.Allocations||[]};}
+async function load(){try{const j=await Ledger.get();L={Charges:j.Charges||[],Receipts:j.Receipts||[],Allocations:j.Allocations||[]};}
  catch(e){showToast('Ledger not reachable — add the Accounts backend: '+errText(e.message),'error');}after();}
-AP2Api.onSession(()=>load());
+load();
 
 let party='',rid=null,mode='auto',amts={},busy=false;
 const D=()=>data();

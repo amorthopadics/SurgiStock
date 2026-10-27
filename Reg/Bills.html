@@ -326,6 +326,42 @@ $('f-items').addEventListener('input',e=>{const i=e.target.closest('.rt');if(!i)
 function tot(){const t=calc(curLines(),f.disc,f.dt,f.vat);
   $('f-tot').innerHTML=`<div><span>Subtotal</span><span class="mono">${money(t.sub)}</span></div><div><span>Discount</span><span class="mono">− ${money(t.d)}</span></div><div><span>VAT</span><span class="mono">${money(t.v)}</span></div>${exT()?`<div><span>Other charges</span><span class="mono">${money(exT())}</span></div>`:''}<div class="g"><span>Total ${CUR}</span><span>${money(r2(t.total+exT()))}</span></div>`;
   $('m-sum').textContent=f.sel.size+' order'+(f.sel.size==1?'':'s');}
+
+/* ═══ LEDGER STORE — local-cache mode (no backend). Same data shape as the Apps Script backend,
+   so going live later = set USE_BACKEND=true (and re-enable the shared scripts in <head>). ═══ */
+const USE_BACKEND=false;
+const Ledger=USE_BACKEND?{get:()=>AP2Api.get('ledger'),post:(a,p)=>AP2Api.post(a,p)}:(()=>{
+ const KEY='acc_ledger_v1',H={
+  Charges:['ChargeID','Type','BillID','BillNo','OrderID','OrderNo','PartyType','Party','Dir','Date','Description','Amount','Comments','Created'],
+  Receipts:['PaymentID','ReceiptNo','Dir','PartyType','Party','Date','Mode','Ref','Amount','Comments','Type','Created'],
+  Allocations:['AllocID','PaymentID','ReceiptNo','BillID','BillNo','ChargeID','OrderID','OrderNo','PartyType','Party','Date','Amount','Comments','Reverses','Created']};
+ const rd=()=>{try{const j=JSON.parse(localStorage.getItem(KEY));if(j&&j.Charges&&j.Receipts&&j.Allocations)return j;}catch(e){}return{Charges:[H.Charges],Receipts:[H.Receipts],Allocations:[H.Allocations]};};
+ const wr=j=>{try{localStorage.setItem(KEY,JSON.stringify(j));}catch(e){throw new Error('Browser storage is full or blocked — export a backup and clear space');}};
+ const R=n=>Math.round((+n||0)*100)/100,now=()=>new Date().toISOString(),uid=(p,i)=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,5)+(i||0);
+ const sm=(a,f)=>R(a.reduce((s,x)=>s+f(x),0));
+ return{
+  async get(){return rd();},
+  async post(action,p){const j=rd();
+   if(action==='addCharges'){
+    const rows=(p.rows||[]).map((c,i)=>{if(!c.party)throw new Error('Party missing');return[uid('C',i),c.type||'Order',c.billId||'',c.billNo||'',c.orderId||'',c.orderNo||'',c.ptype||'',c.party,c.dir||'out',c.date,c.desc||'',R(c.amount),c.comments||'',now()];});
+    j.Charges.push(...rows);wr(j);return{count:rows.length};}
+   if(action==='addReceipt'){const r=p.receipt;if(!r.party||!(+r.amount>0))throw new Error('Party and amount required');
+    const no=(r.dir==='in'?'P-':'R-')+String(j.Receipts.length).padStart(4,'0');
+    j.Receipts.push([r.id||uid('P'),no,r.dir||'out',r.ptype||'',r.party,r.date,r.mode||'',r.ref||'',R(r.amount),r.comments||'',r.type||'Receipt',now()]);wr(j);return{receipt:{id:r.id,no}};}
+   if(action==='addAllocations'){
+    const rec=j.Receipts.slice(1).find(x=>x[0]==p.paymentId);if(!rec)throw new Error('Receipt not found');
+    const al=j.Allocations.slice(1);let rem=R(rec[8]-sm(al.filter(a=>a[1]==rec[0]),a=>+a[11]));const out=[];
+    (p.rows||[]).forEach((x,i)=>{const ch=j.Charges.slice(1).find(c=>c[0]==x.chargeId);if(!ch)throw new Error('Charge not found');
+     if(ch[7]!=rec[4])throw new Error('Charge belongs to another party');
+     const amt=R(x.amount),due=R(ch[11]-sm(al.filter(a=>a[5]==ch[0]),a=>+a[11])-sm(out.filter(o=>o[5]==ch[0]),o=>o[11]));
+     if(amt>0){if(amt>rem+.005)throw new Error('More than receipt balance');if(amt>due+.005)throw new Error('More than due on '+(ch[5]||ch[10]));}
+     rem=R(rem-amt);out.push([uid('A',i),rec[0],rec[1],ch[2],ch[3],ch[0],ch[4],ch[5],ch[6],ch[7],p.date,amt,x.comments||'',x.reverses||'',now()]);});
+    j.Allocations.push(...out);wr(j);return{count:out.length};}
+   throw new Error('Unknown action');},
+  backup(){return JSON.stringify(rd());},
+  restore(t){const j=JSON.parse(t);if(!(j&&j.Charges&&j.Receipts&&j.Allocations))throw new Error('Not a ledger backup');wr(j);}
+ };})();
+
 /* ═══ ACCOUNTS: other charges + one Charge row per order (add-only ledger) ═══ */
 const exT=()=>r2(f.extras.reduce((a,x)=>a+(+x.amt||0),0));
 function addEx(){f.extras.push({desc:'',amt:''});rEx();}
@@ -337,7 +373,7 @@ async function postCharges(b,no){
   const base={billId:b.id,billNo:no,dir:b.dir,date:b.date,comments:b.note};
   const rows=os.map((o,i)=>{const a=i===os.length-1?r2(t.total-used):r2(sub[i]*k);used=r2(used+a);return{...base,type:'Order',orderId:o.id,orderNo:o.no,ptype:o.partyType,party:o.party,desc:'Order '+o.no,amount:a};});
   f.extras.filter(x=>+x.amt).forEach(x=>rows.push({...base,type:'Extra',orderId:'',orderNo:'',ptype:os[0].partyType,party:os[0].party,desc:x.desc||'Other charge',amount:r2(+x.amt)}));
-  await post('addCharges',{rows});}
+  await Ledger.post('addCharges',{rows});}
 async function saveBill(pr){
   if(busy)return;const L=curLines();
   if(!f.sel.size)return showToast('Select at least one order','error');
