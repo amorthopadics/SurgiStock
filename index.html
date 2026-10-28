@@ -767,9 +767,13 @@ console.log('[AP2] IDB bridge ready — all data served from IndexedDB via Admin
      bell/cache/theme/avatar icons off-screen — collapse to icon-only
      instead of letting them "unfold" and push the rest of the topbar
      out of view. */
-  .tb-sc span{display:none;}
-  .tb-sc{padding:0 7px;gap:0;}
   .tb-shortcuts{max-width:220px;}
+}
+/* Small screens (same breakpoint as the bottom menu): shortcuts are icon-only */
+@media(max-width:720px),(max-height:500px){
+  .tb-sc span{display:none;}
+  .tb-sc{width:32px;height:30px;padding:0;gap:0;justify-content:center;}
+  .tb-sc i{font-size:16px;}
 }
 /* Below this width, the *expanded* sidebar becomes an overlay (like Apple
    Mail on a compact width) instead of squeezing the content area; the
@@ -1214,16 +1218,8 @@ console.log('[AP2] IDB bridge ready — all data served from IndexedDB via Admin
       </div>
 
       <!-- Shortcuts — always visible, scrollable -->
-      <div class="tb-shortcuts">
-        <button class="tb-sc emp"
-          onclick="loadPage('Reg/Master.html',null,'Add Item','ti ti-plus','Make item list','var(--accent-dim)','var(--accent)')">
-          <i class="ti ti-user-plus"></i><span> Add Item</span>
-        </button>
-        <button class="tb-sc bike"
-          onclick="loadPage('Reg/Incoming.html',null,'Items Incoming','ti-motorbike','Register vehicle','var(--teal-dim)','var(--teal)')">
-          <i class="ti ti-motorbike"></i><span>Store</span>
-        </button>
-      </div>
+      <!-- Shortcuts — rendered from SHORTCUTS in the script (add new portals there) -->
+      <div class="tb-shortcuts" id="tb-shortcuts"></div>
 
       <div class="tb-gap"></div>
 
@@ -1613,6 +1609,47 @@ function _hasPerm(perms, key) {
      icon-bar button and topbar shortcut.
    • Sections with permKey:null are always visible.
    • If the first permitted section isn't 'ib-emp', auto-open it.         */
+/* ══ SHORTCUTS (top bar) ══
+   One line per portal. To add a new portal, add an entry here — nothing
+   else needs touching.
+     id       unique name (used for the DOM id)
+     label    text shown beside the icon on wide screens (icon only when small)
+     icon     Tabler icon class
+     file     page loaded into the main frame
+     title/sub  page title + subtitle shown in the top bar once opened
+     cls      colour style: emp | bike | adv | doc | sim  (see .tb-sc.* CSS)
+     permKey  Permissions-sheet column, or null = always visible
+   Colour tokens for the top-bar pill come from cls (see _SC_PILL).          */
+const SHORTCUTS = [
+  { id:'sc-additem', label:'Add Item', icon:'ti-plus',               file:'Reg/Master.html',   title:'Add Item',       sub:'Make item list',  cls:'emp',  permKey:'ap2_specsData' },
+  { id:'sc-store',   label:'Store',    icon:'ti-building-warehouse', file:'Reg/Incoming.html', title:'Items Incoming', sub:'Store / incoming', cls:'bike', permKey:null },
+  // { id:'sc-new', label:'New Portal', icon:'ti-star', file:'Reg/NewPortal.html', title:'New Portal', sub:'Description', cls:'sim', permKey:'ap2_newPortal' },
+];
+const _SC_PILL = {
+  emp:  ['var(--accent-dim)','var(--accent)'],
+  bike: ['var(--teal-dim)',  'var(--teal)'],
+  adv:  ['var(--amber-dim)', 'var(--amber)'],
+  doc:  ['var(--red-dim)',   'var(--red)'],
+  sim:  ['var(--purple-dim)','var(--purple)'],
+};
+function _buildShortcuts(perms) {
+  const box = document.getElementById('tb-shortcuts');
+  if (!box) return;
+  box.innerHTML = '';
+  for (const sc of SHORTCUTS) {
+    if (sc.permKey && !_hasPerm(perms, sc.permKey)) continue;
+    const [bg, fg] = _SC_PILL[sc.cls] || _SC_PILL.emp;
+    const b = document.createElement('button');
+    b.className = 'tb-sc ' + sc.cls;
+    b.id = sc.id;
+    b.title = sc.label;                       // tooltip — matters when only the icon shows
+    b.setAttribute('aria-label', sc.label);
+    b.innerHTML = `<i class="ti ${sc.icon}"></i><span>${sc.label}</span>`;
+    b.addEventListener('click', () => loadPage(sc.file, null, sc.title, sc.icon, sc.sub, bg, fg));
+    box.appendChild(b);
+  }
+}
+
 const _secAllowed = {};   // section id -> allowed (no dock buttons any more)
 function _applyPermissions() {
   const perms = window.Auth && window.Auth.getPermissions
@@ -1646,18 +1683,8 @@ function _applyPermissions() {
     if (allowed && !firstAllowed) firstAllowed = id;
   }
 
-  // Also hide topbar shortcuts that are permission-gated
-  const shortcutGates = [
-    { sel: '.tb-sc.emp',  permKey: 'ap2_employee' },
-    { sel: '.tb-sc.bike', permKey: 'ap2_bike'     },
-    { sel: '.tb-sc.sim',  permKey: 'ap2_sim'      },
-    { sel: '.tb-sc.adv',  permKey: 'ap2_master'   },
-  ];
-  for (const { sel, permKey } of shortcutGates) {
-    document.querySelectorAll(sel).forEach(el => {
-      el.style.display = (!perms || _hasPerm(perms, permKey)) ? '' : 'none';
-    });
-  }
+  // Top-bar shortcuts — rebuilt from SHORTCUTS, gated by each entry's permKey
+  _buildShortcuts(perms);
 
   _buildSidebarAdmin();
   console.log('[Permissions] applied — firstAllowed:', firstAllowed, '| perms:', perms);
