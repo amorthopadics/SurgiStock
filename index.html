@@ -1543,6 +1543,8 @@ async function cmRefresh(key, btn) {
    If Auth.getPermissions() returns null (perms not loaded yet) all sections
    with a permKey are hidden until _applyPermissions() is called.            */
 const SECTIONS = {
+
+	
   'ib-emp': {
     icon:'ti-users', label:'Items',
     pageLabel:'Items', pageSub:'Staff directory',
@@ -1550,100 +1552,17 @@ const SECTIONS = {
     permKey: 'ap2_specsData',   // ← Permissions sheet column
     groups:[
       { label:'Directory', items:[
-		{ label:'New and List', file:'Reg/Master.html', icon:'ti-list',      		sub:'All item records'     },
-		{ label:'New and List', file:'Reg/Orders new.html', icon:'ti-list',			sub:'All item records'     },
-		{ label:'New and List', file:'Reg/Rate_Threshold.html', icon:'ti-list',		sub:'All item records'     },
-		{ label:'New and List', file:'Reg/Bills.html', icon:'ti-list',				sub:'All item records'     },
-		{ label:'New and List', file:'Reg/Receipts.html', icon:'ti-list',			sub:'All item records'     },
-		{ label:'New and List', file:'Reg/Allocation.html', icon:'ti-list',			sub:'All item records'     },
-		{ label:'New and List', file:'Reg/Reports.html', icon:'ti-list',			sub:'All item records'     },
-		{ label:'New and List', file:'Reg/MinStock.html', icon:'ti-list',			sub:'All item records'     },
-
+		{ label:'Items', file:'Reg/Master.html', icon:'ti-list',      		sub:'Items list'     },
+		{ label:'Orders', file:'Reg/Orders new.html', icon:'ti-list',			sub:'Manage Orders'     },
+		{ label:'Rate Management', file:'Reg/Rate_Threshold.html', icon:'ti-list',		sub:'Default Rates'     },
+		{ label:'Bills', file:'Reg/Bills.html', icon:'ti-list',				sub:'Billing'     },
+		{ label:'Receipts', file:'Reg/Receipts.html', icon:'ti-list',			sub:'Billing Receipts'     },
+		{ label:'Allocation', file:'Reg/Allocation.html', icon:'ti-list',			sub:'Amount Allocation'     },
+		{ label:'Reports', file:'Reg/Reports.html', icon:'ti-list',			sub:'All Reports'     },
       ]},
     ],
   },
 
-
-  'ib-bike': {
-    icon:'ti-motorbike', label:'Bike Fleet',
-    pageLabel:'Bike Fleet', pageSub:'Fleet registry',
-    pillBg:'var(--teal-dim)', pillColor:'var(--teal)', pillIcon:'ti-motorbike',
-    permKey: 'ap2_bike',
-    groups:[
-      { label:'Fleet', items:[
-        { label:'Bike List',     file:'Reg/allBike.html', icon:'ti-list', sub:'All registered bikes' },
-        { label:'Register Bike', file:'Reg/addBike.html', icon:'ti-plus', sub:'Add new vehicle'      },
-		{ label:'Check In/Out', file:'Reg/inOut.html', icon:'ti-arrows-horizontal', sub:'Check In/Out'      },
-      ]},
-      { label:'Documents', items:[
-        { label:'Expiring Docs', file:'Reg/bikExp.html', icon:'ti-file-x', sub:'Mulkiya · Insurance', badge:true },
-      ]},
-    ],
-  },	
-'ib-sim': {
-  icon:'ti-device-sim', label:'SIM Cards',
-  pageLabel:'SIM Cards', pageSub:'SIM registry',
-  pillBg:'var(--purple-dim)', pillColor:'var(--purple)', pillIcon:'ti-device-sim',
-  permKey: 'ap2_sim',
-  groups:[
-    { label:'SIM', items:[
-      { label:'SIM List',      file:'Reg/allSim.html',  icon:'ti-list', sub:'All registered SIMs'  },
-      { label:'Register SIM',  file:'Reg/addSim.html',  icon:'ti-plus', sub:'Add new SIM card'     },
-      { label:'Assign SIM',    file:'Reg/assignSim.html', icon:'ti-arrows-horizontal', sub:'Assign / Unassign SIM' },
-    ]},
-    { label:'Documents', items:[
-      { label:'Expiring SIMs', file:'Reg/simExp.html',  icon:'ti-file-x', sub:'Expiring contracts', badge:true },
-    ]},
-  ],
-},
-	
-
-	
-  'ib-adv': {
-    icon:'ti-cash', label:'Advance Salary',
-    pageLabel:'Advance Salary', pageSub:'Salary advances',
-    pillBg:'var(--amber-dim)', pillColor:'var(--amber)', pillIcon:'ti-cash',
-    permKey: 'ap2_master',   // master sheet controls salary advance visibility
-    groups:[
-      { label:'Salary', items:[
-        { label:'All Requests',    file:'Reg/penReq.html', icon:'ti-clipboard-list', sub:'Advance history'   },
-        { label:'New Request',     file:'Reg/finQue.html', icon:'ti-cash',           sub:'Submit an advance'  },
-        { label:'Recovery Module', file:'Reg/recMod.html', icon:'ti-wallet',         sub:'Recovery details'   },
-      ]},
-    ],
-  },
-
-	
-  'ib-docs': {
-    icon:'ti-file-description', label:'Document',
-    pageLabel:'Document', pageSub:'Document manager',
-    pillBg:'var(--red-dim)', pillColor:'var(--red)', pillIcon:'ti-file-description',
-    permKey: 'ap2_docLog',   // section always shown if at least one child item is permitted
-    groups:[
-      { label:'Directory', items:[
-        { label:'Add Documents', file:'Reg/docPortal.html', icon:'ti-file-plus', sub:'Upload new document' },
-      ]},
-      { label:'Doc Portal', items:[
-		{ label:'Opp Desk',  file:'Reg/OpsDeck.html', icon:'ti-device-sim', sub:'Request Booking', badge:true, permKey:'ap2_loginData'  },
-      ]},
-    ],
-  },
-
-  'ib-payroll': {
-    icon:'ti-report-money', label:'Payroll',
-    pageLabel:'Payroll', pageSub:'Payroll & deductions',
-    pillBg:'var(--orange-dim)', pillColor:'var(--orange)', pillIcon:'ti-report-money',
-    permKey: 'ap2_dedLog',
-    groups:[
-      { label:'Payroll', items:[
-        { label:'Salik Reconciliation',       file:'Reg/salik.html',    icon:'ti-road',       		sub:'Toll charges', 			permKey:'ap2_employee'},
-		{ label:'Salik Dump', file:'Reg/salik.html', icon:'ti-users',     sub:'Visa · EID · Labour', 		badge:true, permKey:'ap2_employee' },
-		{ label:'Account Management',   file:'Reg/accLog.html', icon:'ti-ticket',     		sub:'Traffic fines' , 			permKey:'ap2_employee'},
-        { label:'Deductions',  file:'Reg/dedEngine.html', icon:'ti-wallet-off', 	sub:'Salary deductions' , 		permKey:'ap2_employee'},
-		{ label:'Deduction Report',  file:'Reg/dedPivot.html', icon:'ti-device-sim',sub:'Deduction Pivot Report', 	badge:true, permKey:'ap2_loginData'  },
-      ]},
-    ],
-  },
 
   'ib-admin': {
     icon:'ti-settings', label:'Admin',
