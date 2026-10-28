@@ -1545,100 +1545,23 @@ async function cmRefresh(key, btn) {
 const SECTIONS = {
 
 	
-  // 'ib-emp': {
-  //   icon:'ti-users', label:'Items',
-  //   pageLabel:'Items', pageSub:'Staff directory',
-  //   pillBg:'var(--accent-dim)', pillColor:'var(--accent)', pillIcon:'ti-users',
-  //   permKey: 'ap2_specsData',   // ← Permissions sheet column
-  //   groups:[
-  //     { label:'Directory', items:[
-		// { label:'Items', file:'Reg/Master.html', icon:'ti-list',      		sub:'Items list'     },
-		// { label:'Orders', file:'Reg/Orders new.html', icon:'ti-list',			sub:'Manage Orders'     },
-		// { label:'Rate Management', file:'Reg/Rate_Threshold.html', icon:'ti-list',		sub:'Default Rates'     },
-		// { label:'Bills', file:'Reg/Bills.html', icon:'ti-list',				sub:'Billing'     },
-		// { label:'Receipts', file:'Reg/Receipts.html', icon:'ti-list',			sub:'Billing Receipts'     },
-		// { label:'Allocation', file:'Reg/Allocation.html', icon:'ti-list',			sub:'Amount Allocation'     },
-		// { label:'Reports', file:'Reg/Reports.html', icon:'ti-list',			sub:'All Reports'     },
-  //     ]},
-  //   ],
-  // },
-
-
-	
-'ib-emp': {
-  icon: 'ti-package',
-  label: 'Inventory',
-  pageLabel: 'Inventory Management',
-  pageSub: 'Items, purchasing, billing and stock control',
-  pillBg: 'var(--accent-dim)',
-  pillColor: 'var(--accent)',
-  pillIcon: 'ti-package',
-
-  // Parent module only; each page has its own permission key.
-  groups: [
-    {
-      label: 'Item Management',
-      items: [
-        {
-          label: 'Item Master',
-          file: 'Reg/Master.html',
-          icon: 'ti-package',
-          sub: 'Create and manage item records',
-          permKey: 'ap2_bills'
-        },
-        {
-          label: 'Purchase Orders',
-          file: 'Reg/Orders.html',
-          icon: 'ti-shopping-cart',
-          sub: 'Manage purchase orders',
-          permKey: 'ap2_bills'
-        },
-        {
-          label: 'Rate Thresholds',
-          file: 'Reg/Rate_Threshold.html',
-          icon: 'ti-adjustments',
-          sub: 'Configure item rate limits',
-          permKey: 'ap2_bills'
-        },
-        {
-          label: 'Bills & Invoices',
-          file: 'Reg/Bills.html',
-          icon: 'ti-file-invoice',
-          sub: 'Manage bills and invoices',
-          permKey: 'ap2_bills'
-        },
-        {
-          label: 'Receipts',
-          file: 'Reg/Receipts.html',
-          icon: 'ti-receipt',
-          sub: 'Manage receipts and entries',
-          permKey: 'ap2_bills'
-        },
-        {
-          label: 'Item Allocation',
-          file: 'Reg/Allocation.html',
-          icon: 'ti-arrows-exchange',
-          sub: 'Allocate items and track distribution',
-          permKey: 'ap2_bills'
-        },
-        {
-          label: 'Item Reports',
-          file: 'Reg/Reports.html',
-          icon: 'ti-chart-bar',
-          sub: 'View inventory reports and summaries',
-          permKey: 'ap2_bills'
-        },
-        {
-          label: 'Stock Control',
-          file: 'Reg/MinStock.html',
-          icon: 'ti-packages',
-          sub: 'Monitor minimum stock levels',
-          permKey: 'ap2_bills'
-        }
-      ]
-    }
-  ]
-},
+  'ib-emp': {
+    icon:'ti-users', label:'Items',
+    pageLabel:'Items', pageSub:'Staff directory',
+    pillBg:'var(--accent-dim)', pillColor:'var(--accent)', pillIcon:'ti-users',
+    permKey: 'ap2_specsData',   // ← Permissions sheet column
+    groups:[
+      { label:'Directory', items:[
+		{ label:'Items', file:'Reg/Master.html', icon:'ti-list',sub:'Items list',			permKey: 'ap2_bills'},
+		{ label:'Orders', file:'Reg/Orders new.html', icon:'ti-list',sub:'Manage Orders' , 	permKey:'ap2_bills'    },
+		{ label:'Rate', file:'Reg/Rate_Threshold.html', icon:'ti-list',sub:'Default Rates',	permKey: 'ap2_bills'   },
+		{ label:'Bills', file:'Reg/Bills.html', icon:'ti-list',sub:'Billing'  ,				permKey: 'ap2_bills'},
+		{ label:'Receipts', file:'Reg/Receipts.html', icon:'ti-list',sub:'Receipts' ,		permKey: 'ap2_bills'    },
+		{ label:'Allocation', file:'Reg/Allocation.html', icon:'ti-list',sub:'Allocation',	permKey: 'ap2_bills'  },
+		{ label:'Reports', file:'Reg/Reports.html', icon:'ti-list',sub:'All Reports',		permKey: 'ap2_bills' },
+      ]},
+    ],
+  },	
 
 
 
