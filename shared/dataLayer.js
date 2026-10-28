@@ -53,11 +53,11 @@
   // Dataset keys that intentionally return a multi-sheet object
   // instead of a flat array. Add to this only when a backend handler
   // genuinely needs to bundle multiple sheets in one response.
-  const OBJECT_SHAPE_DATASETS = new Set(['ap2_loginData', 'ap2_ticLog', 'ap2_specsData', 'ap2_rateThreshold' , 'ap2_orders' , 'ap2_bills' , 'ap2_ledger']);   // rateThreshold replies { RateThreshold:[…] }
+  const OBJECT_SHAPE_DATASETS = new Set(['ap2_loginData', 'ap2_ticLog', 'ap2_specsData', 'ap2_rateThreshold' , 'ap2_orders' , 'ap2_bills' , 'ap2_ledger' , 'ap2_minStock']);   // rateThreshold replies { RateThreshold:[…] }
 
   // Object-shape datasets that are valid even when every sheet is still empty
   // (e.g. a brand-new Specs database with header rows only).
-  const ALLOW_EMPTY_OBJECT_DATASETS = new Set(['ap2_specsData', 'ap2_rateThreshold' , 'ap2_orders' , 'ap2_bills' , 'ap2_ledger']);
+  const ALLOW_EMPTY_OBJECT_DATASETS = new Set(['ap2_specsData', 'ap2_rateThreshold' , 'ap2_orders' , 'ap2_bills' , 'ap2_ledger' , 'ap2_minStock']);
 
   /* ─────────────────────────────────────────
      LOGOUT CLEANUP
