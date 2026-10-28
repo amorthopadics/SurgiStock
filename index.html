@@ -1552,13 +1552,13 @@ const SECTIONS = {
     permKey: 'ap2_specsData',   // ← Permissions sheet column
     groups:[
       { label:'Directory', items:[
-		{ label:'Items', file:'Reg/Master.html', icon:'ti-list',sub:'Items list',			permKey: 'ap2_bills'},
-		{ label:'Orders', file:'Reg/Orders.html', icon:'ti-list',sub:'Manage Orders' , 	permKey: 'ap2_bills'    },
-		{ label:'Rate', file:'Reg/Rate_Threshold.html', icon:'ti-list',sub:'Default Rates',	permKey: 'ap2_bills'   },
-		{ label:'Bills', file:'Reg/Bills.html', icon:'ti-list',sub:'Billing'  ,				permKey: 'ap2_bills'},
-		{ label:'Receipts', file:'Reg/Receipts.html', icon:'ti-list',sub:'Receipts' ,		permKey: 'ap2_bills'    },
-		{ label:'Allocation', file:'Reg/Allocation.html', icon:'ti-list',sub:'Allocation',	permKey: 'ap2_bills'  },
-		{ label:'Reports', file:'Reg/Reports.html', icon:'ti-list',sub:'All Reports',		permKey: 'ap2_bills' },
+      { label:'Items',           file:'Reg/Master.html',         icon:'ti-package',          sub:'Items list',        permKey:'ap2_specsData'  },
+      { label:'Orders',          file:'Reg/Orders.html',	     icon:'ti-shopping-cart',    sub:'Manage Orders',     permKey:'ap2_orders'     },
+      { label:'Rate Management', file:'Reg/Rate_Threshold.html', icon:'ti-percentage',       sub:'Default Rates',     permKey:'ap2_rateThreshold'},
+      { label:'Bills',           file:'Reg/Bills.html',          icon:'ti-file-invoice',     sub:'Billing',           permKey:'ap2_bills'},
+      { label:'Receipts',        file:'Reg/Receipts.html',       icon:'ti-receipt',          sub:'Billing Receipts',  permKey:'ap2_ledger'},
+      { label:'Allocation',      file:'Reg/Allocation.html',     icon:'ti-coins',            sub:'Amount Allocation', permKey:'ap2_ledger'},
+      { label:'Reports',         file:'Reg/Reports.html',        icon:'ti-report-analytics', sub:'All Reports',       permKey:'ap2_ledger'},
       ]},
     ],
   },	
@@ -1577,6 +1577,8 @@ const SECTIONS = {
       ]},
     ],
   },
+
+	
 };
 
 let activeSection = null;
