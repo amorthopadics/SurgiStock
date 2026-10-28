@@ -792,14 +792,12 @@ console.log('[AP2] IDB bridge ready — all data served from IndexedDB via Admin
 }
 
 
-/* ══ SHORT SCREENS — the left menu moves to the bottom only ══
-   When the viewport is too short for a vertical sidebar (phones in
-   landscape, small laptops with big toolbars), the sidebar becomes a
-   horizontal bar along the bottom edge and the dock tiles sit at its
-   right end, so there is a single bottom bar and nothing on the left.
-   --short-dock-w is measured by JS (updateDockOffset) so the menu never
-   runs under the dock. */
-@media(max-height:500px){
+/* ══ SMALL SCREENS — the side menu's icons move to the bottom ══
+   On a narrow or short viewport the vertical sidebar becomes a single
+   icon-only bar along the bottom edge. Every item (section items first,
+   then Admin) sits in one row and the row scrolls sideways when it does
+   not fit. */
+@media(max-width:640px),(max-height:500px){
   .body-row{flex-direction:column;position:relative;}
   .main-area{order:1;}
 
@@ -807,47 +805,43 @@ console.log('[AP2] IDB bridge ready — all data served from IndexedDB via Admin
   #sub-bar.collapsed,
   #sub-bar:not(.collapsed){
     order:2;position:relative;top:auto;left:auto;bottom:auto;
-    width:100%;min-width:0;max-width:none;height:48px;flex:none;
-    flex-direction:row;align-items:center;
+    width:100%;min-width:0;max-width:none;flex:none;
+    height:calc(54px + env(safe-area-inset-bottom,0px));
+    padding:0 6px env(safe-area-inset-bottom,0px);
+    flex-direction:row;align-items:center;gap:2px;
     border-right:none;border-top:1px solid var(--border);
-    padding-right:var(--short-dock-w,132px);
     box-shadow:none;z-index:110;
+    overflow-x:auto;overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
   }
+  #sub-bar::-webkit-scrollbar{display:none;}
+
+  /* header (collapse toggle) and group titles make no sense in a bottom bar */
   #sub-bar .sb2-header,
-  #sub-bar.collapsed .sb2-header{height:100%;padding:0 14px;border-radius:0;flex:none;gap:0;}
-  #sub-bar .sb2-header span{display:none;}
   #sub-bar .sb2-section{display:none;}
 
   #sub-bar .sb2-nav,
-  #sub-bar.collapsed .sb2-nav{
-    display:flex;flex-direction:row;align-items:center;gap:4px;
-    height:100%;min-width:0;flex:1 1 auto;
-    padding:0 8px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;
-  }
-  #sub-bar .sb2-nav::-webkit-scrollbar{display:none;}
+  #sub-bar.collapsed .sb2-nav,
   #sub-bar .sb2-admin,
   #sub-bar.collapsed .sb2-admin{
-    flex:none;height:100%;border-top:none;border-left:1px solid var(--border);
-    overflow:visible;
+    display:flex;flex-direction:row;align-items:center;gap:4px;
+    flex:none;height:100%;min-width:0;
+    padding:0 4px;overflow:visible;border:none;
   }
+  #sub-bar .sb2-admin{border-left:1px solid var(--border);margin-left:4px;padding-left:8px;}
   #sub-bar .sb2-admin:empty{display:none;}
 
-  #sub-bar .sb2-item{flex:none;height:34px;margin:0;padding:0 12px;}
-  #sub-bar.collapsed .sb2-item{width:38px;height:34px;padding:0;margin:0;}
-  #sub-bar.collapsed .sb2-item:hover{transform:none;}
-
-  /* dock tiles become the right end of the same bottom bar */
-  #icon-bar{bottom:0;left:auto;right:0;transform:none;}
-  .ib-scroll{
-    height:48px;align-items:center;gap:6px;padding:0 10px;
-    border:none;border-top:1px solid var(--border);border-left:1px solid var(--border);
-    border-radius:0;box-shadow:none;max-width:none;overflow:visible;
+  /* icon-only items, whether or not the sidebar is "collapsed" */
+  #sub-bar .sb2-item,
+  #sub-bar.collapsed .sb2-item{
+    flex:none;width:44px;height:44px;margin:0;padding:0;gap:0;
+    justify-content:center;align-items:center;
   }
-  .dock-item,.admin-fab{width:34px;height:34px;font-size:16px;border-radius:10px;}
-  .dock-item:hover{transform:translateY(-3px);}
-  .dock-item::after{bottom:-5px;}
-  .dock-sep{margin:10px 2px;}
-  .admin-flyout{max-height:calc(100dvh - 80px);}
+  #sub-bar .sb2-item i{font-size:20px;}
+  #sub-bar .sb2-item-label,
+  #sub-bar .sb2-badge{display:none;}
+  #sub-bar .sb2-item:hover,
+  #sub-bar.collapsed .sb2-item:hover{transform:none;}
 }
 
 /* ══ CACHE STATUS BUTTON ══ */
@@ -1322,38 +1316,6 @@ console.log('[AP2] IDB bridge ready — all data served from IndexedDB via Admin
 
   </div>
 
-  <!-- FLOATING DOCK — main menu, a macOS-style floating bottom dock that
-       hovers clear of the screen edge, sized to fit its icons. Fixed
-       positioning means it floats over the page without ever shifting
-       the topbar/sidebar/content. Each icon is its own colored "app
-       tile" (see .dock-item); the active tile is marked with a small
-       dot underneath (see .dock-item.active::after). Clicking any icon
-       opens that section's items into the left #sub-bar (see ibOpen()
-       in JS) — same behavior as before, just a different look. -->
-  <nav id="icon-bar" aria-label="Navigation">
-    <div class="ib-scroll" id="ib-scroll">
-      <button class="dock-item active" id="ib-emp" style="background:var(--accent);" onclick="ibOpen('ib-emp',this)" title="Items">
-        <i class="ti ti-package"></i><span class="dock-tip">Items</span>
-      </button>
-
-      <div class="dock-sep"></div>
-
-      <!-- ADMIN — last item in this same floating dock. Its item list is
-           hidden by default and only unfolds while hovering this
-           button/panel (auto-hides again a few seconds after the hover
-           leaves). Clicking the gear still opens the Admin section into
-           the main sidebar + content frame as before. -->
-      <div class="admin-dock-wrap" id="admin-dock-wrap">
-        <div class="admin-flyout" id="admin-flyout" role="menu" aria-hidden="true">
-          <div class="admin-flyout-header"><i class="ti ti-settings"></i> Admin</div>
-          <div class="admin-flyout-nav" id="admin-flyout-nav"></div>
-        </div>
-        <button class="dock-item admin-fab" id="ib-admin" style="background:linear-gradient(135deg,var(--text2),var(--text3));" onclick="ibOpen('ib-admin',this)" title="Admin">
-          <i class="ti ti-settings"></i><span class="dock-tip">Admin</span>
-        </button>
-      </div>
-    </div>
-  </nav>
 </div>
 
 <!-- ══ CACHE STATUS PANEL ══ -->
@@ -1651,6 +1613,7 @@ function _hasPerm(perms, key) {
      icon-bar button and topbar shortcut.
    • Sections with permKey:null are always visible.
    • If the first permitted section isn't 'ib-emp', auto-open it.         */
+const _secAllowed = {};   // section id -> allowed (no dock buttons any more)
 function _applyPermissions() {
   const perms = window.Auth && window.Auth.getPermissions
     ? window.Auth.getPermissions()
@@ -1659,8 +1622,7 @@ function _applyPermissions() {
   let firstAllowed = null;
 
   for (const [id, sec] of Object.entries(SECTIONS)) {
-    const btn = document.getElementById(id);
-    if (!btn) continue;
+    const btn = document.getElementById(id);   // null now that the dock is gone
 
     let allowed;
 
@@ -1679,7 +1641,8 @@ function _applyPermissions() {
 
 	  
 
-    btn.style.display = allowed ? '' : 'none';
+    _secAllowed[id] = allowed;
+    if (btn) btn.style.display = allowed ? '' : 'none';
     if (allowed && !firstAllowed) firstAllowed = id;
   }
 
@@ -1785,18 +1748,6 @@ function toggleSidebar() {
   });
 })();
 
-/* On very small screens the expanded sidebar overlays the content (see
-   CSS); clicking outside it while expanded in that mode collapses it
-   back to the icon-only rail, same as any Apple-style compact sidebar. */
-function _onSidebarOutsideClick(e) {
-  if (window.innerWidth > 640) return;
-  const sb = document.getElementById('sub-bar');
-  const ib = document.getElementById('icon-bar');
-  if (sidebarVisible && sb && !sb.contains(e.target) && !ib.contains(e.target)) {
-    toggleSidebar();
-  }
-}
-document.addEventListener('click', _onSidebarOutsideClick);
 
 /* ── Admin flyout — the gear's item list is hidden by default and only
    unfolds while hovering the corner dock button/panel, auto-hiding again
@@ -1910,6 +1861,8 @@ function ibOpen(id, btn) {
 
   setCtx(sec.pageLabel, sec.pageSub, sec.pillBg, sec.pillColor, sec.pillIcon);
   activeSection = id;
+  const _adm = document.getElementById('sb2-admin');
+  if (_adm) _adm.style.display = (id === 'ib-admin') ? 'none' : '';
 
   // Switching sections always reveals the sidebar so its new items are visible,
   // then folds back to the icon-only rail 5s later unless it's being hovered
@@ -2310,11 +2263,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // ── STEP 3: Open the first permitted section → loads first sub-page into frame ──
   const _openFirstAllowed = () => {
-    const fv = Object.keys(SECTIONS).find(id => {
-      const btn = document.getElementById(id);
-      return btn && btn.style.display !== 'none';
-    });
-    if (fv) { activeSection = null; ibOpen(fv, document.getElementById(fv)); }
+    const fv = Object.keys(SECTIONS).find(id => _secAllowed[id]);
+    if (fv) { activeSection = null; ibOpen(fv, null); }
   };
   _openFirstAllowed();
 
