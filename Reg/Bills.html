@@ -607,8 +607,26 @@ const docHTML=b=>{const t=tb(b),p=paidOf(b),os=b.oids.map(i=>orders.find(o=>o.id
   ${(ps.length||al.length)?`<div class="pay"><b>Payments received</b>${ps.map(x=>`<div>${esc(x.date)} · ${esc(x.mode)}${x.ref?' · '+esc(x.ref):''} · ${money(x.amount)}</div>`).join('')}${al.map(x=>`<div>${esc(x.date)} · Receipt ${esc(x.rno)}${x.orderNo?' · '+esc(x.orderNo):''} · ${money(x.amount)}</div>`).join('')}</div>`:''}</div>
   <div class="tot"><div><span>Subtotal</span><span>${money(t.sub)}</span></div>${t.d?`<div><span>Discount${b.dt==='pct'?' ('+b.disc+'%)':''}</span><span>− ${money(t.d)}</span></div>`:''}${b.vat?`<div><span>VAT (${b.vat}%)</span><span>${money(t.v)}</span></div>`:''}
   <div class="g"><span>Total ${CUR}</span><span>${money(t.total)}</span></div><div><span>Paid</span><span>${money(p)}</span></div><div><b>Balance Due</b><b>${money(t.total-p)}</b></div></div></div></div>`;};
+
+/* Print in its own standalone window. window.print() inside the portal shell prints the WHOLE shell
+   (top bar, bottom nav) as a screenshot, esp. on iPhone. A separate document prints only the bill. */
+function openPrint(title){
+  const sty=[...document.querySelectorAll('style')].map(x=>x.textContent).join('\n');
+  const css=sty.slice(sty.indexOf('/* ── print: only the bill ── */'));
+  const html=$('pr').innerHTML;
+  const w=window.open('','_blank');
+  if(!w){window.print();return;}   // popup blocked → fall back to old behaviour
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(title)+'</title><style>'+css+
+  '@page{size:A4;margin:8mm}html,body{margin:0;height:auto;background:#fff}#pr{display:block}'+
+  '@media screen{#pr{max-width:794px;margin:0 auto;padding:12px}.pbtn{display:block;margin:12px auto;padding:10px 22px;font:600 15px Arial,sans-serif;border:0;border-radius:8px;background:#0550ae;color:#fff}}'+
+  '@media screen and (max-width:700px){#pr .inv .ihd,#pr .inv .ibot,#pr .inv .imeta{flex-direction:column!important}#pr .inv .tot{width:100%!important}#pr .inv .itt{text-align:left!important}}'+
+  '@media print{.pbtn{display:none!important}}</style></head><body>'+
+  '<button class="pbtn" onclick="window.print()">Print / Save as PDF</button><div id="pr">'+html+'</div>'+
+  '<script>window.addEventListener("load",function(){setTimeout(function(){window.print()},400)})<\/script></body></html>');
+  w.document.close();
+}
 function printBill(id){const b=bills.find(x=>x.id===id);if(!b)return;const ft=[[CO_PHONE&&'Ph: '+CO_PHONE,CO_EMAIL&&'Email: '+CO_EMAIL].filter(Boolean).join(' ')].filter(Boolean).map(esc).join('<br>');
-  $('pr').innerHTML=docHTML(b).replace(/<\/div>$/,'')+`<div class="sig"><span>Prepared by</span><span>Received by</span><div style="width:30%;text-align:center">${CO_STAMP?`<img src="${esc(CO_STAMP)}" alt="">`:''}<span style="display:block;width:100%">Authorized Signature &amp; Stamp</span></div></div><div class="ift"><b>Thank you for your business. ${esc(CO)}</b><br>${ft}</div></div>`;setTimeout(()=>window.print(),80);}
+  $('pr').innerHTML=docHTML(b).replace(/<\/div>$/,'')+`<div class="sig"><span>Prepared by</span><span>Received by</span><div style="width:30%;text-align:center">${CO_STAMP?`<img src="${esc(CO_STAMP)}" alt="">`:''}<span style="display:block;width:100%">Authorized Signature &amp; Stamp</span></div></div><div class="ift"><b>Thank you for your business. ${esc(CO)}</b><br>${ft}</div></div>`;openPrint('Bill '+(b.no||''));}
 function viewBill(id){const b=bills.find(x=>x.id===id);if(!b)return;vid=id;const t=tb(b),p=paidOf(b),dr=drift(b),ps=pays.filter(x=>x.billId===id),s=stOf(b),al=allocList(b);
   $('v-title').innerHTML=esc(b.no)+' <span class="badge '+s[0]+'">'+s[1]+'</span>';
   $('v-body').innerHTML=(dr.length?`<div class="warn" style="border:1px solid var(--amber);border-radius:var(--radius);padding:8px 10px">⚠ Orders changed since this bill was made (edit / return / delete):<br>${dr.map(esc).join('<br>')}<br>Delete and re-create the bill to apply the changes.</div>`:'')
