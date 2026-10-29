@@ -687,6 +687,18 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 .log-table td.n,.log-table th.n{white-space:nowrap}
 @media(min-width:1101px){#ov.open{width:560px}#ov2.open{width:680px}}
 @media(min-width:901px) and (max-width:1100px){#ov.open,#ov2.open{width:480px}}
+/* ═══ Fix Rate additions ═══ */
+.tabs-fixed.five{width:234px;flex-shrink:0}.tabs-fixed.five .tab-btn.active span{max-width:120px}
+@media(max-width:700px){.tabs-fixed.five{width:auto}.tabs-fixed.five .tab-btn{flex:0 0 38px;padding:7px 0}.tabs-fixed.five .tab-btn.active{flex:0 0 auto;padding:7px 14px}.tabs-fixed.five .tab-btn.active span{display:inline;max-width:120px;margin-left:6px;opacity:1}}
+@media(max-width:480px){.tabs-fixed.five .tab-btn{flex-basis:34px}.tabs-fixed.five .tab-btn.active{padding:7px 10px;font-size:11.5px}}
+.om .dd.open{display:block}
+.om .di small{display:block;font:400 10.5px var(--mono);color:var(--text3)}
+.cb.bad .date-input{border-color:var(--red)!important;box-shadow:0 0 0 3px var(--red-dim)}
+.trow{display:grid;grid-template-columns:minmax(0,1fr) 86px 86px 28px;gap:8px;align-items:center}
+.trow>.note{grid-column:1/-1}.note{font-size:11px;color:var(--teal)}
+@media(max-width:480px){.trow{grid-template-columns:minmax(0,1fr) 1fr 28px}.trow>.cb{grid-column:1/-1}}
+@media(min-width:1101px){#ov3.open{width:560px}}
+@media(min-width:901px) and (max-width:1100px){#ov3.open{width:480px}}
 /* ── print: only the bill ── */
 #pr,#pr *,#pv,#pv *{color:#000!important;background:#fff!important;font-family:Arial,sans-serif}
 #pr{padding:6mm 8mm;font-size:12px}
@@ -731,8 +743,9 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 <!-- ═══ VIEW BAR — brand · 4 tabs · cache status (same layout as Orders / Master) ═══ -->
 <div class="view-bar">
   <div class="vb-brand" title="Bills &amp; Payments"><i class="ti ti-receipt"></i></div>
-  <div class="tab-nav tabs-fixed four" id="tab-nav"></div>
+  <div class="tab-nav tabs-fixed five" id="tab-nav"></div>
   <button class="ib cache-ind warn" id="cache-ind" type="button" title="Cache: waiting…"><i class="ti ti-database"></i></button>
+  <button class="ib sync-ind" id="sync-ind" type="button" style="display:none"><i class="ti ti-cloud-upload"></i><span class="ping"></span><b class="sync-n">0</b></button>
 </div>
 <div class="portal-wrap" id="panels">
   <div class="tab-panel" id="tab-orders" style="display:none;flex-direction:column;gap:10px;flex:1;min-height:0;">
@@ -791,6 +804,20 @@ select.date-input option{background:var(--surface2);color:var(--text);}
       </div>
     </div>
   </div>
+  <div class="tab-panel" id="tab-rates" style="display:none;flex-direction:column;gap:10px;flex:1;min-height:0;">
+    <div class="main-split">
+      <div class="doc-center">
+        <div class="doc-center-header">
+          <h3><i class="ti ti-adjustments-dollar"></i>Fix Rate <span class="badge purple" id="rates-count">0</span></h3>
+          <span class="hist-tip"><i class="ti ti-info-circle"></i>Min / max rate per Type, Name and Item</span>
+          <div class="hdr-actions"><div class="hs" id="rates-sdw"><button class="ib" type="button" data-srch="rates" title="Search" aria-haspopup="true"><i class="ti ti-search"></i></button>
+        <div class="hs-pop"><i class="ti ti-search"></i><input class="hs-in" id="rates-search" data-sin="rates" type="text" placeholder="Type to search…" autocomplete="off" enterkeyhint="search"/>
+        <button class="hs-x" type="button" data-sclr="rates" title="Clear"><i class="ti ti-x"></i></button></div></div><button class="btn btn-primary btn-sm" type="button" onclick="RT.open()" title="Add Rate"><i class="ti ti-plus"></i><span class="lbl">Add Rate</span></button></div>
+        </div>
+        <div class="doc-center-body" id="rates-body"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="hold" hidden>
@@ -827,6 +854,11 @@ select.date-input option{background:var(--surface2);color:var(--text);}
   <div class="mh"><div class="ttl"><i class="ti ti-file-invoice"></i><span id="v-title"></span></div><button type="button" class="ib x" title="Close" aria-label="Close" onclick="closeView()"><i class="ti ti-x"></i></button></div>
   <div class="mb" id="v-body"></div>
   <div class="mf"><button type="button" class="ib lg" title="Close" aria-label="Close" onclick="closeView()"><i class="ti ti-x"></i></button><button type="button" class="ib lg pri" title="Print" aria-label="Print" onclick="printBill(vid)"><i class="ti ti-printer"></i></button></div>
+</div></div>
+<div class="doc-preview-panel" id="ov3"><div class="om" role="dialog" aria-labelledby="r-title">
+  <div class="mh"><div class="ttl"><i class="ti ti-adjustments-dollar"></i><span id="r-title">Add Rate</span></div><button type="button" class="ib x" title="Close" aria-label="Close" data-a="close"><i class="ti ti-x"></i></button></div>
+  <div class="mb" id="r-body"></div>
+  <div class="mf" id="r-foot"></div>
 </div></div>
 </div>
 <div id="pr"></div>
@@ -888,11 +920,215 @@ function applyRows(rows){
   });
   items=it;stores=st;parties=pa;suppliers=su.sort((x,y)=>x.localeCompare(y));types=[...T.values()].sort((a,b)=>a.l.localeCompare(b.l));
 }
+/* ═══ FIX RATE — min / max rate per Type · Name · Item (ported from Rate_Threshold.html, runs inside this module)
+   Master sheet rows: [ID, Specs, Item, Description, Status] (cache)  ·  Rate Thresholds sheet: ID | Type | Name | Item | Min | Max | Status | Updated | Updated By
+   Own storage keys (so it never collides with the standalone Rate Threshold page). ═══ */
+const RT=(()=>{
+  const PK='bills_rate_pending_rows_v1',TK='bills_rate_thresholds_v1';
+  const rdj=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
+  const wrj=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+  const toks=q=>String(q||'').toLowerCase().split(/[\s\-\u2013\u2014\/,;|]+/).filter(Boolean);
+  const f2=n=>(+n).toFixed(2);
+  const apost=(a,p)=>AP2Api.post(a,p);
+  let cacheRows=[],pending=rdj(PK,[]),synced=[];
+  const ELIGIBLE='customer';
+  const ICONS={customer:'ti-user',vendor:'ti-truck-delivery',hospital:'ti-building-hospital',doctor:'ti-stethoscope'};
+  const IGN=/^(item\s*names?|item\s*lists?|item\s*categor(y|ies)|stores?|medical\s*domains?|material\s*sources?|specs)$/i,IL=/^item\s*lists?$/i;
+  const typeIcon=k=>ICONS[k]||'ti-tag';
+  let parties=[],items=[],domains=[],types=[],custWord='Customer';
+  const sameRow=(a,b)=>String(a[0])===String(b[0])||(norm(a[1])===norm(b[1])&&norm(a[2])===norm(b[2])&&(!IL.test(String(a[1]).trim())||norm(a[3])===norm(b[3])));
+  const allRows=()=>cacheRows.concat(pending,synced).filter((r,i,a)=>Array.isArray(r)&&a.findIndex(x=>Array.isArray(x)&&sameRow(x,r))===i);
+  function derive(){
+    parties=[];items=[];domains=[];const T=new Map();
+    allRows().forEach(r=>{
+      const sid=String(r[0]).trim(),lab=String(r[1]==null?'':r[1]).trim(),nm=String(r[2]==null?'':r[2]).trim();
+      if(!sid||!lab||!nm||sid.toLowerCase()==='id')return;
+      const act=!/^(inactive|in-active|no|0|false|disabled)$/i.test(String(r[4]||'').trim()),dsc=String(r[3]==null?'':r[3]).trim();
+      if(IL.test(lab)){if(dsc&&act)items.push({sid,label:dsc,domain:nm});return}
+      if(/^medical\s*domains?$/i.test(lab)){if(act)domains.push({sid,name:nm});return}
+      if(IGN.test(lab)||norm(dsc)!==ELIGIBLE)return;
+      custWord=dsc;if(!act)return;
+      const k=norm(lab),t=T.get(k);
+      if(!t)T.set(k,{k,l:cap(lab)});else if(/^[a-z]/.test(t.l)&&/^[A-Z]/.test(lab))t.l=lab;
+      parties.push({sid,name:nm,type:k});
+    });
+    types=[...T.values()].sort((a,b)=>a.l.localeCompare(b.l));
+  }
+  /* ── write new Names / Items to the Master sheet (timestamp ID · Active · no duplicates) ── */
+  let sbusy=false;const badge=AP2Api.syncBadge('sync-ind');
+  function setInd(){badge.update(pending.length);badge.busy(sbusy);$('sync-ind').title=pending.length+' change(s) waiting to sync to the sheet — click to retry'}
+  async function sync(manual){
+    if(sbusy||!pending.length)return;sbusy=true;setInd();
+    try{
+      const sent=pending.slice(),j=await apost('addSpecsSetting',{rows:sent.map(r=>({id:r[0],specs:r[1],item:r[2],description:r[3],status:r[4]}))});
+      sent.forEach(r=>{const n=j.idMap&&j.idMap[r[0]];if(n!=null&&String(n)!==String(r[0]))r[0]=n});
+      pending=pending.filter(r=>!sent.includes(r));synced.push(...sent);wrj(PK,pending);
+      cache.requestRefresh(true);
+      if(manual)showToast('Saved to Master sheet','success');
+    }catch(e){const m=errText(e.message);if(manual||/logged in|expired|permission/i.test(m))showToast('Not saved to sheet yet: '+m+' — will retry','error')}
+    sbusy=false;derive();setInd();render();
+  }
+  function newRow(lab,name,desc){
+    let t=Date.now(),id=tsId(t);const used=new Set(allRows().map(r=>String(r[0])));while(used.has(id))id=tsId(++t);
+    const r=[id,lab,name,desc||'','Active'];pending.push(r);wrj(PK,pending);derive();setInd();render();sync(false);return r}
+  const ready=()=>cache.requireReady('Cache not loaded yet — wait a moment before adding');
+  function askSelect(title,sub,lab,opts,okText){return new Promise(res=>{const ov=document.createElement('div');ov.className='modal-ov open';
+    ov.innerHTML=`<div class="modal" style="max-width:380px"><div class="modal-hd"><h3><i class="ti ti-package"></i>${esc(title)}</h3></div><div class="modal-bd"><div class="form-hint">${esc(sub)}</div><div class="field"><label>${esc(lab)} <span class="req">*</span></label><select class="date-input">${opts.map(d=>`<option>${esc(d)}</option>`).join('')}</select></div></div><div class="modal-ft"><span class="sp"></span><button class="btn btn-ghost" type="button" data-v="0">Cancel</button><button class="btn btn-primary" type="button" data-v="1">${esc(okText)}</button></div></div>`;
+    document.body.appendChild(ov);ov.onclick=e=>{const v=e.target.dataset.v;if(v==null&&e.target!==ov)return;const x=ov.querySelector('select').value;ov.remove();res(v==='1'?x:null)}})}
+  async function addParty(name){
+    if(!ready())return null;const t=types.find(x=>x.k===draft.type);if(!t){showToast('Choose a Type first','error');return null}
+    if(allRows().some(r=>!IL.test(String(r[1]).trim())&&norm(r[1])===t.k&&norm(r[2])===norm(name))){showToast(name+' already exists in '+t.l+' (check it is Active and marked Customer in Master)','error');return null}
+    const r=newRow(t.l,name,custWord);showToast('Added to Master sheet under '+t.l,'success');return{text:name,sid:r[0],type:t.k}}
+  async function addItem(label){
+    if(!ready())return null;if(!domains.length){showToast('Add a Medical Domain in Master Setup first','error');return null}
+    const dom=await askSelect('Add item to Master sheet',label,'Medical Domain',domains.map(d=>d.name),'Add item');if(!dom)return null;
+    if(allRows().some(r=>IL.test(String(r[1]).trim())&&norm(r[2])===norm(dom)&&norm(r[3])===norm(label))){showToast('Already in the Item List for '+dom,'error');return null}
+    const r=newRow('Item List',dom,label);showToast('Item added to Master sheet','success');return{text:label,sub:dom,sid:r[0]}}
+
+  /* ── searchable drop-down with "+ Add" ── */
+  function combo(host,o){
+    host.innerHTML='<input class="date-input" autocomplete="off" placeholder="'+o.ph+'"/><div class="dd"></div>';
+    const inp=host.firstChild,dd=host.lastChild;let cur=[],hi=-1,sel=null;
+    const close=()=>{dd.classList.remove('open');hi=-1};
+    function draw(q){const tk=toks(q),all=o.list(),m=all.filter(x=>tk.every(w=>(x.text+' '+(x.sub||'')).toLowerCase().includes(w)));
+      cur=m.slice(0,60).map(x=>({x}));if(q.trim()&&!all.some(x=>norm(x.text)===norm(q)))cur.push({add:q.trim()});
+      dd.innerHTML=cur.map((c,i)=>c.add?`<div class="di add${i===hi?' hi':''}" data-i="${i}"><i class="ti ti-plus"></i>Add “${esc(c.add)}”</div>`:`<div class="di${i===hi?' hi':''}" data-i="${i}">${esc(c.x.text)}${c.x.sub?`<small>${esc(c.x.sub)}</small>`:''}</div>`).join('')||'<div class="di mute">Type to search or add</div>';
+      dd.classList.add('open')}
+    function set(it){sel=it;inp.value=it?it.text:'';close();o.onPick(it)}
+    function choose(c){if(!c)return;if(c.add){Promise.resolve(o.onAdd(c.add)).then(it=>{if(it)set(it);else inp.focus()})}else set(c.x)}
+    inp.onfocus=()=>{inp.select();draw('')};
+    inp.oninput=()=>{if(sel&&inp.value!==sel.text){sel=null;o.onPick(null)}hi=-1;draw(inp.value)};
+    inp.onblur=()=>setTimeout(()=>{close();inp.value=sel?sel.text:''},150);
+    inp.onkeydown=e=>{if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(!dd.classList.contains('open'))draw(inp.value);hi=Math.max(0,Math.min(cur.length-1,hi+(e.key==='ArrowDown'?1:-1)));draw(sel?'':inp.value);const h=dd.querySelector('.hi');h&&h.scrollIntoView({block:'nearest'})}
+      else if(e.key==='Enter'){e.preventDefault();e.stopPropagation();choose(cur[hi>=0?hi:0])}else if(e.key==='Escape'&&dd.classList.contains('open')){e.stopPropagation();close()}};
+    dd.onmousedown=e=>{e.preventDefault();const d=e.target.closest('.di');if(d&&d.dataset.i!=null)choose(cur[+d.dataset.i])};
+    return{set,get:()=>sel,focus:()=>inp.focus(),input:inp};
+  }
+
+  /* ── rate thresholds ── */
+  let rules=rdj(TK,[]),armed=null,loaded=false;
+  const ui={type:'',sortKey:'p',asc:true};
+  const rk=(t,n,i)=>norm(t)+'|'+norm(n)+'|'+norm(i);
+  const findRule=(t,n,i)=>rules.find(x=>rk(x.type,x.name,x.item)===rk(t,n,i));
+  const mapRow=a=>({id:String(a[0]),type:String(a[1]||''),name:String(a[2]||''),item:String(a[3]||''),min:+a[4],max:+a[5],status:/^inactive$/i.test(String(a[6]))?'Inactive':'Active',ts:String(a[7]||''),by:String(a[8]||'')});
+  async function load(){
+    const s=session();if(!s.sessionId&&!s.token)return false;
+    try{const j=await AP2Api.get('rateThreshold');
+      rules=(j.RateThreshold||[]).filter(a=>a&&String(a[0])&&String(a[0])!=='ID').map(mapRow);loaded=true;wrj(TK,rules);render();return true}
+    catch(e){if(tab==='rates'&&!load._w){load._w=1;showToast('Could not load rates: '+errText(e.message),'error')}return false}}
+
+  function render(){
+    const q=SQ.rates,tk=toks(q),all=rules,TL=new Map();
+    all.forEach(r=>{const k=norm(r.type);if(!TL.has(k))TL.set(k,{k,l:r.type,n:0});TL.get(k).n++});
+    if(ui.type&&!TL.has(ui.type))ui.type='';
+    const flt=all.length?`<div class="chips" style="margin-bottom:12px"><button class="chip${!ui.type?' on':''}" data-t="">All <b>${all.length}</b></button>`+[...TL.values()].sort((a,b)=>a.l.localeCompare(b.l)).map(t=>`<button class="chip${ui.type===t.k?' on':''}" data-t="${esc(t.k)}"><i class="ti ${typeIcon(t.k)}"></i>${esc(t.l)} <b>${t.n}</b></button>`).join('')+'</div>':'';
+    const rs=all.filter(r=>(!ui.type||norm(r.type)===ui.type)&&tk.every(w=>(r.name+' '+r.item+' '+r.type).toLowerCase().includes(w)));
+    const val=r=>ui.sortKey==='p'?r.name:ui.sortKey==='t'?r.type:ui.sortKey==='i'?r.item:ui.sortKey==='min'?r.min:ui.sortKey==='max'?r.max:ui.sortKey==='s'?r.status:r.ts;
+    rs.sort((a,b)=>{const x=val(a),y=val(b),d=ui.asc?1:-1;return(typeof x==='number'?x-y:String(x).localeCompare(String(y),undefined,{sensitivity:'base'}))*d||a.item.localeCompare(b.item)});
+    $('rates-count').textContent=rs.length+(rs.length!==all.length?' / '+all.length:'');
+    const body=$('rates-body');
+    if(!rs.length){body.innerHTML=flt+`<div class="empty">${all.length?'No records match your filter':loaded?'No rates fixed yet':'Loading rates…'}${all.length||!loaded?'':'<div style="margin-top:10px"><button class="btn btn-primary btn-sm" type="button" data-a="new"><i class="ti ti-plus"></i> Add Rate</button></div>'}</div>`;return}
+    const th=(k,l,c)=>`<th class="${c||''}" data-s="${k}">${l}${ui.sortKey===k?`<i class="ti ti-chevron-${ui.asc?'up':'down'}" style="font-size:11px;margin-left:3px"></i>`:''}</th>`;
+    body.innerHTML=flt+`<table class="log-table"><thead><tr><th style="cursor:default">#</th>${th('p','Name')}${th('t','Type')}${th('i','Item')}${th('min','Min','n')}${th('max','Max','n')}${th('s','Status')}${th('ts','Updated')}<th style="cursor:default"></th></tr></thead><tbody>${rs.map((r,n)=>{const a=armed===r.id,off=r.status==='Inactive';
+      return`<tr${off?' style="opacity:.55"':''}><td class="num">${n+1}</td><td><strong>${esc(r.name)}</strong></td><td><span class="spec-chip"><i class="ti ${typeIcon(norm(r.type))}"></i>${esc(r.type)}</span></td><td>${esc(r.item)}</td><td class="n">${f2(r.min)}</td><td class="n">${f2(r.max)}</td>
+      <td><button class="spec-chip" type="button" data-st="${r.id}" title="Click to set ${off?'Active':'Inactive'}" style="cursor:pointer;${off?'background:var(--amber-dim);color:var(--amber);border-color:var(--amber)':'background:var(--teal-dim);color:var(--teal);border-color:var(--teal)'}">${r.status}</button></td><td class="mono dim" style="font-size:11px" title="${esc(r.by)}">${esc(r.ts)}</td>
+      <td class="acts"><span class="act-btns"><button class="ib sm" type="button" title="Edit" data-e="${r.id}"><i class="ti ti-pencil"></i></button><button class="ib sm danger${a?' armed':''}" type="button" title="${a?'Click again to confirm delete':'Delete'}" data-d="${r.id}"><i class="ti ti-${a?'check':'trash'}"></i></button></span></td></tr>`}).join('')}</tbody></table>`}
+
+  /* ── side window (same slide-in panel as New Bill) ── */
+  let draft=null,pcomb=null,rcombs=[];
+  const blank=type=>({id:null,type:type||'',party:null,rows:[{item:null,min:'',max:''}],errs:null});
+  function open(id){
+    if(typeof id==='string'){const r=rules.find(x=>x.id===id);if(!r)return;const k=norm(r.type);
+      draft={id,type:k,typeLabel:r.type,party:{text:r.name,type:k},rows:[{item:{text:r.item},min:r.min,max:r.max}],errs:null}}
+    else draft=blank(ui.type&&types.some(t=>t.k===ui.type)?ui.type:'');
+    renderPanel();mountPanel('ov3');
+    setTimeout(()=>{if(draft&&draft.type&&!draft.id&&pcomb)pcomb.focus()},280)}
+  function close(){$('ov3').classList.remove('open');draft=null}
+  function renderPanel(){
+    const d=draft,edit=!!d.id,E=d.errs||{rows:{}},TL=(types.some(x=>x.k===d.type)||!d.type)?types:types.concat({k:d.type,l:d.typeLabel||d.type});
+    const chip=m=>`<button type="button" class="chip${d.type===m.k?' on':''}${edit&&d.type!==m.k?' dis':''}" data-v="${m.k}"${edit?' disabled':''}><i class="ti ${typeIcon(m.k)}"></i>${esc(m.l)}</button>`;
+    $('r-title').textContent=edit?'Edit Rate':'Add Rate';
+    $('r-body').innerHTML=`<div><label><i class="ti ti-tag"></i>Type <span class="req">*</span></label><div class="chips${E.t?' bad':''}">${TL.length?TL.map(chip).join(''):'<span class="chip-empty">No entries with Description “Customer” found in the sheet yet.</span>'}</div></div>
+    <div><label><i class="ti ti-user"></i>Name <span class="req">*</span></label><div class="cb${E.p?' bad':''}" id="rt-pcb"></div></div>
+    <div><div class="sec"><i class="ti ti-package"></i>Items &amp; rates (min / max) <span class="req">*</span>${edit?'':'<button class="btn sm" type="button" data-a="addrow"><i class="ti ti-plus"></i> Add item</button>'}</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">${d.rows.map((r,i)=>{const e=E.rows[i]||{};return`<div class="trow">
+        <div class="cb${e.item?' bad':''}" data-ri="${i}"></div>
+        <input class="date-input${e.min?' bad':''}" data-ri="${i}" data-f="min" type="number" min="0" step="0.01" placeholder="Min" value="${esc(r.min)}"/>
+        <input class="date-input${e.max?' bad':''}" data-ri="${i}" data-f="max" type="number" min="0" step="0.01" placeholder="Max" value="${esc(r.max)}"/>
+        ${d.rows.length>1&&!edit?`<button class="ib sm danger" type="button" data-a="delrow" data-i="${i}" title="Remove item"><i class="ti ti-trash"></i></button>`:'<span></span>'}
+        <div class="note" id="note-${i}"></div></div>`}).join('')}</div></div>`;
+    $('r-foot').innerHTML=`<button type="button" class="ib lg" title="Cancel" aria-label="Cancel" data-a="close"><i class="ti ti-x"></i></button>${edit?'':'<button type="button" class="ib lg" title="Save &amp; Add Another" aria-label="Save and add another" data-a="saveadd"><i class="ti ti-playlist-add"></i></button>'}<button type="button" class="ib lg pri" title="${edit?'Update':'Save'}" aria-label="${edit?'Update':'Save'}" data-a="save"><i class="ti ti-check"></i></button>`;
+    pcomb=combo($('rt-pcb'),{ph:d.type?'Search or add name…':'Choose a Type first',
+      list:()=>d.type?parties.filter(p=>p.type===d.type).map(p=>({text:p.name,sid:p.sid,type:p.type})):[],
+      onPick:p=>{d.party=p;rcombs.forEach((_,i)=>prefill(i))},onAdd:addParty});
+    if(d.party)pcomb.set(d.party);if(edit||!d.type)pcomb.input.disabled=true;
+    rcombs=d.rows.map((r,i)=>{const c=combo($('r-body').querySelector('.cb[data-ri="'+i+'"]'),{ph:'Item '+(i+1)+' — search or add item…',
+      list:()=>items.map(x=>({text:x.label,sub:x.domain,sid:x.sid})),onPick:it=>{r.item=it;prefill(i)},onAdd:addItem});
+      if(r.item)c.set(r.item);return c});
+  }
+  function prefill(i){
+    const d=draft,r=d.rows[i],n=$('note-'+i);if(!n)return;n.textContent='';
+    if(!d.party||!r.item)return;const ex=findRule(d.type,d.party.text,r.item.text);if(!ex||ex.id===d.id)return;
+    r.min=ex.min;r.max=ex.max;$('r-body').querySelectorAll('input[data-ri="'+i+'"]').forEach(x=>x.value=ex[x.dataset.f]);
+    n.textContent='Existing rate loaded — saving will update it.'}
+  async function saveDraft(another){
+    const d=draft,E={t:!d.type,p:!!d.type&&!d.party,rows:{}};let msg='';
+    const rows=d.rows.map((r,i)=>({i,r})).filter(x=>x.r.item||x.r.min!==''||x.r.max!==''||d.rows.length===1);
+    const seen=new Set();
+    rows.forEach(({i,r})=>{const e={};
+      if(!r.item)e.item=1;else{const k=norm(r.item.text);if(seen.has(k)){e.item=1;msg='Same item added twice'}seen.add(k);
+        if(d.party){const ex=findRule(d.type,d.party.text,r.item.text);if(d.id&&ex&&ex.id!==d.id){e.item=1;msg='A rate for this name and item already exists'}}}
+      const mn=r.min,mx=r.max;if(mn===''||isNaN(+mn)||+mn<0)e.min=1;if(mx===''||isNaN(+mx)||+mx<0)e.max=1;
+      if(!e.min&&!e.max&&+mn>+mx){e.min=e.max=1;msg='Minimum cannot be more than maximum'}
+      if(Object.keys(e).length)E.rows[i]=e});
+    if(E.t||E.p||Object.keys(E.rows).length){d.errs=E;renderPanel();showToast(msg||(E.t?'Choose a Type':E.p?'Choose a name':'Fill the highlighted fields'),'error');return}
+    const tl=(types.find(x=>x.k===d.type)||{l:d.typeLabel||d.type}).l,add=[],upd=[];
+    rows.forEach(({r})=>{const o={type:tl,name:d.party.text,item:r.item.text,min:+r.min,max:+r.max,status:'Active'};
+      if(d.id)upd.push(Object.assign({id:d.id},o));
+      else{const old=findRule(tl,o.name,o.item);if(old)upd.push(Object.assign({id:old.id},o));else add.push(o)}});
+    const btns=[...document.querySelectorAll('#ov3 [data-a="save"],#ov3 [data-a="saveadd"]')];btns.forEach(b=>b.disabled=true);
+    try{
+      if(add.length){const used=new Set(rules.map(x=>x.id));let t=Date.now();add.forEach(o=>{let id=tsId(t++);while(used.has(id))id=tsId(t++);used.add(id);o.id=id});await apost('addRateThreshold',{rows:add})}
+      if(upd.length)await apost('updateRateThreshold',{rows:upd});
+    }catch(e){btns.forEach(b=>b.disabled=false);showToast('Not saved: '+errText(e.message),'error');return}
+    await load();const n=add.length+upd.length;
+    showToast(n+' rate'+(n>1?'s':'')+(d.id||upd.length?' saved / updated':' saved')+' in the sheet','success');
+    if(another){const t=d.type;draft=blank(t);renderPanel();pcomb.focus()}else close()}
+
+  function init(){
+    $('rates-body').onclick=async e=>{
+      const c=e.target.closest('.chip[data-t]');if(c){ui.type=c.dataset.t;return render()}
+      const th=e.target.closest('th[data-s]');if(th){ui.asc=ui.sortKey===th.dataset.s?!ui.asc:true;ui.sortKey=th.dataset.s;return render()}
+      if(e.target.closest('[data-a="new"]'))return open();
+      const b=e.target.closest('button');if(!b)return;
+      if(b.dataset.e)open(b.dataset.e);
+      if(b.dataset.st){const r=rules.find(x=>x.id===b.dataset.st);if(!r)return;
+        try{await apost('setRateThresholdStatus',{ids:[r.id],status:r.status==='Active'?'Inactive':'Active'});await load();showToast('Status updated','success')}catch(er){showToast('Not updated: '+errText(er.message),'error')}return}
+      if(b.dataset.d){const id=b.dataset.d;
+        if(armed===id){armed=null;try{await apost('deleteRateThreshold',{ids:[id]});await load();showToast('Rate deleted from the sheet','success')}catch(er){showToast('Not deleted: '+errText(er.message),'error')}}
+        else{armed=id;clearTimeout(render._t);render._t=setTimeout(()=>{armed=null;render()},2800)}render()}};
+    $('ov3').addEventListener('click',e=>{
+      const c=e.target.closest('.chip[data-v]');if(c&&!c.disabled){draft.type=c.dataset.v;draft.party=null;draft.errs=null;renderPanel();pcomb.focus();return}
+      const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;
+      if(a==='close')close();
+      if(a==='addrow'){draft.rows.push({item:null,min:'',max:''});renderPanel();rcombs[rcombs.length-1].focus()}
+      if(a==='delrow'&&draft.rows.length>1){draft.rows.splice(+b.dataset.i,1);draft.errs=null;renderPanel()}
+      if(a==='save')saveDraft(false);if(a==='saveadd')saveDraft(true)});
+    $('ov3').addEventListener('input',e=>{const t=e.target;if(t.dataset&&t.dataset.f){draft.rows[+t.dataset.ri][t.dataset.f]=t.value;t.classList.remove('bad')}});
+    $('sync-ind').onclick=()=>sync(true);
+    if(AP2Api.onSession)AP2Api.onSession(()=>load());
+    if(AP2Api.startRetry)AP2Api.startRetry(()=>sync(false),()=>pending.length);
+    derive();setInd();render();load();setInterval(load,30000);
+  }
+  return{init,render,open,close,rows:r=>{cacheRows=r;derive();render();}};
+})();
+function closeRate(){RT.close();}
+
 const cache=AP2Cache.create({
   indicator:'cache-ind',
   toast:(m,t)=>showToast(m,t),
   title:()=>'Cache loaded · '+items.length+' items · '+parties.length+' names · '+suppliers.length+' suppliers',
-  onRows:rows=>{applyRows(rows);render();if($('ov').classList.contains('open')){fillTypes();fillNames();rOrders();}return items.length;}
+  onRows:rows=>{applyRows(rows);RT.rows(rows);render();if($('ov').classList.contains('open')){fillTypes();fillNames();rOrders();}return items.length;}
 });
 const f={extras:[],dir:'out',from:'',to:'',ptype:'',party:'',sel:new Set(),rates:{},disc:0,dt:'amt',vat:0};
 
@@ -1114,8 +1350,9 @@ function drift(b){const cur=agg(b.oids,b.dir),out=[];
 
 /* ═══ LIST ═══ */
 const TABS=[{k:'orders',label:'Unbilled',icon:'ti-file-description',title:'Unbilled orders'},{k:'all',label:'All bills',icon:'ti-list-details'},
-            {k:'out',label:'Outgoing',icon:'ti-arrow-up-right',title:'Outgoing bills'},{k:'in',label:'Incoming',icon:'ti-arrow-down-left',title:'Incoming bills'}];
-const SQ={orders:'',all:'',out:'',in:''};          // search text per tab
+            {k:'out',label:'Outgoing',icon:'ti-arrow-up-right',title:'Outgoing bills'},{k:'in',label:'Incoming',icon:'ti-arrow-down-left',title:'Incoming bills'},
+            {k:'rates',label:'Fix Rate',icon:'ti-adjustments-dollar',title:'Fix Rate'}];
+const SQ={orders:'',all:'',out:'',in:'',rates:''};          // search text per tab
 const V=()=>$(tab+'-body');
 const balOf=d=>r2(bills.filter(b=>b.dir===d).reduce((a,b)=>a+tb(b).total-paidOf(b),0));
 const kpiHTML=()=>`<div class="kpi"><div>To receive (outgoing)<b>${CUR} ${money(balOf('out'))}</b></div><div>To pay (incoming)<b>${CUR} ${money(balOf('in'))}</b></div><div>Bills<b>${bills.length}</b></div></div>`;
@@ -1124,7 +1361,7 @@ function drawNav(){
   $('tab-nav').innerHTML=TABS.map(t=>`<button class="tab-btn${tab===t.k?' active':''}" title="${esc(t.title||t.label)}" onclick="switchTop('${t.k}')"><i class="ti ${t.icon}"></i><span>${esc(t.label)}</span></button>`).join('');
 }
 function switchTop(k){
-  closeForm();closeView();
+  closeForm();closeView();closeRate();
   document.querySelectorAll('.hs.open').forEach(h=>h.classList.remove('open'));
   tab=k;drawNav();
   TABS.forEach(t=>$('tab-'+t.k).style.display=t.k===k?'flex':'none');
@@ -1144,8 +1381,7 @@ document.addEventListener('input',e=>{const i=e.target.closest('[data-sin]');if(
 document.addEventListener('keydown',e=>{if((e.key==='Escape'||e.key==='Enter')&&e.target.matches('.hs-in')){e.target.closest('.hs').classList.remove('open');e.target.blur();}});
 /* the New Bill / View Bill window is ONE panel that slides in from the right inside the tab that opened it */
 function mountPanel(id){
-  if(id==='ov'&&$('ov2').classList.contains('open'))closeView();
-  if(id==='ov2'&&$('ov').classList.contains('open'))closeForm();
+  [['ov',closeForm],['ov2',closeView],['ov3',closeRate]].forEach(([o,fn])=>{if(o!==id&&$(o).classList.contains('open'))fn();});
   const ov=$(id),host=$('tab-'+tab).querySelector('.main-split');
   if(ov.parentNode!==host){ov.classList.remove('open');host.appendChild(ov);}
   void ov.offsetWidth;ov.classList.add('open');
@@ -1156,6 +1392,7 @@ function render(){
   $('all-count').textContent=bills.length;
   $('out-count').textContent=bills.filter(b=>b.dir==='out').length;
   $('in-count').textContent=bills.filter(b=>b.dir==='in').length;
+  if(tab==='rates'){RT.render();return;}
   if(!allReady()){V().innerHTML=stateHTML();return;}
   const kpi=kpiHTML();
   const q=SQ[tab];
@@ -1372,8 +1609,8 @@ async function addPay(){const b=bills.find(x=>x.id===vid);if(!b||busy)return;con
   busy=true;try{await post('addPayment',{payment:{id:tsId(Date.now()),billId:vid,date:$('p-d').value||today(),amount:a,mode:$('p-m').value,ref:$('p-r').value.trim()}});await loadAll();showToast('Payment added','success');}
   catch(e){showToast('Not saved: '+errText(e.message),'error');}busy=false;}
 async function delPay(id){if(!confirm('Delete this payment?'))return;try{await post('deletePayment',{ids:[id]});await loadAll();}catch(e){showToast('Not deleted: '+errText(e.message),'error');}}
-document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if($('ov2').classList.contains('open'))closeView();else closeForm();});
-drawNav();switchTop('orders');cache.start();loadIDB();
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if($('ov3').classList.contains('open'))closeRate();else if($('ov2').classList.contains('open'))closeView();else closeForm();});
+RT.init();drawNav();switchTop('orders');cache.start();loadIDB();
 if(BILLS_BACKEND){watchBills();bootBills();setInterval(()=>{if(allReady()){applyFromIDB();if(LEDGER_BACKEND)applyLedgerFromIDB();}},15000);}   // safety net behind the subscription
 else{loadAll();setInterval(loadAll,30000);}
 setInterval(loadIDB,10000);
