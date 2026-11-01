@@ -1746,12 +1746,12 @@ async function waGo(){
   }
   waBusy=false;
 }
-/* Share: opens the WhatsApp chat to that number with the message (phones with file-sharing get the PDF attached directly) */
+/* Share: attaches the PDF through the device share sheet (desktop + phone) → pick WhatsApp. If file-sharing isn't supported, opens the chat to that number instead. */
 async function waShare(){
   if(!waFile)return;
-  const mobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  if(mobile&&navigator.canShare&&navigator.canShare({files:[waFile]})){
-    try{await navigator.share({files:[waFile],text:waMsg,title:waFile.name});return;}catch(e){if(e&&e.name==='AbortError')return;}
+  if(navigator.canShare&&navigator.canShare({files:[waFile]})){
+    try{await navigator.share({files:[waFile],text:waMsg,title:waFile.name});waSteps([['ok','PDF created'],['ok','Saved: '+$('wa-path').textContent],['ok','Shared — choose the contact +'+waNum+' in WhatsApp']]);return;}
+    catch(e){if(e&&e.name==='AbortError')return;}   // any other failure → fall back to the chat link below
   }
   window.open('https://wa.me/'+waNum+'?text='+encodeURIComponent(waMsg),'_blank');
   waSteps([['ok','PDF created'],['ok','Saved: '+$('wa-path').textContent],['ok','WhatsApp opened — attach the saved PDF (paperclip → Document)']]);
