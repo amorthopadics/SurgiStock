@@ -1649,7 +1649,7 @@ const WA_LOG='bills_wa_log_v1',WA_CC='bills_wa_cc_v1',WA_NUMS='bills_wa_nums_v1'
 let waId=null,waFile=null,waBusy=false,waNum='',waMsg='',waTok=0;
 const waJ=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
 const waW=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
-const waDB=()=>new Promise((res,rej)=>{const r=indexedDB.open('bills_wa',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
+const waDB=()=>new Promise((res,rej)=>{const r=indexedDB.open('bills_wa',2);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains('kv'))d.createObjectStore('kv');if(!d.objectStoreNames.contains('pdfs'))d.createObjectStore('pdfs');};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
 async function waKV(mode,key,val){const db=await waDB();return new Promise((res,rej)=>{const tx=db.transaction('kv',mode==='get'?'readonly':'readwrite'),st=tx.objectStore('kv'),q=mode==='get'?st.get(key):st.put(val,key);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});}
 const waSafe=t=>String(t||'').replace(/[\\/:*?"<>|\s]+/g,'_').replace(/^_+|_+$/g,'').slice(0,60);
 const waPartyKey=b=>norm(b.party);
@@ -1702,28 +1702,19 @@ async function waBuildPdf(b){
     return await html2pdf().set({margin:[8,8,8,8],image:{type:'jpeg',quality:.98},html2canvas:{scale:2.5,useCORS:true,backgroundColor:'#fff',windowWidth:733,scrollX:0,scrollY:0},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy'],avoid:['tr','.ibot','.sig']}}).from(host).outputPdf('blob');
   }finally{host.innerHTML='';ex.remove();if(old===null)host.removeAttribute('style');else host.setAttribute('style',old);}
 }
-async function waGetDir(){   // folder is chosen once and remembered; must run straight after the tap
-  if(!window.showDirectoryPicker)return null;
-  try{
-    let dir=await waKV('get','dir').catch(()=>null);
-    if(dir){let perm=await dir.queryPermission({mode:'readwrite'});if(perm!=='granted')perm=await dir.requestPermission({mode:'readwrite'});if(perm!=='granted')dir=null;}
-    if(!dir){dir=await window.showDirectoryPicker({id:'bills-wa',mode:'readwrite',startIn:'documents'});await waKV('put','dir',dir);}
-    return dir;
-  }catch(e){return null;}
+/* PDF is kept in the browser's own storage (IndexedDB) — no folder, no prompt. One entry per file name. */
+async function waSavePdf(blob,name,billId){
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
+  const db=await waDB();
+  await new Promise((res,rej)=>{const tx=db.transaction('pdfs','readwrite');tx.objectStore('pdfs').put({name,blob,billId,at:Date.now()},name);tx.oncomplete=res;tx.onerror=()=>rej(tx.error||new Error('Browser storage is full or blocked'));tx.onabort=()=>rej(tx.error||new Error('Browser storage is full or blocked'));});
+  return{where:'browser',path:'Browser storage › '+name};
 }
-async function waSavePdf(blob,name,dir){
-  if(dir){try{const fh=await dir.getFileHandle(name,{create:true}),w=await fh.createWritable();await w.write(blob);await w.close();return{where:'folder',path:dir.name+'/'+name};}catch(e){}}
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),20000);
-  return{where:'downloads',path:'Downloads/'+name};
-}
-/* Continue: number → build + save automatically → result window (nothing opens in WhatsApp yet) */
+/* Continue: number → build + save to browser storage automatically → result window (nothing opens in WhatsApp yet) */
 async function waGo(){
   if(waBusy)return;const b=bills.find(x=>x.id===waId);if(!b)return;
   const cc=$('wa-cc').value,num=waNormalize(cc,$('wa-num').value);
   if(num.length<9||num.length>15){showToast('Enter a valid WhatsApp number','error');$('wa-num').focus();return;}
   waBusy=true;const tok=waTok;
-  const dir=await waGetDir();                       // first time only: pick the save folder
-  if(tok!==waTok)return;
   const os=b.oids.map(i=>orders.find(o=>o.id===i)).filter(Boolean),no=invNo(b,os);
   const name='Invoice_'+waSafe(no)+'_'+waSafe(b.party)+'.pdf';
   const S=[['run','Creating PDF…'],['','Saving file'],['','Ready to share']];
@@ -1731,8 +1722,8 @@ async function waGo(){
   try{
     const blob=await waBuildPdf(b);if(tok!==waTok)return;
     if(blob.size<3000)throw new Error('PDF came out empty — please try again');
-    S[0]=['ok','PDF created ('+Math.round(blob.size/1024)+' KB)'];S[1]=['run','Saving file…'];waSteps(S);
-    const saved=await waSavePdf(blob,name,dir);if(tok!==waTok)return;
+    S[0]=['ok','PDF created ('+Math.round(blob.size/1024)+' KB)'];S[1]=['run','Saving in browser storage…'];waSteps(S);
+    const saved=await waSavePdf(blob,name,b.id);if(tok!==waTok)return;
     waFile=new File([blob],name,{type:'application/pdf'});waNum=num;waMsg=waMessage(b,no);
     S[1]=['ok','Saved: '+saved.path];S[2]=['ok','Ready — tap Share'];waSteps(S);
     $('wa-path').textContent=saved.path;$('wa-path').style.display='block';
