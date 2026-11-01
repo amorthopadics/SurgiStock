@@ -723,7 +723,12 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 .wa-f{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--border);justify-content:flex-end}
 .btn.wa-go{background:#25d366;border-color:#25d366;color:#04230f}
 .btn.wa-go:disabled{opacity:.5;cursor:not-allowed}
-.wa-hist{font-size:11.5px;color:var(--text3)}
+.wa-hist{font-size:11.5px;color:var(--text3);margin-top:4px}
+.wa-act{display:flex;justify-content:center;gap:30px;padding:4px 0 2px}
+.wa-act>div{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.wa-circ{width:58px;height:58px;border-radius:50%;border:1.5px solid var(--border2);background:var(--bg3);color:var(--text);font-size:25px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .12s,filter .12s}
+.wa-circ:hover{filter:brightness(1.12);transform:scale(1.05)}
+.wa-circ.share{background:#25d366;border-color:#25d366;color:#04230f}
 /* ── print: only the bill ── */
 #pr,#pr *,#pv,#pv *{color:#000!important;background:#fff!important;font-family:Arial,sans-serif}
 #pr{padding:6mm 8mm;font-size:12px}
@@ -888,21 +893,24 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 </div>
 <!-- WHATSAPP SEND -->
 <div class="wa-ov" id="wa-ov" role="dialog" aria-modal="true" aria-labelledby="wa-title"><div class="wa-box">
-  <div class="wa-h"><i class="ti ti-brand-whatsapp lg"></i><span id="wa-title">Send bill on WhatsApp</span><button type="button" class="ib x" aria-label="Close" onclick="waClose()"><i class="ti ti-x"></i></button></div>
-  <div class="wa-b">
-    <div class="wa-sum" id="wa-sum"></div>
-    <div><label for="wa-num">WhatsApp number</label>
-      <div class="wa-row"><select id="wa-cc" aria-label="Country code"><option value="92">+92 PK</option><option value="971">+971 UAE</option><option value="91">+91 IN</option><option value="966">+966 KSA</option><option value="968">+968 OM</option><option value="974">+974 QA</option><option value="44">+44 UK</option><option value="1">+1 US/CA</option></select>
-      <input id="wa-num" type="tel" inputmode="tel" autocomplete="off" placeholder="300 1234567"/></div>
-      <div class="wa-hist" id="wa-hist"></div></div>
-    <div><label for="wa-msg">Message</label><textarea id="wa-msg"></textarea></div>
-    <div class="wa-steps" id="wa-steps"></div>
-    <div class="wa-path" id="wa-path" style="display:none"></div>
+  <div class="wa-h"><i class="ti ti-brand-whatsapp lg"></i><span id="wa-title">Send bill on WhatsApp</span></div>
+  <div id="wa-form">
+    <div class="wa-b">
+      <div class="wa-sum" id="wa-sum"></div>
+      <div><label for="wa-num">WhatsApp number</label>
+        <div class="wa-row"><select id="wa-cc" aria-label="Country code"><option value="92">+92 PK</option><option value="971">+971 UAE</option><option value="91">+91 IN</option><option value="966">+966 KSA</option><option value="968">+968 OM</option><option value="974">+974 QA</option><option value="44">+44 UK</option><option value="1">+1 US/CA</option></select>
+        <input id="wa-num" type="tel" inputmode="tel" autocomplete="off" placeholder="300 1234567" onkeydown="if(event.key==='Enter')waGo()"/></div>
+        <div class="wa-hist" id="wa-hist"></div></div>
+    </div>
+    <div class="wa-f"><button type="button" class="btn" onclick="waClose()">Cancel</button><button type="button" class="btn wa-go" onclick="waGo()"><i class="ti ti-arrow-right"></i>Continue</button></div>
   </div>
-  <div class="wa-f"><button type="button" class="btn" onclick="waClose()">Close</button>
-    <button type="button" class="btn" id="wa-open" style="display:none" onclick="if(waUrl)window.open(waUrl,'_blank')"><i class="ti ti-file-type-pdf"></i>Preview PDF</button>
-    <button type="button" class="btn" id="wa-share" style="display:none" onclick="waShareFile()"><i class="ti ti-share"></i>Share file</button>
-    <button type="button" class="btn wa-go" id="wa-go" onclick="waSend()"><i class="ti ti-brand-whatsapp"></i>Create PDF &amp; send</button></div>
+  <div id="wa-res" style="display:none">
+    <div class="wa-b"><div class="wa-steps" id="wa-steps"></div><div class="wa-path" id="wa-path" style="display:none"></div></div>
+    <div class="wa-b wa-act" id="wa-act" style="display:none">
+      <div><button type="button" class="wa-circ" title="Close" aria-label="Close" onclick="waClose()"><i class="ti ti-x"></i></button>Close</div>
+      <div id="wa-sh"><button type="button" class="wa-circ share" title="Share" aria-label="Share" onclick="waShare()"><i class="ti ti-share"></i></button>Share</div>
+    </div>
+  </div>
 </div></div>
 <div id="pr"></div>
 <div class="toast" id="toast" role="alert"><i id="toast-icon" class="ti ti-circle-check"></i><span id="toast-msg">Saved</span></div>
@@ -1636,12 +1644,11 @@ function printBill(id){const b=bills.find(x=>x.id===id);if(!b)return;const w=win
     if(USE_BACKEND&&b.oids.some(x=>!orders.some(o=>o.id===x))){try{const o=await Promise.race([AP2Api.get('orders'),new Promise((_,r)=>setTimeout(r,6000))]);orders=groupOrders(o.Orders||[]);}catch(e){}}
   const ft=[[CO_PHONE&&'Ph: '+CO_PHONE,CO_EMAIL&&'Email: '+CO_EMAIL].filter(Boolean).join(' ')].filter(Boolean).map(esc).join('<br>');
   $('pr').innerHTML=docHTML(b).replace(/<\/div>$/,'')+`<div class="sig"><span>Prepared by</span><span>Received by</span><div style="width:30%;text-align:center">${CO_STAMP?`<img src="${esc(CO_STAMP)}" alt="">`:''}<span style="display:block;width:100%">Authorized Signature &amp; Stamp</span></div></div><div class="ift"><b>Thank you for your business. ${esc(CO)}</b><br>${ft}</div></div>`;openPrint('Bill '+(b.no||''),w);})();}
-/* ═══ WHATSAPP SEND — number prompt → PDF → saved to folder (path logged) → WhatsApp chat opens with the message ═══ */
+/* ═══ WHATSAPP SEND — number → PDF (same layout as Print) saved + path logged → result window → Share opens WhatsApp ═══ */
 const WA_LOG='bills_wa_log_v1',WA_CC='bills_wa_cc_v1',WA_NUMS='bills_wa_nums_v1';
-let waId=null,waFile=null,waBusy=false,waUrl=null;
+let waId=null,waFile=null,waBusy=false,waNum='',waMsg='',waTok=0;
 const waJ=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
 const waW=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
-/* remembered save-folder handle (File System Access API) lives in IndexedDB */
 const waDB=()=>new Promise((res,rej)=>{const r=indexedDB.open('bills_wa',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
 async function waKV(mode,key,val){const db=await waDB();return new Promise((res,rej)=>{const tx=db.transaction('kv',mode==='get'?'readonly':'readwrite'),st=tx.objectStore('kv'),q=mode==='get'?st.get(key):st.put(val,key);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});}
 const waSafe=t=>String(t||'').replace(/[\\/:*?"<>|\s]+/g,'_').replace(/^_+|_+$/g,'').slice(0,60);
@@ -1655,34 +1662,47 @@ function waNormalize(cc,raw){
   return cc+d.replace(/^0+/,'');
 }
 function waSteps(list){$('wa-steps').innerHTML=list.map(([c,t])=>`<div class="${c}"><i class="ti ${c==='ok'?'ti-circle-check':c==='err'?'ti-alert-circle':c==='run'?'ti-loader-2':'ti-circle'}"></i><span>${esc(t)}</span></div>`).join('');}
+/* compact message: total · what was received (date · method · amount) · paid · balance */
+function waMessage(b,no){
+  const t=tb(b),p=paidOf(b),bal=r2(t.total-p),ps=pays.filter(x=>x.billId===b.id),al=allocList(b);
+  const rec=[...ps.map(x=>({d:x.date,m:(x.mode||'Payment')+(x.ref?' ('+x.ref+')':''),a:+x.amount})),...al.map(x=>({d:x.date,m:'Receipt '+x.rno,a:+x.amount}))].filter(x=>x.a);
+  const L=['Hello '+b.party+',','',(b.dir==='out'?'Invoice ':'Bill ')+'*'+no+'* · '+b.date,'Total: *'+CUR+' '+money(t.total)+'*'];
+  if(rec.length){L.push('Paid: *'+CUR+' '+money(p)+'*');rec.slice(0,4).forEach(x=>L.push('• '+x.d+' · '+x.m+' · '+money(x.a)));if(rec.length>4)L.push('• +'+(rec.length-4)+' more');}
+  L.push(bal>.005?'Balance due: *'+CUR+' '+money(bal)+'*':'Status: *Paid in full* ✅');
+  L.push('','Thank you,',CO+(CO_PHONE?' · '+CO_PHONE:''));
+  return L.join('\n');
+}
 function waOpen(id){
-  const b=bills.find(x=>x.id===id);if(!b)return;waId=id;waFile=null;
+  const b=bills.find(x=>x.id===id);if(!b)return;waId=id;waFile=null;waTok++;waBusy=false;
   const t=tb(b),p=paidOf(b),os=b.oids.map(i=>orders.find(o=>o.id===i)).filter(Boolean),no=invNo(b,os),bal=r2(t.total-p);
   $('wa-sum').innerHTML='<b>'+esc(no)+'</b> · '+esc(b.party)+' · '+esc(b.date)+'<br>Total '+esc(CUR)+' '+money(t.total)+' · Balance '+esc(CUR)+' '+money(bal);
   $('wa-cc').value=waJ(WA_CC,'92');
   const saved=waJ(WA_NUMS,{})[waPartyKey(b)]||'';$('wa-num').value=saved;
   const lg=waJ(WA_LOG,[]).filter(x=>x.billId===id);
   $('wa-hist').textContent=lg.length?'Last sent to +'+lg[0].number+' on '+new Date(lg[0].at).toLocaleString():(saved?'Number remembered for this party':'');
-  $('wa-msg').value='Hello '+b.party+',\n\nPlease find attached '+(b.dir==='out'?'invoice ':'bill ')+no+' dated '+b.date+'.\nTotal: '+CUR+' '+money(t.total)+(bal>.005?'\nBalance due: '+CUR+' '+money(bal):'\nStatus: Paid')+'\n\nThank you,\n'+CO+(CO_PHONE?'\n'+CO_PHONE:'');
-  $('wa-path').style.display='none';$('wa-share').style.display='none';$('wa-open').style.display='none';waUrl=null;waSteps([]);
-  $('wa-go').disabled=false;$('wa-go').innerHTML='<i class="ti ti-brand-whatsapp"></i>Create PDF &amp; send';
+  $('wa-form').style.display='';$('wa-res').style.display='none';$('wa-act').style.display='none';$('wa-path').style.display='none';
   $('wa-ov').classList.add('open');setTimeout(()=>$('wa-num').focus(),50);
 }
-function waClose(){$('wa-ov').classList.remove('open');waId=null;}
+function waClose(){waTok++;waBusy=false;$('wa-ov').classList.remove('open');waId=null;}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('wa-ov').classList.contains('open'))waClose();});
+
+/* PDF = the SAME document the Print button produces (same markup, same CSS, A4 with 8 mm margins) */
 async function waBuildPdf(b){
   if(typeof html2pdf==='undefined')throw new Error('PDF library not loaded (check internet)');
   if(USE_BACKEND&&b.oids.some(x=>!orders.some(o=>o.id===x))){try{const o=await Promise.race([AP2Api.get('orders'),new Promise((_,r)=>setTimeout(r,6000))]);orders=groupOrders(o.Orders||[]);}catch(e){}}
   const ft=[[CO_PHONE&&'Ph: '+CO_PHONE,CO_EMAIL&&'Email: '+CO_EMAIL].filter(Boolean).join(' ')].filter(Boolean).map(esc).join('<br>');
   const host=$('pr'),old=host.getAttribute('style');
+  const ex=document.createElement('style');   // the extra rules printBill's window adds (totals box layout) — missing before
+  ex.textContent='#pr .inv .tot div{display:flex;justify-content:space-between;padding:3px 0}#pr .inv .tot .g{font-weight:700}#pr .inv .tot b{font-weight:700}#pr .inv .pay b{display:block}';
+  document.head.appendChild(ex);
   host.innerHTML=docHTML(b).replace(/<\/div>$/,'')+`<div class="sig"><span>Prepared by</span><span>Received by</span><div style="width:30%;text-align:center">${CO_STAMP?`<img src="${esc(CO_STAMP)}" alt="">`:''}<span style="display:block;width:100%">Authorized Signature &amp; Stamp</span></div></div><div class="ift"><b>Thank you for your business. ${esc(CO)}</b><br>${ft}</div></div>`;
-  host.setAttribute('style','display:block;width:794px;background:#fff;overflow:visible');window.scrollTo(0,0);
+  host.setAttribute('style','display:block;box-sizing:border-box;width:733px;background:#fff;overflow:visible');window.scrollTo(0,0);   // 733px = A4 width minus 2×8 mm → 1:1 with print
   try{
     await new Promise(r=>setTimeout(r,400));
-    return await html2pdf().set({margin:[8,8,8,8],image:{type:'jpeg',quality:.95},html2canvas:{scale:2,useCORS:true,backgroundColor:'#fff',windowWidth:794,scrollX:0,scrollY:0},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy'],avoid:['tr','.ibot','.sig']}}).from(host).outputPdf('blob');
-  }finally{host.innerHTML='';if(old===null)host.removeAttribute('style');else host.setAttribute('style',old);}
+    return await html2pdf().set({margin:[8,8,8,8],image:{type:'jpeg',quality:.98},html2canvas:{scale:2.5,useCORS:true,backgroundColor:'#fff',windowWidth:733,scrollX:0,scrollY:0},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy'],avoid:['tr','.ibot','.sig']}}).from(host).outputPdf('blob');
+  }finally{host.innerHTML='';ex.remove();if(old===null)host.removeAttribute('style');else host.setAttribute('style',old);}
 }
-/* folder is picked once and remembered; must run right after the tap so the browser allows the prompt */
-async function waGetDir(){
+async function waGetDir(){   // folder is chosen once and remembered; must run straight after the tap
   if(!window.showDirectoryPicker)return null;
   try{
     let dir=await waKV('get','dir').catch(()=>null);
@@ -1692,40 +1712,49 @@ async function waGetDir(){
   }catch(e){return null;}
 }
 async function waSavePdf(blob,name,dir){
-  if(dir){
-    try{const fh=await dir.getFileHandle(name,{create:true}),w=await fh.createWritable();await w.write(blob);await w.close();return{where:'folder',path:dir.name+'/'+name};}catch(e){}
-  }
+  if(dir){try{const fh=await dir.getFileHandle(name,{create:true}),w=await fh.createWritable();await w.write(blob);await w.close();return{where:'folder',path:dir.name+'/'+name};}catch(e){}}
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),20000);
   return{where:'downloads',path:'Downloads/'+name};
 }
-async function waSend(){
+/* Continue: number → build + save automatically → result window (nothing opens in WhatsApp yet) */
+async function waGo(){
   if(waBusy)return;const b=bills.find(x=>x.id===waId);if(!b)return;
   const cc=$('wa-cc').value,num=waNormalize(cc,$('wa-num').value);
   if(num.length<9||num.length>15){showToast('Enter a valid WhatsApp number','error');$('wa-num').focus();return;}
-  waBusy=true;$('wa-go').disabled=true;
-  const dir=await waGetDir();
+  waBusy=true;const tok=waTok;
+  const dir=await waGetDir();                       // first time only: pick the save folder
+  if(tok!==waTok)return;
   const os=b.oids.map(i=>orders.find(o=>o.id===i)).filter(Boolean),no=invNo(b,os);
   const name='Invoice_'+waSafe(no)+'_'+waSafe(b.party)+'.pdf';
-  const S=[['run','Creating PDF…'],['','Saving file'],['','Opening WhatsApp']];waSteps(S);
+  const S=[['run','Creating PDF…'],['','Saving file'],['','Ready to share']];
+  $('wa-form').style.display='none';$('wa-res').style.display='';$('wa-act').style.display='none';$('wa-path').style.display='none';waSteps(S);
   try{
-    const blob=await waBuildPdf(b);if(blob.size<3000)throw new Error('PDF came out empty — please try again');S[0]=['ok','PDF created ('+Math.round(blob.size/1024)+' KB)'];waUrl=URL.createObjectURL(blob);$('wa-open').style.display='inline-flex';S[1]=['run','Saving file…'];waSteps(S);
-    const file=new File([blob],name,{type:'application/pdf'}),saved=await waSavePdf(blob,name,dir);
-    waFile=file;S[1]=['ok','Saved: '+saved.path];waSteps(S);
+    const blob=await waBuildPdf(b);if(tok!==waTok)return;
+    if(blob.size<3000)throw new Error('PDF came out empty — please try again');
+    S[0]=['ok','PDF created ('+Math.round(blob.size/1024)+' KB)'];S[1]=['run','Saving file…'];waSteps(S);
+    const saved=await waSavePdf(blob,name,dir);if(tok!==waTok)return;
+    waFile=new File([blob],name,{type:'application/pdf'});waNum=num;waMsg=waMessage(b,no);
+    S[1]=['ok','Saved: '+saved.path];S[2]=['ok','Ready — tap Share'];waSteps(S);
     $('wa-path').textContent=saved.path;$('wa-path').style.display='block';
     waW(WA_CC,cc);const nums=waJ(WA_NUMS,{});nums[waPartyKey(b)]=$('wa-num').value.trim();waW(WA_NUMS,nums);
     const log=waJ(WA_LOG,[]);log.unshift({billId:b.id,billNo:no,party:b.party,number:num,file:name,path:saved.path,where:saved.where,at:Date.now()});waW(WA_LOG,log.slice(0,300));
-    const msg=$('wa-msg').value,canFile=!!(navigator.canShare&&navigator.canShare({files:[file]}));
-    if(canFile)$('wa-share').style.display='inline-flex';
-    window.open('https://wa.me/'+num+'?text='+encodeURIComponent(msg),'_blank');
-    S[2]=['ok',canFile?'WhatsApp opened — tap “Share file” to attach the PDF':'WhatsApp opened — attach the saved PDF (paperclip → Document)'];waSteps(S);
-    $('wa-go').innerHTML='<i class="ti ti-refresh"></i>Send again';
-  }catch(e){const i=S.findIndex(x=>x[0]==='run'||x[0]==='');S[i<0?0:i]=['err',(e&&e.message)||'Failed'];waSteps(S);showToast('WhatsApp send failed: '+((e&&e.message)||e),'error');}
-  waBusy=false;$('wa-go').disabled=false;
+    $('wa-sh').style.display='';$('wa-act').style.display='flex';
+  }catch(e){
+    if(tok!==waTok)return;
+    const i=S.findIndex(x=>x[0]==='run'||x[0]==='');S[i<0?0:i]=['err',(e&&e.message)||'Failed'];waSteps(S);
+    $('wa-sh').style.display='none';$('wa-act').style.display='flex';
+  }
+  waBusy=false;
 }
-async function waShareFile(){
+/* Share: opens the WhatsApp chat to that number with the message (phones with file-sharing get the PDF attached directly) */
+async function waShare(){
   if(!waFile)return;
-  try{await navigator.share({files:[waFile],text:$('wa-msg').value,title:waFile.name});}
-  catch(e){if(e&&e.name!=='AbortError')showToast('Share failed: '+e.message,'error');}
+  const mobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if(mobile&&navigator.canShare&&navigator.canShare({files:[waFile]})){
+    try{await navigator.share({files:[waFile],text:waMsg,title:waFile.name});return;}catch(e){if(e&&e.name==='AbortError')return;}
+  }
+  window.open('https://wa.me/'+waNum+'?text='+encodeURIComponent(waMsg),'_blank');
+  waSteps([['ok','PDF created'],['ok','Saved: '+$('wa-path').textContent],['ok','WhatsApp opened — attach the saved PDF (paperclip → Document)']]);
 }
 function viewBill(id){const b=bills.find(x=>x.id===id);if(!b)return;vid=id;const t=tb(b),p=paidOf(b),dr=drift(b),ps=pays.filter(x=>x.billId===id),s=stOf(b),al=allocList(b);
   $('v-title').innerHTML=esc(b.no)+' <span class="badge '+s[0]+'">'+s[1]+'</span>';
