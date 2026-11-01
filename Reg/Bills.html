@@ -13,6 +13,7 @@
 <script src="https://amorthopadics.github.io/SurgiStock/shared/auth.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/accessGuard.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/permGate.js?v=1"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/syncQueue.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/dataLayer.js"></script>
 <style>
 /* ═══ THEME — keep identical across every module ═══ */
@@ -1631,6 +1632,16 @@ PermGate.init({
     { sel:'#rates-body [data-e],#rates-body [data-st],#rates-body [data-d]', need:'ap2_rateThreshold:editDelete' },
     { sel:'#ov3 [data-a="save"],#ov3 [data-a="saveadd"]',     need:'ap2_rateThreshold:add|ap2_rateThreshold:editDelete' }
   ]
+});
+</script>
+<script>
+/* shared/syncQueue.js — offline hold & sync + cache / sync buttons */
+AP2Sync.init({
+  key:'bills',
+  queue:['addPayment','deletePayment','addRateThreshold','updateRateThreshold','setRateThresholdStatus','deleteRateThreshold'],
+  online:['addBill','deleteBill','addCharges','reverseBill'],   /* server-numbered / multi-step → need the network */
+  extraPending:()=>{ try{ return (JSON.parse(localStorage.getItem('bills_rate_pending_rows_v1'))||[]).length; }catch(e){ return 0; } },
+  onSynced:()=>loadAll()
 });
 </script>
 </body>

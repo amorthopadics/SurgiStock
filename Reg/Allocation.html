@@ -12,6 +12,7 @@
 <script src="https://amorthopadics.github.io/SurgiStock/shared/auth.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/accessGuard.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/permGate.js?v=1"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/syncQueue.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/dataLayer.js"></script>
 <style>
 :root,[data-theme="dark"]{color-scheme:dark;--bg:#0d1117;--bg2:#161b22;--bg3:#1c2333;--surface:#21262d;--border:#30363d;--border2:#444c56;--text:#e6edf3;--text2:#8b949e;--accent:#58a6ff;--accent-dim:rgba(88,166,255,.12);--teal:#39d353;--teal-dim:rgba(57,211,83,.12);--amber:#e3b341;--red:#f85149;--orange:#f0883e;--orange-dim:rgba(240,136,62,.12);--radius:8px;--radius-lg:12px;--font:'Sora',sans-serif;--mono:'JetBrains Mono',monospace}
@@ -294,6 +295,16 @@ PermGate.init({
     { sel:'[onclick^="syncBills("]',   need:'add',            fn:'syncBills' },   /* Sync bills → charges */
     { sel:'[onclick^="rev("]',         need:'add&editDelete', fn:'rev' }          /* Reverse an allocation */
   ]
+});
+</script>
+<script>
+/* shared/syncQueue.js — offline hold & sync + cache / sync buttons */
+AP2Sync.init({
+  key:'allocation',
+  queue:[],                                     /* allocation depends on the live ledger → needs the network */
+  online:['addCharges','addAllocations','reverseBill'],
+  state:()=> ready() ? {state:'ok',title:'Cache loaded · Ledger'} : (S.state==='error' ? {state:'err',title:'Cache error — '+S.err} : {state:'warn',title:'Cache: waiting…'}),
+  refresh:()=>{ S.booting=false; SV.forEach(applyFromIDB); }
 });
 </script>
 </body>
