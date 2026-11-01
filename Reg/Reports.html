@@ -11,6 +11,7 @@
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheSync.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/auth.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/accessGuard.js"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/permGate.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/dataLayer.js"></script>
 <style>
 :root,[data-theme="dark"]{color-scheme:dark;--bg:#0d1117;--bg2:#161b22;--bg3:#1c2333;--surface:#21262d;--border:#30363d;--border2:#444c56;--text:#e6edf3;--text2:#8b949e;--accent:#58a6ff;--accent-dim:rgba(88,166,255,.12);--teal:#39d353;--teal-dim:rgba(57,211,83,.12);--amber:#e3b341;--red:#f85149;--orange:#f0883e;--orange-dim:rgba(240,136,62,.12);--radius:8px;--radius-lg:12px;--font:'Sora',sans-serif;--mono:'JetBrains Mono',monospace}
@@ -265,6 +266,15 @@ if(USE_BACKEND){
  document.addEventListener('visibilitychange',()=>{if(document.hidden)return;if(!ready()&&!ST.booting)bootAll();else SV.forEach(applyFromIDB);});
  watchSrc();bootAll();setInterval(()=>{if(ready())SV.forEach(applyFromIDB);},15000);   // safety net behind the subscription
 }else load();
+</script>
+<script>
+/* shared/permGate.js — front-end permission gate: disables denied buttons, blocks denied clicks and shows the "Permission not granted" label */
+PermGate.init({
+  dataset:'ap2_ledger',
+  controls:[
+    { sel:'[onclick^="bk("],[onclick^="csv("]', need:'view', fn:['bk','csv'] }   /* read-only page: only export buttons */
+  ]
+});
 </script>
 </body>
 </html>

@@ -12,6 +12,7 @@
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheSync.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/auth.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/accessGuard.js"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/permGate.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/dataLayer.js"></script>
 <style>
 /* ═══ THEME — keep identical across every module ═══ */
@@ -1614,6 +1615,23 @@ RT.init();drawNav();switchTop('orders');cache.start();loadIDB();
 if(BILLS_BACKEND){watchBills();bootBills();setInterval(()=>{if(allReady()){applyFromIDB();if(LEDGER_BACKEND)applyLedgerFromIDB();}},15000);}   // safety net behind the subscription
 else{loadAll();setInterval(loadAll,30000);}
 setInterval(loadIDB,10000);
+</script>
+<script>
+/* shared/permGate.js — front-end permission gate: disables denied buttons, blocks denied clicks and shows the "Permission not granted" label */
+PermGate.init({
+  dataset:'ap2_bills',
+  controls:[
+    /* bills — creating a bill also writes its charges to the ledger */
+    { sel:'[onclick^="billOne("],[onclick^="billThese("],[onclick^="saveBill("]', need:'ap2_bills:add&ap2_ledger:add', fn:['billOne','billThese','saveBill'] },
+    { sel:'[onclick^="delBill("]',  need:'ap2_bills:editDelete&ap2_ledger:editDelete', fn:'delBill' },   /* delete reverses the ledger first */
+    { sel:'[onclick^="addPay("]',   need:'add',        fn:'addPay' },
+    { sel:'[onclick^="delPay("]',   need:'editDelete', fn:'delPay' },
+    /* rate threshold */
+    { sel:'[data-a="new"]',                                   need:'ap2_rateThreshold:add' },
+    { sel:'#rates-body [data-e],#rates-body [data-st],#rates-body [data-d]', need:'ap2_rateThreshold:editDelete' },
+    { sel:'#ov3 [data-a="save"],#ov3 [data-a="saveadd"]',     need:'ap2_rateThreshold:add|ap2_rateThreshold:editDelete' }
+  ]
+});
 </script>
 </body>
 </html>
