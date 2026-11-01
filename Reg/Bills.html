@@ -900,6 +900,7 @@ select.date-input option{background:var(--surface2);color:var(--text);}
     <div class="wa-path" id="wa-path" style="display:none"></div>
   </div>
   <div class="wa-f"><button type="button" class="btn" onclick="waClose()">Close</button>
+    <button type="button" class="btn" id="wa-open" style="display:none" onclick="if(waUrl)window.open(waUrl,'_blank')"><i class="ti ti-file-type-pdf"></i>Preview PDF</button>
     <button type="button" class="btn" id="wa-share" style="display:none" onclick="waShareFile()"><i class="ti ti-share"></i>Share file</button>
     <button type="button" class="btn wa-go" id="wa-go" onclick="waSend()"><i class="ti ti-brand-whatsapp"></i>Create PDF &amp; send</button></div>
 </div></div>
@@ -1637,7 +1638,7 @@ function printBill(id){const b=bills.find(x=>x.id===id);if(!b)return;const w=win
   $('pr').innerHTML=docHTML(b).replace(/<\/div>$/,'')+`<div class="sig"><span>Prepared by</span><span>Received by</span><div style="width:30%;text-align:center">${CO_STAMP?`<img src="${esc(CO_STAMP)}" alt="">`:''}<span style="display:block;width:100%">Authorized Signature &amp; Stamp</span></div></div><div class="ift"><b>Thank you for your business. ${esc(CO)}</b><br>${ft}</div></div>`;openPrint('Bill '+(b.no||''),w);})();}
 /* ═══ WHATSAPP SEND — number prompt → PDF → saved to folder (path logged) → WhatsApp chat opens with the message ═══ */
 const WA_LOG='bills_wa_log_v1',WA_CC='bills_wa_cc_v1',WA_NUMS='bills_wa_nums_v1';
-let waId=null,waFile=null,waBusy=false;
+let waId=null,waFile=null,waBusy=false,waUrl=null;
 const waJ=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
 const waW=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 /* remembered save-folder handle (File System Access API) lives in IndexedDB */
@@ -1663,7 +1664,7 @@ function waOpen(id){
   const lg=waJ(WA_LOG,[]).filter(x=>x.billId===id);
   $('wa-hist').textContent=lg.length?'Last sent to +'+lg[0].number+' on '+new Date(lg[0].at).toLocaleString():(saved?'Number remembered for this party':'');
   $('wa-msg').value='Hello '+b.party+',\n\nPlease find attached '+(b.dir==='out'?'invoice ':'bill ')+no+' dated '+b.date+'.\nTotal: '+CUR+' '+money(t.total)+(bal>.005?'\nBalance due: '+CUR+' '+money(bal):'\nStatus: Paid')+'\n\nThank you,\n'+CO+(CO_PHONE?'\n'+CO_PHONE:'');
-  $('wa-path').style.display='none';$('wa-share').style.display='none';waSteps([]);
+  $('wa-path').style.display='none';$('wa-share').style.display='none';$('wa-open').style.display='none';waUrl=null;waSteps([]);
   $('wa-go').disabled=false;$('wa-go').innerHTML='<i class="ti ti-brand-whatsapp"></i>Create PDF &amp; send';
   $('wa-ov').classList.add('open');setTimeout(()=>$('wa-num').focus(),50);
 }
@@ -1674,22 +1675,25 @@ async function waBuildPdf(b){
   const ft=[[CO_PHONE&&'Ph: '+CO_PHONE,CO_EMAIL&&'Email: '+CO_EMAIL].filter(Boolean).join(' ')].filter(Boolean).map(esc).join('<br>');
   const host=$('pr'),old=host.getAttribute('style');
   host.innerHTML=docHTML(b).replace(/<\/div>$/,'')+`<div class="sig"><span>Prepared by</span><span>Received by</span><div style="width:30%;text-align:center">${CO_STAMP?`<img src="${esc(CO_STAMP)}" alt="">`:''}<span style="display:block;width:100%">Authorized Signature &amp; Stamp</span></div></div><div class="ift"><b>Thank you for your business. ${esc(CO)}</b><br>${ft}</div></div>`;
-  host.setAttribute('style','display:block;position:fixed;left:-10000px;top:0;width:794px;background:#fff');
+  host.setAttribute('style','display:block;width:794px;background:#fff;overflow:visible');window.scrollTo(0,0);
   try{
-    await new Promise(r=>setTimeout(r,150));
-    return await html2pdf().set({margin:[8,8,8,8],image:{type:'jpeg',quality:.95},html2canvas:{scale:2,useCORS:true,backgroundColor:'#fff',windowWidth:794},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy'],avoid:['tr','.ibot','.sig']}}).from(host).outputPdf('blob');
+    await new Promise(r=>setTimeout(r,400));
+    return await html2pdf().set({margin:[8,8,8,8],image:{type:'jpeg',quality:.95},html2canvas:{scale:2,useCORS:true,backgroundColor:'#fff',windowWidth:794,scrollX:0,scrollY:0},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy'],avoid:['tr','.ibot','.sig']}}).from(host).outputPdf('blob');
   }finally{host.innerHTML='';if(old===null)host.removeAttribute('style');else host.setAttribute('style',old);}
 }
-/* returns {where, path} — chosen folder via File System Access API when available, otherwise the browser's Downloads */
-async function waSavePdf(blob,name){
-  if(window.showDirectoryPicker){
-    try{
-      let dir=await waKV('get','dir').catch(()=>null);
-      if(dir){let perm=await dir.queryPermission({mode:'readwrite'});if(perm!=='granted')perm=await dir.requestPermission({mode:'readwrite'});if(perm!=='granted')dir=null;}
-      if(!dir){dir=await window.showDirectoryPicker({id:'bills-wa',mode:'readwrite',startIn:'documents'});await waKV('put','dir',dir);}
-      const fh=await dir.getFileHandle(name,{create:true}),w=await fh.createWritable();await w.write(blob);await w.close();
-      return{where:'folder',path:dir.name+'/'+name};
-    }catch(e){if(e&&e.name==='AbortError')throw new Error('Save folder not chosen');/* else fall through to download */}
+/* folder is picked once and remembered; must run right after the tap so the browser allows the prompt */
+async function waGetDir(){
+  if(!window.showDirectoryPicker)return null;
+  try{
+    let dir=await waKV('get','dir').catch(()=>null);
+    if(dir){let perm=await dir.queryPermission({mode:'readwrite'});if(perm!=='granted')perm=await dir.requestPermission({mode:'readwrite'});if(perm!=='granted')dir=null;}
+    if(!dir){dir=await window.showDirectoryPicker({id:'bills-wa',mode:'readwrite',startIn:'documents'});await waKV('put','dir',dir);}
+    return dir;
+  }catch(e){return null;}
+}
+async function waSavePdf(blob,name,dir){
+  if(dir){
+    try{const fh=await dir.getFileHandle(name,{create:true}),w=await fh.createWritable();await w.write(blob);await w.close();return{where:'folder',path:dir.name+'/'+name};}catch(e){}
   }
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),20000);
   return{where:'downloads',path:'Downloads/'+name};
@@ -1699,12 +1703,13 @@ async function waSend(){
   const cc=$('wa-cc').value,num=waNormalize(cc,$('wa-num').value);
   if(num.length<9||num.length>15){showToast('Enter a valid WhatsApp number','error');$('wa-num').focus();return;}
   waBusy=true;$('wa-go').disabled=true;
+  const dir=await waGetDir();
   const os=b.oids.map(i=>orders.find(o=>o.id===i)).filter(Boolean),no=invNo(b,os);
   const name='Invoice_'+waSafe(no)+'_'+waSafe(b.party)+'.pdf';
   const S=[['run','Creating PDF…'],['','Saving file'],['','Opening WhatsApp']];waSteps(S);
   try{
-    const blob=await waBuildPdf(b);S[0]=['ok','PDF created ('+Math.round(blob.size/1024)+' KB)'];S[1]=['run','Saving file…'];waSteps(S);
-    const file=new File([blob],name,{type:'application/pdf'}),saved=await waSavePdf(blob,name);
+    const blob=await waBuildPdf(b);if(blob.size<3000)throw new Error('PDF came out empty — please try again');S[0]=['ok','PDF created ('+Math.round(blob.size/1024)+' KB)'];waUrl=URL.createObjectURL(blob);$('wa-open').style.display='inline-flex';S[1]=['run','Saving file…'];waSteps(S);
+    const file=new File([blob],name,{type:'application/pdf'}),saved=await waSavePdf(blob,name,dir);
     waFile=file;S[1]=['ok','Saved: '+saved.path];waSteps(S);
     $('wa-path').textContent=saved.path;$('wa-path').style.display='block';
     waW(WA_CC,cc);const nums=waJ(WA_NUMS,{});nums[waPartyKey(b)]=$('wa-num').value.trim();waW(WA_NUMS,nums);
