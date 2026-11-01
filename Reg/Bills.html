@@ -7,7 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheWatcher.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/api.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheSync.js?v=1"></script>
@@ -1686,21 +1687,43 @@ function waOpen(id){
 function waClose(){waTok++;waBusy=false;$('wa-ov').classList.remove('open');waId=null;}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('wa-ov').classList.contains('open'))waClose();});
 
-/* PDF = the SAME document the Print button produces (same markup, same CSS, A4 with 8 mm margins) */
+/* PDF = the SAME document the Print button produces. It is laid out inside its own fixed-width A4 iframe
+   (same markup + same CSS as the print window), so the laptop / phone screen size can never change the result. */
 async function waBuildPdf(b){
-  if(typeof html2pdf==='undefined')throw new Error('PDF library not loaded (check internet)');
+  if(typeof html2canvas==='undefined'||!window.jspdf)throw new Error('PDF library not loaded (check internet)');
   if(USE_BACKEND&&b.oids.some(x=>!orders.some(o=>o.id===x))){try{const o=await Promise.race([AP2Api.get('orders'),new Promise((_,r)=>setTimeout(r,6000))]);orders=groupOrders(o.Orders||[]);}catch(e){}}
   const ft=[[CO_PHONE&&'Ph: '+CO_PHONE,CO_EMAIL&&'Email: '+CO_EMAIL].filter(Boolean).join(' ')].filter(Boolean).map(esc).join('<br>');
-  const host=$('pr'),old=host.getAttribute('style');
-  const ex=document.createElement('style');   // the extra rules printBill's window adds (totals box layout) — missing before
-  ex.textContent='#pr .inv .tot div{display:flex;justify-content:space-between;padding:3px 0}#pr .inv .tot .g{font-weight:700}#pr .inv .tot b{font-weight:700}#pr .inv .pay b{display:block}';
-  document.head.appendChild(ex);
-  host.innerHTML=docHTML(b).replace(/<\/div>$/,'')+`<div class="sig"><span>Prepared by</span><span>Received by</span><div style="width:30%;text-align:center">${CO_STAMP?`<img src="${esc(CO_STAMP)}" alt="">`:''}<span style="display:block;width:100%">Authorized Signature &amp; Stamp</span></div></div><div class="ift"><b>Thank you for your business. ${esc(CO)}</b><br>${ft}</div></div>`;
-  host.setAttribute('style','display:block;box-sizing:border-box;width:733px;background:#fff;overflow:visible');window.scrollTo(0,0);   // 733px = A4 width minus 2×8 mm → 1:1 with print
+  const sty=[...document.querySelectorAll('style')].map(x=>x.textContent).join('\n'),css=sty.slice(sty.indexOf('/* ── print: only the bill ── */'));
+  const inner=docHTML(b).replace(/<\/div>$/,'')+`<div class="sig"><span>Prepared by</span><span>Received by</span><div style="width:30%;text-align:center">${CO_STAMP?`<img src="${esc(CO_STAMP)}" alt="">`:''}<span style="display:block;width:100%">Authorized Signature &amp; Stamp</span></div></div><div class="ift"><b>Thank you for your business. ${esc(CO)}</b><br>${ft}</div></div>`;
+  const W=733,PX_MM=W/194;                                   // 733 css px = A4 width (210) − 2×8 mm margins → 1:1 with print
+  const fr=document.createElement('iframe');
+  fr.setAttribute('aria-hidden','true');fr.style.cssText='position:fixed;left:0;top:0;width:'+W+'px;height:1200px;border:0;opacity:0;pointer-events:none;z-index:-1';
+  document.body.appendChild(fr);
   try{
-    await new Promise(r=>setTimeout(r,400));
-    return await html2pdf().set({margin:[8,8,8,8],image:{type:'jpeg',quality:.98},html2canvas:{scale:2.5,useCORS:true,backgroundColor:'#fff',windowWidth:733,scrollX:0,scrollY:0},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy'],avoid:['tr','.ibot','.sig']}}).from(host).outputPdf('blob');
-  }finally{host.innerHTML='';ex.remove();if(old===null)host.removeAttribute('style');else host.setAttribute('style',old);}
+    await new Promise(res=>{fr.onload=res;fr.srcdoc='<!DOCTYPE html><html><head><meta charset="utf-8"><style>'+css+
+      '.inv .tot div{display:flex;justify-content:space-between;padding:3px 0}.inv .tot .g{font-weight:700}.inv .tot b{font-weight:700}.inv .pay b{display:block}'+
+      'html,body{margin:0;padding:0;background:#fff}#pr{display:block;box-sizing:border-box;width:'+W+'px}</style></head><body><div id="pr">'+inner+'</div></body></html>';});
+    const doc=fr.contentDocument,el=doc.getElementById('pr');
+    await Promise.all([...doc.images].map(i=>i.decode?i.decode().catch(()=>{}):0));
+    await new Promise(r=>setTimeout(r,150));
+    const H=Math.ceil(el.scrollHeight);fr.style.height=H+'px';
+    const base=el.getBoundingClientRect().top;
+    const cuts=[...doc.querySelectorAll('tr,.ihd,.imeta,.ibot,.sig,.ift,.iwords')].map(n=>n.getBoundingClientRect().bottom-base).sort((x,y)=>x-y);
+    const canvas=await html2canvas(el,{scale:2.5,useCORS:true,backgroundColor:'#fff',width:W,height:H,windowWidth:W,windowHeight:H,scrollX:0,scrollY:0});
+    const k=canvas.width/W,PH=281*PX_MM;                     // page content height (297 − 2×8 mm) in css px
+    const pdf=new window.jspdf.jsPDF({unit:'mm',format:'a4',orientation:'portrait',compress:true});
+    let y=0,first=true;
+    while(y<H-2){
+      let end=Math.min(y+PH,H);
+      if(end<H){const c=cuts.filter(v=>v>y+PH*.5&&v<=end).pop();if(c)end=c;}   // never cut through a table row / total box
+      const part=document.createElement('canvas');part.width=canvas.width;part.height=Math.max(1,Math.round((end-y)*k));
+      const cx=part.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,part.width,part.height);cx.drawImage(canvas,0,Math.round(y*k),canvas.width,part.height,0,0,part.width,part.height);
+      if(!first)pdf.addPage();first=false;
+      pdf.addImage(part.toDataURL('image/jpeg',.95),'JPEG',8,8,194,(end-y)/PX_MM,undefined,'FAST');
+      y=end;
+    }
+    return pdf.output('blob');
+  }finally{fr.remove();}
 }
 /* PDF is kept in the browser's own storage (IndexedDB) — no folder, no prompt. One entry per file name. */
 async function waSavePdf(blob,name,billId){
