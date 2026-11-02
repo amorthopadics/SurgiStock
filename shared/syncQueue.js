@@ -33,6 +33,12 @@
  *    });
  *
  *  AP2Sync.count() · AP2Sync.flush() · AP2Sync.offline() · AP2Sync.paint()
+ *
+ *  FIX (Maximum call stack size exceeded on save)
+ *    • AP2Api.post is wrapped exactly ONCE. The function underneath is kept in `base` (closure),
+ *      so a second install() / init() can never capture a wrapper that already contains ours.
+ *    • A re-entry guard turns any accidental wrapper loop into a clear error instead of a stack overflow.
+ *    • Only ONE copy of this file may run per page (window.AP2Sync guard) — do not include it twice.
  * ═══════════════════════════════════════════════════════════════ */
 (function (global) {
   'use strict';
@@ -40,7 +46,8 @@
   var D = global.document;
 
   var cfg = { key: '', queue: {}, online: {}, extraPending: null, extraFlush: null, state: null, refresh: null, onSynced: null, onQueued: null, toast: null };
-  var inner = null;                       // the AP2Api.post that was there when we loaded (already permission-guarded)
+  var base = null;                        // the AP2Api.post that was there BEFORE we wrapped it (already permission-guarded)
+  var inCall = false;                     // true while `base` is running synchronously → detects wrapper loops
   var Q = [], netDown = false, authBlock = false, flushing = false, started = false;
 
   /* ── helpers ── */
@@ -65,6 +72,18 @@
     try { var P = global.PermGate, r = P && P.actionRules && P.actionRules[action]; return !!(r && !P.can(r)); } catch (e) { return false; }
   }
 
+  /* ── the ONLY place that calls the underlying post. Guards against wrapper loops. ── */
+  function callBase(self, args) {
+    if (!base) return Promise.reject(new Error('AP2Api.post is not ready'));
+    if (inCall) {
+      console.error('[AP2Sync] wrapper loop detected — AP2Api.post is calling itself. Check that api.js / permGate.js do not call AP2Api.post from inside post.');
+      return Promise.reject(new Error('Internal error — recursive post blocked'));
+    }
+    inCall = true;
+    try { return base.apply(self, args); }
+    finally { inCall = false; }
+  }
+
   /* ── the answer a held write gives back to the page (so its own "saved" flow keeps working) ── */
   function stubFor(payload) {
     var res = { success: true, queued: true };
@@ -86,26 +105,28 @@
     return stubFor(payload);
   }
 
-  /* ── AP2Api.post wrapper — installed at load so `const post = AP2Api.post` in a page gets it ── */
+  /* ── AP2Api.post wrapper — installed ONCE, so `const post = AP2Api.post` in a page gets it ── */
   function route(self, args, action, payload) {
     var held = !!cfg.queue[action], only = !!cfg.online[action];
-    if (!held && !only) return inner.apply(self, args);
-    if (denied(action)) return inner.apply(self, args);                 // rejected "Forbidden" by the permission layer
+    if (!held && !only) return callBase(self, args);
+    if (denied(action)) return callBase(self, args);                    // rejected "Forbidden" by the permission layer
     if (only) {
       if (offline()) return Promise.reject(new Error('Network error — this action needs a connection'));
-      return inner.apply(self, args).catch(function (e) { if (isNet(e)) { netDown = true; paint(); } throw e; });
+      return callBase(self, args).catch(function (e) { if (isNet(e)) { netDown = true; paint(); } throw e; });
     }
     /* held action */
     if (Q.length || offline()) return Promise.resolve(enqueue(action, payload));   // keep the order: never jump the queue
-    return inner.apply(self, args).then(
+    return callBase(self, args).then(
       function (r) { if (netDown) { netDown = false; paint(); } return r; },
       function (e) { if (isNet(e)) { netDown = true; return enqueue(action, payload); } throw e; }
     );
   }
   function install() {
+    if (base) return;                                                   // already installed — never wrap twice
     var api = global.AP2Api;
-    if (!api || typeof api.post !== 'function' || api.post.__sq) return;
-    inner = api.post;
+    if (!api || typeof api.post !== 'function') return;
+    if (api.post.__sq) return;                                          // someone else's copy of this wrapper is already there
+    base = api.post;
     var w = function (action, payload) { return route(this, arguments, action, payload); };
     w.__sq = true; api.post = w;
   }
@@ -113,7 +134,9 @@
 
   /* ── send held changes, in order ── */
   async function flush(manual) {
-    if (flushing || !inner) return;
+    if (flushing) return;
+    if (!base) install();
+    if (!base) return;
     if (!Q.length) { paint(); return; }
     flushing = true; paint();
     var done = 0;
@@ -122,12 +145,13 @@
         if (global.navigator && navigator.onLine === false) { netDown = true; break; }
         var op = Q[0];
         try {
-          await inner(op.action, op.payload);
+          await callBase(null, [op.action, op.payload]);
           Q.shift(); persist(); done++; netDown = false; authBlock = false;
         } catch (e) {
           var m = msgOf(e);
           if (!isNet(m)) netDown = false;                                                   // the server answered → we are online
           if (isNet(m)) { netDown = true; break; }                                          // wait for the network
+          if (/recursive post blocked/i.test(m)) { break; }                                 // code problem, keep the change safe
           if (/forbidden|permission not granted/i.test(m)) {                                // refused for good
             Q.shift(); persist();
             toast('Not synced — you do not have permission for this change', 'error'); continue;
@@ -212,7 +236,7 @@
     cfg.queue = {}; (o.queue || []).forEach(function (a) { cfg.queue[a] = 1; });
     cfg.online = {}; (o.online || []).forEach(function (a) { cfg.online[a] = 1; });
     ['extraPending', 'extraFlush', 'state', 'refresh', 'onSynced', 'onQueued', 'toast'].forEach(function (k) { if (typeof o[k] === 'function') cfg[k] = o[k]; });
-    install(); load();
+    install(); load();                                              // install() is a no-op if already installed
     if (D.readyState === 'loading') D.addEventListener('DOMContentLoaded', start); else start();
     return api;
   }
