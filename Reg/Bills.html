@@ -680,6 +680,28 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 .sec{font-size:12px;color:var(--text2);font-weight:600;display:flex;align-items:center;gap:8px}.sec .btn{margin-left:auto}
 .ol{border:1px solid var(--border);border-radius:var(--radius-lg);max-height:260px;overflow:auto}
 .om .opt{align-items:flex-start;padding:8px 12px;font-size:13px}.om .opt:last-child{border-bottom:0}
+
+/* ═══ New-bill window: capsule header · icon fields · filter box · tabbed panel ═══ */
+.bw-caps{display:flex;gap:8px;flex-wrap:wrap}
+.bw-cap{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);font:600 13px var(--font);cursor:pointer;transition:.15s}
+.bw-cap i{font-size:15px}.bw-cap:hover{color:var(--text);border-color:var(--accent)}
+.bw-cap.on{border-color:var(--accent);background:var(--accent-dim);color:var(--accent);box-shadow:0 0 0 1px var(--accent-glow)}
+.om .bw-d{display:inline-flex;align-items:center;gap:8px;margin:0 0 0 auto;padding:5px 10px;border:1px solid var(--accent);border-radius:var(--radius-lg);background:var(--accent-dim);color:var(--accent);cursor:pointer}
+.om .bw-d input{width:auto;border:0;background:transparent;padding:0;font:500 12.5px var(--mono);color:var(--text2)}
+.mh .bw-d+.x{margin-left:0}
+.bw-f{position:relative}.bw-f>i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:16px;pointer-events:none}
+.om .bw-f select,.om .bw-f input{height:40px;padding-left:36px}
+.bw-box,.bw-panel{border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg2);overflow:hidden}
+.bw-dr{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border)}
+.om .bw-dr label{display:flex;align-items:center;gap:8px;margin:0;padding:6px 12px;color:var(--text2);min-width:0}.bw-dr label+label{border-left:1px solid var(--border)}
+.om .bw-dr input{border:0;background:transparent;padding:4px 0;min-width:0}
+.bw-sr{display:flex;align-items:center;gap:8px;padding:0 12px;color:var(--text3)}
+.om .bw-sr input{border:0;background:transparent;height:42px;padding:0}
+.bw-tabs{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;border-bottom:1px solid var(--border)}
+.bw-sp{margin-left:auto;display:flex;gap:6px}
+.bw-cnt{padding:8px 14px;font-size:12px;border-bottom:1px solid var(--border)}
+.bw-panel .ol{border:0;border-radius:0;max-height:340px}
+.bw-pane.pad{padding:12px;display:flex;flex-direction:column;gap:12px}
 .opt.off{opacity:.5;cursor:not-allowed}.opt .b{flex:1;min-width:0}.opt input{margin-top:3px}
 .om table{width:100%;border-collapse:collapse;background:var(--bg2);border:1px solid var(--border);font-size:13px}
 .om th,.om td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}
@@ -855,27 +877,37 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 <div id="hold" hidden>
 <!-- NEW BILL -->
 <div class="doc-preview-panel" id="ov"><div class="om" role="dialog" aria-labelledby="m-title">
-  <div class="mh"><div class="ttl"><i class="ti ti-receipt"></i><span id="m-title"></span></div><button type="button" class="ib x" title="Close" aria-label="Close" onclick="closeForm()"><i class="ti ti-x"></i></button></div>
+  <div class="mh"><div class="ttl" id="bw-ttl"><i class="ti ti-receipt"></i><span id="m-title"></span></div>
+    <div id="w-type"><div class="bw-caps" id="bw-caps"></div><select id="f-type" style="display:none" onchange="f.ptype=this.value;f.party='';fillNames();rOrders();rTypeCaps()"></select></div>
+    <label class="bw-d" title="Bill date"><i class="ti ti-calendar"></i><input type="date" id="f-date"/></label>
+    <button type="button" class="ib x" title="Close" aria-label="Close" onclick="closeForm()"><i class="ti ti-x"></i></button></div>
   <div class="mb">
     <div class="fg">
-      <div><label>Bill date</label><input type="date" id="f-date"/></div>
-      <div id="w-type"><label>Party type</label><select id="f-type" onchange="f.ptype=this.value;f.party='';fillNames();rOrders()"></select></div>
-      <div><label id="l-party">Name</label><select id="f-party" onchange="f.party=this.value;rOrders()"></select></div>
-      <div><label>Reference / note</label><input id="f-note" autocomplete="off"/></div>
+      <div class="bw-f"><i class="ti ti-user"></i><select id="f-party" aria-label="Name" onchange="f.party=this.value;rOrders()"></select></div>
+      <div class="bw-f"><i class="ti ti-notes"></i><input id="f-note" placeholder="Note…" aria-label="Reference / note" autocomplete="off"/></div>
     </div>
-    <div class="fg"><div class="w2"><label>Search — doctor, hospital, vendor, order no, date, item</label><input id="f-q" autocomplete="off" oninput="rOrders()"/></div><div><label>From date</label><input type="date" id="f-from" onchange="f.from=this.value;rOrders()"/></div><div><label>To date</label><input type="date" id="f-to" onchange="f.to=this.value;rOrders()"/></div></div>
-    <div class="sec">Orders to bill <span class="dim" id="o-cnt"></span>
-      
-      <button class="btn sm" style="margin-left:auto" onclick="selAll(1)">All</button><button class="btn sm" style="margin-left:0" onclick="selAll(0)">None</button></div>
-    <div class="ol" id="f-orders"></div>
-    <div class="sec">Items &amp; rates <span class="dim">(net qty = ordered − returned/claimed; edits already included)</span></div>
+    <div class="bw-box">
+      <div class="bw-dr"><label><i class="ti ti-calendar-event"></i>From<input type="date" id="f-from" onchange="f.from=this.value;rOrders()"/></label><label><i class="ti ti-calendar-event"></i>To<input type="date" id="f-to" onchange="f.to=this.value;rOrders()"/></label></div>
+      <div class="bw-sr"><i class="ti ti-search"></i><input id="f-q" placeholder="Type to search orders, items, dates…" autocomplete="off" oninput="rOrders()"/></div>
+    </div>
+    <div class="bw-panel">
+      <div class="bw-tabs">
+        <button type="button" class="bw-cap on" id="bw-t-o" onclick="bwTab('o')"><i class="ti ti-clipboard-list"></i>Orders (<span id="bw-oc">0</span>)</button>
+        <button type="button" class="bw-cap" id="bw-t-i" onclick="bwTab('i')"><i class="ti ti-list-details"></i>Items &amp; rates</button>
+        <span class="bw-sp" id="bw-sel"><button class="btn sm" type="button" onclick="selAll(1)">All</button><button class="btn sm" type="button" onclick="selAll(0)">None</button></span>
+      </div>
+      <div class="bw-pane" id="bw-p-o"><div class="bw-cnt dim" id="o-cnt"></div><div class="ol" id="f-orders"></div></div>
+      <div class="bw-pane pad" id="bw-p-i" style="display:none">
+      <div class="sec">Items &amp; rates <span class="dim">(net qty = ordered − returned/claimed; edits already included)</span></div>
     <div class="tw" id="f-items"></div>
     <div class="fg">
       <div><label>Discount</label><div style="display:flex;gap:4px"><input type="number" id="f-disc" min="0" step="any" value="0" oninput="f.disc=+this.value||0;tot()"/><select id="f-dt" style="width:70px" onchange="f.dt=this.value;tot()"><option value="amt">AED</option><option value="pct">%</option></select></div></div>
       <div><label>VAT %</label><input type="number" id="f-vat" min="0" step="any" value="0" oninput="f.vat=+this.value||0;tot()"/></div>
     </div>
     <div><label>Other charges (fuel, delivery, assistance…) — added to the bill, no VAT</label><div id="f-ex"></div><button class="btn sm" type="button" onclick="addEx()"><i class="ti ti-plus"></i>Add charge</button><datalist id="ex-dl"><option>Fuel</option><option>Delivery</option><option>Assistance</option></datalist></div>
-    <div class="tot" id="f-tot"></div>
+      <div class="tot" id="f-tot"></div>
+      </div>
+    </div>
   </div>
   <div class="mf"><span class="sum" id="m-sum"></span>
     <button type="button" class="ib lg" title="Cancel" aria-label="Cancel" onclick="closeForm()"><i class="ti ti-x"></i></button><button type="button" class="ib lg" title="Save &amp; Print" aria-label="Save and print" onclick="saveBill(1)"><i class="ti ti-printer"></i></button><button type="button" class="ib lg pri" title="Save" aria-label="Save" onclick="saveBill(0)"><i class="ti ti-check"></i></button></div>
@@ -904,13 +936,15 @@ select.date-input option{background:var(--surface2);color:var(--text);}
         <input id="wa-num" type="tel" inputmode="tel" autocomplete="off" placeholder="300 1234567" onkeydown="if(event.key==='Enter')waGo()"/></div>
         <div class="wa-hist" id="wa-hist"></div></div>
     </div>
-    <div class="wa-f"><button type="button" class="btn" onclick="waClose()">Cancel</button><button type="button" class="btn wa-go" onclick="waGo()"><i class="ti ti-arrow-right"></i>Continue</button></div>
+    <div class="wa-f"><button type="button" class="btn" onclick="waClose()">Cancel</button><button type="button" class="btn wa-go" onclick="waGo()"><i class="ti ti-brand-whatsapp"></i>Send</button></div>
   </div>
   <div id="wa-res" style="display:none">
     <div class="wa-b"><div class="wa-steps" id="wa-steps"></div><div class="wa-path" id="wa-path" style="display:none"></div></div>
     <div class="wa-b wa-act" id="wa-act" style="display:none">
       <div><button type="button" class="wa-circ" title="Close" aria-label="Close" onclick="waClose()"><i class="ti ti-x"></i></button>Close</div>
-      <div id="wa-sh"><button type="button" class="wa-circ share" title="Share" aria-label="Share" onclick="waShare()"><i class="ti ti-share"></i></button>Share</div>
+      <div><button type="button" class="wa-circ" title="Change number" aria-label="Change number" onclick="waEdit()"><i class="ti ti-phone"></i></button>Number</div>
+      <div id="wa-sh"><button type="button" class="wa-circ share" title="Open chat again" aria-label="Open chat again" onclick="waChat()"><i class="ti ti-brand-whatsapp"></i></button>Open chat</div>
+      <div id="wa-sh2"><button type="button" class="wa-circ" title="Share PDF + message (choose contact)" aria-label="Share" onclick="waShare()"><i class="ti ti-share"></i></button>Share</div>
     </div>
   </div>
 </div></div>
@@ -1494,12 +1528,16 @@ function openForm(dir,pre){
   try{if(cache.requestRefresh)cache.requestRefresh(true);}catch(e){}
   Object.assign(f,{dir,from:'',to:'',ptype:pre?pre.ptype:'',party:pre?pre.party:'',sel:new Set(pre?pre.ids:[]),extras:[],rates:{},disc:0,dt:'amt',vat:0});
   $('m-title').textContent=dir==='out'?'New Bill — Outgoing (customer)':'New Bill — Incoming (supplier)';
-  $('l-party').textContent=dir==='out'?'Name':'Supplier';$('w-type').style.display=dir==='out'?'':'none';
+  $('w-type').style.display=dir==='out'?'':'none';$('bw-ttl').classList.toggle('sr-only',dir==='out');bwTab('o');
   $('f-date').value=today();$('f-note').value='';$('f-q').value='';$('f-from').value='';$('f-to').value='';$('f-disc').value=0;$('f-dt').value='amt';$('f-vat').value=0;
   fillTypes();fillNames();rEx();rOrders();mountPanel('ov');
 }
 function fillTypes(){const m=new Map(types.map(t=>[t.k,t.l]));orders.filter(o=>kd(o,'out')).forEach(o=>{if(!m.has(norm(o.partyType)))m.set(norm(o.partyType),o.partyType);});
-  const cur=f.ptype;$('f-type').innerHTML='<option value="">All types</option>'+[...m].filter(([k,l])=>k&&l).sort((a,b)=>a[1].localeCompare(b[1])).map(([k,l])=>`<option value="${esc(l)}">${esc(l)}</option>`).join('');$('f-type').value=cur;}
+  const cur=f.ptype;$('f-type').innerHTML='<option value="">All types</option>'+[...m].filter(([k,l])=>k&&l).sort((a,b)=>a[1].localeCompare(b[1])).map(([k,l])=>`<option value="${esc(l)}">${esc(l)}</option>`).join('');$('f-type').value=cur;rTypeCaps();}
+const tIcon=l=>{const n=norm(l);return /doctor|dr\b|physician|surgeon/.test(n)?'ti-stethoscope':/hospital|clinic/.test(n)?'ti-building-hospital':/vendor|supplier/.test(n)?'ti-truck':'ti-user';};
+function rTypeCaps(){$('bw-caps').innerHTML=[...$('f-type').options].filter(o=>o.value).map(o=>`<button type="button" class="bw-cap${norm(o.value)===norm(f.ptype||'')?' on':''}" data-v="${esc(o.value)}"><i class="ti ${tIcon(o.value)}"></i>${esc(o.value)}</button>`).join('');}
+$('bw-caps').addEventListener('click',e=>{const c=e.target.closest('.bw-cap');if(!c)return;const v=c.dataset.v;f.ptype=norm(f.ptype||'')===norm(v)?'':v;f.party='';$('f-type').value=f.ptype;fillNames();rOrders();rTypeCaps();});
+function bwTab(k){$('bw-p-o').style.display=k==='o'?'':'none';$('bw-p-i').style.display=k==='i'?'':'none';$('bw-sel').style.visibility=k==='o'?'':'hidden';$('bw-t-o').classList.toggle('on',k==='o');$('bw-t-i').classList.toggle('on',k==='i');}
 function fillNames(){const fromOrders=orders.filter(o=>kd(o,f.dir)&&(!f.ptype||norm(o.partyType)===norm(f.ptype))).map(o=>o.party);
   const fromCache=f.dir==='in'?suppliers:parties.filter(p=>!f.ptype||p.type===norm(f.ptype)).map(p=>p.name);
   const N=[...new Map([...fromCache,...fromOrders].filter(Boolean).map(n=>[norm(n),n])).values()].sort((a,b)=>a.localeCompare(b));
@@ -1512,7 +1550,7 @@ function rOrders(){
     return `<div class="opt${b?' off':''}" data-id="${o.id}"><input type="checkbox" ${f.sel.has(o.id)?'checked':''} ${b?'disabled':''}/><div class="b"><b class="mono">${esc(o.no)}</b> <span class="dim">· ${esc(o.date)} · ${esc(o.party)}${o.store?' · '+esc(o.store):''}</span>
       ${k==='r'?`<span class="badge out">${f.dir==='out'?'Returned':'Claim / Damaged'} (credit)</span>`:''}${b?`<span class="badge in">Billed ${esc(b.no)}</span>`:''}
       <div class="dim" style="font-size:12px">${x.L.map(l=>esc(l.label)+' × '+l.qty+(l.r?' @ '+money(l.r):'')).join(' · ')}</div></div><div class="mono">${x.ok?money(x.a):'–'}</div></div>`;}).join(''):'<div class="empty">No orders match — clear the search, dates or name filter</div>';
-  $('o-cnt').textContent='· '+f.sel.size+' selected of '+L.length;rItems();
+  $('o-cnt').textContent=f.sel.size+' selected of '+L.length;$('bw-oc').textContent=f.sel.size;rItems();
 }
 function selAll(on){const bb=billedBy();f.sel.clear();if(on)elig().filter(o=>!bb[o.id]).forEach(o=>f.sel.add(o.id));rOrders();}
 $('f-orders').addEventListener('click',e=>{const d=e.target.closest('.opt');if(!d||d.classList.contains('off'))return;const id=d.dataset.id;f.sel.has(id)?f.sel.delete(id):f.sel.add(id);rOrders();});
@@ -1683,10 +1721,13 @@ function waOpen(id){
   $('wa-cc').value=waJ(WA_CC,'92');
   const saved=waJ(WA_NUMS,{})[waPartyKey(b)]||'';$('wa-num').value=saved;
   const lg=waJ(WA_LOG,[]).filter(x=>x.billId===id);
-  $('wa-hist').textContent=lg.length?'Last sent to +'+lg[0].number+' on '+new Date(lg[0].at).toLocaleString():(saved?'Number remembered for this party':'');
+  $('wa-hist').textContent=lg.length?'Last sent to +'+lg[0].number+' on '+new Date(lg[0].at).toLocaleString():'';
   $('wa-form').style.display='';$('wa-res').style.display='none';$('wa-act').style.display='none';$('wa-path').style.display='none';
-  $('wa-ov').classList.add('open');setTimeout(()=>$('wa-num').focus(),50);
+  $('wa-ov').classList.add('open');
+  /* number already known for this party → no form, no extra click: go straight to sending */
+  if(saved&&waNormalize($('wa-cc').value,saved).length>=9)waGo();else setTimeout(()=>$('wa-num').focus(),50);
 }
+function waEdit(){if(waBusy)return;$('wa-res').style.display='none';$('wa-form').style.display='';$('wa-num').focus();}
 function waClose(){waTok++;waBusy=false;$('wa-ov').classList.remove('open');waId=null;}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('wa-ov').classList.contains('open'))waClose();});
 
@@ -1729,58 +1770,76 @@ async function waBuildPdf(b){
   }finally{fr.remove();}
 }
 /* PDF is kept in the browser's own storage (IndexedDB) — no folder, no prompt. One entry per file name. */
-async function waSavePdf(blob,name,billId){
+async function waSavePdf(blob,name,billId,sig){
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
   const db=await waDB();
-  await new Promise((res,rej)=>{const tx=db.transaction('pdfs','readwrite');tx.objectStore('pdfs').put({name,blob,billId,at:Date.now()},name);tx.oncomplete=res;tx.onerror=()=>rej(tx.error||new Error('Not enough space to save the file'));tx.onabort=()=>rej(tx.error||new Error('Not enough space to save the file'));});
+  await new Promise((res,rej)=>{const tx=db.transaction('pdfs','readwrite');tx.objectStore('pdfs').put({name,blob,billId,sig,at:Date.now()},name);tx.oncomplete=res;tx.onerror=()=>rej(tx.error||new Error('Not enough space to save the file'));tx.onabort=()=>rej(tx.error||new Error('Not enough space to save the file'));});
   return{where:'browser',path:'This device · '+name};
 }
-/* Continue: number → build + save to browser storage automatically → result window (nothing opens in WhatsApp yet) */
+/* ONE-CLICK SEND
+   number (remembered per party) → PDF taken from the browser cache (rebuilt only if the bill changed) → text + chat opened on THAT number.
+   A browser cannot attach a file to a chat by itself. So: the PDF is saved to the device (1 tap to attach: 📎 → Document),
+   unless WA_API_URL is set — then the server sends text + PDF straight to the number, no WhatsApp window needed. */
+const WA_API_URL='';   // optional: your backend endpoint that calls the WhatsApp Business Cloud API (multipart: to, caption, file → {ok:true}). Never put the API token in this page.
+const waHash=t=>{let h=5381;for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return (h>>>0).toString(36)+'_'+t.length;};
+async function waGetPdf(name,sig){
+  try{const db=await waDB();return await new Promise(res=>{const r=db.transaction('pdfs').objectStore('pdfs').get(name);r.onsuccess=()=>{const v=r.result;res(v&&v.sig===sig&&v.blob&&v.blob.size>3000?v.blob:null);};r.onerror=()=>res(null);});}catch(e){return null;}
+}
+function waDownload(blob,name){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),30000);}
+function waLink(){return 'https://wa.me/'+waNum+'?text='+encodeURIComponent(waMsg);}
 async function waGo(){
   if(waBusy)return;const b=bills.find(x=>x.id===waId);if(!b)return;
   const cc=$('wa-cc').value,num=waNormalize(cc,$('wa-num').value);
-  if(num.length<9||num.length>15){showToast('Enter a valid WhatsApp number','error');$('wa-num').focus();return;}
+  if(num.length<9||num.length>15){showToast('Enter a valid WhatsApp number','error');waEdit();return;}
+  /* open the chat tab NOW (inside the click) so the browser allows it; it is pointed at the chat once the PDF is ready */
+  const tab=WA_API_URL?null:window.open('','_blank');
   waBusy=true;const tok=waTok;
   const os=b.oids.map(i=>orders.find(o=>o.id===i)).filter(Boolean),no=invNo(b,os);
-  const name='Invoice_'+waSafe(no)+'_'+waSafe(b.party)+'.pdf';
-  const S=[['run','Creating PDF…'],['','Saving file'],['','Ready to share']];
+  const name='Invoice_'+waSafe(no)+'_'+waSafe(b.party)+'.pdf',msg=waMessage(b,no),sig=waHash(docHTML(b)+'|'+msg);
+  const S=[['run','Preparing PDF for +'+num+'…']];
   $('wa-form').style.display='none';$('wa-res').style.display='';$('wa-act').style.display='none';$('wa-path').style.display='none';waSteps(S);
   try{
-    const blob=await waBuildPdf(b);if(tok!==waTok)return;
-    if(blob.size<3000)throw new Error('PDF came out empty — please try again');
-    S[0]=['ok','PDF created ('+Math.round(blob.size/1024)+' KB)'];S[1]=['run','Saving file…'];waSteps(S);
-    const saved=await waSavePdf(blob,name,b.id);if(tok!==waTok)return;
-    waFile=new File([blob],name,{type:'application/pdf'});waNum=num;waMsg=waMessage(b,no);
-    S[1]=['ok','Saved: '+saved.path];S[2]=['ok','Ready — tap Share'];waSteps(S);
-    $('wa-path').textContent=saved.path;$('wa-path').style.display='block';
+    let blob=await waGetPdf(name,sig),cached=!!blob;
+    if(!blob){
+      blob=await waBuildPdf(b);if(tok!==waTok){if(tab)tab.close();return;}
+      if(blob.size<3000)throw new Error('PDF came out empty — please try again');
+      await waSavePdf(blob,name,b.id,sig);
+    }
+    if(tok!==waTok){if(tab)tab.close();return;}
+    waFile=new File([blob],name,{type:'application/pdf'});waNum=num;waMsg=msg;
+    S[0]=['ok','PDF '+(cached?'ready (from cache)':'created')+' · '+Math.round(blob.size/1024)+' KB'];
     waW(WA_CC,cc);const nums=waJ(WA_NUMS,{});nums[waPartyKey(b)]=$('wa-num').value.trim();waW(WA_NUMS,nums);
-    const log=waJ(WA_LOG,[]);log.unshift({billId:b.id,billNo:no,party:b.party,number:num,file:name,path:saved.path,where:saved.where,at:Date.now()});waW(WA_LOG,log.slice(0,300));
-    $('wa-sh').style.display='';$('wa-act').style.display='flex';
+    if(WA_API_URL){
+      S.push(['run','Sending to +'+num+'…']);waSteps(S);
+      const fd=new FormData();fd.append('to',num);fd.append('caption',msg);fd.append('file',waFile,name);
+      const r=await fetch(WA_API_URL,{method:'POST',body:fd});const j=await r.json().catch(()=>({}));
+      if(!r.ok||j.ok===false)throw new Error(j.error||'Sending failed ('+r.status+')');
+      S[1]=['ok','Sent to +'+num+' — PDF and message delivered'];
+    }else{
+      waDownload(blob,name);
+      if(tab&&!tab.closed)tab.location.href=waLink();else window.open(waLink(),'_blank');
+      S.push(['ok','Chat opened on +'+num+' with the message']);
+      S.push(['ok','PDF saved to this device — in WhatsApp tap 📎 → Document → '+name]);
+    }
+    waSteps(S);$('wa-path').textContent=name;$('wa-path').style.display='block';
+    const log=waJ(WA_LOG,[]);log.unshift({billId:b.id,billNo:no,party:b.party,number:num,file:name,path:WA_API_URL?'sent via API':'browser cache',where:'browser',at:Date.now()});waW(WA_LOG,log.slice(0,300));
+    $('wa-sh').style.display=WA_API_URL?'none':'';$('wa-sh2').style.display=WA_API_URL?'none':'';
   }catch(e){
+    if(tab)try{tab.close();}catch(_){}
     if(tok!==waTok)return;
-    const i=S.findIndex(x=>x[0]==='run'||x[0]==='');S[i<0?0:i]=['err',(e&&e.message)||'Failed'];waSteps(S);
-    $('wa-sh').style.display='none';$('wa-act').style.display='flex';
+    const i=S.findIndex(x=>x[0]==='run');S[i<0?S.length-1:i]=['err',(e&&e.message)||'Failed'];waSteps(S);
+    $('wa-sh').style.display='none';$('wa-sh2').style.display='none';
   }
-  waBusy=false;
+  $('wa-act').style.display='flex';waBusy=false;
 }
-/* Share — PDF + message always travel together.
-   Phone: WhatsApp shows the text as the caption of the PDF (one message).
-   Laptop: the share sheet delivers the PDF and the text to WhatsApp Desktop, which may show them as two messages;
-   the message is also copied to the clipboard as a backup. */
+function waChat(){if(waNum)window.open(waLink(),'_blank');}
+/* optional: phone share sheet — PDF + message as ONE message, but WhatsApp makes you pick the contact */
 async function waShare(){
   if(!waFile)return;
-  const base=[['ok','PDF created'],['ok','Saved: '+$('wa-path').textContent]];
-  const mobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  let copied=false;
-  if(!mobile){try{await navigator.clipboard.writeText(waMsg);copied=true;}catch(e){}}
   if(navigator.canShare&&navigator.canShare({files:[waFile]})){
-    try{
-      await navigator.share({files:[waFile],text:waMsg});
-      waSteps(base.concat([['ok',mobile?'Shared — pick +'+waNum+' in WhatsApp; the message is the caption':'Shared — pick +'+waNum+' in WhatsApp'+(copied?' (message also copied: press Ctrl+V if the text is missing)':'')]]));return;
-    }catch(e){if(e&&e.name==='AbortError')return;}   // any other failure → chat link below
+    try{await navigator.share({files:[waFile],text:waMsg});return;}catch(e){if(e&&e.name==='AbortError')return;}
   }
-  window.open('https://wa.me/'+waNum+'?text='+encodeURIComponent(waMsg),'_blank');
-  waSteps(base.concat([['ok','WhatsApp opened with the message — attach the saved PDF (paperclip → Document)']]));
+  waChat();
 }
 function viewBill(id){const b=bills.find(x=>x.id===id);if(!b)return;vid=id;const t=tb(b),p=paidOf(b),dr=drift(b),ps=pays.filter(x=>x.billId===id),s=stOf(b),al=allocList(b);
   $('v-title').innerHTML=esc(b.no)+' <span class="badge '+s[0]+'">'+s[1]+'</span>';
