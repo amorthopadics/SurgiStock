@@ -1760,24 +1760,24 @@ async function waGo(){
   }
   waBusy=false;
 }
-/* Share — one message: PDF with the text as its caption.
-   Phone: file + text go together (WhatsApp shows the text as the caption).
-   Laptop: the share sheet would send the text as a separate message, so only the PDF is shared and the message is copied
-   → paste it into the caption box before sending. */
+/* Share — PDF + message always travel together.
+   Phone: WhatsApp shows the text as the caption of the PDF (one message).
+   Laptop: the share sheet delivers the PDF and the text to WhatsApp Desktop, which may show them as two messages;
+   the message is also copied to the clipboard as a backup. */
 async function waShare(){
   if(!waFile)return;
   const base=[['ok','PDF created'],['ok','Saved: '+$('wa-path').textContent]];
   const mobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  let copied=false;
+  if(!mobile){try{await navigator.clipboard.writeText(waMsg);copied=true;}catch(e){}}
   if(navigator.canShare&&navigator.canShare({files:[waFile]})){
     try{
-      if(mobile){await navigator.share({files:[waFile],text:waMsg});waSteps(base.concat([['ok','Shared — pick +'+waNum+' in WhatsApp; the message is the caption']]));return;}
-      let copied=false;try{await navigator.clipboard.writeText(waMsg);copied=true;}catch(e){}
-      await (copied?navigator.share({files:[waFile]}):navigator.share({files:[waFile],text:waMsg}));
-      waSteps(base.concat([copied?[ 'ok','Message copied — in WhatsApp pick +'+waNum+', press Ctrl+V in the caption box, then send']:['ok','Shared — pick +'+waNum+' in WhatsApp']]));return;
+      await navigator.share({files:[waFile],text:waMsg});
+      waSteps(base.concat([['ok',mobile?'Shared — pick +'+waNum+' in WhatsApp; the message is the caption':'Shared — pick +'+waNum+' in WhatsApp'+(copied?' (message also copied: press Ctrl+V if the text is missing)':'')]]));return;
     }catch(e){if(e&&e.name==='AbortError')return;}   // any other failure → chat link below
   }
   window.open('https://wa.me/'+waNum+'?text='+encodeURIComponent(waMsg),'_blank');
-  waSteps(base.concat([['ok','WhatsApp opened — attach the saved PDF (paperclip → Document)']]));
+  waSteps(base.concat([['ok','WhatsApp opened with the message — attach the saved PDF (paperclip → Document)']]));
 }
 function viewBill(id){const b=bills.find(x=>x.id===id);if(!b)return;vid=id;const t=tb(b),p=paidOf(b),dr=drift(b),ps=pays.filter(x=>x.billId===id),s=stOf(b),al=allocList(b);
   $('v-title').innerHTML=esc(b.no)+' <span class="badge '+s[0]+'">'+s[1]+'</span>';
