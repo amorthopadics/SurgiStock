@@ -130,11 +130,11 @@
           if (isNet(m)) { netDown = true; break; }                                          // wait for the network
           if (/forbidden|permission not granted/i.test(m)) {                                // refused for good
             Q.shift(); persist();
-            toast('Not synced — you do not have permission for ' + op.action, 'error'); continue;
+            toast('Not synced — you do not have permission for this change', 'error'); continue;
           }
           if (/unauthori[sz]ed|not logged in|session/i.test(m)) { authBlock = true; break; } // keep it, log in again
           Q.shift(); persist();                                                             // server rejected the data itself
-          toast('Not synced (' + op.action + '): ' + (global.AP2Api && AP2Api.errText ? AP2Api.errText(m) : m), 'error');
+          console.warn('[AP2Sync] rejected', op.action, m); toast('A saved change was not accepted: ' + (global.AP2Api && AP2Api.errText ? AP2Api.errText(m) : 'please check it and enter it again'), 'error');
         }
       }
     } finally { flushing = false; }
@@ -171,7 +171,7 @@
     if (!c) return;
     var want = null;
     if (authBlock)       want = { st: 'err',  t: 'Session expired — log in again to sync ' + n + ' change' + (n > 1 ? 's' : '') };
-    else if (off)        want = { st: 'warn', t: 'Offline — showing saved data' + (n ? ' · ' + n + ' change' + (n > 1 ? 's' : '') + ' held on this device, will sync when the network is back' : '') };
+    else if (off)        want = { st: 'warn', t: 'Offline — showing your last loaded data' + (n ? ' · ' + n + ' change' + (n > 1 ? 's' : '') + ' held on this device, will sync when the network is back' : '') };
     else if (n)          want = { st: 'warn', t: n + ' change' + (n > 1 ? 's' : '') + ' waiting to sync — click to retry' };
     else if (cfg.state) { try { var r = cfg.state(); if (r) want = { st: r.state || 'ok', t: r.title || '' }; } catch (e) {} }
     if (!want) return;                                              // AP2Cache owns the button

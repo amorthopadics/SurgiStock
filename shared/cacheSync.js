@@ -12,7 +12,7 @@
  *  JS:
  *    const cache = AP2Cache.create({
  *      onRows(rows, manual){ …build your lists from [[ID,Specs,Item,Description,Status],…]… ; return count; },
- *      title: n => 'Cache loaded · ' + n + ' rows',      // optional tooltip text
+ *      title: n => 'Up to date · ' + n + ' rows',      // optional tooltip text
  *      toast: showToast,                                  // optional (msg, 'error'|'success'|'info')
  *      hasPending: () => bool, onPending: () => sync(),   // optional: don't overwrite unsynced local changes
  *      hasLocalData: () => bool,                          // optional: ignore one flaky empty read
@@ -84,7 +84,7 @@
   function create(opt) {
     opt = opt || {};
     const pick     = opt.pick || pickSpecs;
-    const titleFn  = opt.title || (n => 'Cache loaded · ' + n + ' rows');
+    const titleFn  = opt.title || (n => 'Up to date · ' + n + ' rows');
     const toast    = opt.toast || (() => {});
     const indId    = opt.indicator || 'cache-ind';
     const pollMs   = opt.pollMs || 4000;
@@ -126,7 +126,7 @@
       if (!rows || !rows.length) return false;
       st.emptyStreak = 0;
       if (opt.hasPending && opt.hasPending()) {                         // never overwrite unsynced local changes
-        setState('warn', 'Local changes waiting to sync — cache not applied');
+        setState('warn', 'Changes waiting to sync — not refreshed yet');
         if (opt.onPending) opt.onPending();
         if (manual) toast('Local changes are still syncing', 'info');
         return true;
@@ -138,24 +138,24 @@
       st.count = n; st.sig = sig;
       if (opt.sigKey) { try { localStorage.setItem(opt.sigKey, sig); } catch (e) {} }
       setState('ok', titleFn(n) + ' · ' + new Date().toLocaleTimeString('en-GB'));
-      if (manual) toast('Loaded ' + n + ' rows from cache', 'success');
+      if (manual) toast('Loaded ' + n + ' rows', 'success');
       return true;
     }
 
     async function refresh(manual) {
       if (st.busy) return; st.busy = true;
-      if (manual) setState('warn busy', 'Reading cache…');
+      if (manual) setState('warn busy', 'Loading…');
       try {
         const payload = await readCache();
         if (!apply(payload, manual)) {
           const have = opt.hasLocalData ? opt.hasLocalData() : false;
           if (have && ++st.emptyStreak < 2) { /* ignore a single empty read */ }
-          else setState('warn', 'Cache: no Specs data yet' + (have ? ' — showing local data' : ''));
-          if (manual) toast('Cache has no Specs data yet', 'error');
+          else setState('warn', 'No data yet' + (have ? ' — showing local data' : ''));
+          if (manual) toast('No data yet', 'error');
         }
       } catch (e) {
         console.warn('[AP2Cache] read failed', e.message); setState('err', 'Cache error: ' + e.message);
-        if (manual) toast('Cache read failed', 'error');
+        if (manual) toast('Could not load data', 'error');
       } finally { st.busy = false; }
     }
 
@@ -165,7 +165,7 @@
       catch (e) { console.warn('[AP2Cache] watcher wiring failed, continuing without live updates:', e.message); }
       const btn = document.getElementById(indId);
       if (btn) btn.addEventListener('click', () => refresh(true));
-      global.addEventListener('ap-cache-status', e => { if (e.detail && e.detail.healthy === false) setState('err', 'Cache unavailable: ' + (e.detail.lastError || '')); });
+      global.addEventListener('ap-cache-status', e => { if (e.detail && e.detail.healthy === false) setState('err', 'Data unavailable: ' + (e.detail.lastError || '')); });
 
       /* portal shell push — fastest path when running inside the app */
       const fromDatasets = ds => {
@@ -192,7 +192,7 @@
       forgetSig() { st.sig = ''; if (opt.sigKey) { try { localStorage.removeItem(opt.sigKey); } catch (e) {} } },
       requireReady(msg) {
         if (st.loaded) return true;
-        toast(msg || 'Cache not loaded yet — please wait before making changes', 'error');
+        toast(msg || 'Still loading — please wait before making changes', 'error');
         return false;
       }
     };
