@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheWatcher.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/api.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheSync.js?v=1"></script>
@@ -702,6 +704,33 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 @media(max-width:480px){.trow{grid-template-columns:minmax(0,1fr) 1fr 28px}.trow>.cb{grid-column:1/-1}}
 @media(min-width:1101px){#ov3.open{width:560px}}
 @media(min-width:901px) and (max-width:1100px){#ov3.open{width:480px}}
+/* ── WhatsApp send ── */
+.ib.wa{color:#25d366;border-color:rgba(37,211,102,.45)}
+.ib.wa:hover{background:rgba(37,211,102,.14);color:#25d366}
+.wa-ov{position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:14px}
+.wa-ov.open{display:flex}
+.wa-box{width:100%;max-width:440px;max-height:92vh;overflow:auto;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow-lg)}
+.wa-h{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);font-weight:700}
+.wa-h i.lg{color:#25d366;font-size:22px}.wa-h .x{margin-left:auto}
+.wa-b{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.wa-b label{display:block;font-size:11px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:var(--text2);margin-bottom:4px}
+.wa-b input,.wa-b select,.wa-b textarea{width:100%;padding:9px 10px;border-radius:var(--radius);border:1.5px solid var(--border2);background:var(--bg2);color:var(--text);font:inherit}
+.wa-b textarea{min-height:92px;resize:vertical;font-size:13px}
+.wa-row{display:flex;gap:8px}.wa-row select{width:112px;flex:none}
+.wa-sum{font-size:12px;color:var(--text2);background:var(--bg3);border-radius:var(--radius);padding:8px 10px}
+.wa-steps{display:flex;flex-direction:column;gap:6px;font-size:12.5px}
+.wa-steps div{display:flex;gap:8px;align-items:flex-start;color:var(--text2)}
+.wa-steps div.ok{color:var(--teal)}.wa-steps div.err{color:var(--red)}.wa-steps div.run{color:var(--accent)}
+.wa-path{font-family:var(--mono);font-size:11.5px;word-break:break-all;background:var(--bg3);border-radius:var(--radius);padding:8px 10px}
+.wa-f{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--border);justify-content:flex-end}
+.btn.wa-go{background:#25d366;border-color:#25d366;color:#04230f}
+.btn.wa-go:disabled{opacity:.5;cursor:not-allowed}
+.wa-hist{font-size:11.5px;color:var(--text3);margin-top:4px}
+.wa-act{display:flex;justify-content:center;gap:30px;padding:4px 0 2px}
+.wa-act>div{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.wa-circ{width:58px;height:58px;border-radius:50%;border:1.5px solid var(--border2);background:var(--bg3);color:var(--text);font-size:25px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .12s,filter .12s}
+.wa-circ:hover{filter:brightness(1.12);transform:scale(1.05)}
+.wa-circ.share{background:#25d366;border-color:#25d366;color:#04230f}
 /* ── print: only the bill ── */
 #pr,#pr *,#pv,#pv *{color:#000!important;background:#fff!important;font-family:Arial,sans-serif}
 #pr{padding:6mm 8mm;font-size:12px}
@@ -856,7 +885,7 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 <div class="doc-preview-panel" id="ov2"><div class="om" role="dialog" aria-labelledby="v-title">
   <div class="mh"><div class="ttl"><i class="ti ti-file-invoice"></i><span id="v-title"></span></div><button type="button" class="ib x" title="Close" aria-label="Close" onclick="closeView()"><i class="ti ti-x"></i></button></div>
   <div class="mb" id="v-body"></div>
-  <div class="mf"><button type="button" class="ib lg" title="Close" aria-label="Close" onclick="closeView()"><i class="ti ti-x"></i></button><button type="button" class="ib lg pri" title="Print" aria-label="Print" onclick="printBill(vid)"><i class="ti ti-printer"></i></button></div>
+  <div class="mf"><button type="button" class="ib lg" title="Close" aria-label="Close" onclick="closeView()"><i class="ti ti-x"></i></button><button type="button" class="ib lg pri" title="Print" aria-label="Print" onclick="printBill(vid)"><i class="ti ti-printer"></i></button><button type="button" class="ib lg wa" title="Send on WhatsApp" aria-label="Send on WhatsApp" onclick="waOpen(vid)"><i class="ti ti-brand-whatsapp"></i></button></div>
 </div></div>
 <div class="doc-preview-panel" id="ov3"><div class="om" role="dialog" aria-labelledby="r-title">
   <div class="mh"><div class="ttl"><i class="ti ti-adjustments-dollar"></i><span id="r-title">Add Rate</span></div><button type="button" class="ib x" title="Close" aria-label="Close" data-a="close"><i class="ti ti-x"></i></button></div>
@@ -864,6 +893,27 @@ select.date-input option{background:var(--surface2);color:var(--text);}
   <div class="mf" id="r-foot"></div>
 </div></div>
 </div>
+<!-- WHATSAPP SEND -->
+<div class="wa-ov" id="wa-ov" role="dialog" aria-modal="true" aria-labelledby="wa-title"><div class="wa-box">
+  <div class="wa-h"><i class="ti ti-brand-whatsapp lg"></i><span id="wa-title">Send bill on WhatsApp</span></div>
+  <div id="wa-form">
+    <div class="wa-b">
+      <div class="wa-sum" id="wa-sum"></div>
+      <div><label for="wa-num">WhatsApp number</label>
+        <div class="wa-row"><select id="wa-cc" aria-label="Country code"><option value="92">+92 PK</option><option value="971">+971 UAE</option><option value="91">+91 IN</option><option value="966">+966 KSA</option><option value="968">+968 OM</option><option value="974">+974 QA</option><option value="44">+44 UK</option><option value="1">+1 US/CA</option></select>
+        <input id="wa-num" type="tel" inputmode="tel" autocomplete="off" placeholder="300 1234567" onkeydown="if(event.key==='Enter')waGo()"/></div>
+        <div class="wa-hist" id="wa-hist"></div></div>
+    </div>
+    <div class="wa-f"><button type="button" class="btn" onclick="waClose()">Cancel</button><button type="button" class="btn wa-go" onclick="waGo()"><i class="ti ti-arrow-right"></i>Continue</button></div>
+  </div>
+  <div id="wa-res" style="display:none">
+    <div class="wa-b"><div class="wa-steps" id="wa-steps"></div><div class="wa-path" id="wa-path" style="display:none"></div></div>
+    <div class="wa-b wa-act" id="wa-act" style="display:none">
+      <div><button type="button" class="wa-circ" title="Close" aria-label="Close" onclick="waClose()"><i class="ti ti-x"></i></button>Close</div>
+      <div id="wa-sh"><button type="button" class="wa-circ share" title="Share" aria-label="Share" onclick="waShare()"><i class="ti ti-share"></i></button>Share</div>
+    </div>
+  </div>
+</div></div>
 <div id="pr"></div>
 <div class="toast" id="toast" role="alert"><i id="toast-icon" class="ti ti-circle-check"></i><span id="toast-msg">Saved</span></div>
 
@@ -1308,7 +1358,7 @@ function mutateRaw(j,a,p,res){const now=new Date().toISOString();      // optimi
 const LocalBills=(()=>{
  const KEY='bills_local_v1',now=()=>new Date().toISOString();
  const rd=()=>{try{const j=JSON.parse(localStorage.getItem(KEY));if(j&&j.Bills&&j.Payments)return j;}catch(e){}return{seq:0,Bills:[],Payments:[]};};
- const wr=j=>{try{localStorage.setItem(KEY,JSON.stringify(j));}catch(e){throw new Error('Browser storage is full or blocked');}};
+ const wr=j=>{try{localStorage.setItem(KEY,JSON.stringify(j));}catch(e){throw new Error('Not enough space to save the file');}};
  return{async get(){const j=rd();return{Bills:j.Bills,Payments:j.Payments};},
   async post(a,p){const j=rd();
    if(a==='addBill'){const b=p.bill;j.seq=(j.seq||0)+1;const no=String(j.seq).padStart(4,'0');
@@ -1411,6 +1461,7 @@ function render(){
     <td><span class="badge ${s[0]}">${s[1]}</span></td>
     <td class="acts"><span class="act-btns"><button class="ib sm" title="View / payments" onclick="viewBill('${b.id}')"><i class="ti ti-eye"></i></button>
     <button class="ib sm" title="Print" onclick="printBill('${b.id}')"><i class="ti ti-printer"></i></button>
+    <button class="ib sm wa" title="Send on WhatsApp" aria-label="Send on WhatsApp" onclick="waOpen('${b.id}')"><i class="ti ti-brand-whatsapp"></i></button>
     <button class="ib sm dng" id="del-${b.id}" title="Delete" onclick="delBill('${b.id}')"><i class="ti ti-trash"></i></button></span></td></tr>`;}).join('')}</tbody></table>`
     :'<div class="empty">No bills yet. Use <b>New Bill</b> to create one.</div>');
 }
@@ -1493,7 +1544,7 @@ const Ledger=LEDGER_BACKEND?{get:async()=>{await freshLedger();return{};},post:(
   Receipts:['PaymentID','ReceiptNo','Dir','PartyType','Party','Date','Mode','Ref','Amount','Comments','Type','Created'],
   Allocations:['AllocID','PaymentID','ReceiptNo','BillID','BillNo','ChargeID','OrderID','OrderNo','PartyType','Party','Date','Amount','Comments','Reverses','Created']};
  const rd=()=>{try{const j=JSON.parse(localStorage.getItem(KEY));if(j&&j.Charges&&j.Receipts&&j.Allocations)return j;}catch(e){}return{Charges:[H.Charges],Receipts:[H.Receipts],Allocations:[H.Allocations]};};
- const wr=j=>{try{localStorage.setItem(KEY,JSON.stringify(j));}catch(e){throw new Error('Browser storage is full or blocked — export a backup and clear space');}};
+ const wr=j=>{try{localStorage.setItem(KEY,JSON.stringify(j));}catch(e){throw new Error('Not enough space to save the file — export a backup and clear space');}};
  const R=n=>Math.round((+n||0)*100)/100,now=()=>new Date().toISOString(),uid=(p,i)=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,5)+(i||0);
  const sm=(a,f)=>R(a.reduce((s,x)=>s+f(x),0));
  return{
@@ -1597,6 +1648,140 @@ function printBill(id){const b=bills.find(x=>x.id===id);if(!b)return;const w=win
     if(USE_BACKEND&&b.oids.some(x=>!orders.some(o=>o.id===x))){try{idbTs=0;await loadIDB();}catch(e){}}
   const ft=[[CO_PHONE&&'Ph: '+CO_PHONE,CO_EMAIL&&'Email: '+CO_EMAIL].filter(Boolean).join(' ')].filter(Boolean).map(esc).join('<br>');
   $('pr').innerHTML=docHTML(b).replace(/<\/div>$/,'')+`<div class="sig"><span>Prepared by</span><span>Received by</span><div style="width:30%;text-align:center">${CO_STAMP?`<img src="${esc(CO_STAMP)}" alt="">`:''}<span style="display:block;width:100%">Authorized Signature &amp; Stamp</span></div></div><div class="ift"><b>Thank you for your business. ${esc(CO)}</b><br>${ft}</div></div>`;openPrint('Bill '+(b.no||''),w);})();}
+/* ═══ WHATSAPP SEND — number → PDF (same layout as Print) saved + path logged → result window → Share opens WhatsApp ═══ */
+const WA_LOG='bills_wa_log_v1',WA_CC='bills_wa_cc_v1',WA_NUMS='bills_wa_nums_v1';
+let waId=null,waFile=null,waBusy=false,waNum='',waMsg='',waTok=0;
+const waJ=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
+const waW=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const waDB=()=>new Promise((res,rej)=>{const r=indexedDB.open('bills_wa',2);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains('kv'))d.createObjectStore('kv');if(!d.objectStoreNames.contains('pdfs'))d.createObjectStore('pdfs');};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
+async function waKV(mode,key,val){const db=await waDB();return new Promise((res,rej)=>{const tx=db.transaction('kv',mode==='get'?'readonly':'readwrite'),st=tx.objectStore('kv'),q=mode==='get'?st.get(key):st.put(val,key);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});}
+const waSafe=t=>String(t||'').replace(/[\\/:*?"<>|\s]+/g,'_').replace(/^_+|_+$/g,'').slice(0,60);
+const waPartyKey=b=>norm(b.party);
+function waNormalize(cc,raw){
+  let d=String(raw||'').replace(/[^\d+]/g,'');
+  if(d.startsWith('+'))return d.slice(1).replace(/\D/g,'');
+  d=d.replace(/\D/g,'');
+  if(d.startsWith('00'))return d.slice(2);
+  if(d.startsWith(cc)&&d.length>=cc.length+8)return d;
+  return cc+d.replace(/^0+/,'');
+}
+function waSteps(list){$('wa-steps').innerHTML=list.map(([c,t])=>`<div class="${c}"><i class="ti ${c==='ok'?'ti-circle-check':c==='err'?'ti-alert-circle':c==='run'?'ti-loader-2':'ti-circle'}"></i><span>${esc(t)}</span></div>`).join('');}
+/* compact message: total · what was received (date · method · amount) · paid · balance */
+function waMessage(b,no){
+  const t=tb(b),p=paidOf(b),bal=r2(t.total-p),ps=pays.filter(x=>x.billId===b.id),al=allocList(b);
+  const rec=[...ps.map(x=>({d:x.date,m:(x.mode||'Payment')+(x.ref?' ('+x.ref+')':''),a:+x.amount})),...al.map(x=>({d:x.date,m:'Receipt '+x.rno,a:+x.amount}))].filter(x=>x.a);
+  const L=['Hello '+b.party+',','',(b.dir==='out'?'Invoice ':'Bill ')+'*'+no+'* · '+b.date,'Total: *'+CUR+' '+money(t.total)+'*'];
+  if(rec.length){L.push('Paid: *'+CUR+' '+money(p)+'*');rec.slice(0,4).forEach(x=>L.push('• '+x.d+' · '+x.m+' · '+money(x.a)));if(rec.length>4)L.push('• +'+(rec.length-4)+' more');}
+  L.push(bal>.005?'Balance due: *'+CUR+' '+money(bal)+'*':'Status: *Paid in full* ✅');
+  L.push('','Thank you,',CO+(CO_PHONE?' · '+CO_PHONE:''));
+  return L.join('\n');
+}
+function waOpen(id){
+  const b=bills.find(x=>x.id===id);if(!b)return;waId=id;waFile=null;waTok++;waBusy=false;
+  const t=tb(b),p=paidOf(b),os=b.oids.map(i=>orders.find(o=>o.id===i)).filter(Boolean),no=invNo(b,os),bal=r2(t.total-p);
+  $('wa-sum').innerHTML='<b>'+esc(no)+'</b> · '+esc(b.party)+' · '+esc(b.date)+'<br>Total '+esc(CUR)+' '+money(t.total)+' · Balance '+esc(CUR)+' '+money(bal);
+  $('wa-cc').value=waJ(WA_CC,'92');
+  const saved=waJ(WA_NUMS,{})[waPartyKey(b)]||'';$('wa-num').value=saved;
+  const lg=waJ(WA_LOG,[]).filter(x=>x.billId===id);
+  $('wa-hist').textContent=lg.length?'Last sent to +'+lg[0].number+' on '+new Date(lg[0].at).toLocaleString():(saved?'Number remembered for this party':'');
+  $('wa-form').style.display='';$('wa-res').style.display='none';$('wa-act').style.display='none';$('wa-path').style.display='none';
+  $('wa-ov').classList.add('open');setTimeout(()=>$('wa-num').focus(),50);
+}
+function waClose(){waTok++;waBusy=false;$('wa-ov').classList.remove('open');waId=null;}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('wa-ov').classList.contains('open'))waClose();});
+
+/* PDF = the SAME document the Print button produces. It is laid out inside its own fixed-width A4 iframe
+   (same markup + same CSS as the print window), so the laptop / phone screen size can never change the result. */
+async function waBuildPdf(b){
+  if(typeof html2canvas==='undefined'||!window.jspdf)throw new Error('PDF library not loaded (check internet)');
+  if(USE_BACKEND&&b.oids.some(x=>!orders.some(o=>o.id===x))){try{idbTs=0;await loadIDB();}catch(e){}}
+  const ft=[[CO_PHONE&&'Ph: '+CO_PHONE,CO_EMAIL&&'Email: '+CO_EMAIL].filter(Boolean).join(' ')].filter(Boolean).map(esc).join('<br>');
+  const sty=[...document.querySelectorAll('style')].map(x=>x.textContent).join('\n'),css=sty.slice(sty.indexOf('/* ── print: only the bill ── */'));
+  const inner=docHTML(b).replace(/<\/div>$/,'')+`<div class="sig"><span>Prepared by</span><span>Received by</span><div style="width:30%;text-align:center">${CO_STAMP?`<img src="${esc(CO_STAMP)}" alt="">`:''}<span style="display:block;width:100%">Authorized Signature &amp; Stamp</span></div></div><div class="ift"><b>Thank you for your business. ${esc(CO)}</b><br>${ft}</div></div>`;
+  const W=733,PX_MM=W/194;                                   // 733 css px = A4 width (210) − 2×8 mm margins → 1:1 with print
+  const fr=document.createElement('iframe');
+  fr.setAttribute('aria-hidden','true');fr.style.cssText='position:fixed;left:0;top:0;width:'+W+'px;height:1200px;border:0;opacity:0;pointer-events:none;z-index:-1';
+  document.body.appendChild(fr);
+  try{
+    await new Promise(res=>{fr.onload=res;fr.srcdoc='<!DOCTYPE html><html><head><meta charset="utf-8"><style>'+css+
+      '.inv .tot div{display:flex;justify-content:space-between;padding:3px 0}.inv .tot .g{font-weight:700}.inv .tot b{font-weight:700}.inv .pay b{display:block}'+
+      'html,body{margin:0;padding:0;background:#fff}#pr{display:block;box-sizing:border-box;width:'+W+'px}</style></head><body><div id="pr">'+inner+'</div></body></html>';});
+    const doc=fr.contentDocument,el=doc.getElementById('pr');
+    await Promise.all([...doc.images].map(i=>i.decode?i.decode().catch(()=>{}):0));
+    await new Promise(r=>setTimeout(r,150));
+    const H=Math.ceil(el.scrollHeight);fr.style.height=H+'px';
+    const base=el.getBoundingClientRect().top;
+    const cuts=[...doc.querySelectorAll('tr,.ihd,.imeta,.ibot,.sig,.ift,.iwords')].map(n=>n.getBoundingClientRect().bottom-base).sort((x,y)=>x-y);
+    const canvas=await html2canvas(el,{scale:2.5,useCORS:true,backgroundColor:'#fff',width:W,height:H,windowWidth:W,windowHeight:H,scrollX:0,scrollY:0});
+    const k=canvas.width/W,PH=281*PX_MM;                     // page content height (297 − 2×8 mm) in css px
+    const pdf=new window.jspdf.jsPDF({unit:'mm',format:'a4',orientation:'portrait',compress:true});
+    let y=0,first=true;
+    while(y<H-2){
+      let end=Math.min(y+PH,H);
+      if(end<H){const c=cuts.filter(v=>v>y+PH*.5&&v<=end).pop();if(c)end=c;}   // never cut through a table row / total box
+      const part=document.createElement('canvas');part.width=canvas.width;part.height=Math.max(1,Math.round((end-y)*k));
+      const cx=part.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,part.width,part.height);cx.drawImage(canvas,0,Math.round(y*k),canvas.width,part.height,0,0,part.width,part.height);
+      if(!first)pdf.addPage();first=false;
+      pdf.addImage(part.toDataURL('image/jpeg',.95),'JPEG',8,8,194,(end-y)/PX_MM,undefined,'FAST');
+      y=end;
+    }
+    return pdf.output('blob');
+  }finally{fr.remove();}
+}
+/* PDF is kept in the browser's own storage (IndexedDB) — no folder, no prompt. One entry per file name. */
+async function waSavePdf(blob,name,billId){
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
+  const db=await waDB();
+  await new Promise((res,rej)=>{const tx=db.transaction('pdfs','readwrite');tx.objectStore('pdfs').put({name,blob,billId,at:Date.now()},name);tx.oncomplete=res;tx.onerror=()=>rej(tx.error||new Error('Not enough space to save the file'));tx.onabort=()=>rej(tx.error||new Error('Not enough space to save the file'));});
+  return{where:'browser',path:'This device · '+name};
+}
+/* Continue: number → build + save to browser storage automatically → result window (nothing opens in WhatsApp yet) */
+async function waGo(){
+  if(waBusy)return;const b=bills.find(x=>x.id===waId);if(!b)return;
+  const cc=$('wa-cc').value,num=waNormalize(cc,$('wa-num').value);
+  if(num.length<9||num.length>15){showToast('Enter a valid WhatsApp number','error');$('wa-num').focus();return;}
+  waBusy=true;const tok=waTok;
+  const os=b.oids.map(i=>orders.find(o=>o.id===i)).filter(Boolean),no=invNo(b,os);
+  const name='Invoice_'+waSafe(no)+'_'+waSafe(b.party)+'.pdf';
+  const S=[['run','Creating PDF…'],['','Saving file'],['','Ready to share']];
+  $('wa-form').style.display='none';$('wa-res').style.display='';$('wa-act').style.display='none';$('wa-path').style.display='none';waSteps(S);
+  try{
+    const blob=await waBuildPdf(b);if(tok!==waTok)return;
+    if(blob.size<3000)throw new Error('PDF came out empty — please try again');
+    S[0]=['ok','PDF created ('+Math.round(blob.size/1024)+' KB)'];S[1]=['run','Saving file…'];waSteps(S);
+    const saved=await waSavePdf(blob,name,b.id);if(tok!==waTok)return;
+    waFile=new File([blob],name,{type:'application/pdf'});waNum=num;waMsg=waMessage(b,no);
+    S[1]=['ok','Saved: '+saved.path];S[2]=['ok','Ready — tap Share'];waSteps(S);
+    $('wa-path').textContent=saved.path;$('wa-path').style.display='block';
+    waW(WA_CC,cc);const nums=waJ(WA_NUMS,{});nums[waPartyKey(b)]=$('wa-num').value.trim();waW(WA_NUMS,nums);
+    const log=waJ(WA_LOG,[]);log.unshift({billId:b.id,billNo:no,party:b.party,number:num,file:name,path:saved.path,where:saved.where,at:Date.now()});waW(WA_LOG,log.slice(0,300));
+    $('wa-sh').style.display='';$('wa-act').style.display='flex';
+  }catch(e){
+    if(tok!==waTok)return;
+    const i=S.findIndex(x=>x[0]==='run'||x[0]==='');S[i<0?0:i]=['err',(e&&e.message)||'Failed'];waSteps(S);
+    $('wa-sh').style.display='none';$('wa-act').style.display='flex';
+  }
+  waBusy=false;
+}
+/* Share — PDF + message always travel together.
+   Phone: WhatsApp shows the text as the caption of the PDF (one message).
+   Laptop: the share sheet delivers the PDF and the text to WhatsApp Desktop, which may show them as two messages;
+   the message is also copied to the clipboard as a backup. */
+async function waShare(){
+  if(!waFile)return;
+  const base=[['ok','PDF created'],['ok','Saved: '+$('wa-path').textContent]];
+  const mobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  let copied=false;
+  if(!mobile){try{await navigator.clipboard.writeText(waMsg);copied=true;}catch(e){}}
+  if(navigator.canShare&&navigator.canShare({files:[waFile]})){
+    try{
+      await navigator.share({files:[waFile],text:waMsg});
+      waSteps(base.concat([['ok',mobile?'Shared — pick +'+waNum+' in WhatsApp; the message is the caption':'Shared — pick +'+waNum+' in WhatsApp'+(copied?' (message also copied: press Ctrl+V if the text is missing)':'')]]));return;
+    }catch(e){if(e&&e.name==='AbortError')return;}   // any other failure → chat link below
+  }
+  window.open('https://wa.me/'+waNum+'?text='+encodeURIComponent(waMsg),'_blank');
+  waSteps(base.concat([['ok','WhatsApp opened with the message — attach the saved PDF (paperclip → Document)']]));
+}
 function viewBill(id){const b=bills.find(x=>x.id===id);if(!b)return;vid=id;const t=tb(b),p=paidOf(b),dr=drift(b),ps=pays.filter(x=>x.billId===id),s=stOf(b),al=allocList(b);
   $('v-title').innerHTML=esc(b.no)+' <span class="badge '+s[0]+'">'+s[1]+'</span>';
   $('v-body').innerHTML=(dr.length?`<div class="warn" style="border:1px solid var(--amber);border-radius:var(--radius);padding:8px 10px">⚠ Orders changed since this bill was made (edit / return / delete):<br>${dr.map(esc).join('<br>')}<br>Delete and re-create the bill to apply the changes.</div>`:'')
