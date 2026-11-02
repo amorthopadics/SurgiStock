@@ -673,7 +673,9 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 .fi>select{text-overflow:ellipsis}
 .dtr{display:flex;align-items:center;gap:10px;min-height:38px}
 .dtr [hidden]{display:none!important}
-.dtr .dti{flex:1;min-width:0}
+.dtr .dti{flex:none;width:150px}.mh .dtr{margin-left:auto}.mh .dtr+.x{margin-left:0}
+.om .fg{grid-template-columns:minmax(0,auto) minmax(0,1fr) minmax(0,1fr)}.fi.st{max-width:170px}
+@media(max-width:1100px) and (min-width:901px),(max-width:600px){.om .fg{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.fi.st{max-width:none}.fg .fi:last-child{grid-column:1/-1}}
 .om .tdy{display:inline-flex;align-items:center;gap:9px;flex:none;height:38px;margin:0;padding:0 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg3);color:var(--text2);font-size:16px;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
 .om .tdy:hover{border-color:var(--accent)}
 .om .tdy:has(input:checked){border-color:var(--accent);background:var(--accent-dim);color:var(--accent)}
@@ -771,18 +773,18 @@ select.date-input option{background:var(--surface2);color:var(--text);}
   <div class="mh">
     <div class="ttl"><i class="ti" id="m-ico"></i><span id="m-title"></span></div>
     <div class="chips" id="f-types"></div>
+    <div class="dtr">
+      <label class="tdy" title="Today"><i class="ti ti-calendar-event"></i><input type="checkbox" id="f-today" aria-label="Today" checked/></label>
+      <span class="dshow" id="f-dshow"></span>
+      <div class="dti" id="f-dtw" hidden><input type="date" id="f-date" aria-label="Date" title="Date"/></div>
+    </div>
     <button type="button" class="ib x" title="Close" aria-label="Close" onclick="closeForm()"><i class="ti ti-x"></i></button>
   </div>
   <div class="mb">
     <div class="fg">
-      <div class="w2 dtr">
-        <label class="tdy" title="Today"><i class="ti ti-calendar-event"></i><input type="checkbox" id="f-today" aria-label="Today" checked/></label>
-        <span class="dshow" id="f-dshow"></span>
-        <div class="dti" id="f-dtw" hidden><input type="date" id="f-date" aria-label="Date" title="Date"/></div>
-      </div>
-      <div class="fi"><i class="ti ti-building-store fic"></i><select id="f-store" title="Store" aria-label="Store"></select></div>
+      <div class="fi st"><i class="ti ti-building-store fic"></i><select id="f-store" title="Store" aria-label="Store"></select></div>
       <div class="fi"><i class="ti fic" id="f-plbl"></i><div class="cb" id="f-pcb"></div></div>
-      <div class="fi w2"><i class="ti ti-notes fic"></i><input id="f-note" placeholder="Note…" title="Reference / Note" aria-label="Reference / Note" autocomplete="off"/></div>
+      <div class="fi"><i class="ti ti-notes fic"></i><input id="f-note" placeholder="Note…" title="Reference / Note" aria-label="Reference / Note" autocomplete="off"/></div>
     </div>
     <div class="pick">
       <div class="sbox fs">
