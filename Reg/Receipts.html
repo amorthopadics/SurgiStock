@@ -216,17 +216,17 @@ async function bootAll(){
  if(ST.booting)return;ST.booting=true;ST.state='loading';ST.err='';render();askParent();
  await Promise.all(SV.filter(s=>!s.painted).map(bootSrc));
  ST.booting=false;
- if(!ready()){ST.state='error';ST.err=SV.filter(s=>!s.painted).map(s=>s.label+' ('+s.key+')'+(s.err?': '+s.err:'')).join(' · ');render();showToast('Not loaded — '+ST.err,'error');}}
+ if(!ready()){ST.state='error';ST.err=SV.filter(s=>!s.painted).map(s=>(s.err&&console.warn('[load]',s.label,s.err),s.label)).join(' · ');render();showToast('Not loaded — '+ST.err,'error');}}
 function retryAll(){ST.booting=false;bootAll();}
 const stateHTML=()=>ST.state==='error'
- ?`<div class="empty">Ledger data isn’t available yet.<div class="dim" style="margin:6px 0 10px;font-size:12px">${esc(ST.err||'The cache is empty and the server could not be reached.')}</div><button class="btn pri" onclick="retryAll()"><i class="ti ti-refresh"></i>Retry</button></div>`
+ ?`<div class="empty">Ledger data isn’t available yet.<div class="dim" style="margin:6px 0 10px;font-size:12px">${esc(ST.err||'Data isn’t available right now. Check your connection and try again.')}</div><button class="btn pri" onclick="retryAll()"><i class="ti ti-refresh"></i>Retry</button></div>`
  :'<div class="sk"></div>'.repeat(6);
 const notReady=()=>{if(USE_BACKEND&&!ready()){showToast(ST.state==='error'?'Data not loaded — press Retry':'Still loading — please wait','error');return true;}return false;};
 
 async function load(){
-  if(USE_BACKEND){try{await freshLedger();}catch(e){showToast('Ledger not reachable: '+errText(e.message),'error');}after();return;}
+  if(USE_BACKEND){try{await freshLedger();}catch(e){showToast('Could not refresh the ledger: '+errText(e.message),'error');}after();return;}
  try{const j=await Ledger.get();L={Charges:j.Charges||[],Receipts:j.Receipts||[],Allocations:j.Allocations||[]};}
-  catch(e){showToast('Ledger not reachable — add the Accounts backend: '+errText(e.message),'error');}loadParties();render();}
+  catch(e){showToast('Could not load the ledger: '+errText(e.message),'error');}loadParties();render();}
 function recs(){const al={};rw(L.Allocations,'AllocID').forEach(a=>al[a[1]]=r2((al[a[1]]||0)+(+a[11]||0)));
   return rw(L.Receipts,'PaymentID').map(r=>({id:String(r[0]),no:r[1],dir:r[2],ptype:r[3],party:r[4],date:r[5],mode:r[6],ref:r[7],amt:+r[8]||0,note:r[9],type:r[10],alloc:al[r[0]]||0})).map(r=>({...r,un:r2(r.amt-r.alloc)})).sort((a,b)=>b.id.localeCompare(a.id));}
 function render(){
@@ -278,7 +278,7 @@ PermGate.init({
 AP2Sync.init({
   key:'receipts',
   queue:['addReceipt','addCharges'],            /* held on this device while offline (both carry their own data) */
-  state:()=> ready() ? {state:'ok',title:'Cache loaded · Ledger'} : (ST.state==='error' ? {state:'err',title:'Cache error — '+ST.err} : {state:'warn',title:'Cache: waiting…'}),
+  state:()=> ready() ? {state:'ok',title:'Up to date'} : (ST.state==='error' ? {state:'err',title:'Could not load — '+ST.err} : {state:'warn',title:'Loading…'}),
   refresh:()=>{ ST.booting=false; SV.forEach(applyFromIDB); },
   onSynced:()=>load()
 });

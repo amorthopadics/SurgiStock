@@ -570,7 +570,7 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 <div class="view-bar">
   <div class="vb-brand" title="Master Setup"><i class="ti ti-building-hospital"></i></div>
   <div class="tab-nav tabs-fixed four" id="tab-nav"></div>
-  <button class="ib cache-ind warn" id="cache-ind" type="button" title="Cache: waiting…"><i class="ti ti-database"></i></button>
+  <button class="ib cache-ind warn" id="cache-ind" type="button" title="Loading…"><i class="ti ti-database"></i></button>
   <button class="ib sync-ind" id="sync-ind" type="button" style="display:none" title=""><i class="ti ti-cloud-upload"></i><span class="ping"></span><b class="sync-n">0</b></button>
 </div>
 
@@ -594,7 +594,7 @@ const MODULES = [
   { key:'itemlist', label:'Item Lists', plural:'Item Lists', icon:'ti-list-check', custom:true, group:'itemlist',
     hint:'Medical Domain-wise catalog: Material Source - Item - Category - Specs - Description' },
   { key:'specsetting', label:'Specs Settings', plural:'Specs Settings', icon:'ti-settings', custom:true, group:'settings',
-    hint:'One sheet for every kind of Specs: ID - Specs - Item - Description - Status' },
+    hint:'One list for every kind of Specs: ID - Specs - Item - Description - Status' },
   { key:'storebranch', label:'Store', plural:'Stores', icon:'ti-building-store', group:'spectype',
     hint:'Physical store / location',
     fields:[
@@ -743,7 +743,7 @@ async function syncSpecsSheet(opts){
   } else {
     updateSyncInd();
     let had = false; try { had = localStorage.getItem(FAILED_KEY) === '1'; if (had) localStorage.removeItem(FAILED_KEY); } catch(e){}
-    if (had) showToast('Saved — all pending changes are now synced to the sheet', 'success');
+    if (had) showToast('Saved — all pending changes are now synced', 'success');
   }
   return res;
 }
@@ -782,7 +782,7 @@ async function specsSyncOnce(){
         next[a.id] = [a.id, a.specs, a.item, a.description, a.status];
         const sent = adds.find(r => r[0] === clientId); if (sent) next[a.id] = sent.slice(), next[a.id][0] = a.id;
       });
-      if ((j.skipped||[]).length){ rejected = j.skipped.length; showToast('Not saved to sheet: ' + j.skipped[0].reason, 'error'); }   // legacy — server no longer skips
+      if ((j.skipped||[]).length){ rejected = j.skipped.length; showToast('Not saved: ' + j.skipped[0].reason, 'error'); }   // legacy — server no longer skips
       if (Object.keys(j.idMap || {}).length){ persist(); renderAll(); }
       adds.forEach(r => { if (!(j.added||[]).some(a => (rev[a.id]||a.id) === r[0])) next[r[0]] = r.slice(); });   // rejected rows: don't retry forever
     }

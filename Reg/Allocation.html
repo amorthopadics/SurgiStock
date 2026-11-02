@@ -200,17 +200,17 @@ async function bootAll(){
  if(S.booting)return;S.booting=true;S.state='loading';S.err='';render();askParent();
  await Promise.all(SV.filter(s=>!s.painted).map(bootSrc));
  S.booting=false;
- if(!ready()){S.state='error';S.err=SV.filter(s=>!s.painted).map(s=>s.label+' ('+s.key+')'+(s.err?': '+s.err:'')).join(' · ');render();showToast('Not loaded — '+S.err,'error');}}
+ if(!ready()){S.state='error';S.err=SV.filter(s=>!s.painted).map(s=>(s.err&&console.warn('[load]',s.label,s.err),s.label)).join(' · ');render();showToast('Not loaded — '+S.err,'error');}}
 function retryAll(){S.booting=false;bootAll();}
 const stateHTML=()=>S.state==='error'
- ?`<div class="empty">Ledger / bills data isn’t available yet.<div class="dim" style="margin:6px 0 10px;font-size:12px">${esc(S.err||'The cache is empty and the server could not be reached.')}</div><button class="btn pri" onclick="retryAll()"><i class="ti ti-refresh"></i>Retry</button></div>`
+ ?`<div class="empty">Ledger / bills data isn’t available yet.<div class="dim" style="margin:6px 0 10px;font-size:12px">${esc(S.err||'Data isn’t available right now. Check your connection and try again.')}</div><button class="btn pri" onclick="retryAll()"><i class="ti ti-refresh"></i>Retry</button></div>`
  :'<div class="sk"></div>'.repeat(5);
 const notReady=()=>{if(USE_BACKEND&&!ready()){showToast(S.state==='error'?'Data not loaded — press Retry':'Still loading — please wait','error');return true;}return false;};
 
 async function load(){
- if(USE_BACKEND){try{await freshLedger();}catch(e){showToast('Ledger not reachable: '+errText(e.message),'error');}after();return;}   // bills come from the cache; only the ledger changes through this page
+ if(USE_BACKEND){try{await freshLedger();}catch(e){showToast('Could not refresh the ledger: '+errText(e.message),'error');}after();return;}   // bills come from the cache; only the ledger changes through this page
  try{const j=await Ledger.get();L={Charges:j.Charges||[],Receipts:j.Receipts||[],Allocations:j.Allocations||[]};}
- catch(e){showToast('Ledger not reachable: '+errText(e.message),'error');}
+ catch(e){showToast('Could not refresh the ledger: '+errText(e.message),'error');}
  try{const b=await BillsApi.get();BL={Bills:b.Bills||[],Payments:b.Payments||[]};}
  catch(e){showToast('Bills not reachable: '+errText(e.message),'error');}
  after();}
@@ -303,7 +303,7 @@ AP2Sync.init({
   key:'allocation',
   queue:[],                                     /* allocation depends on the live ledger → needs the network */
   online:['addCharges','addAllocations','reverseBill'],
-  state:()=> ready() ? {state:'ok',title:'Cache loaded · Ledger'} : (S.state==='error' ? {state:'err',title:'Cache error — '+S.err} : {state:'warn',title:'Cache: waiting…'}),
+  state:()=> ready() ? {state:'ok',title:'Up to date'} : (S.state==='error' ? {state:'err',title:'Could not load — '+S.err} : {state:'warn',title:'Loading…'}),
   refresh:()=>{ S.booting=false; SV.forEach(applyFromIDB); }
 });
 </script>

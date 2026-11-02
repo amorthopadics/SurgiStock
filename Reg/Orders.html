@@ -10,6 +10,7 @@
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheWatcher.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/api.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheSync.js?v=1"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/cacheRead.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/auth.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/accessGuard.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/permGate.js?v=1"></script>
@@ -666,7 +667,7 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 <div class="view-bar">
   <div class="vb-brand" title="Orders"><i class="ti ti-truck-delivery"></i></div>
   <div class="tab-nav tabs-fixed four" id="tab-nav"></div>
-  <button class="ib cache-ind warn" id="cache-ind" type="button" title="Cache: waiting…"><i class="ti ti-database"></i></button>
+  <button class="ib cache-ind warn" id="cache-ind" type="button" title="Loading…"><i class="ti ti-database"></i></button>
   <button class="ib sync-ind" id="sync-ind" type="button" style="display:none"><i class="ti ti-cloud-upload"></i><span class="ping"></span><b class="sync-n">0</b></button>
   <span id="ldg" class="sr-only"></span>
 </div>
@@ -841,7 +842,7 @@ function applyRows(rows){
 const cache=AP2Cache.create({
   indicator:'cache-ind',
   toast:(m,t)=>showToast(m,t),
-  title:()=>'Cache loaded · '+items.length+' items · '+stores.length+' stores · '+parties.length+' names · '+suppliers.length+' suppliers',
+  title:()=>'Up to date · '+items.length+' items · '+stores.length+' stores · '+parties.length+' names · '+suppliers.length+' suppliers',
   onRows:rows=>{
     const sig=()=>[items.length,domains.length,inames.length,msources.length,stores.length,parties.length,suppliers.length,types.length].join();
     const before=sig();applyRows(rows);render();
@@ -862,10 +863,13 @@ function groupRows(rows){
   });
   return [...m.values()].sort((a,b)=>b.id.localeCompare(a.id));
 }
-async function loadOrders(){
-  const s=session();if(!s.sessionId&&!s.token)return false;
-  try{const j=await AP2Api.get('orders');orders=groupRows(j.Orders||[]);ordersLoaded=true;wr(OK,orders);$('ldg').textContent='';render();return true;}
-  catch(e){if(!loadOrders._w){loadOrders._w=1;showToast('Could not load orders: '+errText(e.message),'error');}return false;}
+/* orders come from the local cache (kept current by the cache layer) — no live request when the module opens */
+const OrdersFeed=AP2Read.watch('ap2_orders',{
+  pick:d=>d&&Array.isArray(d.Orders)?d:null, apiType:'orders',
+  onData:d=>{orders=groupRows(d.Orders||[]);ordersLoaded=true;wr(OK,orders);$('ldg').textContent='';render();}
+});
+async function loadOrders(force){            // force = after our own save: update the cache once, then re-read it
+  try{return force?await OrdersFeed.refreshFromServer():await OrdersFeed.read();}catch(e){return false;}
 }
 AP2Api.onSession(()=>{loadOrders();setTimeout(()=>msRefresh(),0);});
 
@@ -1005,13 +1009,14 @@ async function msFlush(){
     }
   }finally{msFlushing=false;$('sync-ind').classList.remove('busy');}
 }
+const MinFeed=AP2Read.watch('ap2_minStock',{
+  pick:d=>d&&Array.isArray(d.MinStock)?d:null, apiType:'minStock',
+  onData:(d,m)=>{if(msGetQ().length&&!(m&&m.forced))return;msRows=(d.MinStock||[]).map(r=>r.slice());msSaveLocal();render();}
+});
 async function msRefresh(force){
   if(msGetQ().length&&!force)return;
-  const s=session();if(!s.sessionId&&!s.token)return;
-  try{
-    let j;try{j=await AP2Api.get('minStock');}catch(e){j=await post('minStockList',{});}
-    msRows=(j.MinStock||[]).map(r=>r.slice());msSaveLocal();render();
-  }catch(e){console.warn('[minstock] refresh failed',e.message);}
+  try{if(force)await MinFeed.refreshFromServer();else await MinFeed.read();}
+  catch(e){console.warn('[minstock] refresh failed',e.message);}
 }
 function msRender(){
   const pend=new Set(msGetQ().filter(o=>o.action==='minStockSave').map(o=>o.payload.rows[0].itemId));
@@ -1025,7 +1030,7 @@ function msRender(){
       <button class="ib sm${msArmed===r[0]?' dng armed':''}" data-mdel="${esc(r[0])}" title="${msArmed===r[0]?'Click again to delete':'Delete'}"><i class="ti ${msArmed===r[0]?'ti-check':'ti-trash'}"></i></button></span></td></tr>`).join('')+'</tbody></table>';
 }
 function msOpen(row){
-  if(!row&&!cache.requireReady('Cache not loaded yet — please wait'))return;
+  if(!row&&!cache.requireReady('Still loading — please wait'))return;
   msPicked=row?{id:row[1],domain:row[2],label:row[3]}:null;
   $('ms-item').value=msPicked?msPicked.label:'';$('ms-item').readOnly=!!row;
   $('ms-qty').value=row?row[4]:'';
@@ -1167,7 +1172,7 @@ async function addSupplier(name){
 
 /* ═══ FORM ═══ */
 function openForm(t,id){
-  if(!cache.requireReady('Cache not loaded yet — please wait'))return;
+  if(!cache.requireReady('Still loading — please wait'))return;
   if(!stores.length)return showToast('No active Store found in Specs Settings','error');
   const o=id?orders.find(x=>x.id===id):null;if(id&&!o)return;
   formType=o?o.type:t;
@@ -1206,7 +1211,7 @@ function closeForm(){$('ov').classList.remove('open');draft=null;}
 function drawChips(){
   const d=draft,TL=(!d.ptype||types.some(t=>t.k===d.ptype))?types:types.concat({k:d.ptype,l:d.ptypeLabel||d.ptype});
   $('f-types').innerHTML=TL.length?TL.map(t=>`<button type="button" class="chip${d.ptype===t.k?' on':''}" data-v="${esc(t.k)}"><i class="ti ${typeIcon(t.k)}"></i>${esc(t.l)}</button>`).join('')
-    :'<span class="dim" style="font-size:12px">No entries with Description “Customer” found in the Master sheet yet.</span>';
+    :'<span class="dim" style="font-size:12px">No customers yet.</span>';
 }
 function drawPartyBlock(){
   const d=draft,out=formType==='out';
@@ -1235,7 +1240,7 @@ function refreshOpenForm(changed){
   $('f-types').dataset.sig=types.map(t=>t.k).join('|');
   if(pcomb&&pcomb.redraw)pcomb.redraw();
   if($('panel').classList.contains('pick'))showDD();
-  if(changed)showToast('Lists updated from cache','success');
+  if(changed)showToast('Lists updated','success');
 }
 $('f-types').onclick=e=>{const b=e.target.closest('.chip');if(!b||!draft)return;
   draft.ptype=b.dataset.v;draft.ptypeLabel='';draft.party=null;lastPType=draft.ptype;drawPartyBlock();pcomb.focus();};
@@ -1361,9 +1366,9 @@ async function saveEdit(){
       const j=await post('addOrder',{order:{id:tsId(Date.now()+1),type:out?'in':'out',date:new Date().toISOString().slice(0,10),storeId:o.storeId,storeName:o.storeName,
         partyType:o.partyType,partyId:o.partyId,party:o.party,note:out?'Returned':'Claim/Damaged',lines:rt.map(L)}});
       msg.push((out?'Returned':'Claim/Damaged')+' saved'+((j&&j.order&&j.order.no)?': '+j.order.no:''));}
-    await loadOrders();closeForm();render();showToast(msg.join(' · '),'success');
+    await loadOrders(true);closeForm();render();showToast(msg.join(' · '),'success');
   }catch(e){
-    if(msg.length){await loadOrders();render();}
+    if(msg.length){await loadOrders(true);render();}
     console.error('saveEdit failed at',step,e);
     showToast((step==='return'?'Return/claim not saved: ':'Not saved: ')+errText(e.message)+(msg.length?' ('+msg[0]+')':''),'error');
   }
@@ -1390,7 +1395,7 @@ async function saveOrder(){
   try{
     const j=await post(d.id?'updateOrder':'addOrder',{order});
     const no=(j&&j.order&&j.order.no)||d.no;
-    await loadOrders();
+    await loadOrders(true);
     closeForm();render();
     showToast((d.id?'Order updated: ':'Order saved: ')+no,'success');
   }catch(e){showToast('Not saved: '+errText(e.message),'error');}
@@ -1401,7 +1406,7 @@ async function delOrder(id){
   if(armed!==id){armed=id;const b=$('del-'+id);if(b){b.classList.add('armed');b.title='Click again to confirm delete';}
     clearTimeout(delOrder.t);delOrder.t=setTimeout(()=>{armed=null;render();},2800);return;}
   armed=null;
-  try{await post('deleteOrder',{ids:[id]});await loadOrders();showToast('Order deleted — stock recalculated','success');}
+  try{await post('deleteOrder',{ids:[id]});await loadOrders(true);showToast('Order deleted — stock recalculated','success');}
   catch(e){showToast('Not deleted: '+errText(e.message),'error');render();}
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('ov').classList.contains('open'))closeForm();});
@@ -1443,7 +1448,7 @@ AP2Sync.init({
   queue:['addOrder','updateOrder','deleteOrder'],
   extraPending:()=>msGetQ().length,             /* Stock Threshold already keeps its own queue — counted on the same button */
   extraFlush:()=>msFlush(),
-  onSynced:()=>loadOrders()
+  onSynced:()=>loadOrders(true)
 });
 </script>
 </body>

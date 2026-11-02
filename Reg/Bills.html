@@ -7,11 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheWatcher.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/api.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheSync.js?v=1"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/cacheRead.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/auth.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/accessGuard.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/permGate.js?v=1"></script>
@@ -703,33 +702,6 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 @media(max-width:480px){.trow{grid-template-columns:minmax(0,1fr) 1fr 28px}.trow>.cb{grid-column:1/-1}}
 @media(min-width:1101px){#ov3.open{width:560px}}
 @media(min-width:901px) and (max-width:1100px){#ov3.open{width:480px}}
-/* ── WhatsApp send ── */
-.ib.wa{color:#25d366;border-color:rgba(37,211,102,.45)}
-.ib.wa:hover{background:rgba(37,211,102,.14);color:#25d366}
-.wa-ov{position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:14px}
-.wa-ov.open{display:flex}
-.wa-box{width:100%;max-width:440px;max-height:92vh;overflow:auto;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow-lg)}
-.wa-h{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);font-weight:700}
-.wa-h i.lg{color:#25d366;font-size:22px}.wa-h .x{margin-left:auto}
-.wa-b{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
-.wa-b label{display:block;font-size:11px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:var(--text2);margin-bottom:4px}
-.wa-b input,.wa-b select,.wa-b textarea{width:100%;padding:9px 10px;border-radius:var(--radius);border:1.5px solid var(--border2);background:var(--bg2);color:var(--text);font:inherit}
-.wa-b textarea{min-height:92px;resize:vertical;font-size:13px}
-.wa-row{display:flex;gap:8px}.wa-row select{width:112px;flex:none}
-.wa-sum{font-size:12px;color:var(--text2);background:var(--bg3);border-radius:var(--radius);padding:8px 10px}
-.wa-steps{display:flex;flex-direction:column;gap:6px;font-size:12.5px}
-.wa-steps div{display:flex;gap:8px;align-items:flex-start;color:var(--text2)}
-.wa-steps div.ok{color:var(--teal)}.wa-steps div.err{color:var(--red)}.wa-steps div.run{color:var(--accent)}
-.wa-path{font-family:var(--mono);font-size:11.5px;word-break:break-all;background:var(--bg3);border-radius:var(--radius);padding:8px 10px}
-.wa-f{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--border);justify-content:flex-end}
-.btn.wa-go{background:#25d366;border-color:#25d366;color:#04230f}
-.btn.wa-go:disabled{opacity:.5;cursor:not-allowed}
-.wa-hist{font-size:11.5px;color:var(--text3);margin-top:4px}
-.wa-act{display:flex;justify-content:center;gap:30px;padding:4px 0 2px}
-.wa-act>div{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
-.wa-circ{width:58px;height:58px;border-radius:50%;border:1.5px solid var(--border2);background:var(--bg3);color:var(--text);font-size:25px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .12s,filter .12s}
-.wa-circ:hover{filter:brightness(1.12);transform:scale(1.05)}
-.wa-circ.share{background:#25d366;border-color:#25d366;color:#04230f}
 /* ── print: only the bill ── */
 #pr,#pr *,#pv,#pv *{color:#000!important;background:#fff!important;font-family:Arial,sans-serif}
 #pr{padding:6mm 8mm;font-size:12px}
@@ -775,7 +747,7 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 <div class="view-bar">
   <div class="vb-brand" title="Bills &amp; Payments"><i class="ti ti-receipt"></i></div>
   <div class="tab-nav tabs-fixed five" id="tab-nav"></div>
-  <button class="ib cache-ind warn" id="cache-ind" type="button" title="Cache: waiting…"><i class="ti ti-database"></i></button>
+  <button class="ib cache-ind warn" id="cache-ind" type="button" title="Loading…"><i class="ti ti-database"></i></button>
   <button class="ib sync-ind" id="sync-ind" type="button" style="display:none"><i class="ti ti-cloud-upload"></i><span class="ping"></span><b class="sync-n">0</b></button>
 </div>
 <div class="portal-wrap" id="panels">
@@ -884,7 +856,7 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 <div class="doc-preview-panel" id="ov2"><div class="om" role="dialog" aria-labelledby="v-title">
   <div class="mh"><div class="ttl"><i class="ti ti-file-invoice"></i><span id="v-title"></span></div><button type="button" class="ib x" title="Close" aria-label="Close" onclick="closeView()"><i class="ti ti-x"></i></button></div>
   <div class="mb" id="v-body"></div>
-  <div class="mf"><button type="button" class="ib lg" title="Close" aria-label="Close" onclick="closeView()"><i class="ti ti-x"></i></button><button type="button" class="ib lg pri" title="Print" aria-label="Print" onclick="printBill(vid)"><i class="ti ti-printer"></i></button><button type="button" class="ib lg wa" title="Send on WhatsApp" aria-label="Send on WhatsApp" onclick="waOpen(vid)"><i class="ti ti-brand-whatsapp"></i></button></div>
+  <div class="mf"><button type="button" class="ib lg" title="Close" aria-label="Close" onclick="closeView()"><i class="ti ti-x"></i></button><button type="button" class="ib lg pri" title="Print" aria-label="Print" onclick="printBill(vid)"><i class="ti ti-printer"></i></button></div>
 </div></div>
 <div class="doc-preview-panel" id="ov3"><div class="om" role="dialog" aria-labelledby="r-title">
   <div class="mh"><div class="ttl"><i class="ti ti-adjustments-dollar"></i><span id="r-title">Add Rate</span></div><button type="button" class="ib x" title="Close" aria-label="Close" data-a="close"><i class="ti ti-x"></i></button></div>
@@ -892,27 +864,6 @@ select.date-input option{background:var(--surface2);color:var(--text);}
   <div class="mf" id="r-foot"></div>
 </div></div>
 </div>
-<!-- WHATSAPP SEND -->
-<div class="wa-ov" id="wa-ov" role="dialog" aria-modal="true" aria-labelledby="wa-title"><div class="wa-box">
-  <div class="wa-h"><i class="ti ti-brand-whatsapp lg"></i><span id="wa-title">Send bill on WhatsApp</span></div>
-  <div id="wa-form">
-    <div class="wa-b">
-      <div class="wa-sum" id="wa-sum"></div>
-      <div><label for="wa-num">WhatsApp number</label>
-        <div class="wa-row"><select id="wa-cc" aria-label="Country code"><option value="92">+92 PK</option><option value="971">+971 UAE</option><option value="91">+91 IN</option><option value="966">+966 KSA</option><option value="968">+968 OM</option><option value="974">+974 QA</option><option value="44">+44 UK</option><option value="1">+1 US/CA</option></select>
-        <input id="wa-num" type="tel" inputmode="tel" autocomplete="off" placeholder="300 1234567" onkeydown="if(event.key==='Enter')waGo()"/></div>
-        <div class="wa-hist" id="wa-hist"></div></div>
-    </div>
-    <div class="wa-f"><button type="button" class="btn" onclick="waClose()">Cancel</button><button type="button" class="btn wa-go" onclick="waGo()"><i class="ti ti-arrow-right"></i>Continue</button></div>
-  </div>
-  <div id="wa-res" style="display:none">
-    <div class="wa-b"><div class="wa-steps" id="wa-steps"></div><div class="wa-path" id="wa-path" style="display:none"></div></div>
-    <div class="wa-b wa-act" id="wa-act" style="display:none">
-      <div><button type="button" class="wa-circ" title="Close" aria-label="Close" onclick="waClose()"><i class="ti ti-x"></i></button>Close</div>
-      <div id="wa-sh"><button type="button" class="wa-circ share" title="Share" aria-label="Share" onclick="waShare()"><i class="ti ti-share"></i></button>Share</div>
-    </div>
-  </div>
-</div></div>
 <div id="pr"></div>
 <div class="toast" id="toast" role="alert"><i id="toast-icon" class="ti ti-circle-check"></i><span id="toast-msg">Saved</span></div>
 
@@ -1008,7 +959,7 @@ const RT=(()=>{
   }
   /* ── write new Names / Items to the Master sheet (timestamp ID · Active · no duplicates) ── */
   let sbusy=false;const badge=AP2Api.syncBadge('sync-ind');
-  function setInd(){badge.update(pending.length);badge.busy(sbusy);$('sync-ind').title=pending.length+' change(s) waiting to sync to the sheet — click to retry'}
+  function setInd(){badge.update(pending.length);badge.busy(sbusy);$('sync-ind').title=pending.length+' change(s) waiting to sync — click to retry'}
   async function sync(manual){
     if(sbusy||!pending.length)return;sbusy=true;setInd();
     try{
@@ -1016,26 +967,26 @@ const RT=(()=>{
       sent.forEach(r=>{const n=j.idMap&&j.idMap[r[0]];if(n!=null&&String(n)!==String(r[0]))r[0]=n});
       pending=pending.filter(r=>!sent.includes(r));synced.push(...sent);wrj(PK,pending);
       cache.requestRefresh(true);
-      if(manual)showToast('Saved to Master sheet','success');
-    }catch(e){const m=errText(e.message);if(manual||/logged in|expired|permission/i.test(m))showToast('Not saved to sheet yet: '+m+' — will retry','error')}
+      if(manual)showToast('Saved','success');
+    }catch(e){const m=errText(e.message);if(manual||/logged in|expired|permission/i.test(m))showToast('Not saved yet: '+m+' — will retry','error')}
     sbusy=false;derive();setInd();render();
   }
   function newRow(lab,name,desc){
     let t=Date.now(),id=tsId(t);const used=new Set(allRows().map(r=>String(r[0])));while(used.has(id))id=tsId(++t);
     const r=[id,lab,name,desc||'','Active'];pending.push(r);wrj(PK,pending);derive();setInd();render();sync(false);return r}
-  const ready=()=>cache.requireReady('Cache not loaded yet — wait a moment before adding');
+  const ready=()=>cache.requireReady('Still loading — please wait a moment');
   function askSelect(title,sub,lab,opts,okText){return new Promise(res=>{const ov=document.createElement('div');ov.className='modal-ov open';
     ov.innerHTML=`<div class="modal" style="max-width:380px"><div class="modal-hd"><h3><i class="ti ti-package"></i>${esc(title)}</h3></div><div class="modal-bd"><div class="form-hint">${esc(sub)}</div><div class="field"><label>${esc(lab)} <span class="req">*</span></label><select class="date-input">${opts.map(d=>`<option>${esc(d)}</option>`).join('')}</select></div></div><div class="modal-ft"><span class="sp"></span><button class="btn btn-ghost" type="button" data-v="0">Cancel</button><button class="btn btn-primary" type="button" data-v="1">${esc(okText)}</button></div></div>`;
     document.body.appendChild(ov);ov.onclick=e=>{const v=e.target.dataset.v;if(v==null&&e.target!==ov)return;const x=ov.querySelector('select').value;ov.remove();res(v==='1'?x:null)}})}
   async function addParty(name){
     if(!ready())return null;const t=types.find(x=>x.k===draft.type);if(!t){showToast('Choose a Type first','error');return null}
     if(allRows().some(r=>!IL.test(String(r[1]).trim())&&norm(r[1])===t.k&&norm(r[2])===norm(name))){showToast(name+' already exists in '+t.l+' (check it is Active and marked Customer in Master)','error');return null}
-    const r=newRow(t.l,name,custWord);showToast('Added to Master sheet under '+t.l,'success');return{text:name,sid:r[0],type:t.k}}
+    const r=newRow(t.l,name,custWord);showToast('Added under '+t.l,'success');return{text:name,sid:r[0],type:t.k}}
   async function addItem(label){
     if(!ready())return null;if(!domains.length){showToast('Add a Medical Domain in Master Setup first','error');return null}
-    const dom=await askSelect('Add item to Master sheet',label,'Medical Domain',domains.map(d=>d.name),'Add item');if(!dom)return null;
+    const dom=await askSelect('Add item',label,'Medical Domain',domains.map(d=>d.name),'Add item');if(!dom)return null;
     if(allRows().some(r=>IL.test(String(r[1]).trim())&&norm(r[2])===norm(dom)&&norm(r[3])===norm(label))){showToast('Already in the Item List for '+dom,'error');return null}
-    const r=newRow('Item List',dom,label);showToast('Item added to Master sheet','success');return{text:label,sub:dom,sid:r[0]}}
+    const r=newRow('Item List',dom,label);showToast('Item added','success');return{text:label,sub:dom,sid:r[0]}}
 
   /* ── searchable drop-down with "+ Add" ── */
   function combo(host,o){
@@ -1063,11 +1014,13 @@ const RT=(()=>{
   const rk=(t,n,i)=>norm(t)+'|'+norm(n)+'|'+norm(i);
   const findRule=(t,n,i)=>rules.find(x=>rk(x.type,x.name,x.item)===rk(t,n,i));
   const mapRow=a=>({id:String(a[0]),type:String(a[1]||''),name:String(a[2]||''),item:String(a[3]||''),min:+a[4],max:+a[5],status:/^inactive$/i.test(String(a[6]))?'Inactive':'Active',ts:String(a[7]||''),by:String(a[8]||'')});
-  async function load(){
-    const s=session();if(!s.sessionId&&!s.token)return false;
-    try{const j=await AP2Api.get('rateThreshold');
-      rules=(j.RateThreshold||[]).filter(a=>a&&String(a[0])&&String(a[0])!=='ID').map(mapRow);loaded=true;wrj(TK,rules);render();return true}
-    catch(e){if(tab==='rates'&&!load._w){load._w=1;showToast('Could not load rates: '+errText(e.message),'error')}return false}}
+  /* rate rules come from the local cache — no live request when the tab opens */
+  const RateFeed=AP2Read.watch('ap2_rateThreshold',{
+    pick:d=>d&&Array.isArray(d.RateThreshold)?d:null, apiType:'rateThreshold',
+    onData:d=>{rules=(d.RateThreshold||[]).filter(a=>a&&String(a[0])&&String(a[0])!=='ID').map(mapRow);loaded=true;wrj(TK,rules);render();}
+  });
+  async function load(force){                 // force = after our own save: update the cache once, then re-read it
+    try{return force?await RateFeed.refreshFromServer():await RateFeed.read();}catch(e){return false}}
 
   function render(){
     const q=SQ.rates,tk=toks(q),all=rules,TL=new Map();
@@ -1100,7 +1053,7 @@ const RT=(()=>{
     const d=draft,edit=!!d.id,E=d.errs||{rows:{}},TL=(types.some(x=>x.k===d.type)||!d.type)?types:types.concat({k:d.type,l:d.typeLabel||d.type});
     const chip=m=>`<button type="button" class="chip${d.type===m.k?' on':''}${edit&&d.type!==m.k?' dis':''}" data-v="${m.k}"${edit?' disabled':''}><i class="ti ${typeIcon(m.k)}"></i>${esc(m.l)}</button>`;
     $('r-title').textContent=edit?'Edit Rate':'Add Rate';
-    $('r-body').innerHTML=`<div><label><i class="ti ti-tag"></i>Type <span class="req">*</span></label><div class="chips${E.t?' bad':''}">${TL.length?TL.map(chip).join(''):'<span class="chip-empty">No entries with Description “Customer” found in the sheet yet.</span>'}</div></div>
+    $('r-body').innerHTML=`<div><label><i class="ti ti-tag"></i>Type <span class="req">*</span></label><div class="chips${E.t?' bad':''}">${TL.length?TL.map(chip).join(''):'<span class="chip-empty">No customers yet.</span>'}</div></div>
     <div><label><i class="ti ti-user"></i>Name <span class="req">*</span></label><div class="cb${E.p?' bad':''}" id="rt-pcb"></div></div>
     <div><div class="sec"><i class="ti ti-package"></i>Items &amp; rates (min / max) <span class="req">*</span>${edit?'':'<button class="btn sm" type="button" data-a="addrow"><i class="ti ti-plus"></i> Add item</button>'}</div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">${d.rows.map((r,i)=>{const e=E.rows[i]||{};return`<div class="trow">
@@ -1143,8 +1096,8 @@ const RT=(()=>{
       if(add.length){const used=new Set(rules.map(x=>x.id));let t=Date.now();add.forEach(o=>{let id=tsId(t++);while(used.has(id))id=tsId(t++);used.add(id);o.id=id});await apost('addRateThreshold',{rows:add})}
       if(upd.length)await apost('updateRateThreshold',{rows:upd});
     }catch(e){btns.forEach(b=>b.disabled=false);showToast('Not saved: '+errText(e.message),'error');return}
-    await load();const n=add.length+upd.length;
-    showToast(n+' rate'+(n>1?'s':'')+(d.id||upd.length?' saved / updated':' saved')+' in the sheet','success');
+    await load(true);const n=add.length+upd.length;
+    showToast(n+' rate'+(n>1?'s':'')+(d.id||upd.length?' saved / updated':' saved')+'','success');
     if(another){const t=d.type;draft=blank(t);renderPanel();pcomb.focus()}else close()}
 
   function init(){
@@ -1155,9 +1108,9 @@ const RT=(()=>{
       const b=e.target.closest('button');if(!b)return;
       if(b.dataset.e)open(b.dataset.e);
       if(b.dataset.st){const r=rules.find(x=>x.id===b.dataset.st);if(!r)return;
-        try{await apost('setRateThresholdStatus',{ids:[r.id],status:r.status==='Active'?'Inactive':'Active'});await load();showToast('Status updated','success')}catch(er){showToast('Not updated: '+errText(er.message),'error')}return}
+        try{await apost('setRateThresholdStatus',{ids:[r.id],status:r.status==='Active'?'Inactive':'Active'});await load(true);showToast('Status updated','success')}catch(er){showToast('Not updated: '+errText(er.message),'error')}return}
       if(b.dataset.d){const id=b.dataset.d;
-        if(armed===id){armed=null;try{await apost('deleteRateThreshold',{ids:[id]});await load();showToast('Rate deleted from the sheet','success')}catch(er){showToast('Not deleted: '+errText(er.message),'error')}}
+        if(armed===id){armed=null;try{await apost('deleteRateThreshold',{ids:[id]});await load(true);showToast('Rate deleted','success')}catch(er){showToast('Not deleted: '+errText(er.message),'error')}}
         else{armed=id;clearTimeout(render._t);render._t=setTimeout(()=>{armed=null;render()},2800)}render()}};
     $('ov3').addEventListener('click',e=>{
       const c=e.target.closest('.chip[data-v]');if(c&&!c.disabled){draft.type=c.dataset.v;draft.party=null;draft.errs=null;renderPanel();pcomb.focus();return}
@@ -1179,7 +1132,7 @@ function closeRate(){RT.close();}
 const cache=AP2Cache.create({
   indicator:'cache-ind',
   toast:(m,t)=>showToast(m,t),
-  title:()=>'Cache loaded · '+items.length+' items · '+parties.length+' names · '+suppliers.length+' suppliers',
+  title:()=>'Up to date · '+items.length+' items · '+parties.length+' names · '+suppliers.length+' suppliers',
   onRows:rows=>{applyRows(rows);RT.rows(rows);render();if($('ov').classList.contains('open')){fillTypes();fillNames();rOrders();}return items.length;}
 });
 const f={extras:[],dir:'out',from:'',to:'',ptype:'',party:'',sel:new Set(),rates:{},disc:0,dt:'amt',vat:0};
@@ -1287,13 +1240,13 @@ async function bootBills(){
   askParent();
   await Promise.all([S.painted?0:bootBillsData(),LS.painted?0:(LEDGER_BACKEND?bootLedger():loadLocalLedger())]);
   S.booting=false;
-  if(!allReady()){const p=[];if(!S.painted)p.push('Bills ('+BILLS_KEY+')'+(S.err?': '+S.err:''));if(!LS.painted)p.push('Ledger ('+LEDGER_KEY+')'+(LS.err?': '+LS.err:''));
+  if(!allReady()){const p=[];if(!S.painted)(S.err&&console.warn('[load] Bills',S.err),p.push('Bills'));if(!LS.painted)(LS.err&&console.warn('[load] Ledger',LS.err),p.push('Ledger'));
     S.state='error';S.err=p.join(' · ');render();showToast('Not loaded — '+S.err,'error');}}
 function retryBills(){S.booting=false;bootBills();}
 function allReady(){return S.painted&&LS.painted;}
 const billsReady=()=>{if(allReady())return true;showToast(S.state==='error'?'Bills / ledger data not loaded — press Retry':'Still loading — please wait','error');return false;};
 const stateHTML=()=>S.state==='error'
-  ?`<div class="empty">Bills / ledger data isn’t available yet.<div class="dim" style="margin:6px 0 10px;font-size:12px">${esc(S.err||'The cache is empty and the server could not be reached.')}</div><button class="btn pri" onclick="retryBills()"><i class="ti ti-refresh"></i>Retry</button></div>`
+  ?`<div class="empty">Bills / ledger data isn’t available yet.<div class="dim" style="margin:6px 0 10px;font-size:12px">${esc(S.err||'Data isn’t available right now. Check your connection and try again.')}</div><button class="btn pri" onclick="retryBills()"><i class="ti ti-refresh"></i>Retry</button></div>`
   :'<div class="sk"></div>'.repeat(6);
 
 /* ═══ LEDGER (read here, written by Allocation / Receipts) — dataset "ap2_ledger"
@@ -1374,7 +1327,7 @@ const USE_BACKEND=false;                             // ledger store (below) —
 async function loadAll(){
   if(USE_BACKEND){const s=session();if(!s.sessionId&&!s.token)return;}
   if(USE_BACKEND)try{const o=await AP2Api.get('orders');orders=groupOrders(o.Orders||[]);}
-  catch(e){if(!loadAll._o){loadAll._o=1;showToast('Orders not refreshed (showing cached): '+errText(e.message),'error');}}
+  catch(e){if(!loadAll._o){loadAll._o=1;showToast('Orders could not be refreshed: '+errText(e.message),'error');}}
   if(!BILLS_BACKEND){                                // local mode only — in cache mode the data arrives through applyBills()
     try{const b=await BillsApi.get();S.raw={Bills:b.Bills||[],Payments:b.Payments||[]};rebuild();S.painted=true;if(!LEDGER_BACKEND)await loadLocalLedger();S.state='ready';}
     catch(e){S.state='error';S.err=errText(e.message);if(!loadAll._b){loadAll._b=1;showToast('Bills not loaded: '+errText(e.message),'error');}}}
@@ -1458,7 +1411,6 @@ function render(){
     <td><span class="badge ${s[0]}">${s[1]}</span></td>
     <td class="acts"><span class="act-btns"><button class="ib sm" title="View / payments" onclick="viewBill('${b.id}')"><i class="ti ti-eye"></i></button>
     <button class="ib sm" title="Print" onclick="printBill('${b.id}')"><i class="ti ti-printer"></i></button>
-    <button class="ib sm wa" title="Send on WhatsApp" aria-label="Send on WhatsApp" onclick="waOpen('${b.id}')"><i class="ti ti-brand-whatsapp"></i></button>
     <button class="ib sm dng" id="del-${b.id}" title="Delete" onclick="delBill('${b.id}')"><i class="ti ti-trash"></i></button></span></td></tr>`;}).join('')}</tbody></table>`
     :'<div class="empty">No bills yet. Use <b>New Bill</b> to create one.</div>');
 }
@@ -1487,7 +1439,7 @@ const inRange=o=>(!f.from||o.date>=f.from)&&(!f.to||o.date<=f.to);
 const elig=()=>orders.filter(o=>kd(o,f.dir)&&(!f.ptype||norm(o.partyType)===norm(f.ptype))&&(!f.party||norm(o.party)===norm(f.party))&&inRange(o)&&match($('f-q').value,otxt(o))).sort((a,b)=>a.date.localeCompare(b.date)||a.no.localeCompare(b.no));
 function openForm(dir,pre){
   if(!billsReady())return;
-  if(!cache.requireReady('Cache not loaded yet — please wait'))return;
+  if(!cache.requireReady('Still loading — please wait'))return;
   try{if(cache.requestRefresh)cache.requestRefresh(true);}catch(e){}
   Object.assign(f,{dir,from:'',to:'',ptype:pre?pre.ptype:'',party:pre?pre.party:'',sel:new Set(pre?pre.ids:[]),extras:[],rates:{},disc:0,dt:'amt',vat:0});
   $('m-title').textContent=dir==='out'?'New Bill — Outgoing (customer)':'New Bill — Incoming (supplier)';
@@ -1642,143 +1594,9 @@ function printBill(id){const b=bills.find(x=>x.id===id);if(!b)return;const w=win
   if(w)w.document.write('<p style="font:16px Arial;padding:24px">Preparing bill…</p>');
   (async()=>{
     // phone may have no/old order cache → Invoice No would fall back to the bill no. Refresh orders first.
-    if(USE_BACKEND&&b.oids.some(x=>!orders.some(o=>o.id===x))){try{const o=await Promise.race([AP2Api.get('orders'),new Promise((_,r)=>setTimeout(r,6000))]);orders=groupOrders(o.Orders||[]);}catch(e){}}
+    if(USE_BACKEND&&b.oids.some(x=>!orders.some(o=>o.id===x))){try{idbTs=0;await loadIDB();}catch(e){}}
   const ft=[[CO_PHONE&&'Ph: '+CO_PHONE,CO_EMAIL&&'Email: '+CO_EMAIL].filter(Boolean).join(' ')].filter(Boolean).map(esc).join('<br>');
   $('pr').innerHTML=docHTML(b).replace(/<\/div>$/,'')+`<div class="sig"><span>Prepared by</span><span>Received by</span><div style="width:30%;text-align:center">${CO_STAMP?`<img src="${esc(CO_STAMP)}" alt="">`:''}<span style="display:block;width:100%">Authorized Signature &amp; Stamp</span></div></div><div class="ift"><b>Thank you for your business. ${esc(CO)}</b><br>${ft}</div></div>`;openPrint('Bill '+(b.no||''),w);})();}
-/* ═══ WHATSAPP SEND — number → PDF (same layout as Print) saved + path logged → result window → Share opens WhatsApp ═══ */
-const WA_LOG='bills_wa_log_v1',WA_CC='bills_wa_cc_v1',WA_NUMS='bills_wa_nums_v1';
-let waId=null,waFile=null,waBusy=false,waNum='',waMsg='',waTok=0;
-const waJ=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
-const waW=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
-const waDB=()=>new Promise((res,rej)=>{const r=indexedDB.open('bills_wa',2);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains('kv'))d.createObjectStore('kv');if(!d.objectStoreNames.contains('pdfs'))d.createObjectStore('pdfs');};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
-async function waKV(mode,key,val){const db=await waDB();return new Promise((res,rej)=>{const tx=db.transaction('kv',mode==='get'?'readonly':'readwrite'),st=tx.objectStore('kv'),q=mode==='get'?st.get(key):st.put(val,key);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});}
-const waSafe=t=>String(t||'').replace(/[\\/:*?"<>|\s]+/g,'_').replace(/^_+|_+$/g,'').slice(0,60);
-const waPartyKey=b=>norm(b.party);
-function waNormalize(cc,raw){
-  let d=String(raw||'').replace(/[^\d+]/g,'');
-  if(d.startsWith('+'))return d.slice(1).replace(/\D/g,'');
-  d=d.replace(/\D/g,'');
-  if(d.startsWith('00'))return d.slice(2);
-  if(d.startsWith(cc)&&d.length>=cc.length+8)return d;
-  return cc+d.replace(/^0+/,'');
-}
-function waSteps(list){$('wa-steps').innerHTML=list.map(([c,t])=>`<div class="${c}"><i class="ti ${c==='ok'?'ti-circle-check':c==='err'?'ti-alert-circle':c==='run'?'ti-loader-2':'ti-circle'}"></i><span>${esc(t)}</span></div>`).join('');}
-/* compact message: total · what was received (date · method · amount) · paid · balance */
-function waMessage(b,no){
-  const t=tb(b),p=paidOf(b),bal=r2(t.total-p),ps=pays.filter(x=>x.billId===b.id),al=allocList(b);
-  const rec=[...ps.map(x=>({d:x.date,m:(x.mode||'Payment')+(x.ref?' ('+x.ref+')':''),a:+x.amount})),...al.map(x=>({d:x.date,m:'Receipt '+x.rno,a:+x.amount}))].filter(x=>x.a);
-  const L=['Hello '+b.party+',','',(b.dir==='out'?'Invoice ':'Bill ')+'*'+no+'* · '+b.date,'Total: *'+CUR+' '+money(t.total)+'*'];
-  if(rec.length){L.push('Paid: *'+CUR+' '+money(p)+'*');rec.slice(0,4).forEach(x=>L.push('• '+x.d+' · '+x.m+' · '+money(x.a)));if(rec.length>4)L.push('• +'+(rec.length-4)+' more');}
-  L.push(bal>.005?'Balance due: *'+CUR+' '+money(bal)+'*':'Status: *Paid in full* ✅');
-  L.push('','Thank you,',CO+(CO_PHONE?' · '+CO_PHONE:''));
-  return L.join('\n');
-}
-function waOpen(id){
-  const b=bills.find(x=>x.id===id);if(!b)return;waId=id;waFile=null;waTok++;waBusy=false;
-  const t=tb(b),p=paidOf(b),os=b.oids.map(i=>orders.find(o=>o.id===i)).filter(Boolean),no=invNo(b,os),bal=r2(t.total-p);
-  $('wa-sum').innerHTML='<b>'+esc(no)+'</b> · '+esc(b.party)+' · '+esc(b.date)+'<br>Total '+esc(CUR)+' '+money(t.total)+' · Balance '+esc(CUR)+' '+money(bal);
-  $('wa-cc').value=waJ(WA_CC,'92');
-  const saved=waJ(WA_NUMS,{})[waPartyKey(b)]||'';$('wa-num').value=saved;
-  const lg=waJ(WA_LOG,[]).filter(x=>x.billId===id);
-  $('wa-hist').textContent=lg.length?'Last sent to +'+lg[0].number+' on '+new Date(lg[0].at).toLocaleString():(saved?'Number remembered for this party':'');
-  $('wa-form').style.display='';$('wa-res').style.display='none';$('wa-act').style.display='none';$('wa-path').style.display='none';
-  $('wa-ov').classList.add('open');setTimeout(()=>$('wa-num').focus(),50);
-}
-function waClose(){waTok++;waBusy=false;$('wa-ov').classList.remove('open');waId=null;}
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('wa-ov').classList.contains('open'))waClose();});
-
-/* PDF = the SAME document the Print button produces. It is laid out inside its own fixed-width A4 iframe
-   (same markup + same CSS as the print window), so the laptop / phone screen size can never change the result. */
-async function waBuildPdf(b){
-  if(typeof html2canvas==='undefined'||!window.jspdf)throw new Error('PDF library not loaded (check internet)');
-  if(USE_BACKEND&&b.oids.some(x=>!orders.some(o=>o.id===x))){try{const o=await Promise.race([AP2Api.get('orders'),new Promise((_,r)=>setTimeout(r,6000))]);orders=groupOrders(o.Orders||[]);}catch(e){}}
-  const ft=[[CO_PHONE&&'Ph: '+CO_PHONE,CO_EMAIL&&'Email: '+CO_EMAIL].filter(Boolean).join(' ')].filter(Boolean).map(esc).join('<br>');
-  const sty=[...document.querySelectorAll('style')].map(x=>x.textContent).join('\n'),css=sty.slice(sty.indexOf('/* ── print: only the bill ── */'));
-  const inner=docHTML(b).replace(/<\/div>$/,'')+`<div class="sig"><span>Prepared by</span><span>Received by</span><div style="width:30%;text-align:center">${CO_STAMP?`<img src="${esc(CO_STAMP)}" alt="">`:''}<span style="display:block;width:100%">Authorized Signature &amp; Stamp</span></div></div><div class="ift"><b>Thank you for your business. ${esc(CO)}</b><br>${ft}</div></div>`;
-  const W=733,PX_MM=W/194;                                   // 733 css px = A4 width (210) − 2×8 mm margins → 1:1 with print
-  const fr=document.createElement('iframe');
-  fr.setAttribute('aria-hidden','true');fr.style.cssText='position:fixed;left:0;top:0;width:'+W+'px;height:1200px;border:0;opacity:0;pointer-events:none;z-index:-1';
-  document.body.appendChild(fr);
-  try{
-    await new Promise(res=>{fr.onload=res;fr.srcdoc='<!DOCTYPE html><html><head><meta charset="utf-8"><style>'+css+
-      '.inv .tot div{display:flex;justify-content:space-between;padding:3px 0}.inv .tot .g{font-weight:700}.inv .tot b{font-weight:700}.inv .pay b{display:block}'+
-      'html,body{margin:0;padding:0;background:#fff}#pr{display:block;box-sizing:border-box;width:'+W+'px}</style></head><body><div id="pr">'+inner+'</div></body></html>';});
-    const doc=fr.contentDocument,el=doc.getElementById('pr');
-    await Promise.all([...doc.images].map(i=>i.decode?i.decode().catch(()=>{}):0));
-    await new Promise(r=>setTimeout(r,150));
-    const H=Math.ceil(el.scrollHeight);fr.style.height=H+'px';
-    const base=el.getBoundingClientRect().top;
-    const cuts=[...doc.querySelectorAll('tr,.ihd,.imeta,.ibot,.sig,.ift,.iwords')].map(n=>n.getBoundingClientRect().bottom-base).sort((x,y)=>x-y);
-    const canvas=await html2canvas(el,{scale:2.5,useCORS:true,backgroundColor:'#fff',width:W,height:H,windowWidth:W,windowHeight:H,scrollX:0,scrollY:0});
-    const k=canvas.width/W,PH=281*PX_MM;                     // page content height (297 − 2×8 mm) in css px
-    const pdf=new window.jspdf.jsPDF({unit:'mm',format:'a4',orientation:'portrait',compress:true});
-    let y=0,first=true;
-    while(y<H-2){
-      let end=Math.min(y+PH,H);
-      if(end<H){const c=cuts.filter(v=>v>y+PH*.5&&v<=end).pop();if(c)end=c;}   // never cut through a table row / total box
-      const part=document.createElement('canvas');part.width=canvas.width;part.height=Math.max(1,Math.round((end-y)*k));
-      const cx=part.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,part.width,part.height);cx.drawImage(canvas,0,Math.round(y*k),canvas.width,part.height,0,0,part.width,part.height);
-      if(!first)pdf.addPage();first=false;
-      pdf.addImage(part.toDataURL('image/jpeg',.95),'JPEG',8,8,194,(end-y)/PX_MM,undefined,'FAST');
-      y=end;
-    }
-    return pdf.output('blob');
-  }finally{fr.remove();}
-}
-/* PDF is kept in the browser's own storage (IndexedDB) — no folder, no prompt. One entry per file name. */
-async function waSavePdf(blob,name,billId){
-  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
-  const db=await waDB();
-  await new Promise((res,rej)=>{const tx=db.transaction('pdfs','readwrite');tx.objectStore('pdfs').put({name,blob,billId,at:Date.now()},name);tx.oncomplete=res;tx.onerror=()=>rej(tx.error||new Error('Browser storage is full or blocked'));tx.onabort=()=>rej(tx.error||new Error('Browser storage is full or blocked'));});
-  return{where:'browser',path:'Browser storage › '+name};
-}
-/* Continue: number → build + save to browser storage automatically → result window (nothing opens in WhatsApp yet) */
-async function waGo(){
-  if(waBusy)return;const b=bills.find(x=>x.id===waId);if(!b)return;
-  const cc=$('wa-cc').value,num=waNormalize(cc,$('wa-num').value);
-  if(num.length<9||num.length>15){showToast('Enter a valid WhatsApp number','error');$('wa-num').focus();return;}
-  waBusy=true;const tok=waTok;
-  const os=b.oids.map(i=>orders.find(o=>o.id===i)).filter(Boolean),no=invNo(b,os);
-  const name='Invoice_'+waSafe(no)+'_'+waSafe(b.party)+'.pdf';
-  const S=[['run','Creating PDF…'],['','Saving file'],['','Ready to share']];
-  $('wa-form').style.display='none';$('wa-res').style.display='';$('wa-act').style.display='none';$('wa-path').style.display='none';waSteps(S);
-  try{
-    const blob=await waBuildPdf(b);if(tok!==waTok)return;
-    if(blob.size<3000)throw new Error('PDF came out empty — please try again');
-    S[0]=['ok','PDF created ('+Math.round(blob.size/1024)+' KB)'];S[1]=['run','Saving in browser storage…'];waSteps(S);
-    const saved=await waSavePdf(blob,name,b.id);if(tok!==waTok)return;
-    waFile=new File([blob],name,{type:'application/pdf'});waNum=num;waMsg=waMessage(b,no);
-    S[1]=['ok','Saved: '+saved.path];S[2]=['ok','Ready — tap Share'];waSteps(S);
-    $('wa-path').textContent=saved.path;$('wa-path').style.display='block';
-    waW(WA_CC,cc);const nums=waJ(WA_NUMS,{});nums[waPartyKey(b)]=$('wa-num').value.trim();waW(WA_NUMS,nums);
-    const log=waJ(WA_LOG,[]);log.unshift({billId:b.id,billNo:no,party:b.party,number:num,file:name,path:saved.path,where:saved.where,at:Date.now()});waW(WA_LOG,log.slice(0,300));
-    $('wa-sh').style.display='';$('wa-act').style.display='flex';
-  }catch(e){
-    if(tok!==waTok)return;
-    const i=S.findIndex(x=>x[0]==='run'||x[0]==='');S[i<0?0:i]=['err',(e&&e.message)||'Failed'];waSteps(S);
-    $('wa-sh').style.display='none';$('wa-act').style.display='flex';
-  }
-  waBusy=false;
-}
-/* Share — PDF + message always travel together.
-   Phone: WhatsApp shows the text as the caption of the PDF (one message).
-   Laptop: the share sheet delivers the PDF and the text to WhatsApp Desktop, which may show them as two messages;
-   the message is also copied to the clipboard as a backup. */
-async function waShare(){
-  if(!waFile)return;
-  const base=[['ok','PDF created'],['ok','Saved: '+$('wa-path').textContent]];
-  const mobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  let copied=false;
-  if(!mobile){try{await navigator.clipboard.writeText(waMsg);copied=true;}catch(e){}}
-  if(navigator.canShare&&navigator.canShare({files:[waFile]})){
-    try{
-      await navigator.share({files:[waFile],text:waMsg});
-      waSteps(base.concat([['ok',mobile?'Shared — pick +'+waNum+' in WhatsApp; the message is the caption':'Shared — pick +'+waNum+' in WhatsApp'+(copied?' (message also copied: press Ctrl+V if the text is missing)':'')]]));return;
-    }catch(e){if(e&&e.name==='AbortError')return;}   // any other failure → chat link below
-  }
-  window.open('https://wa.me/'+waNum+'?text='+encodeURIComponent(waMsg),'_blank');
-  waSteps(base.concat([['ok','WhatsApp opened with the message — attach the saved PDF (paperclip → Document)']]));
-}
 function viewBill(id){const b=bills.find(x=>x.id===id);if(!b)return;vid=id;const t=tb(b),p=paidOf(b),dr=drift(b),ps=pays.filter(x=>x.billId===id),s=stOf(b),al=allocList(b);
   $('v-title').innerHTML=esc(b.no)+' <span class="badge '+s[0]+'">'+s[1]+'</span>';
   $('v-body').innerHTML=(dr.length?`<div class="warn" style="border:1px solid var(--amber);border-radius:var(--radius);padding:8px 10px">⚠ Orders changed since this bill was made (edit / return / delete):<br>${dr.map(esc).join('<br>')}<br>Delete and re-create the bill to apply the changes.</div>`:'')
@@ -1826,7 +1644,7 @@ AP2Sync.init({
   queue:['addPayment','deletePayment','addRateThreshold','updateRateThreshold','setRateThresholdStatus','deleteRateThreshold'],
   online:['addBill','deleteBill','addCharges','reverseBill'],   /* server-numbered / multi-step → need the network */
   extraPending:()=>{ try{ return (JSON.parse(localStorage.getItem('bills_rate_pending_rows_v1'))||[]).length; }catch(e){ return 0; } },
-  onSynced:()=>loadAll()
+  onSynced:()=>{ try{AdminPro.forceRefresh('ap2_bills');}catch(e){} loadAll(); }
 });
 </script>
 </body>

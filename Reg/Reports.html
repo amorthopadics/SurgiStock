@@ -88,7 +88,7 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
 const USE_BACKEND=true;   // true: ledger is read from the ap2_ledger cache (read-only page) · false: old local-only mode (localStorage)
 const Ledger=USE_BACKEND?{get:()=>freshLedger(),post:(a,p)=>AP2Api.post(a,p).then(r=>r||{}),
   backup:()=>JSON.stringify({Charges:L.Charges,Receipts:L.Receipts,Allocations:L.Allocations}),            // exports what is on screen
-  restore:()=>{throw new Error('Restore is only available in local mode — the ledger now lives on the server');}}:(()=>{
+  restore:()=>{throw new Error('Restore is not available');}}:(()=>{
  const KEY='acc_ledger_v1',H={
   Charges:['ChargeID','Type','BillID','BillNo','OrderID','OrderNo','PartyType','Party','Dir','Date','Description','Amount','Comments','Created'],
   Receipts:['PaymentID','ReceiptNo','Dir','PartyType','Party','Date','Mode','Ref','Amount','Comments','Type','Created'],
@@ -217,17 +217,17 @@ async function bootAll(){
  if(ST.booting)return;ST.booting=true;ST.state='loading';ST.err='';render();askParent();
  await Promise.all(SV.filter(s=>!s.painted).map(bootSrc));
  ST.booting=false;
- if(!ready()){ST.state='error';ST.err=SV.filter(s=>!s.painted).map(s=>s.label+' ('+s.key+')'+(s.err?': '+s.err:'')).join(' · ');render();showToast('Not loaded — '+ST.err,'error');}}
+ if(!ready()){ST.state='error';ST.err=SV.filter(s=>!s.painted).map(s=>(s.err&&console.warn('[load]',s.label,s.err),s.label)).join(' · ');render();showToast('Not loaded — '+ST.err,'error');}}
 function retryAll(){ST.booting=false;bootAll();}
 const stateHTML=()=>ST.state==='error'
- ?`<div class="empty">Ledger data isn’t available yet.<div class="dim" style="margin:6px 0 10px;font-size:12px">${esc(ST.err||'The cache is empty and the server could not be reached.')}</div><div class="dim" style="font-size:11px;margin-bottom:10px">${esc(SV.map(s=>s.label+': readKey='+(s.dbg.readKey||'-')+', scan='+(s.dbg.scan||'-')).join(' · ')+' ·'+dbgLine())}</div><button class="btn pri" onclick="retryAll()"><i class="ti ti-refresh"></i>Retry</button></div>`
+ ?`<div class="empty">Ledger data isn’t available yet.<div class="dim" style="margin:6px 0 10px;font-size:12px">${esc(ST.err||'Data isn’t available right now. Check your connection and try again.')}</div><button class="btn pri" onclick="retryAll()"><i class="ti ti-refresh"></i>Retry</button></div>`
  :'<div class="sk"></div>'.repeat(6);
 const notReady=()=>{if(USE_BACKEND&&!ready()){showToast(ST.state==='error'?'Data not loaded — press Retry':'Still loading — please wait','error');return true;}return false;};
 
 async function load(){
- if(USE_BACKEND){try{await freshLedger();}catch(e){showToast('Ledger not reachable: '+errText(e.message),'error');}after();return;}
+ if(USE_BACKEND){try{await freshLedger();}catch(e){showToast('Could not refresh the ledger: '+errText(e.message),'error');}after();return;}
 try{const j=await Ledger.get();L={Charges:j.Charges||[],Receipts:j.Receipts||[],Allocations:j.Allocations||[]};}
- catch(e){showToast('Ledger not reachable — add the Accounts backend: '+errText(e.message),'error');}after();}
+ catch(e){showToast('Could not load the ledger: '+errText(e.message),'error');}after();}
 
 const TABS=[['out','Outstanding'],['stm','Statement'],['age','Aging'],['trc','Trace'],['day','Daily collection'],['hist','Allocation history']];let tab='out';
 const after=()=>render();
@@ -281,7 +281,7 @@ PermGate.init({
 /* shared/syncQueue.js — offline hold & sync + cache / sync buttons */
 AP2Sync.init({
   key:'reports', queue:[],                      /* read-only page: only the cache button */
-  state:()=> ready() ? {state:'ok',title:'Cache loaded · Ledger'} : (ST.state==='error' ? {state:'err',title:'Cache error — '+ST.err} : {state:'warn',title:'Cache: waiting…'}),
+  state:()=> ready() ? {state:'ok',title:'Up to date'} : (ST.state==='error' ? {state:'err',title:'Could not load — '+ST.err} : {state:'warn',title:'Loading…'}),
   refresh:()=>{ ST.booting=false; SV.forEach(applyFromIDB); }
 });
 </script>
