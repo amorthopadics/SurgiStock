@@ -609,7 +609,7 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 .mb{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:14px;display:flex;flex-direction:column;gap:12px}
 .mb>*{flex-shrink:0}
 .mh .ttl{display:flex;align-items:center;gap:8px;font-size:14px;min-width:0}.mh .ttl i{font-size:18px;color:var(--accent)}
-.mh .chips{flex:1 1 100%;order:3;min-width:0}.mh .x{margin-left:auto}
+.mh .chips{flex:1 1 0;min-width:0}.mh .x{margin-left:auto}.mh .ttl{display:none}
 .fg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}.fg .w2{grid-column:1/-1}
 .fg label,.pick label{display:flex;align-items:center;gap:5px}.fg label i,.pick label i{font-size:14px}
 .cb,.pick{position:relative}
@@ -623,11 +623,11 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 .sbox{position:relative}
 .sbox.fs{display:flex;flex-wrap:wrap;align-items:center;border:1px solid var(--border2);border-radius:var(--radius);background:var(--bg3)}
 .sbox.fs:focus-within{border-color:var(--accent)}
-.sbox.fs>i{display:none}
+.sbox.fs>i{position:absolute;left:11px;bottom:0;height:38px;display:flex;align-items:center;font-size:16px;color:var(--text3);pointer-events:none}
 .sbox.fs select,.sbox.fs input{border:0!important;background:transparent!important;box-shadow:none!important;outline:0;margin:0}
 .sbox.fs select{flex:1 1 30%;min-width:0;padding:9px 18px 9px 8px;font-size:12px;color:var(--text2);border-bottom:1px solid var(--border2)!important;border-radius:0!important;cursor:pointer;text-overflow:ellipsis}
 .sbox.fs select.on{color:var(--accent);font-weight:600}
-.sbox.fs input{flex:1 1 100%;min-width:0;padding:9px 10px}
+.sbox.fs input{flex:1 1 100%;min-width:0;padding:0 10px;height:38px}.sbox.fs input#f-search{padding-left:34px}
 .panel{flex:1 1 auto!important;min-height:220px;display:flex;flex-direction:column;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg2);overflow:hidden}
 .panel.lock{pointer-events:none}
 .ptabs{flex:none;display:flex;gap:4px;padding:6px 8px;background:var(--bg3);border-bottom:1px solid var(--border)}
@@ -659,6 +659,26 @@ select.date-input option{background:var(--surface2);color:var(--text);}
   .ln .stk{text-align:left;align-self:center}.ln .stk .sl{display:inline}
   .ln .qc{justify-self:end;width:112px}
 }
+
+/* ── order window: icon-only fields, Today checkbox, tidy layout ── */
+.mh{min-height:52px;align-items:center}
+.om .fg input:not([type=checkbox]),.om .fg select{height:38px}
+.om input:focus,.om select:focus{box-shadow:0 0 0 3px var(--accent-dim)}
+.fi{position:relative;display:flex;align-items:center;min-width:0}
+.fi>.fic{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--text3);pointer-events:none;z-index:1}
+.fi:focus-within>.fic{color:var(--accent)}
+.fi>.cb{flex:1;min-width:0}
+.om .fi>input,.om .fi>select,.om .fi .cb input{padding-left:34px}
+.fi>select{text-overflow:ellipsis}
+.dtr{display:flex;align-items:center;gap:10px;min-height:38px}
+.dtr [hidden]{display:none!important}
+.dtr .dti{flex:1;min-width:0}
+.om .tdy{display:inline-flex;align-items:center;gap:9px;flex:none;height:38px;margin:0;padding:0 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg3);color:var(--text2);font-size:16px;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
+.om .tdy:hover{border-color:var(--accent)}
+.om .tdy:has(input:checked){border-color:var(--accent);background:var(--accent-dim);color:var(--accent)}
+.om .tdy input[type=checkbox]{width:18px;height:18px;padding:0;margin:0;flex:none;accent-color:var(--accent);cursor:pointer}
+.om .tdy:has(input:disabled){opacity:.6;cursor:default}
+.dshow{font-size:12.5px;font-weight:600;color:var(--text2);font-family:var(--mono)}
 
 </style>
 </head>
@@ -754,16 +774,19 @@ select.date-input option{background:var(--surface2);color:var(--text);}
   </div>
   <div class="mb">
     <div class="fg">
-      <div><label><i class="ti ti-building-store"></i>Store <span class="req">*</span></label><select id="f-store"></select></div>
-      <div><label><i class="ti ti-calendar"></i>Date <span class="req">*</span></label><input type="date" id="f-date"/></div>
-      <div class="w2"><label id="f-plbl"></label><div class="cb" id="f-pcb"></div></div>
-      <div class="w2"><label><i class="ti ti-notes"></i>Reference / Note</label><input id="f-note" autocomplete="off"/></div>
+      <div class="w2 dtr">
+        <label class="tdy" title="Today"><i class="ti ti-calendar-event"></i><input type="checkbox" id="f-today" aria-label="Today" checked/></label>
+        <span class="dshow" id="f-dshow"></span>
+        <div class="dti" id="f-dtw" hidden><input type="date" id="f-date" aria-label="Date" title="Date"/></div>
+      </div>
+      <div class="fi"><i class="ti ti-building-store fic"></i><select id="f-store" title="Store" aria-label="Store"></select></div>
+      <div class="fi"><i class="ti fic" id="f-plbl"></i><div class="cb" id="f-pcb"></div></div>
+      <div class="fi w2"><i class="ti ti-notes fic"></i><input id="f-note" placeholder="Note…" title="Reference / Note" aria-label="Reference / Note" autocomplete="off"/></div>
     </div>
     <div class="pick">
-      <label><i class="ti ti-packages"></i>Add items (from Item List) — tick as many as you need <span class="req">*</span></label>
-      <div class="sbox fs"><i class="ti ti-search"></i>
+      <div class="sbox fs">
         <select id="f-dom" title="Medical Domain" aria-label="Medical Domain" onchange="showDD()"></select><select id="f-src" title="Material Source" aria-label="Material Source" onchange="showDD()"></select><select id="f-itm" title="Item Name" aria-label="Item Name" onchange="showDD()"></select>
-        <input id="f-search" placeholder="Type to search items…" autocomplete="off" oninput="showDD()" onfocus="pullLatest();showDD()"/></div>
+        <input id="f-search" placeholder="Type to search items…" autocomplete="off" oninput="showDD()" onfocus="pullLatest();showDD()"/><i class="ti ti-search"></i></div>
     </div>
     <div class="panel pick" id="panel">
       <div class="ptabs"><button type="button" class="ptab on" id="t-pick" onclick="showDD()">Items</button><button type="button" class="ptab" id="t-lines" onclick="setMode('lines')">Order (0)</button></div>
@@ -1171,6 +1194,16 @@ async function addSupplier(name){
 }
 
 /* ═══ FORM ═══ */
+const todayStr=()=>{const d=new Date();return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());};
+/* Today ticked → date = today (picker hidden, date shown as text); un-ticked → the date picker appears */
+function syncToday(){
+  const on=$('f-today').checked;
+  if(on)$('f-date').value=todayStr();
+  const v=$('f-date').value,dt=v?new Date(v+'T00:00:00'):null;
+  $('f-dshow').textContent=dt&&!isNaN(dt)?dt.toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short',year:'numeric'}):'';
+  $('f-dshow').hidden=!on;$('f-dtw').hidden=on;
+}
+$('f-today').addEventListener('change',()=>{syncToday();if(!$('f-today').checked){const d=$('f-date');d.focus();try{d.showPicker&&d.showPicker();}catch(e){}}});
 function openForm(t,id){
   if(!cache.requireReady('Still loading — please wait'))return;
   if(!stores.length)return showToast('No active Store found in Specs Settings','error');
@@ -1193,12 +1226,12 @@ function openForm(t,id){
   $('f-store').innerHTML=opts.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
   $('f-store').value=o?o.storeId:opts[0].id;
   $('f-store').onchange=renderLines;
-  $('f-date').value=o?o.date:new Date().toISOString().slice(0,10);
+  $('f-date').value=o?o.date:todayStr();$('f-today').checked=!o||o.date===todayStr();syncToday();
   $('f-note').value=o?o.note:'';
   $('f-search').value='';resetFilters();
   drawPartyBlock();
   $('ov').querySelector('.om').classList.toggle('locked',edit);
-  ['f-store','f-date','f-note'].forEach(id=>$(id).disabled=edit);
+  ['f-store','f-date','f-today','f-note'].forEach(id=>$(id).disabled=edit);
   if(pcomb&&pcomb.input)pcomb.input.disabled=edit||(out&&!draft.ptype);
   renderLines();mountOv();if(draft.lines.length)setMode('lines');else showDD();updPick();
   $('f-types').dataset.sig=types.map(t=>t.k).join('|');
@@ -1216,7 +1249,7 @@ function drawChips(){
 function drawPartyBlock(){
   const d=draft,out=formType==='out';
   $('f-types').classList.remove('bad');$('f-pcb').classList.remove('bad');
-  $('f-plbl').innerHTML=out?'<i class="ti ti-user"></i>Name <span class="req">*</span>':'<i class="ti ti-truck-delivery"></i>Supplier <span class="req">*</span>';
+  const pi=$('f-plbl');pi.className='ti fic '+(out?'ti-user':'ti-truck-delivery');pi.title=out?'Name':'Supplier';
   if(out)drawChips();
   pcomb=combo($('f-pcb'),out?{ph:d.ptype?'Search name…':'Choose a Type first',onOpen:()=>pullLatest(),
       list:()=>d.ptype?parties.filter(p=>p.type===d.ptype).map(p=>({text:p.name,sid:p.sid,type:p.type})):[],
@@ -1225,7 +1258,7 @@ function drawPartyBlock(){
       list:()=>suppliers.map(x=>({text:x.name,sid:x.sid,type:'supplier'})),add:addSupplier,
       onPick:p=>{d.party=p;$('f-pcb').classList.remove('bad');}});
   if(d.party)pcomb.set(d.party);
-  pcomb.input.disabled=out&&!d.ptype;
+  pcomb.input.disabled=out&&!d.ptype;pcomb.input.setAttribute('aria-label',out?'Name':'Supplier');
 }
 /* the cache changed while the window is open → refresh Store list, Type chips and any open drop-down (nothing typed or selected is lost) */
 function refreshOpenForm(changed){
