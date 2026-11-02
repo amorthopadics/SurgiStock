@@ -632,6 +632,7 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 .panel.lock{pointer-events:none}
 .ptabs{flex:none;display:flex;gap:4px;padding:6px 8px;background:var(--bg3);border-bottom:1px solid var(--border)}
 .ptab{padding:4px 12px;border-radius:14px;border:1px solid transparent;background:transparent;color:var(--text2);font:600 12px var(--font);cursor:pointer}
+.ptab{display:inline-flex;align-items:center;gap:6px}.ptab i{font-size:14px}
 .ptab.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
 .panel .dd,.panel .lines{flex:1 1 auto;min-height:0;overflow-y:auto;border:0;border-radius:0;box-shadow:none;background:transparent;position:static;max-height:none}
 .panel .dd{display:none}.panel.pick .dd{display:block}.panel.pick .lines{display:none}.panel .lines{display:block}
@@ -789,7 +790,7 @@ select.date-input option{background:var(--surface2);color:var(--text);}
         <input id="f-search" placeholder="Type to search items…" autocomplete="off" oninput="showDD()" onfocus="pullLatest();showDD()"/><i class="ti ti-search"></i></div>
     </div>
     <div class="panel pick" id="panel">
-      <div class="ptabs"><button type="button" class="ptab on" id="t-pick" onclick="showDD()">Items</button><button type="button" class="ptab" id="t-lines" onclick="setMode('lines')">Order (0)</button></div>
+      <div class="ptabs"><button type="button" class="ptab on" id="t-pick" onclick="showDD()"><i class="ti ti-packages"></i>Items</button><button type="button" class="ptab" id="t-lines" onclick="setMode('lines')"><i class="ti ti-shopping-cart"></i>Order (0)</button></div>
       <div class="dd" id="dd"></div>
       <div class="lines" id="lines"></div>
     </div>
@@ -1343,7 +1344,7 @@ function renderLines(){
       +(l.pick?`<div class="lnch"><span>Choose:</span><button type="button" class="btn btn-ghost btn-sm" data-ch="edit" data-n="${n}"><i class="ti ti-pencil"></i>Edit order</button>${canRet?`<button type="button" class="btn btn-ghost btn-sm" data-ch="ret" data-n="${n}"><i class="ti ti-arrow-back-up"></i>${retLabel()}</button>`:''}</div>`:'')).join('')
     :'<div class="ln none">Search above and tick the items to add</div>';
   checkWarn();
-  $('t-lines').textContent='Order ('+draft.lines.length+')';
+  $('t-lines').innerHTML='<i class="ti ti-shopping-cart"></i>Order ('+draft.lines.length+')';
   if(!draft.lines.length)showDD();
 }
 $('lines').addEventListener('input',e=>{const i=e.target.closest('input[data-n]');if(!i||!draft)return;const l=draft.lines[+i.dataset.n];
