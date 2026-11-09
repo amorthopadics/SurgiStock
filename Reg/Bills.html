@@ -734,6 +734,10 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 .wa-box{width:100%;max-width:440px;max-height:92vh;overflow:auto;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow-lg)}
 .wa-h{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);font-weight:700}
 .wa-h i.lg{color:#25d366;font-size:22px}.wa-h .x{margin-left:auto}
+.wa-h .ib.x{margin-left:auto;background:transparent;border:0;color:var(--text2);box-shadow:none;transition:background .15s,color .15s}
+.wa-h .ib.x i{display:inline-block;transition:transform .25s ease}
+.wa-h .ib.x:hover,.wa-h .ib.x:focus-visible{background:var(--red);border:0;color:#fff;outline:none}
+.wa-h .ib.x:hover i,.wa-h .ib.x:focus-visible i{transform:rotate(90deg)}
 .wa-b{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
 .wa-b label{display:block;font-size:11px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:var(--text2);margin-bottom:4px}
 .wa-b input,.wa-b select,.wa-b textarea{width:100%;padding:9px 10px;border-radius:var(--radius);border:1.5px solid var(--border2);background:var(--bg2);color:var(--text);font:inherit}
@@ -1829,12 +1833,13 @@ function waLink(t){return 'https://wa.me/'+(waNum||'')+'?text='+encodeURICompone
 async function waShare(){
   if(!waFile){showToast('PDF is not ready yet','error');return;}
   if(navigator.canShare&&navigator.canShare({files:[waFile]})){
-    try{await navigator.share({files:[waFile],text:waMsg});return;}catch(e){if(e&&e.name==='AbortError')return;}
+    try{await navigator.share({files:[waFile],text:waMsg});waClose();return;}catch(e){if(e&&e.name==='AbortError')return;}
   }
   /* browsers without file sharing (most desktops): save the PDF and open the chat with the message */
   waDownload(waFile,waFile.name);
   window.open(waLink(waMsg),'_blank');
   showToast('Share not supported here — PDF saved, attach it in WhatsApp (📎 → Document)','success');
+  waClose();
 }
 function viewBill(id){const b=bills.find(x=>x.id===id);if(!b)return;vid=id;const t=tb(b),p=paidOf(b),dr=drift(b),ps=pays.filter(x=>x.billId===id),s=stOf(b),al=allocList(b);
   $('v-title').innerHTML=esc(b.no)+' <span class="badge '+s[0]+'">'+s[1]+'</span>';
