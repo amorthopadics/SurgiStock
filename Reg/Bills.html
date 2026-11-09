@@ -748,7 +748,13 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 .btn.wa-go{background:#25d366;border-color:#25d366;color:#04230f}
 .btn.wa-go:disabled{opacity:.5;cursor:not-allowed}
 .wa-hist{font-size:11.5px;color:var(--text3);margin-top:4px}
-.wa-act{display:flex;justify-content:center;gap:30px;padding:4px 0 2px}
+.wa-act{display:flex;flex-direction:row;flex-wrap:nowrap;justify-content:center;align-items:flex-start;gap:30px;padding:2px 16px 14px}
+.wa-sum .wa-steps{flex-direction:row;flex-wrap:wrap;gap:6px 16px;margin-top:6px}
+.wa-circ:disabled{opacity:.45;cursor:not-allowed;transform:none;filter:none}
+.wa-hist:empty{display:none}
+.wa-row input{min-width:0;flex:1}
+.wa-send{flex:none;width:42px;padding:0;display:inline-flex;align-items:center;justify-content:center;font-size:18px}
+@media(max-width:480px){.wa-act{gap:22px}.wa-circ{width:54px;height:54px;font-size:23px}.wa-row select{width:96px}}
 .wa-act>div{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
 .wa-circ{width:58px;height:58px;border-radius:50%;border:1.5px solid var(--border2);background:var(--bg3);color:var(--text);font-size:25px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .12s,filter .12s}
 .wa-circ:hover{filter:brightness(1.12);transform:scale(1.05)}
@@ -928,24 +934,18 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 <!-- WHATSAPP SEND -->
 <div class="wa-ov" id="wa-ov" role="dialog" aria-modal="true" aria-labelledby="wa-title"><div class="wa-box">
   <div class="wa-h"><i class="ti ti-brand-whatsapp lg"></i><span id="wa-title">Send bill on WhatsApp</span></div>
-  <div class="wa-b"><div class="wa-sum" id="wa-sum"></div></div>
-  <div id="wa-res">
-    <div class="wa-b"><div class="wa-steps" id="wa-steps"></div><div class="wa-path" id="wa-path" style="display:none"></div></div>
-    <div class="wa-b wa-act" id="wa-act" style="display:none">
-      <div><button type="button" class="wa-circ" title="Close" aria-label="Close" onclick="waClose()"><i class="ti ti-x"></i></button>Close</div>
-      <div><button type="button" class="wa-circ" title="New number - add chat first" aria-label="New number" onclick="waNewToggle()"><i class="ti ti-user-plus"></i></button>New number</div>
-      <div><button type="button" class="wa-circ share" title="Share PDF + message (choose WhatsApp chat)" aria-label="Share" onclick="waShare()"><i class="ti ti-share"></i></button>Share</div>
-    </div>
+  <div class="wa-b"><div class="wa-sum"><div id="wa-sum"></div><div class="wa-steps" id="wa-steps"></div></div></div>
+  <div class="wa-act" id="wa-act">
+    <div><button type="button" class="wa-circ" title="Close" aria-label="Close" onclick="waClose()"><i class="ti ti-x"></i></button>Close</div>
+    <div><button type="button" class="wa-circ" title="Add number" aria-label="Add number" onclick="waNewToggle()"><i class="ti ti-user-plus"></i></button>Add number</div>
+    <div><button type="button" class="wa-circ share" id="wa-share-btn" title="Share PDF + message" aria-label="Share" onclick="waShare()"><i class="ti ti-share"></i></button>Share</div>
   </div>
-  <div id="wa-new" style="display:none;border-top:1px solid var(--border)">
-    <div class="wa-b">
-      <div><label for="wa-num">New WhatsApp number</label>
-        <div class="wa-row"><select id="wa-cc" aria-label="Country code"><option value="92">+92 PK</option><option value="971">+971 UAE</option><option value="91">+91 IN</option><option value="966">+966 KSA</option><option value="968">+968 OM</option><option value="974">+974 QA</option><option value="44">+44 UK</option><option value="1">+1 US/CA</option></select>
-        <input id="wa-num" type="tel" inputmode="tel" autocomplete="off" placeholder="300 1234567" onkeydown="if(event.key==='Enter')waIntro()"/></div>
-        <div class="wa-hist" id="wa-hist"></div></div>
-      <button type="button" class="btn wa-go" onclick="waIntro()"><i class="ti ti-brand-whatsapp"></i>Open chat with short message</button>
-      <div class="wa-hist" id="wa-hint">Send the short message in WhatsApp so the chat is created, then come back here and tap Share.</div>
-    </div>
+  <div class="wa-b" id="wa-new" style="display:none;padding-top:0">
+    <div><label class="sr-only" for="wa-num">WhatsApp number</label>
+      <div class="wa-row"><select id="wa-cc" aria-label="Country code"><option value="92">+92 PK</option><option value="971">+971 UAE</option><option value="91">+91 IN</option><option value="966">+966 KSA</option><option value="968">+968 OM</option><option value="974">+974 QA</option><option value="44">+44 UK</option><option value="1">+1 US/CA</option></select>
+      <input id="wa-num" type="tel" inputmode="tel" autocomplete="off" placeholder="300 1234567" onkeydown="if(event.key==='Enter')waIntro()"/>
+      <button type="button" class="btn wa-go wa-send" title="Open chat with short message" aria-label="Send short message" onclick="waIntro()"><i class="ti ti-brand-whatsapp"></i></button></div>
+      <div class="wa-hist" id="wa-hist"></div></div>
   </div>
 </div></div>
 <div id="pr"></div>
@@ -1723,7 +1723,8 @@ function waOpen(id){
   waNum=saved&&waNormalize($('wa-cc').value,saved).length>=9?waNormalize($('wa-cc').value,saved):'';
   const lg=waJ(WA_LOG,[]).filter(x=>x.billId===id);
   $('wa-hist').textContent=lg.length?'Last chat opened on +'+lg[0].number+' · '+new Date(lg[0].at).toLocaleString():'';
-  $('wa-new').style.display='none';$('wa-res').style.display='';$('wa-act').style.display='none';$('wa-path').style.display='none';
+  $('wa-new').style.display='none';$('wa-act').style.display='flex';$('wa-share-btn').disabled=true;
+  waSteps([['run','Creating…']]);
   $('wa-ov').classList.add('open');
   waPrepare(b);   /* icon click -> PDF + message are made right away */
 }
@@ -1732,10 +1733,10 @@ async function waPrepare(b){
   if(waBusy)return;waBusy=true;const tok=waTok;
   const os=b.oids.map(i=>orders.find(o=>o.id===i)).filter(Boolean),no=invNo(b,os);
   const name='Invoice_'+waSafe(no)+'_'+waSafe(b.party)+'.pdf',msg=waMessage(b,no),sig=waHash(docHTML(b)+'|'+msg);
-  const S=[['run','Creating PDF…']];waSteps(S);
+  const S=[['run','Creating…']];waSteps(S);
   let ok=false;
   try{
-    let blob=await waGetPdf(name,sig),cached=!!blob;
+    let blob=await waGetPdf(name,sig);
     if(!blob){
       blob=await waBuildPdf(b);
       if(blob.size<3000)throw new Error('PDF came out empty — please try again');
@@ -1743,18 +1744,14 @@ async function waPrepare(b){
     }
     if(tok!==waTok)return;
     waFile=new File([blob],name,{type:'application/pdf'});waMsg=msg;waNo=no;
-    S[0]=['ok','PDF '+(cached?'ready (from cache)':'created')+' · '+Math.round(blob.size/1024)+' KB'];
-    S.push(['ok','Message ready']);
-    S.push(['ok','Tap Share → choose WhatsApp → pick the chat. New number? Tap "New number" first.']);
-    waSteps(S);$('wa-path').textContent=name;$('wa-path').style.display='block';ok=true;
+    waSteps([['ok','Created'],['ok','Ready']]);ok=true;
   }catch(e){
     if(tok!==waTok)return;
-    S[S.length-1]=['err',(e&&e.message)||'Failed'];waSteps(S);
+    waSteps([['err',(e&&e.message)||'Failed']]);
   }
-  waBusy=false;$('wa-act').style.display='flex';
-  if(!ok)document.querySelector('#wa-act .share').disabled=true;else document.querySelector('#wa-act .share').disabled=false;
+  waBusy=false;$('wa-share-btn').disabled=!ok;
 }
-/* STEP 2 (only for a number that is not in your WhatsApp chats yet): open its chat with a SHORT message */
+/* STEP 2 (number not in your WhatsApp chats yet): open its chat with a SHORT message */
 function waNewToggle(){const n=$('wa-new');const show=n.style.display==='none';n.style.display=show?'':'none';if(show)setTimeout(()=>$('wa-num').focus(),50);}
 function waIntro(){
   const b=bills.find(x=>x.id===waId);if(!b)return;
@@ -1766,7 +1763,7 @@ function waIntro(){
   const text='Hello '+b.party+', this is '+CO+'. Your '+(b.dir==='out'?'invoice ':'bill ')+no+' is coming now.';
   window.open('https://wa.me/'+num+'?text='+encodeURIComponent(text),'_blank');
   const log=waJ(WA_LOG,[]);log.unshift({billId:b.id,billNo:no,party:b.party,number:num,file:'',path:'short message',where:'browser',at:Date.now()});waW(WA_LOG,log.slice(0,300));
-  $('wa-hint').textContent='Press SEND in WhatsApp (so the chat is created), come back here and tap Share → WhatsApp → choose this chat.';
+  $('wa-hist').textContent='Press Send in WhatsApp, then come back and tap Share.';
 }
 function waClose(){waTok++;waBusy=false;$('wa-ov').classList.remove('open');waId=null;}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('wa-ov').classList.contains('open'))waClose();});
