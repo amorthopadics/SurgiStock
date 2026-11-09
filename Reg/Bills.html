@@ -933,10 +933,9 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 </div>
 <!-- WHATSAPP SEND -->
 <div class="wa-ov" id="wa-ov" role="dialog" aria-modal="true" aria-labelledby="wa-title"><div class="wa-box">
-  <div class="wa-h"><i class="ti ti-brand-whatsapp lg"></i><span id="wa-title">Send bill on WhatsApp</span></div>
+  <div class="wa-h"><i class="ti ti-brand-whatsapp lg"></i><span id="wa-title">Send bill on WhatsApp</span><button type="button" class="ib x" title="Close" aria-label="Close" onclick="waClose()"><i class="ti ti-x"></i></button></div>
   <div class="wa-b"><div class="wa-sum"><div id="wa-sum"></div><div class="wa-steps" id="wa-steps"></div></div></div>
   <div class="wa-act" id="wa-act">
-    <div><button type="button" class="wa-circ" title="Close" aria-label="Close" onclick="waClose()"><i class="ti ti-x"></i></button>Close</div>
     <div><button type="button" class="wa-circ" title="Add number" aria-label="Add number" onclick="waNewToggle()"><i class="ti ti-user-plus"></i></button>Add number</div>
     <div><button type="button" class="wa-circ share" id="wa-share-btn" title="Share PDF + message" aria-label="Share" onclick="waShare()"><i class="ti ti-share"></i></button>Share</div>
   </div>
@@ -1763,7 +1762,9 @@ function waIntro(){
   const text='Hello '+b.party+', this is '+CO+'. Your '+(b.dir==='out'?'invoice ':'bill ')+no+' is coming now.';
   window.open('https://wa.me/'+num+'?text='+encodeURIComponent(text),'_blank');
   const log=waJ(WA_LOG,[]);log.unshift({billId:b.id,billNo:no,party:b.party,number:num,file:'',path:'short message',where:'browser',at:Date.now()});waW(WA_LOG,log.slice(0,300));
-  $('wa-hist').textContent='Press Send in WhatsApp, then come back and tap Share.';
+  $('wa-hist').textContent='Last chat opened on +'+num+' · '+new Date().toLocaleString();
+  $('wa-new').style.display='none';
+  showToast('Press Send in WhatsApp, then come back and tap Share','success');
 }
 function waClose(){waTok++;waBusy=false;$('wa-ov').classList.remove('open');waId=null;}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('wa-ov').classList.contains('open'))waClose();});
