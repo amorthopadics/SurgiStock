@@ -612,6 +612,9 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 .pr-qty .date-input{width:58px;padding:4px 6px;text-align:center;font-family:var(--mono);}
 .dc-pick.sm{max-height:200px;min-height:110px;}
 .dc-tools select.date-input{flex:0 0 140px;}
+.dc-cbs{display:flex;align-items:center;gap:6px;padding:4px 8px;margin-bottom:3px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface2);position:sticky;top:0;z-index:2;}
+.dc-cbs i{color:var(--accent);font-size:14px;}
+.dc-cbs input{flex:1;min-width:0;border:none;outline:none;background:transparent;color:var(--text);font-family:var(--font);font-size:12.5px;padding:3px 0;}
 </style>
 </head>
 <body>
@@ -2065,7 +2068,7 @@ function openDcForm(key){
   const rows = key ? (data.dclist||[]).filter(e => dcKey(e.dcName)===key) : [];
   if (key && !rows.length) return;
   const g = key ? dcGroups(rows)[0] : null;
-  pdraft = null; dcdraft = { orig: g ? g.name : null, name: g ? g.name : '', q:'', sel:new Map(), existing:new Map() };
+  pdraft = null; dcdraft = { orig: g ? g.name : null, name: g ? g.name : '', q:'', sel:new Map(), existing:new Map(), man:[], mn:0 };
   if (g) g.items.forEach(e => { const kk = dupNorm(e.label); dcdraft.sel.set(kk, e.label); dcdraft.existing.set(kk, e); });
   renderDcPanel();
   dcPanelEl().classList.add('open');
@@ -2095,7 +2098,21 @@ function dcPickHTML(){
     }).join('');
   }).join('');
 }
-function updateDcCount(){ const el = document.getElementById('dc-count'); if (el && dcdraft) el.textContent = dcdraft.sel.size + ' selected'; }
+/* ticked items + the manually written ones (blank lines ignored, duplicates merged) */
+function dcSelAll(d){
+  const m = new Map(d.sel);
+  d.man.forEach(x => { const t = x.text.trim().replace(/\s+/g,' '), kk = dupNorm(t); if (t && !m.has(kk)) m.set(kk, t); });
+  return m;
+}
+function updateDcCount(){ const el = document.getElementById('dc-count'); if (el && dcdraft) el.textContent = dcSelAll(dcdraft).size + ' selected'; }
+function fillDcMan(){
+  const el = document.getElementById('dc-man'); if (!el || !dcdraft) return;
+  el.style.display = dcdraft.man.length ? '' : 'none';
+  el.innerHTML = dcdraft.man.map(x => `<div class="pr-row"><input class="date-input pr-lbl" data-dcm data-id="${x.id}" type="text" value="${esc(x.text)}" placeholder="Write item…" autocomplete="off"/>
+    <button class="ib sm danger" type="button" data-act="dc-delman" data-id="${x.id}" title="Remove manual item"><i class="ti ti-trash"></i></button></div>`).join('');
+  const c = document.getElementById('dc-clrman'); if (c) c.style.display = dcdraft.man.length ? '' : 'none';
+  updateDcCount();
+}
 function fillDcPick(){ const el = document.getElementById('dc-pick'); if (!el || !dcdraft) return; el.innerHTML = dcPickHTML(); updateDcCount(); }
 function renderDcPanel(){
   const d = dcdraft, edit = d.orig !== null;
@@ -2111,40 +2128,52 @@ function renderDcPanel(){
         <div class="dc-tools"><input class="date-input" data-dcq type="text" placeholder="Search items…" value="${esc(d.q)}" autocomplete="off"/>
           <button class="btn btn-ghost btn-sm" type="button" data-act="dc-selall" title="Tick every item shown">All shown</button>
           <button class="btn btn-ghost btn-sm" type="button" data-act="dc-selnone" title="Untick every item shown">Clear</button></div>
-        <div class="dc-pick" id="dc-pick"></div></div>
+        <div class="dc-pick" id="dc-pick"></div>
+        <div class="pr-rows" id="dc-man" style="display:none;margin-top:6px;max-height:160px;"></div>
+        <div class="dc-tools" style="margin:6px 0 0;">
+          <button class="btn btn-ghost btn-sm" type="button" data-act="dc-addman" title="Write an item by hand"><i class="ti ti-pencil-plus"></i> Add manual</button>
+          <button class="btn btn-ghost btn-sm" type="button" id="dc-clrman" data-act="dc-clrman" style="display:none;" title="Remove every manually written item"><i class="ti ti-eraser"></i> Remove manual</button></div></div>
     </div></div>
     <div class="ppf form-actions">
       <button class="btn btn-ghost" type="button" data-act="dc-close">Cancel</button>
       <button class="btn btn-primary" type="button" data-act="dc-save"><i class="ti ti-device-floppy"></i> ${edit?'Update':'Save'}</button>
     </div>`;
-  fillDcPick();
+  fillDcPick(); fillDcMan();
 }
-/* DC name = searchable drop-down fed from the cached Delivery Challan list (Specs Settings items with Description "DC") */
+/* DC names offered in Add DC = every DC already in the cached DC List + the Specs Settings items written with Description "DC" */
+function dcNames(){
+  const m = new Map();
+  dcGroups(data.dclist||[]).forEach(g => m.set(g.key, { v:g.name, n:g.items.length, tl:'' }));
+  dcSources().forEach(o => { const k = dcKey(o.name); if (!m.has(k)) m.set(k, { v:o.name, n:0, tl:o.tl }); });
+  return [...m.values()].sort((a,b) => natCmp(a.v, b.v)).map(o => ({ v:o.v, sub:[o.tl, o.n ? o.n+' item'+(o.n>1?'s':'') : ''].filter(Boolean).join(' · ') }));
+}
+/* DC name = text box + search icon; the icon drops down the DC list with its own search */
 function dcNameField(d, edit){
-  const src = dcSources(), kk = dcKey(d.name);
-  return `<div class="cb"><input class="date-input" data-dcn type="text" placeholder="Search or choose DC name…" value="${esc(d.name)}" autocomplete="off" role="combobox" aria-autocomplete="list"/>
-    <div class="cb-pop"></div>
-    <div class="cb-hint${src.length && d.name && !src.some(o => dcKey(o.name)===kk) ? ' show' : ''}"><i class="ti ti-circle-plus"></i> Not in the Delivery Challan list — used as typed</div></div>`
-    + (src.length ? '' : `<div class="dc-src-hint">Tip: write Description “DC” on items in Specs Settings and they appear here as a list to choose from.</div>`);
+  const known = dcNames().some(o => dcKey(o.v)===dcKey(d.name));
+  return `<div class="cb" style="display:flex;gap:6px;align-items:center;">
+      <input class="date-input" data-dcn type="text" placeholder="Type a DC name or pick one →" value="${esc(d.name)}" autocomplete="off"/>
+      <button class="ib" type="button" data-act="dc-namepop" title="Choose a DC from the list"><i class="ti ti-search"></i></button>
+      <div class="cb-pop"></div></div>
+    <div class="cb-hint${d.name && !known ? ' show' : ''}"><i class="ti ti-circle-plus"></i> New DC — will be created</div>`;
 }
 function dcCbList(inp){
-  const q = inp.value.trim(), ql = q.toLowerCase(), isPr = inp.dataset.prn !== undefined;
-  const cnt = n => (data.dclist||[]).filter(e => dcKey(e.dcName)===dcKey(n)).length, items = n => n ? n+' item'+(n>1?'s':'') : '';
-  const base = isPr ? dcGroups(data.dclist||[]).map(g => ({ v:g.name, sub:items(g.items.length) }))
-                    : dcSources().map(o => ({ v:o.name, sub:[o.tl, items(cnt(o.name))].filter(Boolean).join(' · ') }));
-  return { q, list:base.filter(o => !ql || o.v.toLowerCase().includes(ql)), canAdd: !isPr && q && !base.some(o => o.v.trim().toLowerCase()===ql) };
+  const isPr = inp.dataset.prn !== undefined, box = inp.closest('.cb');
+  const s = box.querySelector('[data-dcs]'), q = (isPr ? inp.value : (s ? s.value : '')).trim().toLowerCase();
+  const base = isPr ? dcGroups(data.dclist||[]).map(g => ({ v:g.name, sub:g.items.length+' item'+(g.items.length>1?'s':'') })) : dcNames();
+  return { list:base.filter(o => !q || o.v.toLowerCase().includes(q)) };
 }
-function dcCbOpen(inp){
-  cbClose();
-  const box = inp.parentElement, pop = box.querySelector('.cb-pop'), r = dcCbList(inp);
-  pop.innerHTML = r.list.map(o => `<div class="dc-cbo" data-v="${esc(o.v)}"><span>${esc(o.v)}</span><small>${esc(o.sub)}</small></div>`).join('')
-    + (r.canAdd ? `<div class="dc-cbo add" data-v="${esc(r.q)}"><i class="ti ti-plus"></i>Use “${esc(r.q)}”</div>` : '')
-    + (!r.list.length && !r.canAdd ? '<div class="cb-none">No DC found</div>' : '');
+function dcCbOpen(inp, focusSearch){
+  const box = inp.closest('.cb'), pop = box.querySelector('.cb-pop'), isPr = inp.dataset.prn !== undefined;
+  if (!box.classList.contains('open')) cbClose();
+  if (!isPr && !pop.querySelector('[data-dcs]')) pop.innerHTML = `<div class="dc-cbs"><i class="ti ti-search"></i><input data-dcs type="text" placeholder="Search DC…" autocomplete="off"/></div><div class="dc-cbl"></div>`;
+  const html = dcCbList(inp).list.map(o => `<div class="dc-cbo" data-v="${esc(o.v)}"><span>${esc(o.v)}</span><small>${esc(o.sub)}</small></div>`).join('') || '<div class="cb-none">No DC found</div>';
+  (isPr ? pop : pop.querySelector('.dc-cbl')).innerHTML = html;
   box.classList.add('open');
+  if (focusSearch){ const f = pop.querySelector('[data-dcs]'); if (f) f.focus(); }
 }
 function dcNameHint(inp){
-  const h = inp.parentElement.querySelector('.cb-hint'), v = inp.value.trim(), src = dcSources();
-  if (h) h.classList.toggle('show', !!v && src.length>0 && !src.some(o => dcKey(o.name)===dcKey(v)));
+  const h = inp.closest('.cb').nextElementSibling, v = inp.value.trim();
+  if (h && h.classList.contains('cb-hint')) h.classList.toggle('show', !!v && !dcNames().some(o => dcKey(o.v)===dcKey(v)));
 }
 function dcCbPick(inp, v){
   inp.value = v; cbClose();
@@ -2171,13 +2200,13 @@ function saveDC(){
   const origKey = editing ? dcKey(d.orig) : nk;
   const clash = editing && nk!==origKey && all.some(e => dcKey(e.dcName)===nk);
   const p = dcPanelEl(), pick = p.querySelector('#dc-pick');
-  const badName = !N || clash, badItems = !d.sel.size;
+  const sel = dcSelAll(d), badName = !N || clash, badItems = !sel.size;
   p.querySelectorAll('[data-dcn]').forEach(el => el.classList.toggle('bad', badName)); pick.classList.toggle('bad', badItems);
   if (badName || badItems) return showToast(clash ? 'A DC with this name already exists' : !N ? 'Enter the DC name' : 'Tick at least one item', 'error');
   const mine = all.filter(e => dcKey(e.dcName)===origKey);
   const have = new Set(mine.map(e => dupNorm(e.label)));
-  const toAdd = [...d.sel.keys()].filter(kk => !have.has(kk));
-  const toRemove = editing ? mine.filter(e => !d.sel.has(dupNorm(e.label))) : [];
+  const toAdd = [...sel.keys()].filter(kk => !have.has(kk));
+  const toRemove = editing ? mine.filter(e => !sel.has(dupNorm(e.label))) : [];
   const rename = editing && mine.some(e => e.dcName !== N);
   if (!toAdd.length && !toRemove.length && !rename){ closeDcPanel(); return showToast(editing ? 'No changes' : 'Those items are already in this DC','info'); }
   if (toAdd.length && !AccessGuard.require(PERM_DATASET, 'add', PERM_LABEL)) return;
@@ -2185,7 +2214,7 @@ function saveDC(){
   const name = (!editing && mine[0]) ? mine[0].dcName : N, now = Date.now();
   if (toRemove.length){ const ids = new Set(toRemove.map(e => e.id)); data.dclist = data.dclist.filter(e => !ids.has(e.id)); }
   if (rename) mine.forEach(e => { e.dcName = N; });
-  toAdd.forEach((kk,i) => data.dclist.push({ id:'dc'+now+'_'+i+Math.floor(Math.random()*1000), dcName:name, label:d.sel.get(kk), status:'active', created:now+i }));
+  toAdd.forEach((kk,i) => data.dclist.push({ id:'dc'+now+'_'+i+Math.floor(Math.random()*1000), dcName:name, label:sel.get(kk), status:'active', created:now+i }));
   persist(); ui.dclist.dc = dcKey(rename ? N : name); render('dclist'); syncSpecsSheet(); closeDcPanel();
   const bits = []; if (toAdd.length) bits.push(toAdd.length + ' added'); if (toRemove.length) bits.push(toRemove.length + ' removed'); if (rename) bits.push('renamed');
   showToast((editing ? 'DC updated' : 'DC saved') + ' · ' + bits.join(' · '), 'success');
@@ -2199,7 +2228,9 @@ function wireDcEvents(){
   document.addEventListener('input', e => {
     const t = e.target, ds = t.dataset; if (!ds || (!dcdraft && !pdraft)) return;
     if (dcdraft){
-      if (ds.dcn !== undefined){ dcdraft.name = t.value; t.classList.remove('bad'); dcNameHint(t); dcCbOpen(t); }
+      if (ds.dcn !== undefined){ dcdraft.name = t.value; t.classList.remove('bad'); dcNameHint(t); }
+      else if (ds.dcs !== undefined) dcCbOpen(t.closest('.cb').querySelector('[data-dcn]'));
+      else if (ds.dcm !== undefined){ const x = dcdraft.man.find(m => m.id===ds.id); if (x){ x.text = t.value; updateDcCount(); } }
       else if (ds.dcq !== undefined){ dcdraft.q = t.value; fillDcPick(); }
     }
     if (pdraft){
@@ -2212,7 +2243,7 @@ function wireDcEvents(){
   });
   document.addEventListener('focusin', e => {
     const t = e.target, ds = t.dataset; if (!ds) return;
-    if ((dcdraft && ds.dcn !== undefined) || (pdraft && ds.prn !== undefined)) dcCbOpen(t);
+    if (pdraft && ds.prn !== undefined) dcCbOpen(t);
     else if (pdraft && ds.prq !== undefined && !t.value.trim()){ const r = prRow(ds.id); if (r){ r.qty = '1'; t.value = '1'; t.select(); } }   // one click on an empty Qty = 1
   });
   document.addEventListener('focusout', e => { const ds = e.target.dataset; if (pdraft && ds && ds.prn !== undefined) e.target.value = pdraft.name; });
@@ -2224,15 +2255,19 @@ function wireDcEvents(){
   document.addEventListener('keydown', e => {
     if (!dcdraft && !pdraft) return;
     const t = e.target, ds = t.dataset || {};
-    if (ds.dcn !== undefined || ds.prn !== undefined){
-      const box = t.parentElement, opts = [...box.querySelectorAll('.dc-cbo')], cur = opts.findIndex(o => o.classList.contains('hl'));
+    if (ds.dcn !== undefined){
+      if (e.key==='Enter'){ e.preventDefault(); e.stopPropagation(); return; }
+      if (e.key==='ArrowDown'){ e.preventDefault(); dcCbOpen(t, true); return; }
+    }
+    if (ds.dcs !== undefined || ds.prn !== undefined){
+      const box = t.closest('.cb'), opts = [...box.querySelectorAll('.dc-cbo')], cur = opts.findIndex(o => o.classList.contains('hl'));
       const hl = i => { opts.forEach(o => o.classList.remove('hl')); if (opts[i]){ opts[i].classList.add('hl'); opts[i].scrollIntoView && opts[i].scrollIntoView({block:'nearest'}); } };
-      if (e.key==='ArrowDown'){ e.preventDefault(); if (!box.classList.contains('open')) dcCbOpen(t); else hl(Math.min(opts.length-1, cur+1)); return; }
+      if (e.key==='ArrowDown'){ e.preventDefault(); if (!box.classList.contains('open')) dcCbOpen(box.querySelector('[data-dcn],[data-prn]')); else hl(Math.min(opts.length-1, cur+1)); return; }
       if (e.key==='ArrowUp'){ e.preventDefault(); hl(Math.max(0, cur-1)); return; }
-      if (e.key==='Enter'){ e.preventDefault(); e.stopPropagation(); if (cur>=0) dcCbPick(t, opts[cur].dataset.v); else cbClose(); return; }
+      if (e.key==='Enter'){ e.preventDefault(); e.stopPropagation(); if (cur>=0) dcCbPick(box.querySelector('[data-dcn],[data-prn]'), opts[cur].dataset.v); else if (opts.length===1) dcCbPick(box.querySelector('[data-dcn],[data-prn]'), opts[0].dataset.v); else cbClose(); return; }
       if (e.key==='Escape' && box.classList.contains('open')){ e.stopPropagation(); cbClose(); return; }
     }
-    if (e.key==='Enter' && (ds.dcq !== undefined || ds.prq !== undefined || ds.prl !== undefined || ds.prs !== undefined)){ e.preventDefault(); e.stopPropagation(); }   // Enter in these fields must not save / print
+    if (e.key==='Enter' && (ds.dcq !== undefined || ds.dcm !== undefined || ds.prq !== undefined || ds.prl !== undefined || ds.prs !== undefined)){ e.preventDefault(); e.stopPropagation(); }   // Enter in these fields must not save / print
     else if (e.key==='Escape') closeDcPanel();
   }, true);
 }
@@ -2458,6 +2493,11 @@ function wireDelegation(){
       case 'dc-selall':  dcSelect(true); break;
       case 'dc-selnone': dcSelect(false); break;
       case 'dc-print':   printDC(el.dataset.dc); break;
+      case 'dc-namepop': { const box = el.closest('.cb'); if (box.classList.contains('open')) cbClose(); else dcCbOpen(box.querySelector('[data-dcn]'), true); break; }
+      case 'dc-addman':  if (dcdraft){ const x = { id:'m'+(++dcdraft.mn), text:'' }; dcdraft.man.push(x); fillDcMan();
+                           const f = document.querySelector('[data-dcm][data-id="'+x.id+'"]'); if (f){ f.scrollIntoView({block:'nearest'}); f.focus(); } } break;
+      case 'dc-delman':  if (dcdraft){ dcdraft.man = dcdraft.man.filter(x => x.id!==id); fillDcMan(); } break;
+      case 'dc-clrman':  if (dcdraft){ dcdraft.man = []; fillDcMan(); } break;
       case 'pr-close':   closeDcPanel(); break;
       case 'pr-go':      doPrint(); break;
       case 'pr-tog':     { const r = prRow(id); if (r){ r.on = !r.on; if (r.on && !String(r.qty).trim()) r.qty = '1'; fillPrRows(); } break; }
