@@ -591,6 +591,8 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 .dc-opt.on{color:var(--accent);background:var(--accent-dim);}
 .dc-opt i{font-size:16px;margin-top:1px;flex-shrink:0;}
 @media(min-width:1101px){#dclist-preview-panel.open{width:480px;}}
+.dv-sel{width:auto;max-width:130px;padding:3px 6px;font-size:11.5px;margin:0;}
+.dc-src-hint{font-size:11px;color:var(--text3);margin-top:4px;}
 </style>
 </head>
 <body>
@@ -1140,6 +1142,39 @@ function visibleSpecRows(){
   return rows.sort((a,b) => { const p = val(a), c = val(b);
     return (typeof p==='number' && typeof c==='number') ? (p-c)*dir : String(p).localeCompare(String(c), undefined, {sensitivity:'base'})*dir; });
 }
+/* ── VIEW BY DESCRIPTION (read-only): every Description written on any Specs row becomes a table named after it.
+      Inside, the rows are listed with their Specs (e.g. Doctor · Hospital · Vendor) and a drop-down filters by Specs. ── */
+function renderDescView(){
+  const k = 'specsetting', s = ui[k], body = document.getElementById(k+'-body');
+  const rows = visibleSpecRows().filter(x => (x.r.description||'').trim());
+  document.getElementById(k+'-count').textContent = rows.length + ' with Description';
+  const gm = new Map();
+  rows.forEach(x => { const d = x.r.description.trim(), gk = dupNorm(d); if (!gm.has(gk)) gm.set(gk, { gk, d, rows:[] }); gm.get(gk).rows.push(x); });
+  const groups = [...gm.values()].sort((a,b) => natCmp(a.d, b.d));
+  if (!groups.length){
+    body.innerHTML = `<div class="doc-center-placeholder"><i class="ti ti-category-2"></i><span>No Description written yet — write a Description on any Specs item and it becomes a table here</span></div>`;
+    return;
+  }
+  s.dvf = s.dvf || {};
+  body.innerHTML = `<div class="specs-grid">${groups.map(g => {
+    const types = []; g.rows.forEach(x => { if (!types.some(t => t.key===x.t)) types.push({ key:x.t, label:x.tl }); });
+    types.sort((a,b) => natCmp(a.label, b.label));
+    let cur = s.dvf[g.gk] || ''; if (cur && !types.some(t => t.key===cur)) cur = '';
+    const shown = g.rows.filter(x => !cur || x.t===cur).sort((a,b) => natCmp(a.tl, b.tl) || natCmp(a.r.name, b.r.name));
+    return `<div class="spec-card">
+      <div class="grp-hd"><i class="ti ti-category-2" style="color:var(--accent);font-size:16px;"></i><strong title="${esc(g.d)}">${esc(g.d)}</strong>
+        <span class="cnt-chip">${shown.length}${shown.length!==g.rows.length ? ' / '+g.rows.length : ''}</span><span class="sp"></span>
+        <select class="date-input dv-sel" data-dvf="${esc(g.gk)}" title="Filter ${esc(g.d)} by Specs"><option value="">All Specs</option>${types.map(t => `<option value="${esc(t.key)}"${t.key===cur?' selected':''}>${esc(t.label)}</option>`).join('')}</select></div>
+      <div class="spec-scroll"><table class="log-table"><thead><tr><th style="cursor:default">Specs</th><th style="cursor:default">Item</th><th style="cursor:default">Status</th></tr></thead>
+        <tbody>${shown.map(x => `<tr><td><span class="spec-chip"><i class="ti ${x.ti}"></i>${esc(x.tl)}</span></td><td><strong>${esc(x.r.name)}</strong></td><td><span class="st-badge ${x.r.status}">${x.r.status==='active'?'Active':'Inactive'}</span></td></tr>`).join('')}</tbody></table></div></div>`;
+  }).join('')}</div>`;
+}
+/* the Items written with Description "DC" / "Delivery Challan" are the DC names offered in DC Lists */
+function dcSources(){
+  return specRows().filter(x => x.r.status==='active' && /^(dcs?|delivery\s*challans?)$/i.test(String(x.r.description||'').trim()))
+    .map(x => ({ name:x.r.name, tl:x.tl })).sort((a,b) => natCmp(a.name, b.name));
+}
+
 function specPanel(m,i){
   return `
     <div class="tab-panel" id="tab-${m.key}" style="display:${i?'none':'flex'};flex-direction:column;gap:10px;flex:1;min-height:0;">
@@ -1150,6 +1185,7 @@ function specPanel(m,i){
             <span class="hist-tip"><i class="ti ti-info-circle"></i>${esc(m.hint)}</span>
             <div class="hdr-actions">
               ${hdrTools(m.key)}
+              <button class="ib" type="button" id="ss-view-btn" data-act="ss-view" data-k="${m.key}" title="Show by Description"><i class="ti ti-category-2"></i></button>
               <button class="btn btn-primary btn-sm" data-act="add" data-k="${m.key}" title="Add Specs Setting"><i class="ti ti-plus"></i><span class="lbl">Add Specs Setting</span></button>
             </div>
           </div>
@@ -1162,7 +1198,11 @@ function specPanel(m,i){
 function renderSpecSidebar(){ renderFilters('specsetting', specRows().map(x => x.r)); renderDupFilter('specsetting', dupSpecSet()); }
 /* every Specs = one table, all shown together in one frame; a new Specs adds a new table */
 function renderSpecTable(){
-  const k = 'specsetting', s = ui[k], rows = visibleSpecRows(), total = specRows().length, types = specTypes();
+  const k = 'specsetting', s = ui[k];
+  const vb = document.getElementById('ss-view-btn');
+  if (vb){ const dv = s.view==='desc'; vb.title = dv ? 'Showing by Description — click to go back to Specs tables' : 'Show by Description (view only)'; vb.innerHTML = `<i class="ti ${dv?'ti-layout-grid':'ti-category-2'}"></i>`; }
+  if (s.view==='desc') return renderDescView();
+  const rows = visibleSpecRows(), total = specRows().length, types = specTypes();
   const filtering = s.q.trim() || s.filter!=='all' || s.dup;
   const DS = dupSpecSet();
   document.getElementById(k+'-count').textContent = types.length + ' Specs · ' + rows.length + (rows.length!==total ? ' / '+total : '') + ' items';
@@ -1983,8 +2023,7 @@ function renderDcPanel(){
     <div class="ppb"><div class="form-stack">
       <div class="edit-banner ${edit?'show':''}"><i class="ti ti-pencil"></i> Editing — tick to add items, untick to remove them</div>
       <div class="field"><div class="fgrp-lbl"><i class="ti ti-clipboard-list"></i>DC Name <span class="req">*</span></div>
-        <input class="date-input" data-dcn type="text" placeholder="e.g. City Hospital – Trauma Set" value="${esc(d.name)}" ${edit?'':'list="dc-names"'} autocomplete="off"/>
-        ${edit ? '' : `<datalist id="dc-names">${names.map(n => `<option value="${esc(n)}">`).join('')}</datalist>`}</div>
+        ${dcNameField(d, edit)}</div>
       <div class="field"><div class="fgrp-lbl"><i class="ti ti-list-check"></i>Items from Item List <span class="req">*</span><span class="dc-cnt" id="dc-count"></span></div>
         <div class="dc-tools"><input class="date-input" data-dcq type="text" placeholder="Search items…" value="${esc(d.q)}" autocomplete="off"/>
           <button class="btn btn-ghost btn-sm" type="button" data-act="dc-selall" title="Tick every item shown">All shown</button>
@@ -1996,6 +2035,18 @@ function renderDcPanel(){
       <button class="btn btn-primary" type="button" data-act="dc-save"><i class="ti ti-device-floppy"></i> ${edit?'Update':'Save'}</button>
     </div>`;
   fillDcPick();
+}
+function dcNameField(d, edit){
+  const src = dcSources(), kk = dcKey(d.name), inSrc = src.some(o => dcKey(o.name)===kk);
+  const showInput = !src.length || d.other || (d.name && !inSrc);
+  const count = n => (data.dclist||[]).filter(e => dcKey(e.dcName)===dcKey(n)).length;
+  const input = `<input class="date-input" data-dcn type="text" placeholder="Type a DC name" value="${esc(d.name)}" autocomplete="off"${showInput ? '' : ' style="display:none;margin-top:6px;"'}/>`;
+  if (!src.length) return input + `<div class="dc-src-hint">Tip: write Description “DC” on items in Specs Settings and they appear here as a list to choose from.</div>`;
+  const cur = inSrc ? src.find(o => dcKey(o.name)===kk).name : (showInput ? '__other__' : '');
+  return `<select class="date-input" data-dcsel><option value="">Choose DC…</option>${src.map(o => { const n = count(o.name);
+      return `<option value="${esc(o.name)}"${o.name===cur?' selected':''}>${esc(o.name)} · ${esc(o.tl)}${n ? ' · '+n+' item'+(n>1?'s':'') : ''}</option>`; }).join('')}
+    <option value="__other__"${cur==='__other__'?' selected':''}>Other — type a name…</option></select>`
+    + input.replace('style="display:none;margin-top:6px;"', '').replace('<input ', `<input style="margin-top:6px;${showInput?'':'display:none;'}" `);
 }
 function dcTogglePick(el){
   const d = dcdraft; if (!d) return;
@@ -2016,9 +2067,9 @@ function saveDC(){
   const N = (d.name||'').trim().replace(/\s+/g,' '), nk = dcKey(N), all = data.dclist||[], editing = d.orig !== null;
   const origKey = editing ? dcKey(d.orig) : nk;
   const clash = editing && nk!==origKey && all.some(e => dcKey(e.dcName)===nk);
-  const p = dcPanelEl(), nameEl = p.querySelector('[data-dcn]'), pick = p.querySelector('#dc-pick');
+  const p = dcPanelEl(), pick = p.querySelector('#dc-pick');
   const badName = !N || clash, badItems = !d.sel.size;
-  nameEl.classList.toggle('bad', badName); pick.classList.toggle('bad', badItems);
+  p.querySelectorAll('[data-dcn],[data-dcsel]').forEach(el => el.classList.toggle('bad', badName)); pick.classList.toggle('bad', badItems);
   if (badName || badItems) return showToast(clash ? 'A DC with this name already exists' : !N ? 'Enter the DC name' : 'Tick at least one item', 'error');
   const mine = all.filter(e => dcKey(e.dcName)===origKey);
   const have = new Set(mine.map(e => dupNorm(e.label)));
@@ -2037,6 +2088,16 @@ function saveDC(){
   showToast((editing ? 'DC updated' : 'DC saved') + ' · ' + bits.join(' · '), 'success');
 }
 function wireDcEvents(){
+  document.addEventListener('change', e => {
+    const t = e.target, ds = t.dataset; if (!ds) return;
+    if (ds.dvf !== undefined){ (ui.specsetting.dvf = ui.specsetting.dvf || {})[ds.dvf] = t.value; renderSpecTable(); return; }
+    if (ds.dcsel !== undefined && dcdraft){
+      const inp = dcPanelEl().querySelector('[data-dcn]');
+      t.classList.remove('bad');
+      if (t.value==='__other__'){ dcdraft.other = true; dcdraft.name = ''; inp.value = ''; inp.style.display = ''; inp.focus(); }
+      else { dcdraft.other = false; dcdraft.name = t.value; inp.value = t.value; inp.style.display = 'none'; inp.classList.remove('bad'); }
+    }
+  });
   document.addEventListener('input', e => {
     const ds = e.target.dataset; if (!dcdraft || !ds) return;
     if (ds.dcn !== undefined){ dcdraft.name = e.target.value; e.target.classList.remove('bad'); }
@@ -2288,6 +2349,7 @@ function wireDelegation(){
         } else dcArm(id);
         break;
       }
+      case 'ss-view': s.view = (s.view==='desc' ? 'specs' : 'desc'); render(k); break;
       case 'sm-close':    closeSpecModal(); break;
       case 'sm-save':     saveSpec(false); break;
       case 'sm-save-new': saveSpec(true); break;
