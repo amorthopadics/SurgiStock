@@ -1142,33 +1142,6 @@ function visibleSpecRows(){
   return rows.sort((a,b) => { const p = val(a), c = val(b);
     return (typeof p==='number' && typeof c==='number') ? (p-c)*dir : String(p).localeCompare(String(c), undefined, {sensitivity:'base'})*dir; });
 }
-/* ── VIEW BY DESCRIPTION (read-only): every Description written on any Specs row becomes a table named after it.
-      Inside, the rows are listed with their Specs (e.g. Doctor · Hospital · Vendor) and a drop-down filters by Specs. ── */
-function renderDescView(){
-  const k = 'specsetting', s = ui[k], body = document.getElementById(k+'-body');
-  const rows = visibleSpecRows().filter(x => (x.r.description||'').trim());
-  document.getElementById(k+'-count').textContent = rows.length + ' with Description';
-  const gm = new Map();
-  rows.forEach(x => { const d = x.r.description.trim(), gk = dupNorm(d); if (!gm.has(gk)) gm.set(gk, { gk, d, rows:[] }); gm.get(gk).rows.push(x); });
-  const groups = [...gm.values()].sort((a,b) => natCmp(a.d, b.d));
-  if (!groups.length){
-    body.innerHTML = `<div class="doc-center-placeholder"><i class="ti ti-category-2"></i><span>No Description written yet — write a Description on any Specs item and it becomes a table here</span></div>`;
-    return;
-  }
-  s.dvf = s.dvf || {};
-  body.innerHTML = `<div class="specs-grid">${groups.map(g => {
-    const types = []; g.rows.forEach(x => { if (!types.some(t => t.key===x.t)) types.push({ key:x.t, label:x.tl }); });
-    types.sort((a,b) => natCmp(a.label, b.label));
-    let cur = s.dvf[g.gk] || ''; if (cur && !types.some(t => t.key===cur)) cur = '';
-    const shown = g.rows.filter(x => !cur || x.t===cur).sort((a,b) => natCmp(a.tl, b.tl) || natCmp(a.r.name, b.r.name));
-    return `<div class="spec-card">
-      <div class="grp-hd"><i class="ti ti-category-2" style="color:var(--accent);font-size:16px;"></i><strong title="${esc(g.d)}">${esc(g.d)}</strong>
-        <span class="cnt-chip">${shown.length}${shown.length!==g.rows.length ? ' / '+g.rows.length : ''}</span><span class="sp"></span>
-        <select class="date-input dv-sel" data-dvf="${esc(g.gk)}" title="Filter ${esc(g.d)} by Specs"><option value="">All Specs</option>${types.map(t => `<option value="${esc(t.key)}"${t.key===cur?' selected':''}>${esc(t.label)}</option>`).join('')}</select></div>
-      <div class="spec-scroll"><table class="log-table"><thead><tr><th style="cursor:default">Specs</th><th style="cursor:default">Item</th><th style="cursor:default">Status</th></tr></thead>
-        <tbody>${shown.map(x => `<tr><td><span class="spec-chip"><i class="ti ${x.ti}"></i>${esc(x.tl)}</span></td><td><strong>${esc(x.r.name)}</strong></td><td><span class="st-badge ${x.r.status}">${x.r.status==='active'?'Active':'Inactive'}</span></td></tr>`).join('')}</tbody></table></div></div>`;
-  }).join('')}</div>`;
-}
 /* the Items written with Description "DC" / "Delivery Challan" are the DC names offered in DC Lists */
 function dcSources(){
   return specRows().filter(x => x.r.status==='active' && /^(dcs?|delivery\s*challans?)$/i.test(String(x.r.description||'').trim()))
@@ -1185,7 +1158,6 @@ function specPanel(m,i){
             <span class="hist-tip"><i class="ti ti-info-circle"></i>${esc(m.hint)}</span>
             <div class="hdr-actions">
               ${hdrTools(m.key)}
-              <button class="ib" type="button" id="ss-view-btn" data-act="ss-view" data-k="${m.key}" title="Show by Description"><i class="ti ti-category-2"></i></button>
               <button class="btn btn-primary btn-sm" data-act="add" data-k="${m.key}" title="Add Specs Setting"><i class="ti ti-plus"></i><span class="lbl">Add Specs Setting</span></button>
             </div>
           </div>
@@ -1198,57 +1170,65 @@ function specPanel(m,i){
 function renderSpecSidebar(){ renderFilters('specsetting', specRows().map(x => x.r)); renderDupFilter('specsetting', dupSpecSet()); }
 /* every Specs = one table, all shown together in one frame; a new Specs adds a new table */
 function renderSpecTable(){
-  const k = 'specsetting', s = ui[k];
-  const vb = document.getElementById('ss-view-btn');
-  if (vb){ const dv = s.view==='desc'; vb.title = dv ? 'Showing by Description — click to go back to Specs tables' : 'Show by Description (view only)'; vb.innerHTML = `<i class="ti ${dv?'ti-layout-grid':'ti-category-2'}"></i>`; }
-  if (s.view==='desc') return renderDescView();
-  const rows = visibleSpecRows(), total = specRows().length, types = specTypes();
+  const k = 'specsetting', s = ui[k], rows = visibleSpecRows(), total = specRows().length, types = specTypes();
   const filtering = s.q.trim() || s.filter!=='all' || s.dup;
   const DS = dupSpecSet();
   document.getElementById(k+'-count').textContent = types.length + ' Specs · ' + rows.length + (rows.length!==total ? ' / '+total : '') + ' items';
   const body = document.getElementById(k+'-body');
   const th = (key,label) => `<th data-act="sort" data-k="${k}" data-v="${key}">${label}${s.sortKey===key ? `<i class="ti ti-chevron-${s.sortAsc?'up':'down'} sort-i"></i>` : ''}</th>`;
-  const shown = types.filter(m => !s.type || m.key===s.type);
-  const cards = shown.map(m => {
-    const mine = rows.filter(x => x.t===m.key);
-    if (filtering && !mine.length) return '';
-    const rowHTML = x => {
-      const r = x.r, armed = armedDelete && armedDelete.k===k && armedDelete.id===r.id;
-      return `<tr data-rid="${r.id}"${DS.has(r.id) ? ' class="dup-row"' : ''}>
-        <td class="it-cell" title="${esc(r.name + (r.description ? ' / ' + r.description : ''))}">${DS.has(r.id) ? DUP_BADGE : ''}<strong>${esc(r.name)}</strong></td>
-        <td><span class="st-badge ${r.status}">${r.status==='active'?'Active':'Inactive'}</span></td>
-        <td class="acts"><div class="act-btns">
-          <button class="ib sm" title="Edit" data-act="edit" data-k="${k}" data-t="${x.t}" data-id="${r.id}"><i class="ti ti-pencil"></i></button>
-          ${DS.has(r.id) ? '' : `<button class="ib sm" title="Set ${r.status==='active'?'inactive':'active'}" data-act="ss-toggle" data-k="${k}" data-t="${x.t}" data-id="${r.id}"><i class="ti ti-${r.status==='active'?'toggle-right':'toggle-left'}"></i></button>`}
-          <button class="ib sm danger ${armed?'armed':''}" title="${armed?'Click again to confirm':'Delete'}" data-act="ss-del" data-k="${k}" data-t="${x.t}" data-id="${r.id}"><i class="ti ti-${armed?'check':'trash'}"></i></button>
-        </div></td></tr>`;
-    };
-    /* rows that carry a Description are grouped under it: the Description is the heading of its own table, the items sit under it */
-    const plain = mine.filter(x => !(x.r.description||'').trim()), gm = new Map();
-    mine.filter(x => (x.r.description||'').trim()).forEach(x => {
-      const d = x.r.description.trim(), gk = dupNorm(d);
-      if (!gm.has(gk)) gm.set(gk, { gk, d, rows:[] }); gm.get(gk).rows.push(x);
-    });
-    const groups = [...gm.values()].sort((p,q) => natCmp(p.d, q.d));
-    const grpTable = g => {
-      const ck = m.key + '|' + g.gk, open = filtering || !s.collapsed.has(ck);
+  const rowHTML = x => {
+    const r = x.r, armed = armedDelete && armedDelete.k===k && armedDelete.id===r.id;
+    return `<tr data-rid="${r.id}"${DS.has(r.id) ? ' class="dup-row"' : ''}>
+      <td class="it-cell" title="${esc(r.name + (r.description ? ' / ' + r.description : ''))}">${DS.has(r.id) ? DUP_BADGE : ''}<strong>${esc(r.name)}</strong></td>
+      <td><span class="st-badge ${r.status}">${r.status==='active'?'Active':'Inactive'}</span></td>
+      <td class="acts"><div class="act-btns">
+        <button class="ib sm" title="Edit" data-act="edit" data-k="${k}" data-t="${x.t}" data-id="${r.id}"><i class="ti ti-pencil"></i></button>
+        ${DS.has(r.id) ? '' : `<button class="ib sm" title="Set ${r.status==='active'?'inactive':'active'}" data-act="ss-toggle" data-k="${k}" data-t="${x.t}" data-id="${r.id}"><i class="ti ti-${r.status==='active'?'toggle-right':'toggle-left'}"></i></button>`}
+        <button class="ib sm danger ${armed?'armed':''}" title="${armed?'Click again to confirm':'Delete'}" data-act="ss-del" data-k="${k}" data-t="${x.t}" data-id="${r.id}"><i class="ti ti-${armed?'check':'trash'}"></i></button>
+      </div></td></tr>`;
+  };
+  /* ── 1. every Description written on a row = a table; its Specs (Doctor, Hospital…) are the sections, the Items sit under them ── */
+  s.dvf = s.dvf || {};
+  const dm = new Map();
+  rows.filter(x => (x.r.description||'').trim()).forEach(x => {
+    const d = x.r.description.trim(), gk = dupNorm(d);
+    if (!dm.has(gk)) dm.set(gk, { gk, d, rows:[] }); dm.get(gk).rows.push(x);
+  });
+  const descCards = [...dm.values()].sort((a,b) => natCmp(a.d, b.d)).map(g => {
+    const tl = []; g.rows.forEach(x => { if (!tl.some(t => t.key===x.t)) tl.push({ key:x.t, label:x.tl }); });
+    tl.sort((a,b) => natCmp(a.label, b.label));
+    let cur = s.dvf[g.gk] || ''; if (cur && !tl.some(t => t.key===cur)) cur = '';
+    const secs = tl.filter(t => !cur || t.key===cur).map(t => {
+      const list = g.rows.filter(x => x.t===t.key), ck = 'd|' + g.gk + '|' + t.key, open = filtering || !s.collapsed.has(ck);
       return `<table class="log-table dgrp"><thead><tr>
-        <th class="dgrp-hd" colspan="2" data-act="grp-toggle" data-k="${k}" data-g="${esc(ck)}" title="${open?'Collapse':'Expand'} ${esc(g.d)}"><div class="dgrp-in"><i class="ti ti-chevron-${open?'down':'right'}"></i><span class="dgrp-t">${esc(g.d)}</span><span class="cnt-chip">${g.rows.length}</span></div></th>
-        <th class="acts" style="cursor:default"><button class="ib sm" title="Add item under ${esc(g.d)}" data-act="add" data-k="${k}" data-t="${m.key}" data-d="${esc(g.d)}"><i class="ti ti-plus"></i></button></th></tr></thead>
-        ${open ? `<tbody>${g.rows.map(rowHTML).join('')}</tbody>` : ''}</table>`;
-    };
+        <th class="dgrp-hd" colspan="2" data-act="grp-toggle" data-k="${k}" data-g="${esc(ck)}" title="${open?'Collapse':'Expand'} ${esc(t.label)}"><div class="dgrp-in"><i class="ti ti-chevron-${open?'down':'right'}"></i><span class="dgrp-t">${esc(t.label)}</span><span class="cnt-chip">${list.length}</span></div></th>
+        <th class="acts" style="cursor:default"><button class="ib sm" title="Add ${esc(t.label)} item under ${esc(g.d)}" data-act="add" data-k="${k}" data-t="${t.key}" data-d="${esc(g.d)}"><i class="ti ti-plus"></i></button></th></tr></thead>
+        ${open ? `<tbody>${list.map(rowHTML).join('')}</tbody>` : ''}</table>`;
+    }).join('');
+    const shown = g.rows.filter(x => !cur || x.t===cur).length;
+    return `<div class="spec-card">
+      <div class="grp-hd"><i class="ti ti-category-2" style="color:var(--accent);font-size:16px;"></i><strong title="${esc(g.d)}">${esc(g.d)}</strong>
+        <span class="cnt-chip">${shown}${shown!==g.rows.length ? ' / '+g.rows.length : ''}</span><span class="sp"></span>
+        <select class="date-input dv-sel" data-dvf="${esc(g.gk)}" title="Filter ${esc(g.d)} by Specs"><option value="">All Specs</option>${tl.map(t => `<option value="${esc(t.key)}"${t.key===cur?' selected':''}>${esc(t.label)}</option>`).join('')}</select>
+        <button class="ib sm" title="Add item under ${esc(g.d)}" data-act="add" data-k="${k}" data-t="${cur}" data-d="${esc(g.d)}"><i class="ti ti-plus"></i></button></div>
+      <div class="spec-scroll">${secs}</div></div>`;
+  });
+  /* ── 2. rows with NO Description stay in a table per Specs (empty Specs keep their table so items can be added / the Specs removed) ── */
+  const specCards = types.filter(m => !s.type || m.key===s.type).map(m => {
+    const mine = rows.filter(x => x.t===m.key && !(x.r.description||'').trim());
+    const everything = data[m.key] || [], hasDescRows = everything.some(r => (r.description||'').trim());
+    if (filtering ? !mine.length : (!mine.length && everything.length)) return '';
     const empty = `<tr><td colspan="3" class="cell-muted" style="text-align:center;padding:14px;">No items yet in ${esc(m.label)}</td></tr>`;
-    const plainTable = (plain.length || !groups.length)
-      ? `<table class="log-table"><thead><tr>${th('name','Item')}${th('status','Status')}<th style="cursor:default"></th></tr></thead><tbody>${plain.map(rowHTML).join('') || empty}</tbody></table>` : '';
-    const delT = m.custom && !(data[m.key]||[]).length
+    const delT = m.custom && !everything.length
       ? `<button class="ib sm danger" title="Remove this empty Specs" data-act="ss-deltype" data-k="${k}" data-t="${m.key}"><i class="ti ti-trash"></i></button>` : '';
     return `<div class="spec-card">
-      <div class="grp-hd"><i class="ti ${m.icon}" style="color:var(--accent);font-size:16px;"></i><strong>${esc(m.label)}</strong><span class="cnt-chip">${(data[m.key]||[]).length}</span><span class="sp"></span>
+      <div class="grp-hd"><i class="ti ${m.icon}" style="color:var(--accent);font-size:16px;"></i><strong>${esc(m.label)}</strong><span class="cnt-chip">${everything.filter(r => !(r.description||'').trim()).length}</span><span class="sp"></span>
         <button class="ib sm" title="Add item to ${esc(m.label)}" data-act="add" data-k="${k}" data-t="${m.key}"><i class="ti ti-plus"></i></button>${delT}</div>
-      <div class="spec-scroll">${plainTable}${groups.map(grpTable).join('')}</div></div>`;
-  }).join('');
-  const html = cards ? `<div class="specs-grid">${cards}</div>` : '';
-  body.innerHTML = html || `<div class="doc-center-placeholder"><i class="ti ti-search-off"></i><span>No records match your filter</span></div>`;
+      <div class="spec-scroll"><table class="log-table"><thead><tr>${th('name','Item')}${th('status','Status')}<th style="cursor:default"></th></tr></thead>
+      <tbody>${mine.map(rowHTML).join('') || empty}</tbody></table></div></div>`;
+  });
+  const cards = descCards.concat(specCards).join('');
+  body.innerHTML = cards ? `<div class="specs-grid">${cards}</div>` : `<div class="doc-center-placeholder"><i class="ti ti-search-off"></i><span>No records match your filter</span></div>`;
 }
 
 /* ── Add / Edit Specs Setting — foldable side window (multiple New Specs · multiple Items) ── */
@@ -2349,7 +2329,6 @@ function wireDelegation(){
         } else dcArm(id);
         break;
       }
-      case 'ss-view': s.view = (s.view==='desc' ? 'specs' : 'desc'); render(k); break;
       case 'sm-close':    closeSpecModal(); break;
       case 'sm-save':     saveSpec(false); break;
       case 'sm-save-new': saveSpec(true); break;
