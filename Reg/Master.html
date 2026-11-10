@@ -549,9 +549,10 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 /* ═══ HEADER — text never wraps; when space runs out the text goes and only the controls stay ═══ */
 .doc-center{container:dch / inline-size;}
 .doc-center-header{flex-wrap:nowrap;}
-.doc-center-header h3,.doc-center-header .hist-tip,.doc-center-header .hdr-actions .btn{white-space:nowrap;flex-shrink:0;}
-.doc-center-header .hdr-actions{flex-wrap:nowrap;flex-shrink:1;min-width:0;overflow-x:auto;scrollbar-width:none;}
-.doc-center-header .hdr-actions::-webkit-scrollbar{display:none;}
+.doc-center-header h3,.doc-center-header .hdr-actions .btn{white-space:nowrap;flex-shrink:0;}
+.doc-center-header .hist-tip{white-space:nowrap;flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;display:block;}
+.doc-center-header .hist-tip i{margin-right:5px;vertical-align:-2px;}
+.doc-center-header .hdr-actions{flex-wrap:nowrap;flex-shrink:0;overflow:visible;}   /* never scrolls / clips: icons, count badges and menus stay whole */
 @container dch (max-width:900px){ .doc-center-header .hist-tip{display:none;} }
 @container dch (max-width:560px){
   .doc-center-header h3{display:none;}
@@ -593,6 +594,24 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 @media(min-width:1101px){#dclist-preview-panel.open{width:480px;}}
 .dv-sel{width:auto;max-width:130px;padding:3px 6px;font-size:11.5px;margin:0;}
 .dc-src-hint{font-size:11px;color:var(--text3);margin-top:4px;}
+
+/* DC name drop-down + Print DC panel */
+.dc-cbo{padding:6px 10px;border-radius:var(--radius);font-size:12.5px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--text);}
+.dc-cbo small{color:var(--text3);font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dc-cbo.hl,.dc-cbo:hover{background:var(--accent-dim);color:var(--accent);}
+.dc-cbo.add{color:var(--teal);font-weight:600;justify-content:flex-start;}
+.pr-rows{border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg3);max-height:280px;min-height:56px;overflow-y:auto;padding:4px;display:flex;flex-direction:column;gap:3px;}
+.pr-row{display:flex;align-items:center;gap:6px;padding:3px 4px;border-radius:var(--radius);}
+.pr-row:hover{background:var(--accent-dim);}
+.pr-row.off{opacity:.5;}
+.pr-row.off .pr-txt{text-decoration:line-through;}
+.pr-tg i{color:var(--accent);}
+.pr-txt{flex:1;min-width:0;font-size:12.5px;line-height:1.35;word-break:break-word;}
+.pr-lbl{flex:1;min-width:0;padding:5px 8px;}
+.pr-qty{display:inline-flex;align-items:center;gap:3px;flex-shrink:0;}
+.pr-qty .date-input{width:58px;padding:4px 6px;text-align:center;font-family:var(--mono);}
+.dc-pick.sm{max-height:200px;min-height:110px;}
+.dc-tools select.date-input{flex:0 0 140px;}
 </style>
 </head>
 <body>
@@ -1933,20 +1952,104 @@ function dcArm(id){
   wireDelegation._t = setTimeout(() => { if (armedDelete && armedDelete.id===id){ armedDelete = null; renderDcTable(); } }, 2800);
 }
 
-/* ── print: DC name + date + numbered list of the ACTIVE items ── */
+/* ── print: opens the Print panel — tick / untick, qty (one click = 1, or a range), add / remove items, manual lines, switch to another DC ── */
+let pdraft = null;
+const prRow = id => pdraft && pdraft.rows.find(r => r.id===id);
+const prNew = (label, manual, qty) => ({ id:'r'+(++pdraft.n), label, qty: qty===undefined ? '1' : qty, on:true, manual:!!manual });
+const prRowsFrom = key => { const g = dcGroups((data.dclist||[]).filter(e => dcKey(e.dcName)===key))[0];
+  return g ? g.items.filter(e => e.status==='active').map(e => prNew(e.label, false)) : []; };
 function printDC(key){
   const g = dcGroups((data.dclist||[]).filter(e => dcKey(e.dcName)===key))[0]; if (!g) return;
-  const items = g.items.filter(e => e.status==='active');
-  if (!items.length) return showToast('No active items in this DC to print','error');
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(g.name)}</title><style>
+  dcdraft = null; pdraft = { key:g.key, name:g.name, rows:[], n:0, src:'__il__', q:'' };
+  pdraft.rows = prRowsFrom(g.key);
+  renderPrintPanel(); dcPanelEl().classList.add('open');
+}
+function prSwitch(name){
+  const g = dcGroups((data.dclist||[]).filter(e => dcKey(e.dcName)===dcKey(name)))[0];
+  if (!g || g.key===pdraft.key) return;
+  pdraft.key = g.key; pdraft.name = g.name; pdraft.q = '';
+  pdraft.rows = prRowsFrom(g.key).concat(pdraft.rows.filter(r => r.manual));      // manual lines stay when the DC changes
+  renderPrintPanel();
+}
+/* "5" → 6 · "5-10" → "6-11" · empty + → 1 */
+function stepQty(q, d){
+  q = String(q||'').trim(); if (!q) return d>0 ? '1' : '';
+  if (/^\d+$/.test(q)) return String(Math.max(1, +q + d));
+  const r = q.match(/^(\d+)\s*(?:-|–|to)\s*(\d+)$/i);
+  if (r){ const a = Math.max(1, +r[1]+d), b = Math.max(a, +r[2]+d); return a+'-'+b; }
+  return q;
+}
+function prOptions(){
+  const have = new Set(pdraft.rows.map(r => dupNorm(r.label))), il = pdraft.src==='__il__';
+  let list = [];
+  if (il){ const seen = new Set();
+    (data.itemlist||[]).filter(e => e.status==='active').forEach(e => { const v = entryView(e), kk = dupNorm(v.label); if (!kk || seen.has(kk)) return; seen.add(kk); list.push({ label:v.label, sub:v.mb||'' }); }); }
+  else list = (data.dclist||[]).filter(e => dcKey(e.dcName)===pdraft.src && e.status==='active').map(e => ({ label:e.label, sub:'' }));
+  list = list.filter(o => !have.has(dupNorm(o.label)) && matchAll(pdraft.q, o.sub+' '+o.label));
+  return il ? list.sort((a,b) => natCmp(a.label, b.label)) : list;
+}
+function fillPrPick(){
+  const el = document.getElementById('pr-pick'); if (!el || !pdraft) return;
+  const opts = prOptions();
+  el.innerHTML = opts.length ? opts.map(o => `<div class="dc-opt" data-act="pr-add" data-label="${esc(o.label)}"><i class="ti ti-plus"></i><span>${esc(o.label)}${o.sub ? ` <small style="color:var(--text3);">· ${esc(o.sub)}</small>` : ''}</span></div>`).join('')
+    : `<div class="cb-none" style="padding:10px;">${pdraft.q ? 'No item matches your search' : 'Nothing left to add from here'}</div>`;
+}
+function fillPrRows(){
+  const el = document.getElementById('pr-rows'); if (!el || !pdraft) return;
+  const top = el.scrollTop, rows = pdraft.rows;
+  el.innerHTML = rows.length ? rows.map(r => `<div class="pr-row${r.on?'':' off'}">
+      <button class="ib sm pr-tg" type="button" data-act="pr-tog" data-id="${r.id}" title="${r.on?'Skip this item':'Include this item'}"><i class="ti ${r.on?'ti-square-check-filled':'ti-square'}"></i></button>
+      ${r.manual ? `<input class="date-input pr-lbl" data-prl data-id="${r.id}" type="text" value="${esc(r.label)}" placeholder="Write item…" autocomplete="off"/>`
+                 : `<span class="pr-txt" title="${esc(r.label)}">${esc(r.label)}</span>`}
+      <div class="pr-qty"><button class="ib sm" type="button" data-act="pr-qty" data-id="${r.id}" data-d="-1" title="Less"><i class="ti ti-minus"></i></button>
+        <input class="date-input" data-prq data-id="${r.id}" type="text" value="${esc(r.qty)}" placeholder="Qty" autocomplete="off" title="Click for 1 · type a number or a range, e.g. 5-10"/>
+        <button class="ib sm" type="button" data-act="pr-qty" data-id="${r.id}" data-d="1" title="More"><i class="ti ti-plus"></i></button></div>
+      <button class="ib sm danger" type="button" data-act="pr-del" data-id="${r.id}" title="${r.manual?'Remove manual item':'Remove from this print'}"><i class="ti ti-trash"></i></button></div>`).join('')
+    : `<div class="cb-none" style="padding:10px;">No items — add them from the list below or write one manually</div>`;
+  el.scrollTop = top;
+  const n = rows.filter(r => r.on && r.label.trim()).length, c = document.getElementById('pr-count'); if (c) c.textContent = n + ' to print';
+  const cm = document.getElementById('pr-clrman'); if (cm) cm.style.display = rows.some(r => r.manual) ? '' : 'none';
+  fillPrPick();
+}
+function renderPrintPanel(){
+  const d = pdraft;
+  const srcs = dcGroups(data.dclist||[]);
+  dcPanelEl().innerHTML = `
+    <div class="pph"><h3><i class="ti ti-printer"></i><span>Print DC</span></h3>
+      <button class="pph-close" data-act="pr-close" title="Close"><i class="ti ti-x"></i></button></div>
+    <div class="ppb"><div class="form-stack">
+      <div class="field"><div class="fgrp-lbl"><i class="ti ti-clipboard-list"></i>DC</div>
+        <div class="cb"><input class="date-input" data-prn type="text" value="${esc(d.name)}" placeholder="Search or choose another DC…" autocomplete="off" role="combobox" aria-autocomplete="list"/><div class="cb-pop"></div></div></div>
+      <div class="field"><div class="fgrp-lbl"><i class="ti ti-list-check"></i>Items to print<span class="dc-cnt" id="pr-count"></span></div>
+        <div class="pr-rows" id="pr-rows"></div>
+        <div class="dc-tools" style="margin:6px 0 0;">
+          <button class="btn btn-ghost btn-sm" type="button" data-act="pr-addman" title="Write an item by hand"><i class="ti ti-pencil-plus"></i> Add manual</button>
+          <button class="btn btn-ghost btn-sm" type="button" id="pr-clrman" data-act="pr-clrman" title="Remove every manually written item"><i class="ti ti-eraser"></i> Remove manual</button></div></div>
+      <div class="field"><div class="fgrp-lbl"><i class="ti ti-playlist-add"></i>Add items from</div>
+        <div class="dc-tools"><select class="date-input" data-prsrc><option value="__il__">Item List</option>${srcs.map(g => `<option value="${esc(g.key)}"${d.src===g.key?' selected':''}>DC · ${esc(g.name)}</option>`).join('')}</select>
+          <input class="date-input" data-prs type="text" placeholder="Search items…" value="${esc(d.q)}" autocomplete="off"/>
+          <button class="btn btn-ghost btn-sm" type="button" data-act="pr-addall" title="Add every item shown">All shown</button></div>
+        <div class="dc-pick sm" id="pr-pick"></div></div>
+    </div></div>
+    <div class="ppf form-actions">
+      <button class="btn btn-ghost" type="button" data-act="pr-close">Close</button>
+      <button class="btn btn-primary" type="button" data-act="pr-go"><i class="ti ti-printer"></i> Print</button>
+    </div>`;
+  fillPrRows();
+}
+function doPrint(){
+  const d = pdraft; if (!d) return;
+  const rows = d.rows.filter(r => r.on && r.label.trim());
+  if (!rows.length) return showToast('Nothing to print — tick or add at least one item','error');
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(d.name)}</title><style>
     *{box-sizing:border-box;} body{font-family:Arial,Helvetica,sans-serif;color:#000;margin:0;padding:18mm 14mm;font-size:13px;}
     h1{font-size:20px;margin:0 0 4px;letter-spacing:.04em;text-transform:uppercase;text-align:center;}
     .meta{display:flex;justify-content:space-between;align-items:baseline;border-top:2px solid #000;border-bottom:1px solid #000;padding:8px 2px;margin:10px 0 14px;}
     .meta b{font-size:16px;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #444;padding:7px 9px;text-align:left;vertical-align:top;}
-    th{background:#eee;font-size:12px;text-transform:uppercase;letter-spacing:.04em;} td.n,th.n{width:44px;text-align:center;} tr{page-break-inside:avoid;}
+    th{background:#eee;font-size:12px;text-transform:uppercase;letter-spacing:.04em;} td.n,th.n{width:44px;text-align:center;} td.q,th.q{width:90px;text-align:center;} tr{page-break-inside:avoid;}
   </style></head><body><h1>Delivery Challan</h1>
-  <div class="meta"><b>${esc(g.name)}</b><span>${esc(fmtDate(Date.now()))}</span></div>
-  <table><thead><tr><th class="n">#</th><th>Item</th></tr></thead><tbody>${items.map((e,i) => `<tr><td class="n">${i+1}</td><td>${esc(e.label)}</td></tr>`).join('')}</tbody></table></body></html>`;
+  <div class="meta"><b>${esc(d.name)}</b><span>${esc(fmtDate(Date.now()))}</span></div>
+  <table><thead><tr><th class="n">#</th><th>Item</th><th class="q">Qty</th></tr></thead><tbody>${rows.map((r,i) => `<tr><td class="n">${i+1}</td><td>${esc(r.label.trim())}</td><td class="q">${esc(String(r.qty||'').trim())}</td></tr>`).join('')}</tbody></table></body></html>`;
   const f = document.createElement('iframe');
   f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
   document.body.appendChild(f);
@@ -1962,13 +2065,13 @@ function openDcForm(key){
   const rows = key ? (data.dclist||[]).filter(e => dcKey(e.dcName)===key) : [];
   if (key && !rows.length) return;
   const g = key ? dcGroups(rows)[0] : null;
-  dcdraft = { orig: g ? g.name : null, name: g ? g.name : '', q:'', sel:new Map(), existing:new Map() };
+  pdraft = null; dcdraft = { orig: g ? g.name : null, name: g ? g.name : '', q:'', sel:new Map(), existing:new Map() };
   if (g) g.items.forEach(e => { const kk = dupNorm(e.label); dcdraft.sel.set(kk, e.label); dcdraft.existing.set(kk, e); });
   renderDcPanel();
   dcPanelEl().classList.add('open');
   setTimeout(() => { const f = dcPanelEl().querySelector(g ? '[data-dcq]' : '[data-dcn]'); if (f) f.focus(); }, 260);
 }
-function closeDcPanel(){ dcPanelEl().classList.remove('open'); dcdraft = null; }
+function closeDcPanel(){ dcPanelEl().classList.remove('open'); dcdraft = null; pdraft = null; }
 /* options = active Item List entries (unique text) + anything already in this DC */
 function dcOptions(){
   const src = new Map();
@@ -2016,17 +2119,37 @@ function renderDcPanel(){
     </div>`;
   fillDcPick();
 }
+/* DC name = searchable drop-down fed from the cached Delivery Challan list (Specs Settings items with Description "DC") */
 function dcNameField(d, edit){
-  const src = dcSources(), kk = dcKey(d.name), inSrc = src.some(o => dcKey(o.name)===kk);
-  const showInput = !src.length || d.other || (d.name && !inSrc);
-  const count = n => (data.dclist||[]).filter(e => dcKey(e.dcName)===dcKey(n)).length;
-  const input = `<input class="date-input" data-dcn type="text" placeholder="Type a DC name" value="${esc(d.name)}" autocomplete="off"${showInput ? '' : ' style="display:none;margin-top:6px;"'}/>`;
-  if (!src.length) return input + `<div class="dc-src-hint">Tip: write Description “DC” on items in Specs Settings and they appear here as a list to choose from.</div>`;
-  const cur = inSrc ? src.find(o => dcKey(o.name)===kk).name : (showInput ? '__other__' : '');
-  return `<select class="date-input" data-dcsel><option value="">Choose DC…</option>${src.map(o => { const n = count(o.name);
-      return `<option value="${esc(o.name)}"${o.name===cur?' selected':''}>${esc(o.name)} · ${esc(o.tl)}${n ? ' · '+n+' item'+(n>1?'s':'') : ''}</option>`; }).join('')}
-    <option value="__other__"${cur==='__other__'?' selected':''}>Other — type a name…</option></select>`
-    + input.replace('style="display:none;margin-top:6px;"', '').replace('<input ', `<input style="margin-top:6px;${showInput?'':'display:none;'}" `);
+  const src = dcSources(), kk = dcKey(d.name);
+  return `<div class="cb"><input class="date-input" data-dcn type="text" placeholder="Search or choose DC name…" value="${esc(d.name)}" autocomplete="off" role="combobox" aria-autocomplete="list"/>
+    <div class="cb-pop"></div>
+    <div class="cb-hint${src.length && d.name && !src.some(o => dcKey(o.name)===kk) ? ' show' : ''}"><i class="ti ti-circle-plus"></i> Not in the Delivery Challan list — used as typed</div></div>`
+    + (src.length ? '' : `<div class="dc-src-hint">Tip: write Description “DC” on items in Specs Settings and they appear here as a list to choose from.</div>`);
+}
+function dcCbList(inp){
+  const q = inp.value.trim(), ql = q.toLowerCase(), isPr = inp.dataset.prn !== undefined;
+  const cnt = n => (data.dclist||[]).filter(e => dcKey(e.dcName)===dcKey(n)).length, items = n => n ? n+' item'+(n>1?'s':'') : '';
+  const base = isPr ? dcGroups(data.dclist||[]).map(g => ({ v:g.name, sub:items(g.items.length) }))
+                    : dcSources().map(o => ({ v:o.name, sub:[o.tl, items(cnt(o.name))].filter(Boolean).join(' · ') }));
+  return { q, list:base.filter(o => !ql || o.v.toLowerCase().includes(ql)), canAdd: !isPr && q && !base.some(o => o.v.trim().toLowerCase()===ql) };
+}
+function dcCbOpen(inp){
+  cbClose();
+  const box = inp.parentElement, pop = box.querySelector('.cb-pop'), r = dcCbList(inp);
+  pop.innerHTML = r.list.map(o => `<div class="dc-cbo" data-v="${esc(o.v)}"><span>${esc(o.v)}</span><small>${esc(o.sub)}</small></div>`).join('')
+    + (r.canAdd ? `<div class="dc-cbo add" data-v="${esc(r.q)}"><i class="ti ti-plus"></i>Use “${esc(r.q)}”</div>` : '')
+    + (!r.list.length && !r.canAdd ? '<div class="cb-none">No DC found</div>' : '');
+  box.classList.add('open');
+}
+function dcNameHint(inp){
+  const h = inp.parentElement.querySelector('.cb-hint'), v = inp.value.trim(), src = dcSources();
+  if (h) h.classList.toggle('show', !!v && src.length>0 && !src.some(o => dcKey(o.name)===dcKey(v)));
+}
+function dcCbPick(inp, v){
+  inp.value = v; cbClose();
+  if (inp.dataset.prn !== undefined) prSwitch(v);
+  else if (dcdraft){ dcdraft.name = v; inp.classList.remove('bad'); dcNameHint(inp); }
 }
 function dcTogglePick(el){
   const d = dcdraft; if (!d) return;
@@ -2049,7 +2172,7 @@ function saveDC(){
   const clash = editing && nk!==origKey && all.some(e => dcKey(e.dcName)===nk);
   const p = dcPanelEl(), pick = p.querySelector('#dc-pick');
   const badName = !N || clash, badItems = !d.sel.size;
-  p.querySelectorAll('[data-dcn],[data-dcsel]').forEach(el => el.classList.toggle('bad', badName)); pick.classList.toggle('bad', badItems);
+  p.querySelectorAll('[data-dcn]').forEach(el => el.classList.toggle('bad', badName)); pick.classList.toggle('bad', badItems);
   if (badName || badItems) return showToast(clash ? 'A DC with this name already exists' : !N ? 'Enter the DC name' : 'Tick at least one item', 'error');
   const mine = all.filter(e => dcKey(e.dcName)===origKey);
   const have = new Set(mine.map(e => dupNorm(e.label)));
@@ -2071,21 +2194,45 @@ function wireDcEvents(){
   document.addEventListener('change', e => {
     const t = e.target, ds = t.dataset; if (!ds) return;
     if (ds.dvf !== undefined){ (ui.specsetting.dvf = ui.specsetting.dvf || {})[ds.dvf] = t.value; renderSpecTable(); return; }
-    if (ds.dcsel !== undefined && dcdraft){
-      const inp = dcPanelEl().querySelector('[data-dcn]');
-      t.classList.remove('bad');
-      if (t.value==='__other__'){ dcdraft.other = true; dcdraft.name = ''; inp.value = ''; inp.style.display = ''; inp.focus(); }
-      else { dcdraft.other = false; dcdraft.name = t.value; inp.value = t.value; inp.style.display = 'none'; inp.classList.remove('bad'); }
-    }
+    if (ds.prsrc !== undefined && pdraft){ pdraft.src = t.value; pdraft.q = ''; const q = dcPanelEl().querySelector('[data-prs]'); if (q) q.value = ''; fillPrPick(); }
   });
   document.addEventListener('input', e => {
-    const ds = e.target.dataset; if (!dcdraft || !ds) return;
-    if (ds.dcn !== undefined){ dcdraft.name = e.target.value; e.target.classList.remove('bad'); }
-    else if (ds.dcq !== undefined){ dcdraft.q = e.target.value; fillDcPick(); }
+    const t = e.target, ds = t.dataset; if (!ds || (!dcdraft && !pdraft)) return;
+    if (dcdraft){
+      if (ds.dcn !== undefined){ dcdraft.name = t.value; t.classList.remove('bad'); dcNameHint(t); dcCbOpen(t); }
+      else if (ds.dcq !== undefined){ dcdraft.q = t.value; fillDcPick(); }
+    }
+    if (pdraft){
+      const r = ds.id ? prRow(ds.id) : null;
+      if (ds.prn !== undefined) dcCbOpen(t);
+      else if (ds.prq !== undefined && r) r.qty = t.value;
+      else if (ds.prl !== undefined && r){ r.label = t.value; const c = document.getElementById('pr-count'); if (c) c.textContent = pdraft.rows.filter(x => x.on && x.label.trim()).length + ' to print'; }
+      else if (ds.prs !== undefined){ pdraft.q = t.value; fillPrPick(); }
+    }
+  });
+  document.addEventListener('focusin', e => {
+    const t = e.target, ds = t.dataset; if (!ds) return;
+    if ((dcdraft && ds.dcn !== undefined) || (pdraft && ds.prn !== undefined)) dcCbOpen(t);
+    else if (pdraft && ds.prq !== undefined && !t.value.trim()){ const r = prRow(ds.id); if (r){ r.qty = '1'; t.value = '1'; t.select(); } }   // one click on an empty Qty = 1
+  });
+  document.addEventListener('focusout', e => { const ds = e.target.dataset; if (pdraft && ds && ds.prn !== undefined) e.target.value = pdraft.name; });
+  document.addEventListener('mousedown', e => {
+    if (!dcdraft && !pdraft) return;
+    const o = e.target.closest && e.target.closest('.dc-cbo'); if (!o) return;
+    e.preventDefault(); dcCbPick(o.closest('.cb').querySelector('input'), o.dataset.v);
   });
   document.addEventListener('keydown', e => {
-    if (!dcdraft) return;
-    if (e.key==='Enter' && e.target.dataset && e.target.dataset.dcq !== undefined){ e.preventDefault(); e.stopPropagation(); }   // Enter in the search box must not save
+    if (!dcdraft && !pdraft) return;
+    const t = e.target, ds = t.dataset || {};
+    if (ds.dcn !== undefined || ds.prn !== undefined){
+      const box = t.parentElement, opts = [...box.querySelectorAll('.dc-cbo')], cur = opts.findIndex(o => o.classList.contains('hl'));
+      const hl = i => { opts.forEach(o => o.classList.remove('hl')); if (opts[i]){ opts[i].classList.add('hl'); opts[i].scrollIntoView && opts[i].scrollIntoView({block:'nearest'}); } };
+      if (e.key==='ArrowDown'){ e.preventDefault(); if (!box.classList.contains('open')) dcCbOpen(t); else hl(Math.min(opts.length-1, cur+1)); return; }
+      if (e.key==='ArrowUp'){ e.preventDefault(); hl(Math.max(0, cur-1)); return; }
+      if (e.key==='Enter'){ e.preventDefault(); e.stopPropagation(); if (cur>=0) dcCbPick(t, opts[cur].dataset.v); else cbClose(); return; }
+      if (e.key==='Escape' && box.classList.contains('open')){ e.stopPropagation(); cbClose(); return; }
+    }
+    if (e.key==='Enter' && (ds.dcq !== undefined || ds.prq !== undefined || ds.prl !== undefined || ds.prs !== undefined)){ e.preventDefault(); e.stopPropagation(); }   // Enter in these fields must not save / print
     else if (e.key==='Escape') closeDcPanel();
   }, true);
 }
@@ -2311,6 +2458,17 @@ function wireDelegation(){
       case 'dc-selall':  dcSelect(true); break;
       case 'dc-selnone': dcSelect(false); break;
       case 'dc-print':   printDC(el.dataset.dc); break;
+      case 'pr-close':   closeDcPanel(); break;
+      case 'pr-go':      doPrint(); break;
+      case 'pr-tog':     { const r = prRow(id); if (r){ r.on = !r.on; if (r.on && !String(r.qty).trim()) r.qty = '1'; fillPrRows(); } break; }
+      case 'pr-qty':     { const r = prRow(id); if (r){ r.qty = stepQty(r.qty, +el.dataset.d); fillPrRows(); } break; }
+      case 'pr-del':     if (prRow(id)){ pdraft.rows = pdraft.rows.filter(r => r.id!==id); fillPrRows(); } break;
+      case 'pr-add':     if (pdraft){ pdraft.rows.push(prNew(el.dataset.label, false)); fillPrRows(); } break;
+      case 'pr-addall':  if (pdraft){ prOptions().forEach(o => pdraft.rows.push(prNew(o.label, false))); fillPrRows(); } break;
+      case 'pr-addman':  if (pdraft){ const r = prNew('', true); pdraft.rows.push(r); fillPrRows();
+                           const box = document.getElementById('pr-rows'); box.scrollTop = box.scrollHeight;
+                           const f = box.querySelector('[data-prl][data-id="'+r.id+'"]'); if (f) f.focus(); } break;
+      case 'pr-clrman':  if (pdraft){ pdraft.rows = pdraft.rows.filter(r => !r.manual); fillPrRows(); } break;
       case 'dcfilter':   s.dc = (s.dc===v ? '' : v); render(k); break;
       case 'grp-toggle': { const g = el.dataset.g; if (s.collapsed.has(g)) s.collapsed.delete(g); else s.collapsed.add(g); renderTable(k); break; }
       case 'dc-toggle': { const r = (data.dclist||[]).find(x => x.id===id); if (r) toggleStatus(r, 'dclist', 'DC item'); break; }
