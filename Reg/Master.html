@@ -1970,7 +1970,7 @@ const prShown = () => pdraft.rows.filter(r => r.manual || matchAll(pdraft.q, r.l
 const prCount = () => { const c = document.getElementById('pr-count'); if (c && pdraft) c.textContent = pdraft.rows.filter(r => r.on && r.label.trim()).length + ' to print'; };
 function printDC(key){
   const g = dcGroups((data.dclist||[]).filter(e => dcKey(e.dcName)===key))[0]; if (!g) return;
-  dcdraft = null; pdraft = { name:'', rows:[], n:0, src:'', q:'' };
+  dcdraft = null; pdraft = { name:'', rows:[], n:0, src:'', q:'', pq:'', psel:new Map() };
   renderPrintPanel(); prLoad(g.key); dcPanelEl().classList.add('open');
 }
 /* choosing a DC adds its items to the pane (unticked); lists chosen earlier keep only what was ticked */
@@ -2012,11 +2012,49 @@ function fillPrRows(){
   el.innerHTML = parts.join('') || `<div class="cb-none" style="padding:10px;">${pdraft.q ? 'No item matches your search' : 'Choose a DC above or add manual'}</div>`;
   el.scrollTop = top; prCount();
 }
+/* search icon = pick items from the whole Item List (many at once) and add them to this print */
+function prOptions(){
+  const src = new Map();
+  (data.itemlist||[]).filter(e => e.status==='active').forEach(e => {
+    const v = entryView(e), kk = dupNorm(v.label); if (!kk || src.has(kk)) return;
+    src.set(kk, { key:kk, label:v.label, mb:v.mb || '' });
+  });
+  return [...src.values()].filter(o => matchAll(pdraft.pq, o.mb + ' ' + o.label));
+}
+function prPickCount(){ const b = document.getElementById('pr-pickadd'); if (b && pdraft) b.querySelector('b').textContent = pdraft.psel.size; }
+function fillPrPick(){
+  const el = document.getElementById('pr-pick'); if (!el || !pdraft) return;
+  const top = el.scrollTop, have = new Set(pdraft.rows.filter(r => r.label.trim()).map(r => dupNorm(r.label))), gm = new Map();
+  prOptions().forEach(o => { const g = o.mb || 'No Medical Domain'; if (!gm.has(g)) gm.set(g, []); gm.get(g).push(o); });
+  el.innerHTML = [...gm.keys()].sort(natCmp).map(g => `<div class="dc-pg"><i class="ti ti-bone"></i>${esc(g)}</div>` + gm.get(g).sort((a,b) => natCmp(a.label,b.label)).map(o => {
+    const added = have.has(o.key), on = added || pdraft.psel.has(o.key);
+    return `<div class="dc-opt${on?' on':''}"${added?' style="opacity:.55;cursor:default;" title="Already in this print"':''} data-act="${added?'':'pr-pick'}" data-key="${esc(o.key)}" data-label="${esc(o.label)}"><i class="ti ${on?'ti-square-check-filled':'ti-square'}"></i><span>${esc(o.label)}</span></div>`;
+  }).join('')).join('') || `<div class="cb-none" style="padding:10px;">${pdraft.pq ? 'No item matches your search' : 'No Item List entries yet'}</div>`;
+  el.scrollTop = top; prPickCount();
+}
+function prPickToggle(el){
+  const k = el.dataset.key, on = !el.classList.contains('on');
+  el.classList.toggle('on', on); el.querySelector('i').className = 'ti ' + (on ? 'ti-square-check-filled' : 'ti-square');
+  if (on) pdraft.psel.set(k, el.dataset.label); else pdraft.psel.delete(k);
+  prPickCount();
+}
+function prPickAll(){
+  const have = new Set(pdraft.rows.filter(r => r.label.trim()).map(r => dupNorm(r.label)));
+  prOptions().forEach(o => { if (!have.has(o.key)) pdraft.psel.set(o.key, o.label); }); fillPrPick();
+}
+function prPickAdd(){
+  if (!pdraft || !pdraft.psel.size) return showToast('Tick at least one item to add','error');
+  const have = new Set(pdraft.rows.filter(r => r.label.trim()).map(r => dupNorm(r.label))); let n = 0;
+  pdraft.psel.forEach((label,k) => { if (have.has(k)) return; const r = prNew(label, false, 'Added from Item List'); r.on = true; r.qty = '1'; pdraft.rows.push(r); n++; });
+  prSrch(); showToast(n + ' item' + (n===1?'':'s') + ' added','success');
+}
 function prSrch(){
-  const b = document.getElementById('pr-sbar'); if (!b || !pdraft) return;
-  const show = b.style.display==='none', i = b.querySelector('input');
-  b.style.display = show ? '' : 'none'; document.querySelector('[data-act="pr-srch"]').classList.toggle('on', show);
-  if (show) i.focus(); else if (pdraft.q){ pdraft.q = ''; i.value = ''; fillPrRows(); }
+  const b = document.getElementById('pr-sbar'), w = document.getElementById('pr-pickwrap'), rows = document.getElementById('pr-rows'); if (!b || !w || !pdraft) return;
+  const show = w.style.display==='none', i = b.querySelector('input');
+  b.style.display = w.style.display = show ? '' : 'none'; rows.style.display = show ? 'none' : '';
+  document.querySelector('[data-act="pr-srch"]').classList.toggle('on', show);
+  pdraft.pq = ''; pdraft.psel = new Map(); i.value = '';
+  if (show){ fillPrPick(); i.focus(); } else fillPrRows();
 }
 function renderPrintPanel(){
   const d = pdraft, srcs = dcGroups(data.dclist||[]);
@@ -2027,11 +2065,18 @@ function renderPrintPanel(){
       <input class="date-input" data-prn type="text" placeholder="DC name to print" value="${esc(d.name)}" autocomplete="off"/>
       <div class="dc-one">
         <select class="date-input dc-nm" data-prsrc><option value="">Choose DC…</option>${srcs.map(g => `<option value="${esc(g.key)}">${esc(g.name)} · ${g.items.length}</option>`).join('')}</select>
-        <button class="ib" type="button" data-act="pr-srch" title="Search items"><i class="ti ti-search"></i></button>
+        <button class="ib" type="button" data-act="pr-srch" title="Search &amp; add items from the Item List"><i class="ti ti-search"></i></button>
         <button class="btn btn-ghost btn-sm" type="button" data-act="pr-selall" title="Tick every item shown"><i class="ti ti-checks"></i><span class="lbl">All shown</span></button>
         <button class="btn btn-ghost btn-sm" type="button" data-act="pr-addman" title="Write an item by hand"><i class="ti ti-pencil-plus"></i><span class="lbl">Add manual</span></button>
       </div>
       <div class="dc-sbar" id="pr-sbar" style="display:none;"><i class="ti ti-search"></i><input data-prs type="text" placeholder="Search items…" value="${esc(d.q)}" autocomplete="off"/></div>
+      <div id="pr-pickwrap" style="display:none;">
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+          <button class="btn btn-primary btn-sm" type="button" id="pr-pickadd" data-act="pr-pickadd"><i class="ti ti-plus"></i> Add selected (<b>0</b>)</button>
+          <button class="btn btn-ghost btn-sm" type="button" data-act="pr-srch"><i class="ti ti-arrow-back-up"></i> Back</button>
+        </div>
+        <div class="dc-pick" id="pr-pick" style="max-height:calc(100vh - 300px);min-height:240px;"></div>
+      </div>
       <div class="pr-rows" id="pr-rows" style="max-height:calc(100vh - 250px);min-height:260px;"></div>
     </div></div>
     <div class="ppf form-actions">
@@ -2067,11 +2112,32 @@ function openDcForm(key){
   const rows = key ? (data.dclist||[]).filter(e => dcKey(e.dcName)===key) : [];
   if (key && !rows.length) return;
   const g = key ? dcGroups(rows)[0] : null;
-  pdraft = null; dcdraft = { orig: g ? g.name : null, name: g ? g.name : '', q:'', sel:new Map(), existing:new Map(), man:[], mn:0 };
+  pdraft = null; dcdraft = { orig: g ? g.name : null, name: g ? g.name : '', q:'', sel:new Map(), existing:new Map(), man:[], mn:0, target:'' };
   if (g) g.items.forEach(e => { const kk = dupNorm(e.label); dcdraft.sel.set(kk, e.label); dcdraft.existing.set(kk, e); });
   renderDcPanel();
   dcPanelEl().classList.add('open');
   if (!g) setTimeout(() => { const f = dcPanelEl().querySelector('[data-dcn]'); if (f) f.focus(); }, 260);
+}
+/* Add DC: a name that already exists → its items load as ticked, the rest unticked, and Save becomes Update */
+function dcSyncTarget(){
+  const d = dcdraft; if (!d || d.orig !== null) return;
+  const nk = dcKey((d.name||'').trim()), g = nk ? dcGroups((data.dclist||[]).filter(e => dcKey(e.dcName)===nk))[0] : null, nt = g ? g.key : '';
+  if (nt !== d.target){
+    if (d.target) d.sel = new Map();                         // leaving a loaded DC → drop its ticks
+    d.existing = new Map(); d.target = nt;
+    if (g) g.items.forEach(e => { const kk = dupNorm(e.label); d.sel.set(kk, e.label); d.existing.set(kk, e); });
+    fillDcPick();
+  }
+  dcModeUI();
+}
+function dcModeUI(){
+  const d = dcdraft, p = dcPanelEl(); if (!d || !p) return;
+  const upd = d.orig !== null || !!d.target;
+  const t = p.querySelector('.pph h3 > span'); if (t) t.textContent = upd ? 'Edit DC' : 'Add DC';
+  const b = p.querySelector('[data-act="dc-save"]'); if (b) b.innerHTML = '<i class="ti ti-device-floppy"></i> ' + (upd ? 'Update' : 'Save');
+  const h = document.getElementById('dc-hint');
+  if (h && d.orig === null && d.target){ h.innerHTML = '<i class="ti ti-info-circle"></i> DC already exists — its items are ticked; tick / untick to update'; h.classList.add('show'); }
+  else if (h) h.innerHTML = '<i class="ti ti-circle-plus"></i> Not in the Delivery Challan list — used as typed';
 }
 function closeDcPanel(){ dcPanelEl().classList.remove('open'); dcdraft = null; pdraft = null; }
 /* options = active Item List entries (unique text) + anything already in this DC */
@@ -2158,11 +2224,11 @@ function dcCbOpen(inp){
 }
 function dcNameHint(inp){
   const h = document.getElementById('dc-hint'), v = inp.value.trim();
-  if (h) h.classList.toggle('show', !!v && !dcNames().some(o => dcKey(o.v)===dcKey(v)));
+  if (h) h.classList.toggle('show', !!v && (!dcNames().some(o => dcKey(o.v)===dcKey(v)) || !!(dcdraft && dcdraft.target)));
 }
 function dcCbPick(inp, v){
   inp.value = v; cbClose();
-  if (dcdraft){ dcdraft.name = v; inp.classList.remove('bad'); dcNameHint(inp); }
+  if (dcdraft){ dcdraft.name = v; inp.classList.remove('bad'); dcSyncTarget(); dcNameHint(inp); }
 }
 function dcTogglePick(el){
   const d = dcdraft; if (!d) return;
@@ -2180,9 +2246,9 @@ function dcSelect(on){
 }
 function saveDC(){
   const d = dcdraft; if (!d) return;
-  const N = (d.name||'').trim().replace(/\s+/g,' '), nk = dcKey(N), all = data.dclist||[], editing = d.orig !== null;
-  const origKey = editing ? dcKey(d.orig) : nk;
-  const clash = editing && nk!==origKey && all.some(e => dcKey(e.dcName)===nk);
+  const N = (d.name||'').trim().replace(/\s+/g,' '), nk = dcKey(N), all = data.dclist||[], renaming = d.orig !== null, editing = renaming || !!d.target;
+  const origKey = renaming ? dcKey(d.orig) : nk;
+  const clash = renaming && nk!==origKey && all.some(e => dcKey(e.dcName)===nk);
   const p = dcPanelEl(), pick = p.querySelector('#dc-pick');
   const sel = dcSelAll(d), badName = !N || clash, badItems = !sel.size;
   p.querySelectorAll('[data-dcn]').forEach(el => el.classList.toggle('bad', badName)); pick.classList.toggle('bad', badItems);
@@ -2191,11 +2257,11 @@ function saveDC(){
   const have = new Set(mine.map(e => dupNorm(e.label)));
   const toAdd = [...sel.keys()].filter(kk => !have.has(kk));
   const toRemove = editing ? mine.filter(e => !sel.has(dupNorm(e.label))) : [];
-  const rename = editing && mine.some(e => e.dcName !== N);
+  const rename = renaming && mine.some(e => e.dcName !== N);
   if (!toAdd.length && !toRemove.length && !rename){ closeDcPanel(); return showToast(editing ? 'No changes' : 'Those items are already in this DC','info'); }
   if (toAdd.length && !AccessGuard.require(PERM_DATASET, 'add', PERM_LABEL)) return;
   if ((toRemove.length || rename) && !AccessGuard.require(PERM_DATASET, 'editDelete', PERM_LABEL)) return;
-  const name = (!editing && mine[0]) ? mine[0].dcName : N, now = Date.now();
+  const name = (!renaming && mine[0]) ? mine[0].dcName : N, now = Date.now();
   if (toRemove.length){ const ids = new Set(toRemove.map(e => e.id)); data.dclist = data.dclist.filter(e => !ids.has(e.id)); }
   if (rename) mine.forEach(e => { e.dcName = N; });
   toAdd.forEach((kk,i) => data.dclist.push({ id:'dc'+now+'_'+i+Math.floor(Math.random()*1000), dcName:name, label:sel.get(kk), status:'active', created:now+i }));
@@ -2212,7 +2278,7 @@ function wireDcEvents(){
   document.addEventListener('input', e => {
     const t = e.target, ds = t.dataset; if (!ds || (!dcdraft && !pdraft)) return;
     if (dcdraft){
-      if (ds.dcn !== undefined){ dcdraft.name = t.value; t.classList.remove('bad'); dcNameHint(t); dcCbOpen(t); }
+      if (ds.dcn !== undefined){ dcdraft.name = t.value; t.classList.remove('bad'); dcSyncTarget(); dcNameHint(t); dcCbOpen(t); }
       else if (ds.dcq !== undefined){ dcdraft.q = t.value; fillDcPick(); }
       else if (ds.dcm !== undefined){ const x = dcdraft.man.find(m => m.id===ds.id); if (x){ x.text = t.value; updateDcCount(); } }
     }
@@ -2221,7 +2287,7 @@ function wireDcEvents(){
       if (ds.prn !== undefined) pdraft.name = t.value;
       else if (ds.prq !== undefined && r){ r.qty = t.value; if (t.value.trim() && !r.on){ r.on = true; prSyncRow(t, r); } }
       else if (ds.prl !== undefined && r){ r.label = t.value; prCount(); }
-      else if (ds.prs !== undefined){ pdraft.q = t.value; fillPrRows(); }
+      else if (ds.prs !== undefined){ pdraft.pq = t.value; fillPrPick(); }
     }
   });
   document.addEventListener('focusin', e => {
@@ -2476,7 +2542,7 @@ function wireDelegation(){
       case 'dc-selnone': dcSelect(false); break;
       case 'dc-print':   printDC(el.dataset.dc); break;
       case 'dc-srch':    dcSrch(); break;
-      case 'dc-addman':  if (dcdraft){ cbClose(); const x = { id:'m'+(++dcdraft.mn), text:'' }; dcdraft.man.push(x); fillDcPick();
+      case 'dc-addman':  if (dcdraft){ cbClose(); let x = dcdraft.man.find(m => !m.text.trim()); if (!x){ x = { id:'m'+(++dcdraft.mn), text:'' }; dcdraft.man.push(x); } fillDcPick();
                            const box = document.getElementById('dc-pick'); box.scrollTop = box.scrollHeight;
                            const f = box.querySelector('[data-dcm][data-id="'+x.id+'"]'); if (f) f.focus(); } break;
       case 'dc-delman':  if (dcdraft){ dcdraft.man = dcdraft.man.filter(x => x.id!==id); fillDcPick(); } break;
@@ -2486,8 +2552,10 @@ function wireDelegation(){
       case 'pr-tog':     { const r = prRow(id); if (r){ r.on = !r.on; if (r.on && !String(r.qty).trim()) r.qty = '1'; fillPrRows(); } break; }
       case 'pr-qty':     { const r = prRow(id); if (r){ r.qty = stepQty(r.qty, +el.dataset.d); if (String(r.qty).trim()) r.on = true; fillPrRows(); } break; }
       case 'pr-del':     if (prRow(id)){ pdraft.rows = pdraft.rows.filter(r => r.id!==id); fillPrRows(); } break;
-      case 'pr-selall':  if (pdraft){ prShown().forEach(r => { r.on = true; if (!String(r.qty).trim()) r.qty = '1'; }); fillPrRows(); } break;
-      case 'pr-addman':  if (pdraft){ const r = prNew('', true, 'Manual'); pdraft.rows.push(r); fillPrRows();
+      case 'pr-pick':    if (pdraft) prPickToggle(el); break;
+      case 'pr-pickadd': prPickAdd(); break;
+      case 'pr-selall':  if (pdraft && document.getElementById('pr-pickwrap').style.display!=='none'){ prPickAll(); break; } if (pdraft){ prShown().forEach(r => { r.on = true; if (!String(r.qty).trim()) r.qty = '1'; }); fillPrRows(); } break;
+      case 'pr-addman':  if (pdraft){ let r = pdraft.rows.find(x => x.manual && !x.label.trim()); if (!r){ r = prNew('', true, 'Manual'); pdraft.rows.push(r); } fillPrRows();
                            const box = document.getElementById('pr-rows'); box.scrollTop = box.scrollHeight;
                            const f = box.querySelector('[data-prl][data-id="'+r.id+'"]'); if (f) f.focus(); } break;
       case 'dcfilter':   s.dc = (s.dc===v ? '' : v); render(k); break;
