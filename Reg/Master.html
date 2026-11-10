@@ -1164,9 +1164,9 @@ function visibleSpecRows(){
   return rows.sort((a,b) => { const p = val(a), c = val(b);
     return (typeof p==='number' && typeof c==='number') ? (p-c)*dir : String(p).localeCompare(String(c), undefined, {sensitivity:'base'})*dir; });
 }
-/* the Items written with Description "DC" / "Delivery Challan" are the DC names offered in DC Lists */
+/* the Items under the Specs type "Delivery Challan" (or written with Description "DC") are the DC names offered in DC Lists */
 function dcSources(){
-  return specRows().filter(x => x.r.status==='active' && /^(dcs?|delivery\s*challans?)$/i.test(String(x.r.description||'').trim()))
+  return specRows().filter(x => x.r.status==='active' && (/^(dcs?|delivery\s*challans?)$/i.test(String(x.tl||'').trim()) || /^(dcs?|delivery\s*challans?)$/i.test(String(x.r.description||'').trim())))
     .map(x => ({ name:x.r.name, tl:x.tl })).sort((a,b) => natCmp(a.name, b.name));
 }
 
@@ -1963,16 +1963,9 @@ const prRowsFrom = key => { const g = dcGroups((data.dclist||[]).filter(e => dcK
   return g ? g.items.filter(e => e.status==='active').map(e => prNew(e.label, false)) : []; };
 function printDC(key){
   const g = dcGroups((data.dclist||[]).filter(e => dcKey(e.dcName)===key))[0]; if (!g) return;
-  dcdraft = null; pdraft = { key:g.key, name:g.name, rows:[], n:0, src:'__il__', q:'' };
+  dcdraft = null; pdraft = { key:g.key, name:g.name, rows:[], n:0, src:g.key, q:'' };
   pdraft.rows = prRowsFrom(g.key);
   renderPrintPanel(); dcPanelEl().classList.add('open');
-}
-function prSwitch(name){
-  const g = dcGroups((data.dclist||[]).filter(e => dcKey(e.dcName)===dcKey(name)))[0];
-  if (!g || g.key===pdraft.key) return;
-  pdraft.key = g.key; pdraft.name = g.name; pdraft.q = '';
-  pdraft.rows = prRowsFrom(g.key).concat(pdraft.rows.filter(r => r.manual));      // manual lines stay when the DC changes
-  renderPrintPanel();
 }
 /* "5" → 6 · "5-10" → "6-11" · empty + → 1 */
 function stepQty(q, d){
@@ -1983,13 +1976,9 @@ function stepQty(q, d){
   return q;
 }
 function prOptions(){
-  const have = new Set(pdraft.rows.map(r => dupNorm(r.label))), il = pdraft.src==='__il__';
-  let list = [];
-  if (il){ const seen = new Set();
-    (data.itemlist||[]).filter(e => e.status==='active').forEach(e => { const v = entryView(e), kk = dupNorm(v.label); if (!kk || seen.has(kk)) return; seen.add(kk); list.push({ label:v.label, sub:v.mb||'' }); }); }
-  else list = (data.dclist||[]).filter(e => dcKey(e.dcName)===pdraft.src && e.status==='active').map(e => ({ label:e.label, sub:'' }));
-  list = list.filter(o => !have.has(dupNorm(o.label)) && matchAll(pdraft.q, o.sub+' '+o.label));
-  return il ? list.sort((a,b) => natCmp(a.label, b.label)) : list;
+  const have = new Set(pdraft.rows.map(r => dupNorm(r.label)));
+  const g = dcGroups((data.dclist||[]).filter(e => dcKey(e.dcName)===pdraft.src))[0];
+  return g ? g.items.filter(e => e.status==='active' && !have.has(dupNorm(e.label)) && matchAll(pdraft.q, e.label)).map(e => ({ label:e.label, sub:'' })) : [];
 }
 function fillPrPick(){
   const el = document.getElementById('pr-pick'); if (!el || !pdraft) return;
@@ -2002,8 +1991,7 @@ function fillPrRows(){
   const top = el.scrollTop, rows = pdraft.rows;
   el.innerHTML = rows.length ? rows.map(r => `<div class="pr-row${r.on?'':' off'}">
       <button class="ib sm pr-tg" type="button" data-act="pr-tog" data-id="${r.id}" title="${r.on?'Skip this item':'Include this item'}"><i class="ti ${r.on?'ti-square-check-filled':'ti-square'}"></i></button>
-      ${r.manual ? `<input class="date-input pr-lbl" data-prl data-id="${r.id}" type="text" value="${esc(r.label)}" placeholder="Write item…" autocomplete="off"/>`
-                 : `<span class="pr-txt" title="${esc(r.label)}">${esc(r.label)}</span>`}
+      <input class="date-input pr-lbl" data-prl data-id="${r.id}" type="text" value="${esc(r.label)}" placeholder="Write item…" autocomplete="off" title="Click to edit"/>
       <div class="pr-qty"><button class="ib sm" type="button" data-act="pr-qty" data-id="${r.id}" data-d="-1" title="Less"><i class="ti ti-minus"></i></button>
         <input class="date-input" data-prq data-id="${r.id}" type="text" value="${esc(r.qty)}" placeholder="Qty" autocomplete="off" title="Click for 1 · type a number or a range, e.g. 5-10"/>
         <button class="ib sm" type="button" data-act="pr-qty" data-id="${r.id}" data-d="1" title="More"><i class="ti ti-plus"></i></button></div>
@@ -2021,15 +2009,15 @@ function renderPrintPanel(){
     <div class="pph"><h3><i class="ti ti-printer"></i><span>Print DC</span></h3>
       <button class="pph-close" data-act="pr-close" title="Close"><i class="ti ti-x"></i></button></div>
     <div class="ppb"><div class="form-stack">
-      <div class="field"><div class="fgrp-lbl"><i class="ti ti-clipboard-list"></i>DC</div>
-        <div class="cb"><input class="date-input" data-prn type="text" value="${esc(d.name)}" placeholder="Search or choose another DC…" autocomplete="off" role="combobox" aria-autocomplete="list"/><div class="cb-pop"></div></div></div>
+      <div class="field"><div class="fgrp-lbl"><i class="ti ti-clipboard-list"></i>DC name (printed title)</div>
+        <div class="cb"><input class="date-input" data-prn type="text" value="${esc(d.name)}" placeholder="Choose or type the DC name…" autocomplete="off" role="combobox" aria-autocomplete="list"/><div class="cb-pop"></div></div></div>
       <div class="field"><div class="fgrp-lbl"><i class="ti ti-list-check"></i>Items to print<span class="dc-cnt" id="pr-count"></span></div>
         <div class="pr-rows" id="pr-rows"></div>
         <div class="dc-tools" style="margin:6px 0 0;">
           <button class="btn btn-ghost btn-sm" type="button" data-act="pr-addman" title="Write an item by hand"><i class="ti ti-pencil-plus"></i> Add manual</button>
           <button class="btn btn-ghost btn-sm" type="button" id="pr-clrman" data-act="pr-clrman" title="Remove every manually written item"><i class="ti ti-eraser"></i> Remove manual</button></div></div>
-      <div class="field"><div class="fgrp-lbl"><i class="ti ti-playlist-add"></i>Add items from</div>
-        <div class="dc-tools"><select class="date-input" data-prsrc><option value="__il__">Item List</option>${srcs.map(g => `<option value="${esc(g.key)}"${d.src===g.key?' selected':''}>DC · ${esc(g.name)}</option>`).join('')}</select>
+      <div class="field"><div class="fgrp-lbl"><i class="ti ti-playlist-add"></i>Add items from saved DC</div>
+        <div class="dc-tools"><select class="date-input" data-prsrc>${srcs.map(g => `<option value="${esc(g.key)}"${d.src===g.key?' selected':''}>${esc(g.name)} · ${g.items.length}</option>`).join('')}</select>
           <input class="date-input" data-prs type="text" placeholder="Search items…" value="${esc(d.q)}" autocomplete="off"/>
           <button class="btn btn-ghost btn-sm" type="button" data-act="pr-addall" title="Add every item shown">All shown</button></div>
         <div class="dc-pick sm" id="pr-pick"></div></div>
@@ -2044,14 +2032,14 @@ function doPrint(){
   const d = pdraft; if (!d) return;
   const rows = d.rows.filter(r => r.on && r.label.trim());
   if (!rows.length) return showToast('Nothing to print — tick or add at least one item','error');
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(d.name)}</title><style>
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(d.name.trim() || 'Delivery Challan')}</title><style>
     *{box-sizing:border-box;} body{font-family:Arial,Helvetica,sans-serif;color:#000;margin:0;padding:18mm 14mm;font-size:13px;}
     h1{font-size:20px;margin:0 0 4px;letter-spacing:.04em;text-transform:uppercase;text-align:center;}
     .meta{display:flex;justify-content:space-between;align-items:baseline;border-top:2px solid #000;border-bottom:1px solid #000;padding:8px 2px;margin:10px 0 14px;}
     .meta b{font-size:16px;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #444;padding:7px 9px;text-align:left;vertical-align:top;}
     th{background:#eee;font-size:12px;text-transform:uppercase;letter-spacing:.04em;} td.n,th.n{width:44px;text-align:center;} td.q,th.q{width:90px;text-align:center;} tr{page-break-inside:avoid;}
   </style></head><body><h1>Delivery Challan</h1>
-  <div class="meta"><b>${esc(d.name)}</b><span>${esc(fmtDate(Date.now()))}</span></div>
+  <div class="meta"><b>${esc(d.name.trim() || 'Delivery Challan')}</b><span>${esc(fmtDate(Date.now()))}</span></div>
   <table><thead><tr><th class="n">#</th><th>Item</th><th class="q">Qty</th></tr></thead><tbody>${rows.map((r,i) => `<tr><td class="n">${i+1}</td><td>${esc(r.label.trim())}</td><td class="q">${esc(String(r.qty||'').trim())}</td></tr>`).join('')}</tbody></table></body></html>`;
   const f = document.createElement('iframe');
   f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
@@ -2140,12 +2128,16 @@ function renderDcPanel(){
     </div>`;
   fillDcPick(); fillDcMan();
 }
-/* DC names offered in Add DC = every DC already in the cached DC List + the Specs Settings items written with Description "DC" */
+/* DC names offered in Add DC = the Delivery Challan items of Specs Settings (THR, TNR, TEL …) */
 function dcNames(){
-  const m = new Map();
-  dcGroups(data.dclist||[]).forEach(g => m.set(g.key, { v:g.name, n:g.items.length, tl:'' }));
-  dcSources().forEach(o => { const k = dcKey(o.name); if (!m.has(k)) m.set(k, { v:o.name, n:0, tl:o.tl }); });
-  return [...m.values()].sort((a,b) => natCmp(a.v, b.v)).map(o => ({ v:o.v, sub:[o.tl, o.n ? o.n+' item'+(o.n>1?'s':'') : ''].filter(Boolean).join(' · ') }));
+  const cnt = n => dcGroups((data.dclist||[]).filter(e => dcKey(e.dcName)===dcKey(n))).reduce((t,g) => t + g.items.length, 0);
+  return dcSources().map(o => { const n = cnt(o.name); return { v:o.name, sub: n ? n+' item'+(n>1?'s':'') : '' }; });
+}
+/* Print title list = Delivery Challan names + every DC already saved */
+function dcAllNames(){
+  const m = new Map(dcNames().map(o => [dcKey(o.v), o]));
+  dcGroups(data.dclist||[]).forEach(g => { if (!m.has(g.key)) m.set(g.key, { v:g.name, sub:g.items.length+' item'+(g.items.length>1?'s':'') }); });
+  return [...m.values()].sort((a,b) => natCmp(a.v, b.v));
 }
 /* DC name = text box + search icon; the icon drops down the DC list with its own search */
 function dcNameField(d, edit){
@@ -2154,12 +2146,12 @@ function dcNameField(d, edit){
       <input class="date-input" data-dcn type="text" placeholder="Type a DC name or pick one →" value="${esc(d.name)}" autocomplete="off"/>
       <button class="ib" type="button" data-act="dc-namepop" title="Choose a DC from the list"><i class="ti ti-search"></i></button>
       <div class="cb-pop"></div></div>
-    <div class="cb-hint${d.name && !known ? ' show' : ''}"><i class="ti ti-circle-plus"></i> New DC — will be created</div>`;
+    <div class="cb-hint${d.name && !known ? ' show' : ''}"><i class="ti ti-circle-plus"></i> Not in the Delivery Challan list — used as typed</div>`;
 }
 function dcCbList(inp){
   const isPr = inp.dataset.prn !== undefined, box = inp.closest('.cb');
   const s = box.querySelector('[data-dcs]'), q = (isPr ? inp.value : (s ? s.value : '')).trim().toLowerCase();
-  const base = isPr ? dcGroups(data.dclist||[]).map(g => ({ v:g.name, sub:g.items.length+' item'+(g.items.length>1?'s':'') })) : dcNames();
+  const base = isPr ? dcAllNames() : dcNames();
   return { list:base.filter(o => !q || o.v.toLowerCase().includes(q)) };
 }
 function dcCbOpen(inp, focusSearch){
@@ -2177,7 +2169,7 @@ function dcNameHint(inp){
 }
 function dcCbPick(inp, v){
   inp.value = v; cbClose();
-  if (inp.dataset.prn !== undefined) prSwitch(v);
+  if (inp.dataset.prn !== undefined && pdraft) pdraft.name = v;
   else if (dcdraft){ dcdraft.name = v; inp.classList.remove('bad'); dcNameHint(inp); }
 }
 function dcTogglePick(el){
@@ -2235,7 +2227,7 @@ function wireDcEvents(){
     }
     if (pdraft){
       const r = ds.id ? prRow(ds.id) : null;
-      if (ds.prn !== undefined) dcCbOpen(t);
+      if (ds.prn !== undefined){ pdraft.name = t.value; dcCbOpen(t); }
       else if (ds.prq !== undefined && r) r.qty = t.value;
       else if (ds.prl !== undefined && r){ r.label = t.value; const c = document.getElementById('pr-count'); if (c) c.textContent = pdraft.rows.filter(x => x.on && x.label.trim()).length + ' to print'; }
       else if (ds.prs !== undefined){ pdraft.q = t.value; fillPrPick(); }
@@ -2246,7 +2238,6 @@ function wireDcEvents(){
     if (pdraft && ds.prn !== undefined) dcCbOpen(t);
     else if (pdraft && ds.prq !== undefined && !t.value.trim()){ const r = prRow(ds.id); if (r){ r.qty = '1'; t.value = '1'; t.select(); } }   // one click on an empty Qty = 1
   });
-  document.addEventListener('focusout', e => { const ds = e.target.dataset; if (pdraft && ds && ds.prn !== undefined) e.target.value = pdraft.name; });
   document.addEventListener('mousedown', e => {
     if (!dcdraft && !pdraft) return;
     const o = e.target.closest && e.target.closest('.dc-cbo'); if (!o) return;
