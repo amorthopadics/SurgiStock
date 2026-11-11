@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheWatcher.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/api.js?v=1"></script>
 <script src="https://amorthopadics.github.io/SurgiStock/shared/cacheSync.js?v=1"></script>
@@ -764,25 +766,56 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 .tab-panel{display:none;flex-direction:column;flex:1;min-height:0;gap:10px}
 .tab-panel.on{display:flex}
 .mod-split{flex:1;display:flex;gap:10px;min-height:0}
-.formcard{flex:1.2 1 0;min-width:0}
-.prevcard{flex:1 1 0;min-width:0;max-width:640px}
-.prevcard .doc-center-body{background:var(--bg3);padding:12px}
-.pvbox{background:#fff;border-radius:var(--radius);padding:14px;overflow-x:auto;box-shadow:var(--shadow)}
-@media(min-width:1000px){#pv .inv{zoom:.82}}
-.sl{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)}
-.sl i{color:var(--accent);font-size:15px}
-.hint{font-size:11.5px;color:var(--text3)}
-.om input[type=checkbox]{width:auto;accent-color:var(--accent)}
-.om textarea{resize:vertical;min-height:54px}
-.om .tw table input{padding:6px 8px}
-.om .tw td{vertical-align:middle;padding:5px 6px}
-.om .tw td.num{width:34px;color:var(--text3);font-family:var(--mono);font-size:11px;text-align:center}
-.srow{display:grid;grid-template-columns:minmax(0,1fr) 84px 120px auto;gap:6px;margin-bottom:6px;align-items:center}
-.mtot{margin-left:auto;width:min(360px,100%);border:1px solid var(--border2);border-radius:var(--radius-lg);background:var(--bg3);padding:8px 14px}
-.mtot div{display:flex;justify-content:space-between;gap:12px;padding:3px 0;font-size:13px;color:var(--text2)}
-.mtot b{font-family:var(--mono);font-weight:600;color:var(--text)}
-.mtot .g{border-top:1px solid var(--border2);margin-top:4px;padding-top:7px;font-size:16px;font-weight:700;color:var(--accent)}
-.mtot .g b{color:var(--accent)}
+.formcard{flex:1.6 1 0;min-width:0}
+.prevcard{flex:1 1 0;min-width:0;max-width:560px}
+.prevcard .doc-center-body{background:var(--bg3);padding:10px}
+.prevcard .doc-center-header{padding:8px 12px;gap:8px}
+.pvbox{background:#fff;border-radius:var(--radius);padding:12px;overflow-x:auto;box-shadow:var(--shadow)}
+@media(min-width:1000px){#pv .inv{zoom:.78}}
+.hint{font-size:11px;color:var(--text3)}
+/* compact form */
+.formcard .mh{padding:8px 12px;row-gap:6px}
+.formcard .mb{padding:10px 12px;gap:10px}
+.formcard .om input,.formcard .om select,.formcard .om textarea{font-size:12.5px;padding:5px 8px}
+.formcard .om .bw-f input{height:34px;padding-left:32px}
+.formcard .om .bw-f>i{left:10px;font-size:15px}
+.formcard .bw-cap{padding:5px 12px;font-size:12.5px}
+.nobox{display:flex;align-items:center;gap:4px;min-width:0}
+.nobox .bw-f{width:196px}
+.nobox .bw-f input{font-family:var(--mono);font-weight:600;color:var(--accent)}
+.nobox .ib{width:34px;height:34px}
+.r3{display:grid;grid-template-columns:1.3fr 1.3fr 1fr;gap:8px}
+.om input[type=checkbox]{width:auto;accent-color:var(--accent);padding:0}
+.om textarea{resize:vertical;min-height:44px}
+.sl{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:2px}
+.sl i{color:var(--accent);font-size:14px}
+.om .tw{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg2)}
+.om .tw table{border:0;min-width:430px}
+.om .tw th{padding:6px 8px;font-size:11px}
+.om .tw td{vertical-align:middle;padding:3px 5px}
+.om .tw td.num{width:30px;color:var(--text3);font-family:var(--mono);font-size:11px;text-align:center}
+.om .tw td.n{padding-right:10px;font-size:12.5px}
+.om .tw tr:last-child td{border-bottom:0}
+.rowtools{display:flex;align-items:center;gap:10px;margin-top:6px}
+/* bottom: service (left) · concession (middle) · payment (right) */
+.tri{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:10px;align-items:stretch}
+.bx{border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg3);padding:9px 10px;display:flex;flex-direction:column;gap:7px;min-width:0}
+.bx label{font-size:10.5px;margin:0 0 2px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+.bx .two{display:flex;gap:6px}
+.bx .two select{width:74px;flex:none}
+.svlist{display:flex;flex-direction:column;gap:6px;max-height:158px;overflow-y:auto;padding-right:2px}
+.srow{display:grid;grid-template-columns:70px minmax(0,1fr) 30px;gap:5px;align-items:center;padding-bottom:6px;border-bottom:1px dashed var(--border)}
+.srow:last-child{border-bottom:0;padding-bottom:0}
+.srow .d{grid-column:1/-1}
+.srow .btn.sm{padding:4px 0;justify-content:center;height:30px}
+.chk{display:flex;gap:7px;align-items:center;cursor:pointer;font-size:11.5px;color:var(--text2);text-transform:none!important;letter-spacing:0!important;font-weight:500!important}
+.tchips{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.tchips div{display:flex;flex-direction:column;align-items:flex-end;padding:4px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg3);min-width:78px}
+.tchips span{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);font-weight:700}
+.tchips b{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--text)}
+.tchips .g{border-color:var(--accent);background:var(--accent-dim)}
+.tchips .g b{color:var(--accent);font-size:14px}
+.tchips .bal b{color:var(--amber)}
 .stb{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.03em}
 .stb.paid{background:var(--teal-dim);color:var(--teal)}
 .stb.part{background:var(--amber-dim);color:var(--amber)}
@@ -800,20 +833,24 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 .payrow label{font-size:11px;color:var(--text3);display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:.05em;font-weight:700}
 .payrow input,.payrow select{width:100%;font:inherit;font-size:13px;padding:7px 9px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface2);color:var(--text)}
 .ppf{display:flex;gap:8px;flex-wrap:wrap}
+.btn.wa-b2{background:rgba(37,211,102,.14);border-color:rgba(37,211,102,.5);color:#25d366}
+.btn.wa-b2:hover{background:#25d366;color:#04230f}
 @media(max-width:1000px){
-  .portal-wrap{overflow-y:auto}
+  .portal-wrap{overflow-y:auto;padding-bottom:70px}
   .tab-panel{min-height:auto;flex:none}
   .mod-split{flex-direction:column;overflow:visible}
   .formcard,.prevcard{flex:none;max-width:none;overflow:visible}
   .formcard .om,.formcard .mb{overflow:visible;flex:none}
-  .formcard .mf{position:sticky;bottom:0;background:var(--bg2);z-index:5}
   .prevcard .doc-center-body{overflow:visible}
+  /* Reset / Save / Save & Print / WhatsApp stay reachable at the bottom of the screen */
+  .prevcard .doc-center-header{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--bg2);border-top:1px solid var(--border);border-bottom:0;padding:8px 10px}
+  .prevcard .doc-center-header h3{display:none}
+  .prevcard .doc-center-header .hdr-actions{flex:1;justify-content:center;margin:0}
 }
 @media(max-width:560px){
-  .srow{grid-template-columns:minmax(0,1fr) 70px 90px auto}
-  .fg{grid-template-columns:minmax(0,1fr)}
-  .fg .w2{grid-column:auto}
-  .mf .btn .lbl{display:none}
+  .r3{grid-template-columns:minmax(0,1fr)}
+  .nobox .bw-f{width:150px}
+  .hdr-actions .btn .lbl{display:none}
   .srch input{width:100px}
 }
 
@@ -879,7 +916,13 @@ select.date-input option{background:var(--surface2);color:var(--text);}
     <div class="mod-split">
       <div class="doc-center formcard"><div class="om" id="form-host"></div></div>
       <div class="doc-center prevcard">
-        <div class="doc-center-header"><h3><i class="ti ti-eye"></i>Live preview</h3><span class="hist-tip hint">What will be printed</span></div>
+        <div class="doc-center-header"><h3><i class="ti ti-eye"></i>Preview</h3>
+          <div class="hdr-actions">
+            <button class="ib" type="button" id="rst-btn" title="Reset the form" onclick="resetForm()"><i class="ti ti-refresh"></i></button>
+            <button class="btn btn-ghost btn-sm" type="button" title="Save" onclick="save(0)"><i class="ti ti-device-floppy"></i><span class="lbl">Save</span></button>
+            <button class="btn btn-primary btn-sm" type="button" title="Save and print" onclick="save(1)"><i class="ti ti-printer"></i><span class="lbl">Save &amp; Print</span></button>
+            <button class="btn btn-sm wa-b2" type="button" title="Save and send on WhatsApp" onclick="save(2)"><i class="ti ti-brand-whatsapp"></i><span class="lbl">WhatsApp</span></button>
+          </div></div>
         <div class="doc-center-body"><div class="pvbox" id="pv"></div></div>
       </div>
     </div>
@@ -914,6 +957,22 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 <datalist id="dl-party"></datalist>
 <datalist id="dl-item"></datalist>
 <datalist id="dl-svc"><option>Service charge</option><option>Delivery</option><option>Handling</option><option>Packing</option><option>Installation</option><option>Consultation</option></datalist>
+<!-- WHATSAPP SEND -->
+<div class="wa-ov" id="wa-ov" role="dialog" aria-modal="true" aria-labelledby="wa-title"><div class="wa-box">
+  <div class="wa-h"><i class="ti ti-brand-whatsapp lg"></i><span id="wa-title">Send bill on WhatsApp</span><button type="button" class="ib x" title="Close" aria-label="Close" onclick="waClose()"><i class="ti ti-x"></i></button></div>
+  <div class="wa-b"><div class="wa-sum"><div id="wa-sum"></div><div class="wa-steps" id="wa-steps"></div></div></div>
+  <div class="wa-act" id="wa-act">
+    <div><button type="button" class="wa-circ" title="Add number" aria-label="Add number" onclick="waNewToggle()"><i class="ti ti-user-plus"></i></button>Add number</div>
+    <div><button type="button" class="wa-circ share" id="wa-share-btn" title="Share PDF + message" aria-label="Share" onclick="waShare()"><i class="ti ti-share"></i></button>Share</div>
+  </div>
+  <div class="wa-b" id="wa-new" style="display:none;padding-top:0">
+    <div><label class="sr-only" for="wa-num">WhatsApp number</label>
+      <div class="wa-row"><select id="wa-cc" aria-label="Country code"><option value="92">+92 PK</option><option value="971">+971 UAE</option><option value="91">+91 IN</option><option value="966">+966 KSA</option><option value="968">+968 OM</option><option value="974">+974 QA</option><option value="44">+44 UK</option><option value="1">+1 US/CA</option></select>
+      <input id="wa-num" type="tel" inputmode="tel" autocomplete="off" placeholder="300 1234567" onkeydown="if(event.key==='Enter')waIntro()"/>
+      <button type="button" class="btn wa-go wa-send" title="Open chat with short message" aria-label="Send short message" onclick="waIntro()"><i class="ti ti-brand-whatsapp"></i></button></div>
+      <div class="wa-hist" id="wa-hist"></div></div>
+  </div>
+</div></div>
 <div id="pr"></div>
 <div class="toast" id="toast" role="alert"><i id="toast-icon" class="ti ti-circle-check"></i><span id="toast-msg">Saved</span></div>
 
@@ -1067,55 +1126,57 @@ function printBill(b,w){
 }
 
 /* ═══ FORM ═══ */
+const chipsHTML=(b,t)=>
+  `<div><span>Subtotal</span><b>${money(t.sub)}</b></div>`
+  +(t.d?`<div><span>Concession</span><b>− ${money(t.d)}</b></div>`:'')
+  +(t.svT?`<div><span>Service</span><b>${money(t.svT)}</b></div>`:'')
+  +(t.v?`<div><span>Tax</span><b>${money(t.v)}</b></div>`:'')
+  +`<div class="g"><span>Total ${CUR}</span><b>${money(t.total)}</b></div>`
+  +(t.paid?`<div><span>Paid</span><b>${money(t.paid)}</b></div><div class="bal"><span>Balance</span><b>${money(t.bal)}</b></div>`:'');
 function drawForm(){
   const T=TYPES;
   $('form-host').innerHTML=`
-  <div class="mh"><div class="ttl"><i class="ti ti-file-invoice"></i><span id="ttl">${st.id?'Edit bill':'New manual bill'}</span></div>
+  <div class="mh">
+    <div class="nobox"><div class="bw-f"><i class="ti ti-hash"></i><input id="f-no" value="${esc(st.auto?curBill().no:st.no)}" ${st.auto?'readonly':''} placeholder="Bill number" title="Bill / invoice number" autocomplete="off" oninput="set('no',this.value)"/></div>
+      <button type="button" class="ib" id="no-btn" onclick="noToggle()" title="${st.auto?'Automatic number — click to type your own':'Manual number — click to go back to automatic'}"><i class="ti ${st.auto?'ti-lock':'ti-pencil'}"></i></button></div>
     <div class="bw-caps" id="caps">${Object.keys(T).map(k=>`<button type="button" class="bw-cap${st.type===k?' on':''}" data-k="${k}" onclick="setType('${k}')"><i class="ti ${T[k].i}"></i>${T[k].l}</button>`).join('')}</div>
     <label class="bw-d" title="Bill date"><i class="ti ti-calendar"></i><input type="date" id="f-date" value="${esc(st.date)}" oninput="set('date',this.value)"/></label></div>
   <div class="mb">
-    <div class="fg">
-      <div class="bw-f w2"><i class="ti ti-user"></i><input id="f-party" list="dl-party" value="${esc(st.party)}" placeholder="Select or type name…" autocomplete="off" oninput="set('party',this.value)"/></div>
-      <div style="display:flex;gap:6px"><div class="bw-f" style="flex:1"><i class="ti ti-hash"></i><input id="f-no" value="${esc(st.auto?curBill().no:st.no)}" ${st.auto?'readonly':''} placeholder="Bill number" autocomplete="off" oninput="set('no',this.value)"/></div>
-        <button type="button" class="ib lg" id="no-btn" onclick="noToggle()" title="${st.auto?'Automatic number — click to type your own':'Manual number — click to go back to automatic'}"><i class="ti ${st.auto?'ti-lock':'ti-pencil'}"></i></button></div>
-      <div class="bw-f"><i class="ti ti-notes"></i><input id="f-ref" value="${esc(st.ref)}" placeholder="Reference / PO no. (optional)" autocomplete="off" oninput="set('ref',this.value)"/></div>
-      <div class="bw-f w2"><i class="ti ti-phone"></i><input id="f-contact" value="${esc(st.contact)}" placeholder="Phone / address (optional, printed on the bill)" autocomplete="off" oninput="set('contact',this.value)"/></div>
+    <div class="r3">
+      <div class="bw-f"><i class="ti ti-user"></i><input id="f-party" list="dl-party" value="${esc(st.party)}" placeholder="Select or type ${T[st.type].l.toLowerCase()} name…" autocomplete="off" oninput="set('party',this.value)"/></div>
+      <div class="bw-f"><i class="ti ti-phone"></i><input id="f-contact" value="${esc(st.contact)}" placeholder="Phone / address (optional)" autocomplete="off" oninput="set('contact',this.value)"/></div>
+      <div class="bw-f"><i class="ti ti-notes"></i><input id="f-ref" value="${esc(st.ref)}" placeholder="Reference / PO no." autocomplete="off" oninput="set('ref',this.value)"/></div>
     </div>
 
-    <div class="sl"><i class="ti ti-list-details"></i>Items</div>
-    <div class="tw"><table><thead><tr><th style="width:34px">#</th><th>Item / description</th><th style="width:92px">Qty</th><th style="width:116px">Rate (${CUR})</th><th class="n" style="width:120px">Total</th><th style="width:44px"></th></tr></thead><tbody id="lines" onkeydown="lineKey(event)"></tbody></table></div>
-    <div><button class="btn sm" type="button" onclick="addLine()"><i class="ti ti-plus"></i>Add item</button> <span class="hint">Tip: press Enter to move on — Enter in the last field adds a new row.</span></div>
-
-    <div class="sl"><i class="ti ti-percentage"></i>Concession &amp; tax</div>
-    <div class="fg">
-      <div><label>Concession / discount</label><div style="display:flex;gap:6px"><input type="number" id="f-disc" min="0" step="any" inputmode="decimal" value="${esc(st.disc)}" placeholder="0" oninput="set('disc',this.value)"/><select id="f-dt" style="width:84px" onchange="set('dt',this.value)"><option value="pct"${st.dt==='pct'?' selected':''}>%</option><option value="amt"${st.dt==='amt'?' selected':''}>${CUR}</option></select></div></div>
-      <div><label>Tax / VAT %</label><input type="number" id="f-vat" min="0" step="any" inputmode="decimal" value="${esc(st.vat)}" placeholder="0" oninput="set('vat',this.value)"/></div>
-      <div class="w2"><label style="display:flex;gap:8px;align-items:center;cursor:pointer;margin:0"><input type="checkbox" id="f-vs" ${st.vatSvc?'checked':''} onchange="set('vatSvc',this.checked)"/> Charge tax on service charges too</label></div>
+    <div>
+      <div class="tw"><table><thead><tr><th style="width:30px">#</th><th>Item / description</th><th style="width:84px">Qty</th><th style="width:104px">Rate (${CUR})</th><th class="n" style="width:104px">Total</th><th style="width:40px"></th></tr></thead><tbody id="lines" onkeydown="lineKey(event)"></tbody></table></div>
+      <div class="rowtools"><button class="btn sm" type="button" onclick="addLine()"><i class="ti ti-plus"></i>Add item</button><span class="hint">Enter moves to the next field · Enter in the last field adds a row</span></div>
     </div>
 
-    <div class="sl"><i class="ti ti-tool"></i>Service charges</div>
-    <div><div id="svc"></div><button class="btn sm" type="button" onclick="addSvc()"><i class="ti ti-plus"></i>Add service charge</button></div>
+    <div class="tri">
+      <div class="bx"><div class="sl"><i class="ti ti-tool"></i>Service charges</div>
+        <div class="svlist" id="svc"></div>
+        <div><button class="btn sm" type="button" onclick="addSvc()"><i class="ti ti-plus"></i>Add service charge</button></div></div>
 
-    <div class="sl"><i class="ti ti-cash"></i>Payment &amp; notes</div>
-    <div class="fg">
-      <div><label>Amount paid (${CUR})</label><input type="number" id="f-paid" min="0" step="any" inputmode="decimal" value="${esc(st.paid)}" placeholder="0" oninput="set('paid',this.value)"/></div>
-      <div><label>Mode</label><select id="f-pm" onchange="set('pmode',this.value)">${['Cash','Bank transfer','Cheque','Card'].map(m=>`<option${st.pmode===m?' selected':''}>${m}</option>`).join('')}</select></div>
-      <div class="w2"><label>Notes / terms (printed on the bill)</label><textarea id="f-note" rows="2" oninput="set('note',this.value)">${esc(st.note)}</textarea></div>
+      <div class="bx"><div class="sl"><i class="ti ti-percentage"></i>Concession &amp; tax</div>
+        <div><label>Concession / discount</label><div class="two"><input type="number" id="f-disc" min="0" step="any" inputmode="decimal" value="${esc(st.disc)}" placeholder="0" oninput="set('disc',this.value)"/><select id="f-dt" onchange="set('dt',this.value)"><option value="pct"${st.dt==='pct'?' selected':''}>%</option><option value="amt"${st.dt==='amt'?' selected':''}>${CUR}</option></select></div></div>
+        <div><label>Tax / VAT %</label><input type="number" id="f-vat" min="0" step="any" inputmode="decimal" value="${esc(st.vat)}" placeholder="0" oninput="set('vat',this.value)"/></div>
+        <label class="chk"><input type="checkbox" id="f-vs" ${st.vatSvc?'checked':''} onchange="set('vatSvc',this.checked)"/> Tax on service charges too</label></div>
+
+      <div class="bx"><div class="sl"><i class="ti ti-cash"></i>Payment &amp; notes</div>
+        <div><label>Amount paid (${CUR})</label><input type="number" id="f-paid" min="0" step="any" inputmode="decimal" value="${esc(st.paid)}" placeholder="0" oninput="set('paid',this.value)"/></div>
+        <div><label>Mode</label><select id="f-pm" onchange="set('pmode',this.value)">${['Cash','Bank transfer','Cheque','Card'].map(m=>`<option${st.pmode===m?' selected':''}>${m}</option>`).join('')}</select></div>
+        <div><label>Notes (printed on the bill)</label><textarea id="f-note" rows="2" oninput="set('note',this.value)">${esc(st.note)}</textarea></div></div>
     </div>
-    <div class="mtot" id="tots"></div>
-  </div>
-  <div class="mf"><span class="sum" id="m-sum"></span>
-    <button class="btn btn-ghost" type="button" onclick="resetForm()" title="Clear the form"><i class="ti ti-refresh"></i><span class="lbl">${st.id?'Cancel':'Reset'}</span></button>
-    <button class="btn btn-ghost" type="button" onclick="save(0)" title="Save"><i class="ti ti-device-floppy"></i><span class="lbl">Save</span></button>
-    <button class="btn btn-primary" type="button" onclick="save(1)" title="Save and print"><i class="ti ti-printer"></i><span class="lbl">Save &amp; Print</span></button>
+    <div class="tchips" id="tots"></div>
   </div>`;
+  const rb=$('rst-btn');if(rb)rb.title=st.id?'Cancel editing':'Reset the form';
   fillLists();drawLines();drawSvc();
 }
 function upd(){
   const b=curBill(),t=calc(b);
   st.lines.forEach((l,i)=>{const c=$('lt'+i);if(c)c.textContent=money(r2((+l.qty||0)*(+l.rate||0)));});
-  if($('tots'))$('tots').innerHTML=totsHTML(b,t,true);
-  if($('m-sum'))$('m-sum').innerHTML='Total <b style="color:var(--text)">'+CUR+' '+money(t.total)+'</b>';
+  if($('tots'))$('tots').innerHTML=chipsHTML(b,t);
   if(st.auto&&$('f-no'))$('f-no').value=b.no;
   $('pv').innerHTML=docHTML(b,false);
 }
@@ -1162,10 +1223,10 @@ function pickItem(i,v){   // item chosen → fill the rate you used last time
 }
 /* service charges */
 function drawSvc(){
-  $('svc').innerHTML=st.svc.map((s,i)=>`<div class="srow"><input list="dl-svc" value="${esc(s.desc)}" placeholder="e.g. Delivery" autocomplete="off" oninput="sv(${i},'desc',this.value)"/>
+  $('svc').innerHTML=st.svc.map((s,i)=>`<div class="srow"><input class="d" list="dl-svc" value="${esc(s.desc)}" placeholder="e.g. Delivery" autocomplete="off" oninput="sv(${i},'desc',this.value)"/>
     <select onchange="sv(${i},'t',this.value)"><option value="amt"${s.t==='amt'?' selected':''}>${CUR}</option><option value="pct"${s.t==='pct'?' selected':''}>%</option></select>
     <input type="number" min="0" step="any" inputmode="decimal" value="${esc(s.v)}" placeholder="Value" oninput="sv(${i},'v',this.value)"/>
-    <button class="btn sm" type="button" title="Remove" onclick="delSvc(${i})"><i class="ti ti-x"></i></button></div>`).join('')||'<div class="hint" style="margin-bottom:6px">None — add delivery, handling, packing… (fixed amount, or % of the net amount)</div>';
+    <button class="btn sm" type="button" title="Remove" onclick="delSvc(${i})"><i class="ti ti-x"></i></button></div>`).join('')||'<div class="hint">None yet — delivery, handling, packing… (amount, or % of net)</div>';
   upd();
 }
 function sv(i,k,v){st.svc[i][k]=v;upd();}
@@ -1175,8 +1236,8 @@ function delSvc(i){st.svc.splice(i,1);drawSvc();}
 /* save / reset */
 function resetForm(){st=blank();drawForm();}
 function newBill(){resetForm();switchTab('new');}
-function save(pr){
-  const w=pr?window.open('','_blank'):null;   // must open synchronously inside the click, or the popup is blocked
+function save(pr){   // 0 = save · 1 = save & print · 2 = save & WhatsApp
+  const wa=pr===2;pr=pr===1;const w=pr?window.open('','_blank'):null;   // must open synchronously inside the click, or the popup is blocked
   const fail=m=>{if(w)w.close();showToast(m,'error');};
   const b=curBill();
   if(!b.party)return fail('Choose or type the '+TYPES[b.type].l.toLowerCase()+' name');
@@ -1197,6 +1258,7 @@ function save(pr){
   showToast((old?'Updated: ':'Saved: ')+b.no,'success');
   if(pr)printBill(b,w);
   st=blank();drawForm();drawHist();
+  if(wa)waOpen(b.id);
 }
 
 /* ═══ SAVED BILLS ═══ */
@@ -1207,7 +1269,7 @@ function drawHist(){
   let rec=0,pay=0;saved.forEach(b=>{const t=calc(b);if(b.type==='vendor')pay+=t.bal;else rec+=t.bal;});
   $('h-body').innerHTML=`<div class="kpis"><span class="log-stat-chip"><i class="ti ti-arrow-up-right"></i>To receive <b>${CUR} ${money(rec)}</b></span><span class="log-stat-chip"><i class="ti ti-arrow-down-left"></i>To pay <b>${CUR} ${money(pay)}</b></span></div>`
   +(L.length?`<table class="log-table"><thead><tr><th>Bill no</th><th>Date</th><th>Name</th><th>Type</th><th class="n">Total</th><th class="n">Paid</th><th class="n">Balance</th><th>Status</th><th></th></tr></thead><tbody>${L.map(b=>{const t=calc(b);return `<tr class="row" onclick="openView('${b.id}')"><td class="txn-mono">${esc(b.no)}</td><td>${esc(b.date)}</td><td><strong>${esc(b.party)}</strong></td><td>${TYPES[b.type].l}</td><td class="n">${money(t.total)}</td><td class="n">${money(t.paid)}</td><td class="n">${money(t.bal)}</td><td>${stb(stOf(b,t))}</td>
-    <td class="acts" onclick="event.stopPropagation()"><span class="act-btns"><button class="ib sm" title="Print" onclick="printSaved('${b.id}')"><i class="ti ti-printer"></i></button><button class="ib sm" title="Edit" onclick="editBill('${b.id}')"><i class="ti ti-pencil"></i></button><button class="ib sm" title="Duplicate" onclick="dupBill('${b.id}')"><i class="ti ti-copy"></i></button><button class="ib sm dng${armed===b.id?' armed':''}" id="del-${b.id}" title="${armed===b.id?'Click again to confirm':'Delete'}" onclick="delBill('${b.id}')"><i class="ti ti-trash"></i></button></span></td></tr>`;}).join('')}</tbody></table>`
+    <td class="acts" onclick="event.stopPropagation()"><span class="act-btns"><button class="ib sm wa" title="Send on WhatsApp" onclick="waOpen('${b.id}')"><i class="ti ti-brand-whatsapp"></i></button><button class="ib sm" title="Print" onclick="printSaved('${b.id}')"><i class="ti ti-printer"></i></button><button class="ib sm" title="Edit" onclick="editBill('${b.id}')"><i class="ti ti-pencil"></i></button><button class="ib sm" title="Duplicate" onclick="dupBill('${b.id}')"><i class="ti ti-copy"></i></button><button class="ib sm dng${armed===b.id?' armed':''}" id="del-${b.id}" title="${armed===b.id?'Click again to confirm':'Delete'}" onclick="delBill('${b.id}')"><i class="ti ti-trash"></i></button></span></td></tr>`;}).join('')}</tbody></table>`
   :`<div class="doc-center-placeholder"><i class="ti ti-file-invoice"></i><span>${saved.length?'No bill matches your search.':'No bills yet — create the first one from “New bill”.'}</span></div>`);
 }
 function printSaved(id){const b=saved.find(x=>x.id===id);if(!b)return;const w=window.open('','_blank');printBill(b,w);}
@@ -1229,7 +1291,7 @@ function openView(id){
     <div class="payrow"><div><label>Add payment</label><input type="number" id="pp-a" min="0" step="any" inputmode="decimal" value="${Math.max(0,t.bal)||''}"/></div>
     <div><label>Mode</label><select id="pp-m"><option>Cash</option><option>Bank transfer</option><option>Cheque</option><option>Card</option></select></div>
     <button class="btn btn-primary btn-sm" type="button" onclick="addPay()"><i class="ti ti-plus"></i>Add</button></div>`;
-  $('ov-f').innerHTML=`<button class="btn btn-primary btn-sm" type="button" onclick="printSaved('${b.id}')"><i class="ti ti-printer"></i>Print</button><button class="btn btn-ghost btn-sm" type="button" onclick="editBill('${b.id}')"><i class="ti ti-pencil"></i>Edit</button><button class="btn btn-ghost btn-sm" type="button" onclick="dupBill('${b.id}')"><i class="ti ti-copy"></i>Duplicate</button>`;
+  $('ov-f').innerHTML=`<button class="btn btn-primary btn-sm" type="button" onclick="printSaved('${b.id}')"><i class="ti ti-printer"></i>Print</button><button class="btn btn-sm wa-b2" type="button" onclick="waOpen('${b.id}')"><i class="ti ti-brand-whatsapp"></i>WhatsApp</button><button class="btn btn-ghost btn-sm" type="button" onclick="editBill('${b.id}')"><i class="ti ti-pencil"></i>Edit</button><button class="btn btn-ghost btn-sm" type="button" onclick="dupBill('${b.id}')"><i class="ti ti-copy"></i>Duplicate</button>`;
   $('ov').classList.add('open');
 }
 function closeView(){$('ov').classList.remove('open');vid=null;}
@@ -1261,6 +1323,152 @@ function switchTab(k){
 }
 document.querySelectorAll('#tab-nav .tab-btn').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.t)));
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeView();});
+
+const WA_LOG='bills_wa_log_v1',WA_CC='bills_wa_cc_v1',WA_NUMS='bills_wa_nums_v1';
+let waId=null,waFile=null,waBusy=false,waNum='',waMsg='',waNo='',waTok=0;
+const waJ=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
+const waW=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const waDB=()=>new Promise((res,rej)=>{const r=indexedDB.open('bills_wa',2);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains('kv'))d.createObjectStore('kv');if(!d.objectStoreNames.contains('pdfs'))d.createObjectStore('pdfs');};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
+async function waKV(mode,key,val){const db=await waDB();return new Promise((res,rej)=>{const tx=db.transaction('kv',mode==='get'?'readonly':'readwrite'),st=tx.objectStore('kv'),q=mode==='get'?st.get(key):st.put(val,key);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});}
+const waSafe=t=>String(t||'').replace(/[\\/:*?"<>|\s]+/g,'_').replace(/^_+|_+$/g,'').slice(0,60);
+const waPartyKey=b=>norm(b.party);
+function waNormalize(cc,raw){
+  let d=String(raw||'').replace(/[^\d+]/g,'');
+  if(d.startsWith('+'))return d.slice(1).replace(/\D/g,'');
+  d=d.replace(/\D/g,'');
+  if(d.startsWith('00'))return d.slice(2);
+  if(d.startsWith(cc)&&d.length>=cc.length+8)return d;
+  return cc+d.replace(/^0+/,'');
+}
+function waSteps(list){$('wa-steps').innerHTML=list.map(([c,t])=>`<div class="${c}"><i class="ti ${c==='ok'?'ti-circle-check':c==='err'?'ti-alert-circle':c==='run'?'ti-loader-2':'ti-circle'}"></i><span>${esc(t)}</span></div>`).join('');}
+/* compact message: total · what was received (date · method · amount) · paid · balance */
+function waMessage(b){
+  const t=calc(b),L=['Hello '+b.party+',','',(b.type==='vendor'?'Bill ':'Invoice ')+'*'+b.no+'* · '+b.date,'Total: *'+CUR+' '+money(t.total)+'*'];
+  if(t.paid>0)L.push('Paid: *'+CUR+' '+money(t.paid)+'*'+(b.pmode?' ('+b.pmode+')':''));
+  L.push(t.bal>.005?'Balance due: *'+CUR+' '+money(t.bal)+'*':'Status: *Paid in full* ✅');
+  L.push('','Thank you,',CO+(CO_PHONE?' · '+CO_PHONE:''));
+  return L.join('\n');
+}
+function waOpen(id){
+  const b=saved.find(x=>x.id===id);if(!b)return;waId=id;waFile=null;waTok++;waBusy=false;
+  const t=calc(b);
+  $('wa-sum').innerHTML='<b>'+esc(b.no)+'</b> · '+esc(b.party)+' · '+esc(b.date)+'<br>Total '+esc(CUR)+' '+money(t.total)+' · Balance '+esc(CUR)+' '+money(t.bal);
+  $('wa-cc').value=waJ(WA_CC,'92');
+  const sv0=waJ(WA_NUMS,{})[waPartyKey(b)]||'';$('wa-num').value=sv0;
+  waNum=sv0&&waNormalize($('wa-cc').value,sv0).length>=9?waNormalize($('wa-cc').value,sv0):'';
+  const lg=waJ(WA_LOG,[]).filter(x=>x.billId===id);
+  $('wa-hist').textContent=lg.length?'Last chat opened on +'+lg[0].number+' · '+new Date(lg[0].at).toLocaleString():'';
+  $('wa-new').style.display='none';$('wa-act').style.display='flex';$('wa-share-btn').disabled=true;
+  waSteps([['run','Creating…']]);
+  $('wa-ov').classList.add('open');
+  waPrepare(b);   /* icon click -> PDF + message are made right away */
+}
+/* STEP 1: make PDF + message (cached PDF is reused unless the bill changed) */
+async function waPrepare(b){
+  if(waBusy)return;waBusy=true;const tok=waTok;
+  const no=b.no,name=(b.type==='vendor'?'Bill_':'Invoice_')+waSafe(no)+'_'+waSafe(b.party)+'.pdf',msg=waMessage(b),sig=waHash(docHTML(b,true)+'|'+msg);
+  waSteps([['run','Creating…']]);
+  let ok=false;
+  try{
+    let blob=await waGetPdf(name,sig);
+    if(!blob){
+      blob=await waBuildPdf(b);
+      if(blob.size<3000)throw new Error('PDF came out empty — please try again');
+      await waSavePdf(blob,name,b.id,sig);
+    }
+    if(tok!==waTok)return;
+    waFile=new File([blob],name,{type:'application/pdf'});waMsg=msg;waNo=no;
+    waSteps([['ok','Created'],['ok','Ready']]);ok=true;
+  }catch(e){
+    if(tok!==waTok)return;
+    waSteps([['err',(e&&e.message)||'Failed']]);
+  }
+  waBusy=false;$('wa-share-btn').disabled=!ok;
+}
+/* STEP 2 (number not in your WhatsApp chats yet): open its chat with a SHORT message */
+function waNewToggle(){const n=$('wa-new');const show=n.style.display==='none';n.style.display=show?'':'none';if(show)setTimeout(()=>$('wa-num').focus(),50);}
+function waIntro(){
+  const b=saved.find(x=>x.id===waId);if(!b)return;
+  const cc=$('wa-cc').value,num=waNormalize(cc,$('wa-num').value);
+  if(num.length<9||num.length>15){showToast('Enter a valid WhatsApp number','error');$('wa-num').focus();return;}
+  waW(WA_CC,cc);const nums=waJ(WA_NUMS,{});nums[waPartyKey(b)]=$('wa-num').value.trim();waW(WA_NUMS,nums);
+  waNum=num;
+  const text='Hello '+b.party+', this is '+CO+'. Your '+(b.type==='vendor'?'bill ':'invoice ')+b.no+' is coming now.';
+  window.open('https://wa.me/'+num+'?text='+encodeURIComponent(text),'_blank');
+  const log=waJ(WA_LOG,[]);log.unshift({billId:b.id,billNo:b.no,party:b.party,number:num,file:'',path:'short message',where:'browser',at:Date.now()});waW(WA_LOG,log.slice(0,300));
+  $('wa-hist').textContent='Last chat opened on +'+num+' · '+new Date().toLocaleString();
+  $('wa-new').style.display='none';
+  showToast('Press Send in WhatsApp, then come back and tap Share','success');
+}
+function waClose(){waTok++;waBusy=false;$('wa-ov').classList.remove('open');waId=null;}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('wa-ov').classList.contains('open'))waClose();});
+
+/* PDF = the SAME document the Print button produces. It is laid out inside its own fixed-width A4 iframe
+   (same markup + same CSS as the print window), so the laptop / phone screen size can never change the result. */
+async function waBuildPdf(b){
+  if(typeof html2canvas==='undefined'||!window.jspdf)throw new Error('PDF library not loaded (check internet)');
+  const sty=[...document.querySelectorAll('style')].map(x=>x.textContent).join('\n'),css=sty.slice(sty.indexOf('/* ── print: only the bill ── */'));
+  const inner=docHTML(b,true);
+  const W=733,PX_MM=W/194;                                   // 733 css px = A4 width (210) − 2×8 mm margins → 1:1 with print
+  const fr=document.createElement('iframe');
+  fr.setAttribute('aria-hidden','true');fr.style.cssText='position:fixed;left:0;top:0;width:'+W+'px;height:1200px;border:0;opacity:0;pointer-events:none;z-index:-1';
+  document.body.appendChild(fr);
+  try{
+    await new Promise(res=>{fr.onload=res;fr.srcdoc='<!DOCTYPE html><html><head><meta charset="utf-8"><style>'+css+
+      '.inv .tot div{display:flex;justify-content:space-between;padding:3px 0}.inv .tot .g{font-weight:700}.inv .tot b{font-weight:700}.inv .pay b{display:block}'+
+      'html,body{margin:0;padding:0;background:#fff}#pr{display:block;box-sizing:border-box;width:'+W+'px}</style></head><body><div id="pr">'+inner+'</div></body></html>';});
+    const doc=fr.contentDocument,el=doc.getElementById('pr');
+    await Promise.all([...doc.images].map(i=>i.decode?i.decode().catch(()=>{}):0));
+    await new Promise(r=>setTimeout(r,150));
+    const H=Math.ceil(el.scrollHeight);fr.style.height=H+'px';
+    const base=el.getBoundingClientRect().top;
+    const cuts=[...doc.querySelectorAll('tr,.ihd,.imeta,.ibot,.sig,.ift,.iwords')].map(n=>n.getBoundingClientRect().bottom-base).sort((x,y)=>x-y);
+    const canvas=await html2canvas(el,{scale:2.5,useCORS:true,backgroundColor:'#fff',width:W,height:H,windowWidth:W,windowHeight:H,scrollX:0,scrollY:0});
+    const k=canvas.width/W,PH=281*PX_MM;                     // page content height (297 − 2×8 mm) in css px
+    const pdf=new window.jspdf.jsPDF({unit:'mm',format:'a4',orientation:'portrait',compress:true});
+    let y=0,first=true;
+    while(y<H-2){
+      let end=Math.min(y+PH,H);
+      if(end<H){const c=cuts.filter(v=>v>y+PH*.5&&v<=end).pop();if(c)end=c;}   // never cut through a table row / total box
+      const part=document.createElement('canvas');part.width=canvas.width;part.height=Math.max(1,Math.round((end-y)*k));
+      const cx=part.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,part.width,part.height);cx.drawImage(canvas,0,Math.round(y*k),canvas.width,part.height,0,0,part.width,part.height);
+      if(!first)pdf.addPage();first=false;
+      pdf.addImage(part.toDataURL('image/jpeg',.95),'JPEG',8,8,194,(end-y)/PX_MM,undefined,'FAST');
+      y=end;
+    }
+    return pdf.output('blob');
+  }finally{fr.remove();}
+}
+/* PDF is kept in the browser's own storage (IndexedDB) — no folder, no prompt. One entry per file name. */
+async function waSavePdf(blob,name,billId,sig){
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
+  const db=await waDB();
+  await new Promise((res,rej)=>{const tx=db.transaction('pdfs','readwrite');tx.objectStore('pdfs').put({name,blob,billId,sig,at:Date.now()},name);tx.oncomplete=res;tx.onerror=()=>rej(tx.error||new Error('Not enough space to save the file'));tx.onabort=()=>rej(tx.error||new Error('Not enough space to save the file'));});
+  return{where:'browser',path:'This device · '+name};
+}
+/* ONE-CLICK SEND
+   number (remembered per party) → PDF taken from the browser cache (rebuilt only if the bill changed) → text + chat opened on THAT number.
+   A browser cannot attach a file to a chat by itself. So: the PDF is saved to the device (1 tap to attach: 📎 → Document),
+   unless WA_API_URL is set — then the server sends text + PDF straight to the number, no WhatsApp window needed. */
+const WA_API_URL='';   // optional: your backend endpoint that calls the WhatsApp Business Cloud API (multipart: to, caption, file → {ok:true}). Never put the API token in this page.
+const waHash=t=>{let h=5381;for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return (h>>>0).toString(36)+'_'+t.length;};
+async function waGetPdf(name,sig){
+  try{const db=await waDB();return await new Promise(res=>{const r=db.transaction('pdfs').objectStore('pdfs').get(name);r.onsuccess=()=>{const v=r.result;res(v&&v.sig===sig&&v.blob&&v.blob.size>3000?v.blob:null);};r.onerror=()=>res(null);});}catch(e){return null;}
+}
+function waDownload(blob,name){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),30000);}
+function waLink(t){return 'https://wa.me/'+(waNum||'')+'?text='+encodeURIComponent(t||waMsg);}
+/* STEP 3: Share = PDF + full message as ONE message -> phone share sheet -> choose WhatsApp -> choose the chat */
+async function waShare(){
+  if(!waFile){showToast('PDF is not ready yet','error');return;}
+  if(navigator.canShare&&navigator.canShare({files:[waFile]})){
+    try{await navigator.share({files:[waFile],text:waMsg});waClose();return;}catch(e){if(e&&e.name==='AbortError')return;}
+  }
+  /* browsers without file sharing (most desktops): save the PDF and open the chat with the message */
+  waDownload(waFile,waFile.name);
+  window.open(waLink(waMsg),'_blank');
+  showToast('Share not supported here — PDF saved, attach it in WhatsApp (📎 → Document)','success');
+  waClose();
+}
 
 /* ═══ START ═══ */
 drawForm();drawHist();
