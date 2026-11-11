@@ -1620,8 +1620,8 @@ function _hasPerm(perms, key) {
      permKey  Permissions-sheet column, or null = always visible
    Colour tokens for the top-bar pill come from cls (see _SC_PILL).          */
 const SHORTCUTS = [
-  { id:'sc-additem', label:'Add Item', icon:'ti-plus',               file:'Reg/Master.html',   title:'Add Item',       sub:'Make item list',  cls:'emp',  permKey:'ap2_specsData' },
-  { id:'sc-store',   label:'Store',    icon:'ti-building-warehouse', file:'Reg/Incoming.html', title:'Items Incoming', sub:'Store / incoming', cls:'bike', permKey:null },
+  { id:'sc-additem', label:'DC', icon:'ti-plus',               file:'Reg/DC_Lists.html',   title:'Add Item',       sub:'Make item list',  cls:'emp',  permKey:'ap2_specsData' },
+  { id:'sc-store',   label:'Bill',    icon:'ti-building-warehouse', file:'Reg/mBill.html', title:'Items Incoming', sub:'Store / incoming', cls:'bike', permKey:'ap2_specsData' },
   // { id:'sc-new', label:'New Portal', icon:'ti-star', file:'Reg/NewPortal.html', title:'New Portal', sub:'Description', cls:'sim', permKey:'ap2_newPortal' },
 ];
 const _SC_PILL = {
