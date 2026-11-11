@@ -1,0 +1,2652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DC Lists</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/api.js?v=1"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/auth.js?v=7"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/accessGuard.js"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/dataLayer.js?v=8"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/cacheWatcher.js?v=1"></script>
+<script src="https://amorthopadics.github.io/SurgiStock/shared/cacheSync.js?v=1"></script>
+
+<style>
+/* ═══ THEME — keep identical across every module ═══ */
+:root,[data-theme="dark"]{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#1c2333;
+  --surface:#21262d;--surface2:#2d333b;
+  --border:#30363d;--border2:#444c56;
+  --text:#e6edf3;--text2:#8b949e;--text3:#6e7681;
+  --accent:#58a6ff;--accent-dim:rgba(88,166,255,.12);--accent-glow:rgba(88,166,255,.28);
+  --teal:#39d353;--teal-dim:rgba(57,211,83,.12);
+  --amber:#e3b341;--amber-dim:rgba(227,179,65,.12);
+  --red:#f85149;--red-dim:rgba(248,81,73,.12);
+  --purple:#a371f7;--purple-dim:rgba(163,113,247,.12);
+  --orange:#f0883e;--orange-dim:rgba(240,136,62,.12);
+  --radius:8px;--radius-lg:12px;--radius-xl:16px;
+  --font:'Sora',sans-serif;--mono:'JetBrains Mono',monospace;
+  --shadow:0 1px 3px rgba(0,0,0,.4);--shadow-md:0 4px 16px rgba(0,0,0,.5);--shadow-lg:0 8px 32px rgba(0,0,0,.6);
+}
+[data-theme="light"]{
+  --bg:#f0f2f5;--bg2:#fff;--bg3:#e8ecf0;
+  --surface:#fff;--surface2:#e2e7ed;
+  --border:#c8d0d9;--border2:#9aa5b1;
+  --text:#0d1117;--text2:#3d454f;--text3:#5a6370;
+  --accent:#0550ae;--accent-dim:rgba(5,80,174,.12);--accent-glow:rgba(5,80,174,.22);
+  --teal:#116329;--teal-dim:rgba(17,99,41,.13);
+  --amber:#7d4e00;--amber-dim:rgba(125,78,0,.13);
+  --red:#a8111b;--red-dim:rgba(168,17,27,.11);
+  --purple:#6639c8;--purple-dim:rgba(102,57,200,.13);
+  --orange:#953800;--orange-dim:rgba(149,56,0,.13);
+  --shadow:0 1px 3px rgba(0,0,0,.10);--shadow-md:0 4px 16px rgba(0,0,0,.12);--shadow-lg:0 8px 32px rgba(0,0,0,.15);
+}
+[data-theme="purple"]{
+  --bg:#0f0b1e;--bg2:#17112e;--bg3:#1e1840;
+  --surface:#221a3a;--surface2:#2c2250;
+  --border:#3a2e5e;--border2:#5a4890;
+  --text:#e8e0ff;--text2:#a899d4;--text3:#7a6ca8;
+  --accent:#c084fc;--accent-dim:rgba(192,132,252,.14);--accent-glow:rgba(192,132,252,.3);
+  --teal:#4ade80;--teal-dim:rgba(74,222,128,.12);
+  --amber:#fbbf24;--amber-dim:rgba(251,191,36,.12);
+  --red:#f87171;--red-dim:rgba(248,113,113,.12);
+  --purple:#c084fc;--purple-dim:rgba(192,132,252,.14);
+  --orange:#fb923c;--orange-dim:rgba(251,146,60,.12);
+  --shadow:0 1px 3px rgba(0,0,0,.5);--shadow-md:0 4px 16px rgba(0,0,0,.6);--shadow-lg:0 8px 32px rgba(0,0,0,.7);
+}
+[data-theme="ocean"]{
+  --bg:#071520;--bg2:#0d2035;--bg3:#112840;
+  --surface:#143050;--surface2:#1a3d60;
+  --border:#1e4a72;--border2:#2e6a9e;
+  --text:#d6eeff;--text2:#7db8e8;--text3:#4a87b8;
+  --accent:#38bdf8;--accent-dim:rgba(56,189,248,.14);--accent-glow:rgba(56,189,248,.3);
+  --teal:#34d399;--teal-dim:rgba(52,211,153,.12);
+  --amber:#fbbf24;--amber-dim:rgba(251,191,36,.12);
+  --red:#f87171;--red-dim:rgba(248,113,113,.12);
+  --purple:#a78bfa;--purple-dim:rgba(167,139,250,.12);
+  --orange:#fb923c;--orange-dim:rgba(251,146,60,.12);
+  --shadow:0 1px 3px rgba(0,0,0,.5);--shadow-md:0 4px 16px rgba(0,0,0,.55);--shadow-lg:0 8px 32px rgba(0,0,0,.65);
+}
+[data-theme="slate"]{
+  --bg:#0e1117;--bg2:#1a1f28;--bg3:#222836;
+  --surface:#28303e;--surface2:#313c4e;
+  --border:#3a4556;--border2:#556070;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+  --accent:#60a5fa;--accent-dim:rgba(96,165,250,.13);--accent-glow:rgba(96,165,250,.28);
+  --teal:#4ade80;--teal-dim:rgba(74,222,128,.12);
+  --amber:#fbbf24;--amber-dim:rgba(251,191,36,.12);
+  --red:#f87171;--red-dim:rgba(248,113,113,.12);
+  --purple:#a78bfa;--purple-dim:rgba(167,139,250,.12);
+  --orange:#fb923c;--orange-dim:rgba(251,146,60,.12);
+  --shadow:0 1px 3px rgba(0,0,0,.45);--shadow-md:0 4px 16px rgba(0,0,0,.5);--shadow-lg:0 8px 32px rgba(0,0,0,.6);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+
+/* ═══ LAYOUT ═══ */
+body{display:flex;flex-direction:column;}
+.portal-wrap{display:flex;flex-direction:column;flex:1;min-height:0;width:100%;max-width:1600px;margin:0 auto;padding:10px;gap:8px;}
+
+/* ═══ VIEW BAR ═══ */
+.view-bar{position:relative;display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;padding:8px 14px;background:var(--bg2);border-bottom:1px solid var(--border);}
+.vb-brand{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;flex-shrink:0;border-radius:var(--radius-lg);background:var(--accent-dim);color:var(--accent);border:1px solid var(--border);font-size:16px;}
+.vb-sep{width:1px;height:20px;background:var(--border);flex-shrink:0;}
+.vb-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1 1 auto;min-width:0;}
+.vb-field{display:flex;align-items:center;gap:8px;}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+.ib{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;flex-shrink:0;border-radius:var(--radius-lg);background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:15px;line-height:1;cursor:pointer;transition:color .15s,border-color .15s,background .15s;}
+.ib:hover{border-color:var(--accent);color:var(--accent);}
+.ib.sm{width:26px;height:26px;font-size:13px;border-radius:var(--radius);}
+.vb-sel{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 6px 0 10px;border-radius:var(--radius-lg);background:var(--bg3);border:1px solid var(--border);color:var(--text2);transition:border-color .15s;}
+.vb-sel:hover,.vb-sel:focus-within{border-color:var(--accent);}
+.vb-sel i{font-size:15px;line-height:1;}
+.vb-sel select{background:transparent;border:none;outline:none;color:var(--text);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;max-width:130px;}
+.vb-sel select option{background:var(--surface2);color:var(--text);}
+
+/* search-to-select: icon button → input slides open on focus */
+.vb-search{display:flex;align-items:center;}
+.vb-search>.ib{position:relative;}
+.vb-search.has-val>.ib,.vb-search:focus-within>.ib{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);}
+.sdw{position:relative;}
+.sdw.vb-search input{width:0;margin-left:0;padding:8px 0;border-width:0;opacity:0;transition:width .2s ease,opacity .15s,margin-left .2s;}
+.sdw.vb-search:focus-within input{width:clamp(170px,26vw,270px);margin-left:6px;padding:7px 30px 7px 11px;border-width:1.5px;opacity:1;}
+.vb-search:not(:focus-within) .clr-btn{display:none!important;}
+.sdw input{width:100%;padding:8px 34px 8px 11px;border:1.5px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-family:var(--font);font-size:12.5px;transition:border .15s,box-shadow .15s;}
+.sdw input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);}
+.sdw input::placeholder{color:var(--text3);}
+.sdw .clr-btn{position:absolute;right:7px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;padding:2px;display:none;font-size:14px;line-height:1;}
+.sdw .clr-btn:hover{color:var(--text);}
+.sdw input:not(:placeholder-shown) ~ .clr-btn{display:flex;}
+.sdw.has-val .clr-btn{display:flex;}
+.dropdown-list{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface2);border:1.5px solid var(--border2);border-radius:var(--radius);box-shadow:var(--shadow-lg);z-index:300;max-height:240px;overflow-y:auto;display:none;}
+.dropdown-list.open{display:block;}
+.di{padding:8px 12px;font-size:12.5px;cursor:pointer;transition:background .1s;}
+.di:hover{background:var(--accent-dim);}
+.di .dn{color:var(--text);font-weight:600;}
+.di .dn em{color:var(--accent);font-style:normal;}
+.di .ds{font-family:var(--mono);font-size:10.5px;color:var(--text3);}
+.di.no-match{color:var(--text3);cursor:default;}
+.di.no-match:hover{background:none;}
+
+/* confirm strip — shown once a selection is made */
+.confirm-strip{display:none;align-items:center;gap:7px;background:var(--accent-dim);border:1px solid rgba(88,166,255,.25);border-radius:var(--radius-lg);padding:6px 10px;flex-shrink:0;flex-wrap:wrap;min-width:0;}
+.ca{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;flex-shrink:0;}
+.cn{font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;}
+.cs{font-size:10px;color:var(--text3);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;}
+
+/* tabs — fixed-size nav, active tab grows and reveals its label */
+.tab-nav{display:flex;gap:3px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-lg);padding:3px;}
+.tab-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 12px;border-radius:var(--radius);border:none;background:transparent;color:var(--text2);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;white-space:nowrap;}
+.tab-btn i{font-size:14px;}
+.tab-btn.active{background:var(--accent);color:#fff;box-shadow:0 0 10px var(--accent-glow);}
+.tab-btn:not(.active):hover{background:var(--surface2);color:var(--text);}
+.tabs-fixed{width:176px;flex-shrink:0;}
+.tabs-fixed .tab-btn{flex:0 0 34px;gap:0;min-width:0;padding:6px 0;overflow:hidden;transition:flex-grow .28s ease,background .18s,color .18s,box-shadow .18s;}
+.tabs-fixed .tab-btn.active{flex-grow:1;}
+.tabs-fixed .tab-btn span{max-width:0;margin-left:0;opacity:0;overflow:hidden;transition:max-width .28s ease,margin-left .28s ease,opacity .2s;}
+.tabs-fixed .tab-btn.active span{max-width:80px;margin-left:6px;opacity:1;}
+@media(max-width:600px){.tab-btn span{display:none;}.tab-btn{padding:6px 9px;}}
+
+/* cache status indicator */
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.cache-ind{margin-left:auto;}
+.cache-ind,.cache-ind:hover{background:none;border:0;box-shadow:none;}
+.cache-ind.ok{color:var(--teal);}
+.cache-ind.warn{color:var(--amber);}
+.cache-ind.err{color:var(--red);}
+.cache-ind.busy i{animation:spin 1s linear infinite;}
+.sync-ind,.sync-ind:hover{position:relative;background:none;border:0;box-shadow:none;color:var(--red);}
+.sync-ind .ping{position:absolute;top:2px;right:2px;width:9px;height:9px;border-radius:50%;background:var(--red);}
+.sync-ind .ping::after{content:'';position:absolute;inset:0;border-radius:50%;background:var(--red);animation:pingo 1.4s ease-out infinite;}
+.sync-ind .sync-n{position:absolute;bottom:-3px;right:-2px;min-width:14px;height:14px;padding:0 3px;border-radius:7px;background:var(--red);color:#fff;font-size:9px;line-height:14px;text-align:center;font-family:var(--mono);}
+.sync-ind.busy>i{animation:spin 1s linear infinite;}
+@keyframes pingo{0%{transform:scale(1);opacity:.75}100%{transform:scale(3.2);opacity:0}}
+@keyframes blinkb{0%,100%{box-shadow:inset 0 2px 0 transparent,inset 0 -2px 0 transparent;background:transparent}50%{box-shadow:inset 0 2px 0 var(--accent),inset 0 -2px 0 var(--accent);background:var(--accent-dim)}}
+tr.blink-row>td{animation:blinkb .7s ease-in-out 6;}
+tr.blink-row>td:first-child{box-shadow:inset 2px 0 0 var(--accent);}
+
+/* ═══ FIELD / FORM ═══ */
+.field{display:flex;flex-direction:column;gap:5px;}
+.field label{font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;}
+.field label span.req{color:var(--red);}
+.date-input{width:100%;padding:8px 11px;border:1.5px solid var(--border2);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-family:var(--font);font-size:12.5px;}
+.date-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);}
+
+/* ═══ MAIN SPLIT: sidebar / center / preview ═══ */
+.main-split{flex:1;display:flex;gap:10px;min-height:0;}
+
+.doc-sidebar{width:120px;flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:8px;display:flex;flex-direction:column;gap:5px;overflow-y:auto;box-shadow:var(--shadow);}
+.doc-sidebar-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:8px;color:var(--text3);text-align:center;padding:12px 6px;}
+.doc-sidebar-empty i{font-size:24px;opacity:.35;}
+.doc-sidebar-empty span{font-size:10.5px;}
+.doc-side-btn{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 6px;border-radius:var(--radius-lg);border:1.5px solid var(--border);background:var(--surface2);color:var(--text2);font-family:var(--font);font-size:10px;font-weight:600;cursor:pointer;transition:all .18s;text-align:center;}
+.doc-side-btn i{font-size:18px;}
+.doc-side-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);}
+.doc-side-btn.selected{border-color:var(--accent);background:var(--accent-dim);color:var(--accent);box-shadow:0 0 0 1px var(--accent);}
+.doc-side-btn.has-docs{border-color:var(--teal);color:var(--teal);}
+.doc-side-btn.has-docs i{color:var(--teal);}
+.doc-side-btn.expired-docs{border-color:var(--red);color:var(--red);}
+.doc-side-btn.expiring-docs{border-color:var(--amber);color:var(--amber);}
+.doc-count-badge{position:absolute;top:4px;right:4px;background:var(--teal);color:#fff;font-size:8.5px;font-weight:700;width:15px;height:15px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.doc-count-badge.red{background:var(--red);}
+.doc-count-badge.amber{background:var(--amber);}
+.sidebar-sep{height:1px;background:var(--border);margin:3px 2px;}
+
+.doc-center{flex:1;min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;position:relative;}
+.doc-center-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;flex-shrink:0;}
+.doc-center-header h3{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:7px;}
+.doc-center-header h3 i{color:var(--accent);font-size:17px;}
+.doc-center-body{flex:1;overflow-y:auto;padding:14px 16px;}
+.doc-center-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text3);gap:10px;text-align:center;padding:24px;}
+.doc-center-placeholder i{font-size:34px;opacity:.3;}
+.doc-center-placeholder span{font-size:12.5px;}
+
+/* generic record-list rows inside doc-center-body */
+.hist-list{display:flex;flex-direction:column;gap:7px;}
+.hist-rec{display:inline-flex;gap:9px;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-lg);transition:border .12s;align-items:flex-start;cursor:pointer;width:100%;max-width:560px;}
+.hist-rec:hover{border-color:var(--accent);}
+.hist-rec.active{border-color:var(--accent);background:var(--accent-dim);box-shadow:0 0 0 1px var(--accent);}
+.hist-icon{width:30px;height:30px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;margin-top:1px;}
+.hist-meta{flex:1;min-width:0;}
+.hist-date{font-size:10.5px;color:var(--text2);margin-top:2px;}
+.hist-exp{font-size:10px;margin-top:2px;display:flex;align-items:center;gap:3px;}
+.hist-exp.red{color:var(--red);}
+.hist-exp.amber{color:var(--amber);}
+.hist-exp.teal{color:var(--teal);}
+.hist-exp.gray{color:var(--text3);}
+.hist-note{font-size:10.5px;color:var(--text2);margin-top:2px;font-style:italic;}
+
+.doc-preview-panel{width:0;flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow);overflow:hidden;transition:width .26s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;}
+.doc-preview-panel.open{width:400px;}
+.pph{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;flex-shrink:0;}
+.pph h3{font-size:12.5px;font-weight:700;display:flex;align-items:center;gap:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pph h3 i{color:var(--accent);font-size:16px;flex-shrink:0;}
+.pph-close{margin-left:auto;width:26px;height:26px;border-radius:var(--radius);border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s;flex-shrink:0;}
+.pph-close:hover{background:var(--red-dim);color:var(--red);border-color:var(--red);}
+.ppb{flex:1;overflow-y:auto;padding:14px;}
+.ppb img.pi{max-width:100%;border-radius:var(--radius-lg);display:block;margin:0 auto;}
+.ppb iframe.pf{width:100%;height:400px;border:none;border-radius:var(--radius-lg);}
+.preview-meta{display:flex;flex-direction:column;gap:8px;margin-top:12px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-lg);}
+.pmi{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.pmi .k{font-size:9.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;}
+.pmi .v{font-size:11.5px;font-weight:600;color:var(--text);font-family:var(--mono);text-align:right;}
+.ppf{padding:10px 14px;border-top:1px solid var(--border);flex-shrink:0;}
+
+/* dashed "add new" row + inline upload form */
+.txn-new-row{display:flex;align-items:center;gap:9px;padding:11px 13px;border:1.5px dashed var(--border2);border-radius:var(--radius-lg);margin-top:4px;background:var(--bg2);}
+.txn-new-label{flex:1;font-size:12px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:7px;}
+.txn-new-label i{font-size:17px;color:var(--text3);}
+.btn-new-upload{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius);border:1.5px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;transition:all .18s;}
+.btn-new-upload:hover{background:var(--accent);color:#fff;}
+.upload-inline{display:none;margin-top:10px;background:var(--bg3);border:1.5px dashed var(--border2);border-radius:var(--radius-lg);padding:14px;}
+.upload-inline.open{display:block;}
+.upload-inline-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;display:flex;align-items:center;gap:5px;}
+.upload-inline-title i{font-size:13px;color:var(--accent);}
+.upload-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;}
+.upload-row .field{flex:1;min-width:180px;}
+.file-upload-zone{border:2px dashed var(--border2);border-radius:var(--radius-lg);padding:14px;text-align:center;cursor:pointer;transition:all .18s;background:var(--surface);position:relative;}
+.file-upload-zone:hover,.file-upload-zone.dragover{border-color:var(--accent);background:var(--accent-dim);}
+.file-upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.file-upload-zone i{font-size:22px;color:var(--text3);display:block;margin-bottom:4px;}
+.file-upload-zone p{font-size:11px;color:var(--text3);}
+.file-upload-zone.has-file{border-color:var(--teal);background:var(--teal-dim);}
+.file-upload-zone.has-file i,.file-upload-zone.has-file p{color:var(--teal);}
+.upload-actions{display:flex;justify-content:flex-end;margin-top:10px;gap:7px;}
+.gs-status{display:flex;align-items:center;gap:7px;padding:8px 13px;border-radius:var(--radius-lg);font-size:11px;font-weight:600;margin-top:8px;}
+.gs-status.loading{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(88,166,255,.3);}
+.gs-status.success{background:var(--teal-dim);color:var(--teal);border:1px solid rgba(57,211,83,.3);}
+.gs-status.error{background:var(--red-dim);color:var(--red);border:1px solid rgba(248,81,73,.3);}
+
+/* ═══ BUTTONS / BADGES ═══ */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius);border:1.5px solid;font-family:var(--font);font-size:12.5px;font-weight:600;cursor:pointer;transition:all .18s;white-space:nowrap;line-height:1;}
+.btn i{font-size:15px;flex-shrink:0;}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 0 10px var(--accent-glow);}
+.btn-primary:hover{filter:brightness(1.1);}
+.btn-ghost{background:transparent;color:var(--text2);border-color:var(--border2);}
+.btn-ghost:hover{background:var(--surface2);color:var(--text);}
+.btn-sm{padding:5px 10px;font-size:11.5px;}
+.btn:disabled{opacity:.5;cursor:not-allowed;pointer-events:none;}
+.btn-block{width:100%;justify-content:center;}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;}
+.badge.purple{background:rgba(163,113,247,.18);color:#a371f7;border:1px solid rgba(163,113,247,.3);}
+
+/* ═══ FLAT TABLE (e.g. a combined log tab) ═══ */
+.log-table{width:100%;border-collapse:collapse;font-size:12px;}
+.log-table th{padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid var(--border);background:var(--bg3);cursor:pointer;white-space:nowrap;position:sticky;top:0;z-index:2;}
+.log-table th:hover{color:var(--accent);}
+.log-table td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.log-table tbody tr:hover{background:var(--surface2);}
+.txn-mono{font-family:var(--mono);font-size:10.5px;color:var(--accent);}
+.portal-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:20px;font-size:9.5px;font-weight:700;}
+.doc-link-btn{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:var(--radius);background:var(--accent-dim);color:var(--accent);border:1px solid rgba(88,166,255,.25);font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .14s;}
+.doc-link-btn:hover{background:var(--accent);color:#fff;}
+.log-stat-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--surface);font-size:11px;font-weight:600;color:var(--text2);}
+
+/* ═══ TOAST ═══ */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);padding:10px 16px;border-radius:var(--radius-lg);font-size:12.5px;font-weight:500;z-index:999;opacity:0;transform:translateY(10px);transition:all .25s cubic-bezier(.34,1.56,.64,1);pointer-events:none;display:flex;align-items:center;gap:9px;box-shadow:var(--shadow-lg);max-width:340px;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.success{background:var(--teal-dim);color:var(--teal);border-color:rgba(57,211,83,.25);}
+.toast.error{background:var(--red-dim);color:var(--red);border-color:rgba(248,81,73,.25);}
+.spinner{animation:spin 1s linear infinite;display:inline-flex;}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:1100px){
+  .doc-preview-panel.open{width:340px;}
+}
+@media(max-width:900px){
+  .doc-sidebar{width:86px;}
+  .doc-side-btn span{font-size:9px;}
+  .doc-preview-panel.open{width:100%;position:fixed;inset:0;z-index:300;border-radius:0;width:100%!important;}
+}
+@media(max-width:700px){
+  .vb-sep{display:none;}
+  .tabs-fixed{width:auto;}
+  .tabs-fixed .tab-btn.active{flex-grow:0;}
+  .sdw.vb-search{position:static;}
+  .vb-search .clr-btn{display:none!important;}
+  .vb-search .dropdown-list{left:0;right:0;min-width:0;}
+  .portal-wrap{padding:8px;gap:7px;}
+  .tab-btn span{display:none;}
+  .tab-btn{padding:8px 10px;}
+  .main-split{flex-direction:column;}
+  .doc-sidebar{width:100%;flex-direction:row;overflow-x:auto;padding:6px;flex-wrap:nowrap;height:auto;max-height:none;}
+  .doc-sidebar .doc-side-btn{min-width:70px;flex-shrink:0;}
+  .doc-preview-panel{position:fixed;inset:0;z-index:300;border-radius:0;width:0!important;}
+  .doc-preview-panel.open{width:100%!important;}
+  .confirm-strip{flex-wrap:wrap;}
+  .hist-rec{max-width:100%;}
+}
+@media(max-width:480px){
+  .doc-center-header{flex-wrap:wrap;gap:6px;}
+}
+
+/* ═══ MODULE-SPECIFIC ADDITIONS (Master Setup) ═══ */
+.tabs-fixed.four{width:200px;flex-shrink:0;}
+.tabs-fixed.four .tab-btn.active span{max-width:120px;}
+@media(max-width:700px){   /* keep the active label visible on phones, inactive stays icon-only */
+  .tabs-fixed.four{width:auto;}
+  .tabs-fixed.four .tab-btn{flex:0 0 38px;padding:7px 0;}
+  .tabs-fixed.four .tab-btn.active{flex:0 0 auto;padding:7px 14px;}
+  .tabs-fixed.four .tab-btn.active span{display:inline;max-width:120px;margin-left:6px;opacity:1;}
+}
+
+/* sub menu — sits between the main tabs and the search box */
+.sub-nav{display:none;align-items:center;gap:3px;padding:3px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-lg);min-width:0;max-width:100%;overflow-x:auto;scrollbar-width:none;}
+.sub-nav::-webkit-scrollbar{display:none;}
+.sub-nav{width:360px;flex-shrink:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;}
+.sub-btn{display:inline-flex;align-items:center;justify-content:center;flex:0 0 34px;min-width:0;padding:7px 0;border:none;border-radius:var(--radius);background:transparent;color:var(--text2);font-family:var(--font);font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer;overflow:hidden;transition:background .18s,color .18s,box-shadow .18s;}
+.sub-btn i{font-size:15px;flex-shrink:0;}
+.sub-btn span{max-width:0;margin-left:0;opacity:0;overflow:hidden;transition:max-width .28s ease,margin-left .28s ease,opacity .2s;}
+.sub-btn.active{flex:1 0 auto;padding:7px 12px;background:var(--accent-dim);color:var(--accent);box-shadow:inset 0 0 0 1px rgba(88,166,255,.35);}
+.sub-btn.active span{max-width:110px;margin-left:6px;opacity:1;}
+.sub-btn:not(.active):hover{background:var(--surface2);color:var(--text);}
+@media(max-width:700px){
+  /* small screens: brand + tabs + sub menu share ONE row; the sub menu takes the leftover width and scrolls sideways */
+  .sub-nav{flex:1 1 0;width:auto;min-width:0;}
+  .sub-nav .sub-btn{scroll-margin-inline:6px;}
+  /* search (+ cache icon) drops to the next row */
+  .vb-brand{display:none;}
+}
+@media(max-width:480px){
+  .view-bar{padding:8px;gap:6px;}
+  .tabs-fixed.four .tab-btn{flex-basis:34px;}
+  .tabs-fixed.four .tab-btn.active{padding:7px 10px;font-size:11.5px;}
+  .sub-btn{flex-basis:32px;}
+  .sub-btn.active{padding:7px 10px;font-size:11.5px;}
+}
+
+/* header tools: search · Active / Inactive filters · Upload (import) menu */
+/* search: icon in the header; click opens a search box that drops down OVER the table (nothing else moves) */
+.doc-center-header{position:relative;}
+.hs{display:inline-flex;}
+.hs.has-val>.ib,.hs.open>.ib{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);}
+.hs-pop{display:none;position:absolute;top:calc(100% + 6px);right:16px;width:min(380px,calc(100% - 32px));z-index:60;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border:1.5px solid var(--accent);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg),0 0 0 3px var(--accent-dim);}
+.hs.open .hs-pop{display:flex;animation:hsDrop .16s ease;}
+@keyframes hsDrop{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
+.hs-pop>i{color:var(--accent);font-size:16px;flex-shrink:0;}
+.hs-in{flex:1;min-width:0;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--font);font-size:13px;padding:5px 0;}
+.hs-in::placeholder{color:var(--text3);}
+.hs-x{display:none;align-items:center;justify-content:center;width:24px;height:24px;flex-shrink:0;border:none;border-radius:50%;background:var(--bg3);color:var(--text2);font-size:13px;cursor:pointer;}
+.hs-x:hover{color:var(--text);}
+.hs.has-val .hs-x{display:inline-flex;}
+.hdr-actions .btn{white-space:nowrap;}
+.doc-center-body{overflow-x:auto;}
+.up-menu{max-width:calc(100vw - 24px);}
+@media(max-width:700px){
+  .doc-center-header{flex-wrap:wrap;padding:10px 12px;row-gap:8px;}
+  .doc-center-header .hist-tip{display:none;}
+  .doc-center-header .hdr-actions{flex:1 1 auto;margin-left:auto;gap:6px;}
+  .hs-pop{left:12px;right:12px;width:auto;}
+  .hs-in{font-size:16px;}   /* stops iOS zooming into the field */
+  .doc-center-body{padding:10px;}
+  .main-split{gap:8px;}
+}
+@media(max-width:800px){.doc-center-body .log-table th,.doc-center-body .log-table td{padding:9px 8px;}}
+@media(max-width:600px){
+  /* compact tables: drop "#" and "Added"; long text wraps so nothing forces a sideways scroll */
+  .doc-center-body .log-table th:first-child,.doc-center-body .log-table td:first-child,
+  .doc-center-body .log-table th:nth-last-child(2),.doc-center-body .log-table td:nth-last-child(2){display:none;}
+  .doc-center-body .log-table th,.doc-center-body .log-table td{padding:8px 6px;}
+  .doc-center-body .log-table th{white-space:normal;font-size:9.5px;letter-spacing:.03em;line-height:1.25;vertical-align:bottom;}
+  .doc-center-body .log-table .cell-desc{white-space:normal;max-width:none;overflow:visible;font-size:11.5px;line-height:1.35;word-break:break-word;}
+  .doc-center-body .log-table td strong{word-break:break-word;}
+  .doc-center-body .log-table .st-badge{padding:2px 7px;}
+  .doc-center-body .log-table .act-btns{gap:3px;}
+  .doc-center-body .log-table .ib.sm{width:24px;height:24px;font-size:12px;}
+}
+@media(max-width:360px){.doc-center-body{padding:6px;}.doc-center-header{padding:8px 10px;}}
+@media(max-width:480px){.hdr-actions .btn .lbl{display:none;}.hdr-actions .btn{padding:6px 9px;}}
+
+.doc-center-header .hdr-actions{flex-wrap:wrap;justify-content:flex-end;}
+.flt-group{display:inline-flex;gap:5px;}
+.hdr-actions .ib{width:30px;height:30px;font-size:15px;}
+.ib.flt{position:relative;}
+.ib.flt.dupf{opacity:.45;}
+.ib.flt.dupf.has{opacity:1;border-color:var(--amber);color:var(--amber);background:var(--amber-dim);}
+.ib.flt.dupf.has.on{border-color:var(--orange);color:var(--orange);background:var(--orange-dim);}
+.ib.flt.dupf:disabled{cursor:default;}
+.dup-ic{color:var(--amber);margin-right:5px;font-size:13px;vertical-align:-1px;}
+tr.dup-row>td{background:var(--amber-dim);}
+[data-act][disabled],.ag-disabled{opacity:.4;cursor:not-allowed !important;pointer-events:auto;}
+body.cache-off [data-act="add"],body.cache-off [data-act="add-list"],body.cache-off [data-act="edit"],body.cache-off [data-act="toggle"],body.cache-off [data-act="del"],
+body.cache-off [data-act="ss-toggle"],body.cache-off [data-act="ss-del"],body.cache-off [data-act="ss-deltype"],body.cache-off [data-act="upload"],
+body.cache-off [data-act="save"],body.cache-off [data-act="sm-save"],body.cache-off [data-act="sm-save-new"],body.cache-off [data-act="modal-save"],body.cache-off [data-act="modal-save-new"]{opacity:.4;cursor:not-allowed;}
+.ib.flt .flt-n{position:absolute;top:-6px;right:-6px;min-width:15px;height:15px;padding:0 3px;border-radius:8px;background:var(--surface2);border:1px solid var(--border2);color:var(--text2);font-size:9px;font-weight:700;line-height:13px;text-align:center;font-family:var(--mono);}
+.ib.flt.active:hover,.ib.flt.active.on{border-color:var(--teal);color:var(--teal);background:var(--teal-dim);}
+.ib.flt.inactive:hover,.ib.flt.inactive.on{border-color:var(--red);color:var(--red);background:var(--red-dim);}
+.up-wrap{position:relative;display:inline-flex;}
+.up-menu{display:none;position:absolute;top:calc(100% + 6px);right:0;min-width:178px;padding:4px;background:var(--surface2);border:1.5px solid var(--border2);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);z-index:320;flex-direction:column;gap:2px;}
+.up-menu.open{display:flex;}
+.up-menu button{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border:none;border-radius:var(--radius);background:transparent;color:var(--text);font-family:var(--font);font-size:12px;font-weight:600;text-align:left;cursor:pointer;white-space:nowrap;}
+.up-menu button i{font-size:15px;color:var(--accent);}
+.up-menu button:hover{background:var(--accent-dim);}
+.doc-center-header .hdr-actions{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.log-table .cell-desc{max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2);}
+.log-table .cell-muted{color:var(--text3);font-style:italic;}
+.log-table td.num{width:44px;color:var(--text3);font-family:var(--mono);font-size:10.5px;}
+.log-table td.acts{width:1%;white-space:nowrap;}
+.log-table th .sort-i{font-size:11px;margin-left:3px;opacity:.7;}
+.act-btns{display:inline-flex;gap:4px;}
+.ib.sm.danger:hover,.ib.sm.armed{border-color:var(--red);color:var(--red);background:var(--red-dim);}
+.ib.sm.armed{animation:pulse .9s ease infinite;}
+@keyframes pulse{50%{opacity:.55;}}
+.st-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;border:1px solid;}
+.st-badge.active{background:var(--teal-dim);color:var(--teal);border-color:rgba(57,211,83,.3);}
+.st-badge.inactive{background:var(--red-dim);color:var(--red);border-color:rgba(248,81,73,.3);}
+.st-badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;}
+.form-stack{display:flex;flex-direction:column;gap:14px;}
+textarea.date-input{min-height:92px;resize:vertical;font-family:var(--font);line-height:1.5;}
+select.date-input{cursor:pointer;}
+select.date-input option{background:var(--surface2);color:var(--text);}
+.field .err{display:none;font-size:10.5px;color:var(--red);font-weight:600;}
+.field.invalid .err{display:block;}
+.field.invalid .date-input{border-color:var(--red);}
+.form-actions{display:flex;gap:8px;}
+.form-actions .btn{flex:1;justify-content:center;}
+.edit-banner{display:none;align-items:center;gap:7px;padding:7px 11px;border-radius:var(--radius-lg);background:var(--amber-dim);color:var(--amber);border:1px solid rgba(227,179,65,.3);font-size:11px;font-weight:600;}
+.edit-banner.show{display:flex;}
+.hist-tip{font-size:10.5px;color:var(--text3);display:flex;align-items:center;gap:5px;}
+
+/* ═══ ITEM LIST builder ═══ */
+.spec-chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;background:var(--accent-dim);color:var(--accent);border:1px solid rgba(88,166,255,.25);white-space:nowrap;}
+.it-cell{line-height:1.3;}
+.it-cell strong{font-size:12.5px;}
+.it-sep{color:var(--text3);margin:0 4px;font-size:10px;}
+.it-desc{color:var(--text2);font-size:10px;font-style:italic;}
+.sid{font-family:var(--mono);font-weight:700;color:var(--accent);}
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;}
+.chip:hover{border-color:var(--accent);color:var(--accent);}
+.chip.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);}
+.chip.dis{opacity:.4;cursor:not-allowed;}
+.chip.new{border-style:dashed;}
+.chips.bad{padding:6px;border:1px solid var(--red);border-radius:var(--radius-lg);box-shadow:0 0 0 3px var(--red-dim);}
+.chip-empty{font-size:11.5px;color:var(--text3);}
+.fgrp-lbl{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.modal-bd .field{margin-bottom:12px;}
+.specs-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start;}
+@media(max-width:1100px){.specs-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:700px){.specs-grid{grid-template-columns:1fr;}}
+.spec-row{display:grid;grid-template-columns:64px minmax(0,1fr) 28px;gap:8px;align-items:start;padding:0;border:0;background:none;}
+.spec-row .rno{font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;grid-column:auto;padding-top:8px;line-height:1.2;}
+.spec-row .date-input{margin-bottom:0;}
+.spec-row .rcol{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.spec-row.one{grid-template-columns:50px minmax(0,1fr) minmax(0,1fr) 28px;}
+@media(min-width:1101px){#specsetting-preview-panel.open,#itemlist-preview-panel.open{width:480px;}}
+.spec-row .ib{width:28px;height:28px;margin-top:1px;}
+.ppb .form-stack{gap:8px;}
+.ppb .date-input{padding:6px 10px;font-size:12.5px;}
+.ppb .field.inl{display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px;align-items:start;margin-bottom:0;}
+.ppb .field.inl>.fgrp-lbl,.ppb .field.inl>label{margin:0;padding-top:8px;}
+.ppb .field .fgrp-lbl{margin-bottom:4px;}
+.ppb .field.inl .fgrp-lbl{margin-bottom:0;}
+.ppb .modal-bd .field,.ppb .field{margin-bottom:0;}
+.spec-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;min-width:0;}
+.spec-card .grp-hd{padding:8px 10px;border-bottom:1px solid var(--border);background:var(--bg3);}
+.spec-scroll{max-height:240px;min-height:96px;overflow:auto;}
+.spec-scroll .log-table{width:100%;min-width:300px;}
+.spec-scroll .log-table th,.spec-scroll .log-table td{padding:5px 8px;font-size:12px;}
+.spec-scroll .log-table th{position:sticky;top:0;z-index:1;background:var(--bg3);cursor:pointer;}
+.spec-scroll .cell-desc{max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.spec-scroll .ib.sm{width:22px;height:22px;font-size:12px;}
+.ppb .chips{margin-top:2px;}
+.cb{position:relative;}
+.cb-pop{display:none;position:absolute;left:0;right:0;top:100%;margin-top:3px;z-index:30;max-height:190px;overflow-y:auto;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);padding:4px;}
+.cb.open .cb-pop{display:block;}
+.cb-opt{padding:6px 10px;border-radius:var(--radius);font-size:12.5px;cursor:pointer;display:flex;align-items:center;gap:6px;color:var(--text);}
+.cb-opt.hl,.cb-opt:hover{background:var(--accent-dim);color:var(--accent);}
+.cb-opt.add{color:var(--teal);font-weight:600;}
+.cb-none{padding:6px 10px;font-size:12px;color:var(--text3);}
+.cb-hint{display:none;align-items:center;gap:4px;font-size:10.5px;color:var(--teal);margin-top:3px;}
+.cb-hint.show{display:flex;}
+.hist-title{font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;}
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;display:none;align-items:center;justify-content:center;padding:16px;}
+.modal-ov.open{display:flex;}
+.modal{width:100%;max-width:940px;max-height:calc(100vh - 32px);display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-xl);box-shadow:var(--shadow-lg);overflow:hidden;}
+.modal-hd{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;flex-shrink:0;}
+.modal-hd h3{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:7px;}
+.modal-hd h3 i{color:var(--accent);font-size:17px;}
+.modal-bd{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:14px;}
+.modal-ft{padding:10px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.modal-ft .sp{flex:1;}
+.form-grid{display:grid;grid-template-columns:2fr 2fr 1fr;gap:12px;}
+.form-grid .full{grid-column:1/-1;}
+@media(max-width:700px){.form-grid{grid-template-columns:1fr;}}
+.lines-head{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.lines-wrap{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:auto;}
+.lines-table{min-width:660px;}
+.lines-table th{cursor:default;position:static;}
+.lines-table th:hover{color:var(--text3);}
+.lines-table td{padding:6px 8px;}
+.lines-table .date-input{padding:6px 8px;}
+.lines-table td.q{width:92px;}
+.date-input.bad{border-color:var(--red)!important;box-shadow:0 0 0 3px var(--red-dim);}
+.cnt-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;font-size:10.5px;font-weight:700;background:var(--accent-dim);color:var(--accent);border:1px solid rgba(88,166,255,.25);}
+.ln-no{background:var(--accent-dim);color:var(--accent);font-weight:700;font-size:12px;font-family:var(--mono);}
+/* ═══ Item List groups ═══ */
+.grp{margin-bottom:18px;}
+.grp-hd{display:flex;align-items:center;gap:8px;padding:4px 2px 8px;font-size:13px;}
+.grp-hd i.ti-bone{color:var(--accent);font-size:16px;}
+.grp-hd .sp{flex:1;}
+.grp .log-table th{position:static;cursor:default;}
+.grp .log-table th:hover{color:var(--text3);}
+.merged .sep{color:var(--text3);margin:0 7px;}
+.merged .d{color:var(--text2);font-style:italic;}
+.merge-preview{display:flex;align-items:center;gap:7px;padding:9px 12px;border-radius:var(--radius-lg);background:var(--accent-dim);color:var(--accent);border:1px solid rgba(88,166,255,.25);font-size:12px;font-weight:600;word-break:break-word;}
+.merge-preview.empty{background:var(--bg3);color:var(--text3);border-color:var(--border);font-weight:500;}
+/* ═══ hints / form hint ═══ */
+.form-hint{font-size:10.5px;color:var(--text3);display:flex;align-items:center;gap:5px;}
+@media(max-width:700px){.doc-center-header .hist-tip{display:none;}}
+
+/* ═══ HEADER — text never wraps; when space runs out the text goes and only the controls stay ═══ */
+.doc-center{container:dch / inline-size;}
+.doc-center-header{flex-wrap:nowrap;}
+.doc-center-header h3,.doc-center-header .hdr-actions .btn{white-space:nowrap;flex-shrink:0;}
+.doc-center-header .hist-tip{white-space:nowrap;flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;display:block;}
+.doc-center-header .hist-tip i{margin-right:5px;vertical-align:-2px;}
+.doc-center-header .hdr-actions{flex-wrap:nowrap;flex-shrink:0;overflow:visible;}   /* never scrolls / clips: icons, count badges and menus stay whole */
+@container dch (max-width:900px){ .doc-center-header .hist-tip{display:none;} }
+@container dch (max-width:560px){
+  .doc-center-header h3{display:none;}
+  .doc-center-header .hdr-actions{margin-left:0;width:100%;justify-content:flex-end;}
+}
+@media(max-width:700px){
+  .doc-center-header{flex-wrap:nowrap;padding:8px 10px;}
+  .doc-center-header h3,.doc-center-header .hist-tip{display:none;}
+  .doc-center-header .hdr-actions{margin-left:0;width:100%;justify-content:flex-end;flex-wrap:nowrap;}
+}
+
+/* ═══ Description groups (Specs Settings) ═══ */
+.spec-scroll{max-height:320px;}
+.spec-scroll .log-table.dgrp{margin-bottom:8px;}
+.spec-scroll .log-table th.dgrp-hd{text-align:left;background:var(--accent-dim);color:var(--accent);border-bottom:1px solid var(--border);cursor:pointer;text-transform:none;letter-spacing:.02em;}
+.dgrp-in{display:flex;align-items:center;gap:6px;min-width:0;}
+.dgrp-in .dgrp-t{font-weight:700;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.dgrp-in i{font-size:13px;flex-shrink:0;}
+.cb-grp{padding:6px 10px 3px;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);position:sticky;top:0;background:var(--surface);z-index:1;}
+.cb-grp ~ .cb-opt{padding-left:20px;}
+
+/* ═══ DC Lists ═══ */
+.tabs-fixed.four{width:236px;}
+.dc-list{display:flex;flex-direction:column;gap:12px;padding:2px;}
+.dc-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden;}
+.dc-card .grp-hd{padding:8px 12px;border-bottom:1px solid var(--border);background:var(--bg3);}
+.dc-card .log-table{width:100%;}
+.dc-card .log-table th,.dc-card .log-table td{padding:6px 10px;font-size:12.5px;}
+.dc-tools{display:flex;gap:6px;align-items:center;margin:0 0 6px;}
+.dc-tools .date-input{flex:1;min-width:0;}
+.dc-cnt{margin-left:auto;color:var(--accent);text-transform:none;letter-spacing:0;font-weight:700;}
+.dc-pick{border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg3);max-height:calc(100vh - 360px);min-height:180px;overflow-y:auto;padding:4px;}
+.dc-pick.bad{border-color:var(--red);box-shadow:0 0 0 3px var(--red-dim);}
+.dc-pg{display:flex;align-items:center;gap:6px;padding:6px 8px 3px;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);position:sticky;top:0;background:var(--bg3);z-index:1;}
+.dc-opt{display:flex;gap:8px;align-items:flex-start;padding:6px 8px;border-radius:var(--radius);cursor:pointer;font-size:12.5px;color:var(--text);line-height:1.35;word-break:break-word;}
+.dc-opt:hover{background:var(--accent-dim);}
+.dc-opt.on{color:var(--accent);background:var(--accent-dim);}
+.dc-opt i{font-size:16px;margin-top:1px;flex-shrink:0;}
+@media(min-width:1101px){#dclist-preview-panel.open{width:540px;}}
+.dv-sel{width:auto;max-width:130px;padding:3px 6px;font-size:11.5px;margin:0;}
+
+/* DC name drop-down + Print DC panel */
+.dc-cbo{padding:6px 10px;border-radius:var(--radius);font-size:12.5px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--text);}
+.dc-cbo small{color:var(--text3);font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dc-cbo.hl,.dc-cbo:hover{background:var(--accent-dim);color:var(--accent);}
+.dc-cbo.add{color:var(--teal);font-weight:600;justify-content:flex-start;}
+.pr-rows{border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg3);max-height:280px;min-height:56px;overflow-y:auto;padding:4px;display:flex;flex-direction:column;gap:3px;}
+.pr-row{display:flex;align-items:center;gap:6px;padding:3px 4px;border-radius:var(--radius);}
+.pr-row:hover{background:var(--accent-dim);}
+.pr-row.off{opacity:.5;}
+.pr-row.off .pr-txt{text-decoration:line-through;}
+.pr-tg i{color:var(--accent);}
+.pr-txt{flex:1;min-width:0;font-size:12.5px;line-height:1.35;word-break:break-word;}
+.pr-lbl{flex:1;min-width:0;padding:5px 8px;}
+.pr-qty{display:inline-flex;align-items:center;gap:3px;flex-shrink:0;}
+.pr-qty .date-input{width:58px;padding:4px 6px;text-align:center;font-family:var(--mono);}
+.dc-pick.sm{max-height:200px;min-height:110px;}
+.dc-one{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;}
+.dc-one .dc-nm{flex:1 1 120px;min-width:90px;}
+.dc-one .btn{flex-shrink:0;white-space:nowrap;}
+.dc-nm .cb-pop{min-width:230px;right:auto;max-height:260px;}
+.pr-rows.bad{border-color:var(--red);box-shadow:0 0 0 3px var(--red-dim);}
+.ib.on{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);}
+.dc-sbar{display:flex;align-items:center;gap:6px;padding:4px 10px;border:1.5px solid var(--accent);border-radius:var(--radius-lg);background:var(--surface2);box-shadow:0 0 0 3px var(--accent-dim);}
+.dc-sbar i{color:var(--accent);font-size:15px;}
+.dc-sbar input{flex:1;min-width:0;border:none;outline:none;background:transparent;color:var(--text);font-family:var(--font);font-size:12.5px;padding:3px 0;}
+.dc-mrow{display:flex;align-items:center;gap:6px;padding:3px 4px;}
+#dclist-preview-panel{container:dcp / inline-size;}
+@container dcp (max-width:500px){.dc-one .btn .lbl{display:none;}}
+</style>
+</head>
+<body>
+
+<!-- ═══ VIEW BAR — brand · 4 tabs · per-tab search · cache status ═══ -->
+<div class="view-bar">
+  <div class="vb-brand" title="DC Lists"><i class="ti ti-clipboard-list"></i></div>
+  <div class="vb-title" style="font-weight:700;font-size:14px;color:var(--text);flex:1;min-width:0;">DC Lists</div>
+  <div id="tab-nav" style="display:none"></div>
+  <button class="ib cache-ind warn" id="cache-ind" type="button" title="Loading…"><i class="ti ti-database"></i></button>
+  <button class="ib sync-ind" id="sync-ind" type="button" style="display:none" title=""><i class="ti ti-cloud-upload"></i><span class="ping"></span><b class="sync-n">0</b></button>
+</div>
+
+<div class="portal-wrap" id="panels"></div>
+
+<div class="toast" id="toast" role="alert">
+  <i id="toast-icon" class="ti ti-circle-check"></i>
+  <span id="toast-msg">Saved</span>
+</div>
+
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════════════════
+ *  MODULE CONFIG — add / rename fields here, UI follows
+ *  field types: text · textarea · status
+ * ═══════════════════════════════════════════════════════ */
+const STATUS_FIELD = { key:'status', label:'Status', type:'status' };
+
+const MODULES = [
+  { key:'itemlist', label:'Item Lists', plural:'Item Lists', icon:'ti-list-check', custom:true, group:'itemlist',
+    hint:'Medical Domain-wise catalog: Material Source - Item - Category - Specs - Description' },
+  { key:'dclist', label:'DC Lists', plural:'DC Lists', icon:'ti-clipboard-list', custom:true, group:'dclist',
+    hint:'Add a Delivery Challan from the Item List, or search one and print it' },
+  { key:'specsetting', label:'Specs Settings', plural:'Specs Settings', icon:'ti-settings', custom:true, group:'settings',
+    hint:'One list for every kind of Specs: ID - Specs - Item - Description - Status' },
+  { key:'storebranch', label:'Store', plural:'Stores', icon:'ti-building-store', group:'spectype',
+    hint:'Physical store / location',
+    fields:[
+      { key:'name',        label:'Store Name',  type:'text',     req:true, ph:'e.g. Main Store' },
+      { key:'description', label:'Description', type:'textarea', ph:'Short description…' },
+      STATUS_FIELD ] },
+  { key:'medbranch',   label:'Medical Domain', plural:'Medical Domains', icon:'ti-bone', group:'spectype',
+    hint:'Medical field, e.g. Trauma, Orthoscopy, Orthoplasty',
+    fields:[
+      { key:'name',        label:'Medical Domain Name', type:'text',     req:true, ph:'e.g. Trauma' },
+      { key:'description', label:'Description',         type:'textarea', ph:'Short description…' },
+      STATUS_FIELD ] },
+  { key:'matsource',   label:'Material Source', plural:'Material Sources', icon:'ti-truck-delivery', group:'spectype',
+    hint:'Where the material comes from, e.g. Imported, Local',
+    fields:[
+      { key:'name',        label:'Material Source Name', type:'text',     req:true, ph:'e.g. Imported' },
+      { key:'description', label:'Description',          type:'textarea', ph:'Short description…' },
+      STATUS_FIELD ] },
+  { key:'item',     label:'Item Name', plural:'Item Names', icon:'ti-package', group:'spectype',
+    fields:[
+      { key:'name',        label:'Item Name',   type:'text',     req:true, ph:'e.g. Surgical Gloves' },
+      { key:'description', label:'Description', type:'textarea', ph:'Short description…' },
+      STATUS_FIELD ] },
+  { key:'itemcat',  label:'Item Category', plural:'Item Categories', icon:'ti-category', group:'spectype',
+    hint:'e.g. Consumables, Implants, Instruments',
+    fields:[
+      { key:'name',        label:'Item Category Name', type:'text',     req:true, ph:'e.g. Consumables' },
+      { key:'description', label:'Description',        type:'textarea', ph:'Short description…' },
+      STATUS_FIELD ] },
+  { key:'specs',    label:'Specs',    plural:'Specs',     icon:'ti-list-details', group:'spectype',
+    fields:[
+      { key:'name',        label:'Specs Name',  type:'text',     req:true, ph:'e.g. Cardiology' },
+      { key:'description', label:'Description', type:'textarea', ph:'Short description…' },
+      STATUS_FIELD ] }
+];
+/* main tabs — only two; the settings modules live in the sub menu under "Specs Settings" */
+const TOP_TABS = [
+  { key:'itemlist', label:'Item Lists',     icon:'ti-list-check' },
+  { key:'dclist',   label:'DC Lists',       icon:'ti-clipboard-list' },
+  { key:'settings', label:'Specs Settings', icon:'ti-settings'   }
+];
+const BASE_TYPES = MODULES.filter(m => m.group==='spectype');
+/* built-in Specs + any Specs the user creates (data.spectypes) — every Specs gets its own table */
+function specTypes(){ return BASE_TYPES.concat((data.spectypes||[]).map(t => ({ key:t.key, label:t.label, plural:t.label, icon:'ti-list-details', custom:true }))); }
+function typeOf(key){ return specTypes().find(m => m.key===key); }
+const PANEL_MODS = MODULES.filter(m => m.key==='dclist');   // DC Lists module only     // modules that own a screen
+const MOD = Object.fromEntries(MODULES.map(m => [m.key, m]));
+
+/* ═══════════════════════════════════════════════════════
+ *  DATA LAYER — localStorage now; swap load()/persist() for
+ *  your backend / API calls when ready.
+ * ═══════════════════════════════════════════════════════ */
+const STORE_KEY = 'master_setup_v3';
+const CATALOG_KEY = 'item_list_catalog_v1';   // flat copy of Item List for other modules
+const OLD_STORE_KEY = 'master_setup_v2';   // earlier version: its single "branch" list becomes Store Branch
+
+let data = { spectypes:[], storebranch:[], medbranch:[], matsource:[], item:[], itemcat:[], hospital:[], doctor:[], specs:[], itemlist:[], dclist:[] };
+const ui = {};   // per-tab UI state
+MODULES.forEach(m => ui[m.key] = { q:'', filter:'all', sortKey:'created', sortAsc:false, editId:null, mb:'' });
+ui.specsetting.sortKey = 'sid'; ui.specsetting.sortAsc = true; ui.specsetting.type = ''; ui.specsetting.editType = null;
+ui.specsetting.collapsed = new Set(); ui.dclist.dc = '';
+let activeTab = 'dclist';
+let lastSettingsTab = 'specsetting';
+let armedDelete = null;
+
+function load(){
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) { data = Object.assign(data, JSON.parse(raw)); return; }
+    const old = localStorage.getItem(OLD_STORE_KEY);          // migrate earlier data once
+    if (old) {
+      const o = JSON.parse(old);
+      data.storebranch = o.branch || [];
+      ['item','hospital','doctor','specs'].forEach(k => data[k] = o[k] || []);
+      persist();
+      return;
+    }
+  } catch(e){ console.warn('[module] storage read failed', e.message); }
+}
+function persist(){
+  assignSids();
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
+  catch(e){ console.warn('[module] storage write failed', e.message); }
+  publishCatalog();
+}
+/* ── Specs Settings → Google Sheet: ID | Specs | Item | Description | Status ── */
+const SPECS_SHEET = 'Specs Settings';
+const SPECS_SNAP_KEY = 'master_specs_snapshot_v1';   // last state known to be in the sheet: { sid: [ID,Specs,Item,Description,Status] }
+const specsLoadSnap = () => { try { return JSON.parse(localStorage.getItem(SPECS_SNAP_KEY) || 'null'); } catch(e){ return null; } };
+const specsSaveSnap = m => { try { localStorage.setItem(SPECS_SNAP_KEY, JSON.stringify(m)); } catch(e){} };
+/* backend calls live in shared/api.js (AP2Api) — endpoint, session and error texts are defined there once */
+const specsPost = (action, payload) => AP2Api.post(action, payload);
+/* every row of the sheet as the portal sees it:  sid → [ID, Specs, Item, Description, Status] */
+function specsCurrentMap(){
+  assignSids();
+  const m = {};
+  specRows().forEach(x => { m[x.r.sid] = [x.r.sid, x.tl, x.r.name, x.r.description || '', x.r.status==='active' ? 'Active' : 'Inactive']; });
+  (data.itemlist||[]).forEach(e => { const v = entryView(e);               // Item List → ID | Item List | Medical Domain | label | Status
+    m[e.sid] = [e.sid, 'Item List', v.mb, v.label, e.status==='active' ? 'Active' : 'Inactive']; });
+  (data.dclist||[]).forEach(e => { m[e.sid] = [e.sid, 'DC List', e.dcName, e.label, e.status==='active' ? 'Active' : 'Inactive']; });   // DC List → ID | DC List | DC name | item text | Status
+  return m;
+}
+const toRowObj = r => ({ id:r[0], specs:r[1], item:r[2], description:r[3], status:r[4] });
+let _specsRun = null, _specsResync = false;
+/* sends only what changed since the last sync:  addSpecsSetting · updateSpecsSetting · deleteSpecsSetting */
+const specsErrText = m => AP2Api.errText(m);
+function requestSpecsRefresh(){ cache.requestRefresh(true); }
+function specsRunSync(){
+  if (_specsRun){ _specsResync = true; return _specsRun; }
+  _specsRun = (async () => {
+    let res = { ok:true };
+    try { do { _specsResync = false; res = await specsSyncOnce(); } while (_specsResync); }
+    finally { _specsRun = null; }
+    return res;
+  })();
+  return _specsRun;
+}
+const FAILED_KEY = 'master_specs_sync_failed';
+function specsPendingCount(){                      // local changes the sheet has not confirmed yet
+  const cur = specsCurrentMap(), snap = specsLoadSnap(); if (!snap) return 0;
+  let n = 0;
+  Object.keys(cur).forEach(id => { if (!snap[id] || JSON.stringify(snap[id]) !== JSON.stringify(cur[id])) n++; });
+  Object.keys(snap).forEach(id => { if (!cur[id]) n++; });
+  return n;
+}
+function updateSyncInd(err){
+  const el = document.getElementById('sync-ind'); if (!el) return;
+  const n = specsPendingCount();
+  el.style.display = n ? '' : 'none';
+  el.querySelector('.sync-n').textContent = n;
+  el.title = n ? n + ' change' + (n>1?'s':'') + ' saved on this device, waiting to sync' + (err ? ' (' + err + ')' : '') + ' — click to retry now' : '';
+}
+/* resolves { ok, error, fatal }.
+   Network / temporary trouble is NOT shown as an error: the change stays saved locally, the red ping on the sync icon shows it is waiting,
+   and it is retried automatically. When it finally goes through a success message is shown.
+   Only a refusal from the server (no permission / session expired) is toasted — unless { silent:true }. */
+async function syncSpecsSheet(opts){
+  const ind = document.getElementById('sync-ind'); if (ind) ind.classList.add('busy');
+  const res = await specsRunSync();
+  if (ind) ind.classList.remove('busy');
+  if (!res.ok){
+    try { localStorage.setItem(FAILED_KEY, '1'); } catch(e){}
+    updateSyncInd(res.error);
+    if (res.fatal && !(opts && opts.silent)){
+      showToast(res.error, 'error');
+      try { localStorage.removeItem(PENDING_KEY); localStorage.removeItem(FAILED_KEY); cache.forgetSig(); } catch(e){}
+      refreshFromCache();                      // drop the refused change, show what the sheet really has
+    }
+  } else {
+    updateSyncInd();
+    let had = false; try { had = localStorage.getItem(FAILED_KEY) === '1'; if (had) localStorage.removeItem(FAILED_KEY); } catch(e){}
+    if (had) showToast('Saved — all pending changes are now synced', 'success');
+  }
+  return res;
+}
+function startSpecsRetry(){
+  /* waits for the network: retries when the browser comes back online and every 10 s while changes are pending */
+  AP2Api.startRetry(() => syncSpecsSheet({ silent:true }), specsPendingCount);
+  const b = document.getElementById('sync-ind'); if (b) b.addEventListener('click', () => syncSpecsSheet());
+  if (specsPendingCount()){ try { localStorage.setItem(FAILED_KEY, '1'); } catch(e){} }   // left over from last session → confirm when it goes through
+  updateSyncInd();
+}
+async function specsSyncOnce(){
+  const cur = specsCurrentMap(), snap = specsLoadSnap();
+  if (!snap){ specsSaveSnap(cur); return { ok:true }; }
+  { const c0 = specsCurrentMap(), a=[], u=[], d=[];                       // what would be sent?
+    Object.keys(c0).forEach(id => { if (!snap[id]) a.push(id); else if (JSON.stringify(snap[id])!==JSON.stringify(c0[id])) u.push(id); });
+    Object.keys(snap).forEach(id => { if (!c0[id]) d.push(id); });
+    if ((a.length && !permCan('add')) || ((u.length || d.length) && !permCan('editDelete')))
+      return { ok:false, fatal:true, error:'⛔ Not authorized to change ' + PERM_LABEL }; }
+  const next = Object.assign({}, snap);
+  const adds = [], upds = [], dels = [];
+  Object.keys(cur).forEach(id => { if (!snap[id]) adds.push(cur[id]); else if (JSON.stringify(snap[id]) !== JSON.stringify(cur[id])) upds.push(cur[id]); });
+  Object.keys(snap).forEach(id => { if (!cur[id]) dels.push(sidVal(id)); });
+  if (!adds.length && !upds.length && !dels.length){ try { localStorage.removeItem(PENDING_KEY); } catch(e){} return { ok:true }; }
+  try { localStorage.setItem(PENDING_KEY, '1'); } catch(e){}               // local changes not yet confirmed in the sheet
+  try {
+    let rejected = 0;
+    if (adds.length){
+      const j = await specsPost('addSpecsSetting', { rows: adds.map(toRowObj) });
+      const rev = {}; Object.keys(j.idMap || {}).forEach(c => { rev[j.idMap[c]] = sidVal(c); });
+      (j.added || []).forEach(a => {                                       // server may have re-numbered an id → re-key local record
+        const clientId = rev[a.id] || a.id;
+        if (clientId !== a.id){
+          const rec = specRows().map(x => x.r).concat(data.itemlist||[]).concat(data.dclist||[]).find(r => r.sid === clientId);
+          if (rec) rec.sid = a.id;
+        }
+        next[a.id] = [a.id, a.specs, a.item, a.description, a.status];
+        const sent = adds.find(r => r[0] === clientId); if (sent) next[a.id] = sent.slice(), next[a.id][0] = a.id;
+      });
+      if ((j.skipped||[]).length){ rejected = j.skipped.length; showToast('Not saved: ' + j.skipped[0].reason, 'error'); }   // legacy — server no longer skips
+      if (Object.keys(j.idMap || {}).length){ persist(); renderAll(); }
+      adds.forEach(r => { if (!(j.added||[]).some(a => (rev[a.id]||a.id) === r[0])) next[r[0]] = r.slice(); });   // rejected rows: don't retry forever
+    }
+    if (upds.length){ await specsPost('updateSpecsSetting', { rows: upds.map(toRowObj) }); upds.forEach(r => { next[r[0]] = r.slice(); }); }
+    if (dels.length){ await specsPost('deleteSpecsSetting', { ids: dels }); dels.forEach(id => { delete next[id]; }); }
+    specsSaveSnap(next);
+    try { localStorage.removeItem(PENDING_KEY); } catch(e){}
+    requestSpecsRefresh();
+    if (rejected){ try { cache.forgetSig(); } catch(e){} }  // next cache poll reloads the sheet and drops rejected rows
+    return { ok:true };
+  } catch(e){
+    specsSaveSnap(next);
+    console.warn('[specs] sheet sync failed', e.message);
+    return { ok:false, error:specsErrText(e.message), fatal:/unauthori[sz]ed|forbidden|not logged in/i.test(String(e.message)) };   // fatal = the server refused (retrying won't help)
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+ *  CACHE → PORTAL
+ *  The shared cache (IndexedDB  ap2_fleet_cache / datasets) holds the
+ *  Specs Settings sheet as   data.Specs = [[ID, Specs, Item, Description, Status], …]
+ *  (header row is not stored).  Every screen — Specs Settings tables,
+ *  Item List drop-downs, the published catalog — reads from `data`,
+ *  so loading the cache into `data` feeds all of them.
+ *  The cache record is found automatically (any record whose data has a "Specs" array);
+ *  to pin it, set  localStorage.master_cache_key = '<key>'.
+ * ═══════════════════════════════════════════════════════ */
+const PENDING_KEY  = 'master_setup_pending_sync';
+const SIG_KEY = 'master_setup_cache_sig_v3';
+/* nothing can be added / edited / deleted until the cache has been read once (otherwise the sheet could be overwritten with stale data) */
+const LOCKED_ACTS = new Set(['add','edit','add-list','toggle','del','ss-toggle','ss-del','ss-deltype','save','sm-save','sm-save-new','modal-save','modal-save-new','upload','dc-add','dc-edit','dc-save','dc-toggle','dc-del','dc-deldc']);
+
+/* the cache button itself (IndexedDB read · portal push · polling · lock · colours) is shared/cacheSync.js.
+   Only what is specific to Master lives here: how rows become the portal's lists. */
+const cache = AP2Cache.create({
+  indicator : 'cache-ind',
+  sigKey    : SIG_KEY,
+  toast     : (m, t) => showToast(m, t),
+  hasPending: () => { try { return localStorage.getItem(PENDING_KEY) === '1'; } catch(e){ return false; } },
+  onPending : () => syncSpecsSheet({ silent:true }),
+  hasLocalData: () => specRows().length,
+  onLoaded  : () => applyCacheLock(),
+  onRows    : rows => { const n = applySpecsRows(rows); persist(); specsSaveSnap(specsCurrentMap()); updateSyncInd(); renderAll(); return n; }
+});
+const cacheReady = () => cache.requireReady();
+
+/* ═══════════════════════════════════════════════════════
+ *  PERMISSION GUARD (front-end, runs BEFORE network / backend)
+ *  Dataset  : ap2_specsData   (session.permissions.ap2_specsData.access = {view, add, editDelete})
+ *  add        → create anything / upload
+ *  editDelete → edit · toggle status · delete
+ *  Save buttons use "add" for a new record and "editDelete" when updating an existing one.
+ *  Fails closed: no session / no permissions loaded → everything is denied.
+ * ═══════════════════════════════════════════════════════ */
+const PERM_DATASET = 'ap2_specsData', PERM_LABEL = 'DC Lists';
+const ACT_PERM = {
+  'add':'add', 'add-list':'add', 'upload':'add',
+  'edit':'editDelete', 'toggle':'editDelete', 'ss-toggle':'editDelete',
+  'del':'editDelete', 'ss-del':'editDelete', 'ss-deltype':'editDelete',
+  'dc-add':'add', 'dc-toggle':'editDelete', 'dc-del':'editDelete', 'dc-deldc':'editDelete'
+};
+const SAVE_ACTS = new Set(['save','sm-save','sm-save-new','modal-save','modal-save-new']);
+function permCan(action){
+  try { return !!(window.AccessGuard && AccessGuard.can(PERM_DATASET, action)); } catch(e){ return false; }
+}
+/* which permission does this control need right now? (null = none) */
+function permNeeded(act, k){
+  if (ACT_PERM[act]) return ACT_PERM[act];
+  if (!SAVE_ACTS.has(act)) return null;
+  let editing = false;
+  try {
+    if (act==='sm-save' || act==='sm-save-new') editing = !!(sdraft && sdraft.id);
+    else if (act==='modal-save' || act==='modal-save-new') editing = !!(draft && draft.id);
+    else if (act==='save') editing = k==='specsetting' ? !!(sdraft && sdraft.id) : k==='itemlist' ? !!(draft && draft.id) : !!(ui[k] && ui[k].editId);
+  } catch(e){}
+  return editing ? 'editDelete' : 'add';
+}
+/* click-time check — toasts and returns false when the user is not allowed */
+function permRequire(act, k){
+  const need = permNeeded(act, k);
+  return need ? AccessGuard.require(PERM_DATASET, need, PERM_LABEL) : true;
+}
+/* disable every Add / Edit / Delete / Save control the user may not use */
+function applyPermGate(){
+  document.querySelectorAll('[data-act]').forEach(el => {
+    const need = permNeeded(el.dataset.act, el.dataset.k);
+    if (!need) return;
+    const ok = permCan(need);
+    if (el.disabled === !ok && el.classList.contains('ag-disabled') === !ok) return;
+    el.disabled = !ok;
+    el.classList.toggle('ag-disabled', !ok);
+    if (!ok) el.title = "You don't have " + (need==='add' ? 'add' : 'edit/delete') + ' access for ' + PERM_LABEL;
+    else if (el.title && el.title.indexOf("You don't have")===0) el.title = '';
+  });
+}
+(function wirePermGate(){
+  let q = 0;
+  const run = () => { q = 0; try { applyPermGate(); } catch(e){} };
+  const sched = () => { if (!q) q = requestAnimationFrame(run); };
+  new MutationObserver(sched).observe(document.documentElement, { childList:true, subtree:true });   // re-gate after every render
+  setInterval(sched, 1500);                                                                          // permissions may load late
+  window.addEventListener('storage', sched);
+  document.addEventListener('DOMContentLoaded', sched);
+})();
+const applyCacheLock = () => document.body.classList.toggle('cache-off', !cache.isLoaded());
+const refreshFromCache = m => cache.refresh(m);
+const startCache = () => cache.start();
+
+/* cache rows → per-type lists (ids kept when the sheet ID matches an existing record, so Item List links survive) */
+function applySpecsRows(rows){
+  const have = new Map();
+  specTypes().forEach(m => (data[m.key]||[]).forEach(r => { if (r.sid) have.set(m.key+'|'+String(r.sid), r); }));
+  const byType = {}, ilRows = [], dcRows = []; let count = 0;
+  rows.forEach(row => {
+    if (!Array.isArray(row)) return;
+    if (String(row[0]).trim().toLowerCase() === 'id') return;          // header row, if present
+    const sid = sidVal(row[0]), label = String(row[1] ?? '').trim(), name = String(row[2] ?? '').trim();
+    if (!sid || !label || !name) return;
+    if (/^item\s*lists?$/i.test(label)){                              // Item List row: ID | Item List | Medical Domain | label | Status
+      ilRows.push({ sid, mb:name, label:String(row[3] ?? '').trim(), status:normStatus(row[4]) }); count++; return;
+    }
+    if (/^dc\s*lists?$/i.test(label)){                                // DC List row: ID | DC List | DC name | item text | Status
+      const txt = String(row[3] ?? '').trim(); if (txt){ dcRows.push({ sid, dc:name, label:txt, status:normStatus(row[4]) }); count++; } return;
+    }
+    let t = specTypeOf(label);
+    if (!t){                                                           // a Specs the portal doesn't know yet → becomes its own table
+      const key = 'sp_' + label.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+      (data.spectypes = data.spectypes || []).push({ key, label }); data[key] = data[key] || []; t = typeOf(key);
+    }
+    let desc = String(row[3] ?? '').trim(); if (/^(none|null|n\/a|-|—)$/i.test(desc)) desc = '';
+    const prev = have.get(t.key+'|'+String(sid));
+    (byType[t.key] = byType[t.key] || []).push({ id: (prev && !/^c\d+$/.test(prev.id)) ? prev.id : 'c'+t.key+'_'+sid, sid, name, description:desc,
+      status: normStatus(row[4]), created: prev ? (prev.created||Date.now()) : Date.now() });
+    count++;
+  });
+  specTypes().forEach(m => { data[m.key] = byType[m.key] || []; });
+  /* Item List rows → Item Lists screen (an entry made in this portal is kept as-is while the sheet still shows the same text) */
+  const prevIL = new Map((data.itemlist||[]).filter(e => e.sid).map(e => [String(e.sid), e]));
+  data.itemlist = ilRows.map(x => {
+    const prev = prevIL.get(String(x.sid)), mbRec = (data.medbranch||[]).find(m => m.name.trim().toLowerCase() === x.mb.toLowerCase());
+    if (prev && !prev.rawLabel){ const v = entryView(prev); if (v.label === x.label && v.mb.toLowerCase() === x.mb.toLowerCase()){ prev.status = x.status; return prev; } }
+    return { id:'il'+x.sid, sid:x.sid, medbranchId:mbRec ? mbRec.id : '', medbranchName:x.mb, rawLabel:x.label,
+             status:x.status, created:(prev && prev.created) || Date.now(), updated:Date.now() };
+  });
+  const prevDC = new Map((data.dclist||[]).filter(e => e.sid).map(e => [String(e.sid), e]));
+  data.dclist = dcRows.map(x => { const p = prevDC.get(String(x.sid));
+    return { id:(p && p.id) || 'dc'+x.sid, sid:x.sid, dcName:x.dc, label:x.label, status:x.status, created:(p && p.created) || Date.now() }; });
+  /* keep Item List entries linked: if an id vanished, re-link by the saved name */
+  const relink = (e, idF, nameF, kind) => {
+    if (!e[idF] || (data[kind]||[]).some(x => x.id === e[idF])) return;
+    const nm = String(e[nameF]||'').trim().toLowerCase();
+    const m = nm && (data[kind]||[]).find(x => x.name.trim().toLowerCase() === nm); if (m) e[idF] = m.id;
+  };
+  (data.itemlist||[]).forEach(e => { relink(e,'medbranchId','medbranchName','medbranch'); relink(e,'itemId','itemName','item'); relink(e,'specsId','specsName','specs'); });
+  return count;
+}
+/* ═══════════════════════════════════════════════════════
+ *  BUILD UI (tabs · selectors · panels) from MODULES
+ * ═══════════════════════════════════════════════════════ */
+/* search: every word typed must appear somewhere in the row — any order, any case; space, - / , ; | all separate words */
+const searchTokens = q => String(q||'').toLowerCase().split(/[\s\-\u2013\u2014\/,;|]+/).filter(Boolean);
+const matchAll = (q, hay) => { const t = searchTokens(q); if (!t.length) return true; const h = String(hay||'').toLowerCase(); return t.every(w => h.includes(w)); };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtDate = ts => new Date(ts).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+
+function buildUI(){
+  document.getElementById('tab-nav').innerHTML = TOP_TABS.map((t,i)=>
+    `<button class="tab-btn${i===0?' active':''}" id="top-${t.key}-btn" title="${t.label}" onclick="switchTop('${t.key}')"><i class="ti ${t.icon}"></i><span>${t.label}</span></button>`
+  ).join('');
+
+  document.getElementById('panels').innerHTML = PANEL_MODS.map((m,i)=> m.key==='specsetting' ? specPanel(m,i) : m.key==='dclist' ? dcPanel(m,i) : m.custom ? listPanel(m,i) : `
+    <div class="tab-panel" id="tab-${m.key}" style="display:${i?'none':'flex'};flex-direction:column;gap:10px;flex:1;min-height:0;">
+      <div class="main-split">
+        
+        <div class="doc-center" id="${m.key}-center">
+          <div class="doc-center-header">
+            <h3><i class="ti ${m.icon}"></i>${esc(m.label)} List <span class="badge purple" id="${m.key}-count">0</span></h3>
+            ${m.hint ? `<span class="hist-tip"><i class="ti ti-info-circle"></i>${esc(m.hint)}</span>` : ''}
+            <div class="hdr-actions">
+              ${hdrTools(m.key)}
+              <button class="btn btn-primary btn-sm" data-act="add" data-k="${m.key}" title="Add ${esc(m.label)}"><i class="ti ti-plus"></i><span class="lbl">Add ${esc(m.label)}</span></button>
+            </div>
+          </div>
+          <div class="doc-center-body" id="${m.key}-body"></div>
+        </div>
+        <div class="doc-preview-panel" id="${m.key}-preview-panel">
+          <div class="pph"><h3><i class="ti ti-forms"></i><span id="${m.key}-preview-title">Add ${esc(m.label)}</span></h3>
+            <button class="pph-close" data-act="cancel" data-k="${m.key}" title="Close"><i class="ti ti-x"></i></button></div>
+          <div class="ppb" id="${m.key}-preview-body"></div>
+          <div class="ppf form-actions">
+            <button class="btn btn-ghost" data-act="cancel" data-k="${m.key}">Cancel</button>
+            <button class="btn btn-primary" data-act="save" data-k="${m.key}"><i class="ti ti-device-floppy"></i> <span id="${m.key}-save-lbl">Save</span></button>
+          </div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+/* ═══════════════════════════════════════════════════════
+ *  RENDER — sidebar filter tiles + datatable
+ * ═══════════════════════════════════════════════════════ */
+function renderAll(){ PANEL_MODS.forEach(m => render(m.key)); }
+function render(k){ renderSidebar(k); renderTable(k); }
+
+function renderSidebar(k){
+  if (k==='specsetting') return renderSpecSidebar();
+  if (k==='dclist') return renderDcSidebar();
+  if (MOD[k].custom) return renderListSidebar(k);
+  renderFilters(k, data[k]);
+}
+/* Active / Inactive filter icons in the header (click again to clear) */
+function renderFilters(k, rows){
+  const el = document.getElementById(k+'-filters'); if (!el) return;
+  const s = ui[k], n = st => rows.filter(r => r.status===st).length;
+  const btn = (f, icon, label) => `<button class="ib flt ${f}${s.filter===f?' on':''}" type="button" data-act="sfilter" data-k="${k}" data-v="${f}"
+    title="${label} (${n(f)}) — ${s.filter===f?'click to show all':'click to filter'}" aria-pressed="${s.filter===f}"><i class="ti ${icon}"></i><b class="flt-n">${n(f)}</b></button>`;
+  el.innerHTML = btn('active','ti-circle-check','Active') + btn('inactive','ti-circle-x','Inactive');
+}
+
+function visibleRows(k){
+  const s = ui[k], m = MOD[k], q = s.q.trim().toLowerCase();
+  let rows = data[k].filter(r => s.filter==='all' || r.status===s.filter);
+  if (q) rows = rows.filter(r => matchAll(q, m.fields.map(f => r[f.key]||'').join(' ')));
+  const dir = s.sortAsc ? 1 : -1;
+  rows.sort((a,b)=>{
+    const x = a[s.sortKey] ?? '', y = b[s.sortKey] ?? '';
+    return (typeof x==='number' && typeof y==='number') ? (x-y)*dir : String(x).localeCompare(String(y), undefined, {sensitivity:'base'})*dir;
+  });
+  return rows;
+}
+
+function renderTable(k){
+  if (k==='specsetting') return renderSpecTable();
+  if (k==='dclist') return renderDcTable();
+  if (MOD[k].custom) return renderListTable(k);
+  const m = MOD[k], s = ui[k], rows = visibleRows(k);
+  document.getElementById(k+'-count').textContent = rows.length + (rows.length!==data[k].length ? ' / '+data[k].length : '');
+  const body = document.getElementById(k+'-body');
+
+  if (!rows.length){
+    const empty = !data[k].length;
+    body.innerHTML = `<div class="doc-center-placeholder"><i class="ti ${empty?m.icon:'ti-search-off'}"></i>
+      <span>${empty ? 'No '+esc(m.plural.toLowerCase())+' added yet' : 'No records match your filter'}</span>
+      ${empty ? `<button class="btn btn-primary btn-sm" data-act="add" data-k="${k}"><i class="ti ti-plus"></i> Add ${esc(m.label)}</button>` : ''}</div>`;
+    return;
+  }
+
+  const th = (key,label) => `<th data-act="sort" data-k="${k}" data-v="${key}">${esc(label)}${
+    s.sortKey===key ? `<i class="ti ti-chevron-${s.sortAsc?'up':'down'} sort-i"></i>` : ''}</th>`;
+  const cols = m.fields.map(f => th(f.key, f.label)).join('');
+
+  const trs = rows.map((r,i)=>{
+    const tds = m.fields.map(f=>{
+      if (f.type==='status') return `<td><span class="st-badge ${r.status}">${r.status==='active'?'Active':'Inactive'}</span></td>`;
+      if (f.type==='textarea') return r[f.key] ? `<td class="cell-desc" title="${esc(r[f.key])}">${esc(r[f.key])}</td>` : `<td class="cell-muted">—</td>`;
+      return `<td><strong>${esc(r[f.key])}</strong></td>`;
+    }).join('');
+    const armed = armedDelete && armedDelete.k===k && armedDelete.id===r.id;
+    return `<tr>
+      <td class="num">${i+1}</td>${tds}
+      <td class="txn-mono">${fmtDate(r.created)}</td>
+      <td class="acts"><div class="act-btns">
+        <button class="ib sm" title="Edit" data-act="edit" data-k="${k}" data-id="${r.id}"><i class="ti ti-pencil"></i></button>
+        <button class="ib sm" title="Set ${r.status==='active'?'inactive':'active'}" data-act="toggle" data-k="${k}" data-id="${r.id}"><i class="ti ti-${r.status==='active'?'toggle-right':'toggle-left'}"></i></button>
+        <button class="ib sm danger ${armed?'armed':''}" title="${armed?'Click again to confirm':'Delete'}" data-act="del" data-k="${k}" data-id="${r.id}"><i class="ti ti-${armed?'check':'trash'}"></i></button>
+      </div></td></tr>`;
+  }).join('');
+
+  body.innerHTML = `<table class="log-table"><thead><tr>
+      <th style="cursor:default">#</th>${cols}${th('created','Added')}<th style="cursor:default"></th>
+    </tr></thead><tbody>${trs}</tbody></table>`;
+}
+
+
+/* ═══════════════════════════════════════════════════════
+ *  SPECS SETTINGS — ONE sheet for every kind of Specs
+ *  ID · Specs (selected) · Item · Description · Status (default Active)
+ *  Rows live in the per-type lists (Store, Medical Domain, …) so the
+ *  Item List dropdowns keep working; this sheet is the single view/editor.
+ * ═══════════════════════════════════════════════════════ */
+const _p = (n,l) => String(n).padStart(l||2,'0');
+const tsId = t => { const d = new Date(t); return '' + d.getFullYear() + _p(d.getMonth()+1) + _p(d.getDate()) + _p(d.getHours()) + _p(d.getMinutes()) + _p(d.getSeconds()) + _p(d.getMilliseconds(),3); };   // YYYYMMDDHHmmssSSS
+const sidVal = v => { const s = String(v).trim(); return /^\d{1,15}$/.test(s) ? parseInt(s,10) : s; };   // old short numeric IDs stay numbers, timestamp IDs stay text
+function assignSids(){
+  const used = new Set(), pend = [];
+  specTypes().flatMap(m => data[m.key]||[]).concat(data.itemlist||[]).concat(data.dclist||[]).forEach(r => { if (r.sid) used.add(String(r.sid)); else pend.push(r); });
+  pend.sort((a,b) => (a.created||0)-(b.created||0)).forEach(r => {
+    let t = r.created || Date.now(), id = tsId(t);
+    while (used.has(id)) id = tsId(++t);          // same millisecond → next millisecond
+    used.add(id); r.sid = id;
+  });
+}
+function specTypeOf(label){
+  const q = String(label||'').trim().toLowerCase();
+  return specTypes().find(m => m.key===q || m.label.toLowerCase()===q || m.plural.toLowerCase()===q) || null;
+}
+/* ── duplicates: same Specs category + same Item (Specs rows) · same Medical Domain + same entry text (Item List) ── */
+const dupNorm = x => String(x ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+function dupIdsOf(pairs){                       // pairs: [[recordId, key], …] → Set of record ids whose key appears more than once
+  const cnt = new Map(); pairs.forEach(([, key]) => cnt.set(key, (cnt.get(key)||0) + 1));
+  return new Set(pairs.filter(([, key]) => cnt.get(key) > 1).map(([id]) => id));
+}
+const dupSpecSet = () => dupIdsOf(specRows().map(x => [x.r.id, x.t + '|' + dupNorm(x.r.name)]));
+const dupListSet = () => dupIdsOf((data.itemlist||[]).map(e => { const v = entryView(e); return [e.id, dupNorm(v.mb) + '|' + dupNorm(v.label)]; }));
+const DUP_BADGE = `<i class="ti ti-copy dup-ic" title="Duplicate — edit or delete it"></i>`;
+/* duplicate filter button next to Active / Inactive. Lit when duplicates exist; auto-shows them once per new set of duplicates */
+function renderDupFilter(k, dups){
+  const s = ui[k], n = dups.size, el = document.getElementById(k+'-filters'); if (!el) return;
+  if (!n) s.dup = false;                       // count only — the filter is switched on by the person, never automatically
+  el.insertAdjacentHTML('beforeend', `<button class="ib flt dupf${n?' has':''}${s.dup?' on':''}" type="button" data-act="dupfilter" data-k="${k}" ${n?'':'disabled'}
+    title="${n ? 'Duplicates (' + n + ') — ' + (s.dup ? 'click to show all' : 'click to filter') : 'No duplicates'}" aria-pressed="${!!s.dup}"><i class="ti ti-copy"></i><b class="flt-n">${n}</b></button>`);
+}
+function specRows(){ return specTypes().flatMap(m => (data[m.key]||[]).map(r => ({ r, t:m.key, tl:m.label, ti:m.icon }))); }
+function visibleSpecRows(){
+  const s = ui.specsetting, q = s.q.trim().toLowerCase();
+  const D = s.dup ? dupSpecSet() : null;
+  let rows = specRows().filter(x => (s.filter==='all' || x.r.status===s.filter) && (!s.type || x.t===s.type) && (!D || D.has(x.r.id)));
+  if (q) rows = rows.filter(x => matchAll(q, x.tl+' '+x.r.name+' '+(x.r.description||'')+' '+x.r.status));
+  const val = x => s.sortKey==='sid' ? String(x.r.sid).padStart(17,'0') : s.sortKey==='name' ? x.r.name : s.sortKey==='description' ? (x.r.description||'') : x.r.status;
+  const dir = s.sortAsc ? 1 : -1;
+  return rows.sort((a,b) => { const p = val(a), c = val(b);
+    return (typeof p==='number' && typeof c==='number') ? (p-c)*dir : String(p).localeCompare(String(c), undefined, {sensitivity:'base'})*dir; });
+}
+/* the Items under the Specs type "Delivery Challan" (or written with Description "DC") are the DC names offered in DC Lists */
+function dcSources(){
+  return specRows().filter(x => x.r.status==='active' && (/^(dcs?|delivery\s*challans?)$/i.test(String(x.tl||'').trim()) || /^(dcs?|delivery\s*challans?)$/i.test(String(x.r.description||'').trim())))
+    .map(x => ({ name:x.r.name, tl:x.tl })).sort((a,b) => natCmp(a.name, b.name));
+}
+
+function specPanel(m,i){
+  return `
+    <div class="tab-panel" id="tab-${m.key}" style="display:${i?'none':'flex'};flex-direction:column;gap:10px;flex:1;min-height:0;">
+      <div class="main-split">
+        <div class="doc-center" id="${m.key}-center">
+          <div class="doc-center-header">
+            <h3><i class="ti ${m.icon}"></i>${esc(m.label)} <span class="badge purple" id="${m.key}-count">0</span></h3>
+            <span class="hist-tip"><i class="ti ti-info-circle"></i>${esc(m.hint)}</span>
+            <div class="hdr-actions">
+              ${hdrTools(m.key)}
+              <button class="btn btn-primary btn-sm" data-act="add" data-k="${m.key}" title="Add Specs Setting"><i class="ti ti-plus"></i><span class="lbl">Add Specs Setting</span></button>
+            </div>
+          </div>
+          <div class="doc-center-body" id="${m.key}-body"></div>
+        </div>
+        <div class="doc-preview-panel" id="${m.key}-preview-panel"></div>
+      </div>
+    </div>`;
+}
+function renderSpecSidebar(){ renderFilters('specsetting', specRows().map(x => x.r)); renderDupFilter('specsetting', dupSpecSet()); }
+/* every Specs = one table, all shown together in one frame; a new Specs adds a new table */
+function renderSpecTable(){
+  const k = 'specsetting', s = ui[k], rows = visibleSpecRows(), total = specRows().length, types = specTypes();
+  const filtering = s.q.trim() || s.filter!=='all' || s.dup;
+  const DS = dupSpecSet();
+  document.getElementById(k+'-count').textContent = types.length + ' Specs · ' + rows.length + (rows.length!==total ? ' / '+total : '') + ' items';
+  const body = document.getElementById(k+'-body');
+  const th = (key,label) => `<th data-act="sort" data-k="${k}" data-v="${key}">${label}${s.sortKey===key ? `<i class="ti ti-chevron-${s.sortAsc?'up':'down'} sort-i"></i>` : ''}</th>`;
+  const rowHTML = x => {
+    const r = x.r, armed = armedDelete && armedDelete.k===k && armedDelete.id===r.id;
+    return `<tr data-rid="${r.id}"${DS.has(r.id) ? ' class="dup-row"' : ''}>
+      <td class="it-cell" title="${esc(r.name + (r.description ? ' / ' + r.description : ''))}">${DS.has(r.id) ? DUP_BADGE : ''}<strong>${esc(r.name)}</strong></td>
+      <td><span class="st-badge ${r.status}">${r.status==='active'?'Active':'Inactive'}</span></td>
+      <td class="acts"><div class="act-btns">
+        <button class="ib sm" title="Edit" data-act="edit" data-k="${k}" data-t="${x.t}" data-id="${r.id}"><i class="ti ti-pencil"></i></button>
+        ${DS.has(r.id) ? '' : `<button class="ib sm" title="Set ${r.status==='active'?'inactive':'active'}" data-act="ss-toggle" data-k="${k}" data-t="${x.t}" data-id="${r.id}"><i class="ti ti-${r.status==='active'?'toggle-right':'toggle-left'}"></i></button>`}
+        <button class="ib sm danger ${armed?'armed':''}" title="${armed?'Click again to confirm':'Delete'}" data-act="ss-del" data-k="${k}" data-t="${x.t}" data-id="${r.id}"><i class="ti ti-${armed?'check':'trash'}"></i></button>
+      </div></td></tr>`;
+  };
+  /* ── 1. every Description written on a row = a table; its Specs (Doctor, Hospital…) are the sections, the Items sit under them ── */
+  s.dvf = s.dvf || {};
+  const dm = new Map();
+  rows.filter(x => (x.r.description||'').trim()).forEach(x => {
+    const d = x.r.description.trim(), gk = dupNorm(d);
+    if (!dm.has(gk)) dm.set(gk, { gk, d, rows:[] }); dm.get(gk).rows.push(x);
+  });
+  const descCards = [...dm.values()].sort((a,b) => natCmp(a.d, b.d)).map(g => {
+    const tl = []; g.rows.forEach(x => { if (!tl.some(t => t.key===x.t)) tl.push({ key:x.t, label:x.tl }); });
+    tl.sort((a,b) => natCmp(a.label, b.label));
+    let cur = s.dvf[g.gk] || ''; if (cur && !tl.some(t => t.key===cur)) cur = '';
+    const secs = tl.filter(t => !cur || t.key===cur).map(t => {
+      const list = g.rows.filter(x => x.t===t.key), ck = 'd|' + g.gk + '|' + t.key, open = filtering || !s.collapsed.has(ck);
+      return `<table class="log-table dgrp"><thead><tr>
+        <th class="dgrp-hd" colspan="2" data-act="grp-toggle" data-k="${k}" data-g="${esc(ck)}" title="${open?'Collapse':'Expand'} ${esc(t.label)}"><div class="dgrp-in"><i class="ti ti-chevron-${open?'down':'right'}"></i><span class="dgrp-t">${esc(t.label)}</span><span class="cnt-chip">${list.length}</span></div></th>
+        <th class="acts" style="cursor:default"><button class="ib sm" title="Add ${esc(t.label)} item under ${esc(g.d)}" data-act="add" data-k="${k}" data-t="${t.key}" data-d="${esc(g.d)}"><i class="ti ti-plus"></i></button></th></tr></thead>
+        ${open ? `<tbody>${list.map(rowHTML).join('')}</tbody>` : ''}</table>`;
+    }).join('');
+    const shown = g.rows.filter(x => !cur || x.t===cur).length;
+    return `<div class="spec-card">
+      <div class="grp-hd"><i class="ti ti-category-2" style="color:var(--accent);font-size:16px;"></i><strong title="${esc(g.d)}">${esc(g.d)}</strong>
+        <span class="cnt-chip">${shown}${shown!==g.rows.length ? ' / '+g.rows.length : ''}</span><span class="sp"></span>
+        <select class="date-input dv-sel" data-dvf="${esc(g.gk)}" title="Filter ${esc(g.d)} by Specs"><option value="">All Specs</option>${tl.map(t => `<option value="${esc(t.key)}"${t.key===cur?' selected':''}>${esc(t.label)}</option>`).join('')}</select>
+        <button class="ib sm" title="Add item under ${esc(g.d)}" data-act="add" data-k="${k}" data-t="${cur}" data-d="${esc(g.d)}"><i class="ti ti-plus"></i></button></div>
+      <div class="spec-scroll">${secs}</div></div>`;
+  });
+  /* ── 2. rows with NO Description stay in a table per Specs (empty Specs keep their table so items can be added / the Specs removed) ── */
+  const specCards = types.filter(m => !s.type || m.key===s.type).map(m => {
+    const mine = rows.filter(x => x.t===m.key && !(x.r.description||'').trim());
+    const everything = data[m.key] || [], hasDescRows = everything.some(r => (r.description||'').trim());
+    if (filtering ? !mine.length : (!mine.length && everything.length)) return '';
+    const empty = `<tr><td colspan="3" class="cell-muted" style="text-align:center;padding:14px;">No items yet in ${esc(m.label)}</td></tr>`;
+    const delT = m.custom && !everything.length
+      ? `<button class="ib sm danger" title="Remove this empty Specs" data-act="ss-deltype" data-k="${k}" data-t="${m.key}"><i class="ti ti-trash"></i></button>` : '';
+    return `<div class="spec-card">
+      <div class="grp-hd"><i class="ti ${m.icon}" style="color:var(--accent);font-size:16px;"></i><strong>${esc(m.label)}</strong><span class="cnt-chip">${everything.filter(r => !(r.description||'').trim()).length}</span><span class="sp"></span>
+        <button class="ib sm" title="Add item to ${esc(m.label)}" data-act="add" data-k="${k}" data-t="${m.key}"><i class="ti ti-plus"></i></button>${delT}</div>
+      <div class="spec-scroll"><table class="log-table"><thead><tr>${th('name','Item')}${th('status','Status')}<th style="cursor:default"></th></tr></thead>
+      <tbody>${mine.map(rowHTML).join('') || empty}</tbody></table></div></div>`;
+  });
+  const cards = descCards.concat(specCards).join('');
+  body.innerHTML = cards ? `<div class="specs-grid">${cards}</div>` : `<div class="doc-center-placeholder"><i class="ti ti-search-off"></i><span>No records match your filter</span></div>`;
+}
+
+/* ── Add / Edit Specs Setting — foldable side window (multiple New Specs · multiple Items) ── */
+let sdraft = null;
+const specPanelEl = () => document.getElementById('specsetting-preview-panel');
+const blankSpecDraft = (t, status) => ({ id:null, t:t||'', isNew:false, newNames:[''], rows:[{ name:'', description:'' }], status:status||'active' });
+function openSpecForm(id, t, desc){
+  const rec = id ? (data[t]||[]).find(r => r.id===id) : null;
+  sdraft = blankSpecDraft(t);
+  if (!rec && desc){ sdraft.rows[0].description = desc; sdraft.keepDesc = desc; }
+  if (rec){ sdraft.id = rec.id; sdraft.rows = [{ name:rec.name, description:rec.description||'' }]; sdraft.status = rec.status; }
+  renderSpecModal();
+  specPanelEl().classList.add('open');
+  setTimeout(() => { const f = specPanelEl().querySelector(sdraft && sdraft.isNew ? '[data-sn]' : '[data-si]'); if (f && sdraft && (sdraft.t||sdraft.isNew)) f.focus(); }, 260);
+}
+function closeSpecModal(){ specPanelEl().classList.remove('open'); sdraft = null; }
+function renderSpecModal(){
+  const d = sdraft, edit = !!d.id, E = d.errs || {}, has = (k,i) => (E[k]||[]).includes(i);
+  const chip = m => `<button type="button" class="chip${d.t===m.key&&!d.isNew?' on':''}${edit&&d.t!==m.key?' dis':''}" data-act="sm-type" data-v="${m.key}"${edit?' disabled':''}><i class="ti ${m.icon}"></i>${esc(m.label)}</button>`;
+  const addBtn = (act, show) => show ? `<button class="btn btn-ghost btn-sm" type="button" data-act="${act}" style="margin-left:auto;"><i class="ti ti-plus"></i> Add row</button>` : '';
+  const names = d.isNew ? `<div class="field"><div class="fgrp-lbl"><i class="ti ti-list-details"></i>New Specs Name <span class="req">*</span>${addBtn('sm-addname', true)}</div>
+      <div class="form-stack" style="gap:8px;">${d.newNames.map((n,i) => `<div class="spec-row"><div class="rno">New Specs ${i+1}</div>
+        <input class="date-input${has('n',i)?' bad':''}" data-sn="${i}" type="text" placeholder="e.g. Brand, Size, Color…" value="${esc(n)}" autocomplete="off"/>
+        ${d.newNames.length>1 ? `<button class="ib sm danger" type="button" title="Remove row" data-act="sm-delname" data-i="${i}"><i class="ti ti-trash"></i></button>` : '<span></span>'}</div>`).join('')}</div></div>` : '';
+  const items = `<div class="field"><div class="fgrp-lbl"><i class="ti ti-package"></i>Item <span class="req">*</span>${addBtn('sm-addrow', !edit)}</div>
+      <div class="form-stack" style="gap:8px;">${d.rows.map((r,i) => `<div class="spec-row one"><div class="rno">Item ${i+1}</div>
+        <input class="date-input${has('r',i)?' bad':''}" data-si="${i}" data-sk="name" type="text" placeholder="Item e.g. Trauma, Imported…" value="${esc(r.name)}" autocomplete="off"/>
+        <input class="date-input" data-si="${i}" data-sk="description" type="text" placeholder="Description (optional)" value="${esc(r.description)}" autocomplete="off"/>
+        ${d.rows.length>1 && !edit ? `<button class="ib sm danger" type="button" title="Remove row" data-act="sm-delrow" data-i="${i}"><i class="ti ti-trash"></i></button>` : '<span></span>'}</div>`).join('')}</div></div>`;
+  specPanelEl().innerHTML = `
+    <div class="pph"><h3><i class="ti ti-forms"></i><span>${edit?'Edit Specs Setting':'Add Specs Setting'}</span></h3>
+      <button class="pph-close" data-act="sm-close" title="Close"><i class="ti ti-x"></i></button></div>
+    <div class="ppb"><div class="form-stack">
+      <div class="edit-banner ${edit?'show':''}"><i class="ti ti-pencil"></i> Editing existing record</div>
+      <div class="field"><div class="fgrp-lbl">Specs ${d.isNew?'':'<span class="req">*</span>'}</div>
+        <div class="chips${E.t?' bad':''}">${specTypes().map(chip).join('')}${edit?'':`<button type="button" class="chip new${d.isNew?' on':''}" data-act="sm-type" data-v="__new__"><i class="ti ti-plus"></i>New Specs</button>`}</div></div>
+      ${names}
+      ${items}
+      <div class="field inl"><label>Status</label>
+        <select class="date-input" data-sf="status"${d.id && dupSpecSet().has(d.id) ? ' disabled title="Duplicate — status cannot be changed"' : ''}><option value="active"${d.status==='active'?' selected':''}>Active</option><option value="inactive"${d.status==='inactive'?' selected':''}>Inactive</option></select></div>
+    </div></div>
+    <div class="ppf form-actions">
+      <button class="btn btn-ghost" type="button" data-act="sm-close">Cancel</button>
+      ${edit ? '' : `<button class="btn btn-ghost" type="button" data-act="sm-save-new"><i class="ti ti-plus"></i> Save &amp; Add Another</button>`}
+      <button class="btn btn-primary" type="button" data-act="sm-save"><i class="ti ti-device-floppy"></i> ${edit?'Update':'Save'}</button>
+    </div>`;
+}
+function saveSpec(another){
+  if (!permRequire('sm-save')) return;
+  if (!cacheReady()) return;
+  const d = sdraft, E = { n:[], r:[] };
+  const names = d.newNames.map((n,i) => ({ i, v:n.trim() })).filter(x => x.v);
+  const rows  = d.rows.map((r,i) => ({ i, name:r.name.trim(), description:r.description.trim() })).filter(r => r.name || r.description);
+  if (!d.isNew && !d.t) E.t = 1;
+  if (d.isNew && !names.length) E.n.push(0);
+  if (!rows.length) E.r.push(0);
+  rows.forEach(r => { if (!r.name) E.r.push(r.i); });
+  const seenN = new Set(), taken = specTypes().map(m => dupNorm(m.label));
+  let dupType = false;
+  names.forEach(x => { const k = dupNorm(x.v); if (seenN.has(k) || taken.includes(k)){ E.n.push(x.i); dupType = true; } seenN.add(k); });
+  const targets = d.isNew ? names.map(x => x.v) : [d.t];
+  const seenR = new Set(); let dupItem = false, inactiveHit = null;
+  rows.forEach(r => { const k = dupNorm(r.name); if (!r.name) return;
+    const hit = !d.isNew && d.t ? (data[d.t]||[]).find(x => x.id!==d.id && dupNorm(x.name)===k) : null;
+    if (hit && hit.status==='inactive' && !inactiveHit) inactiveHit = hit;
+    if (seenR.has(k) || hit){ E.r.push(r.i); dupItem = true; } seenR.add(k); });
+  if (E.t || E.n.length || E.r.length){
+    d.errs = E; renderSpecModal();
+    if (inactiveHit && !d.id){ blinkRecord('specsetting', inactiveHit.id); return showToast(INACTIVE_MSG, 'info'); }
+    return showToast(dupType ? 'This Specs already exists — select it above' : dupItem ? 'Duplicate — this item already exists' : 'Please fill the required fields','error');
+  }
+  d.errs = null;
+  const now = Date.now(); let n = 0, added = 0, firstKey = d.t;
+  const keys = d.isNew ? targets.map((label,i) => { const key = 'sp'+now+i; (data.spectypes = data.spectypes||[]).push({ key, label }); data[key] = []; return key; }) : [d.t];
+  firstKey = keys[0];
+  if (d.id){
+    const r = rows[0]; Object.assign(data[d.t].find(x => x.id===d.id), { name:r.name, description:r.description, status:d.status });
+  } else {
+    keys.forEach(key => rows.slice().reverse().forEach(r => {
+      data[key].unshift({ id:'r'+now+(n++)+Math.floor(Math.random()*1000), name:r.name, description:r.description, status:d.status, created:now }); added++;
+    }));
+  }
+  const wasEdit = !!d.id, newCount = d.isNew ? keys.length : 0;
+  persist(); render('specsetting'); syncSpecsSheet();
+  if (another && !wasEdit){
+    sdraft = blankSpecDraft(firstKey, d.status); if (d.keepDesc){ sdraft.rows[0].description = d.keepDesc; sdraft.keepDesc = d.keepDesc; } renderSpecModal();
+    const f = specPanelEl().querySelector('[data-si]'); if (f) f.focus();
+    showToast('Saved — add the next one','success');
+  } else {
+    closeSpecModal();
+    showToast(wasEdit ? 'Specs setting updated' : (newCount ? newCount+' new Specs · ' : '') + added+' item'+(added>1?'s':'')+' added','success');
+  }
+}
+function wireSpecEvents(){
+  const sync = e => {
+    const el = e.target, ds = el.dataset; if (!sdraft || !ds) return;
+    if (ds.sn !== undefined){ sdraft.newNames[+ds.sn] = el.value; }
+    else if (ds.si !== undefined){ sdraft.rows[+ds.si][ds.sk] = el.value; }
+    else if (ds.sf){ sdraft[ds.sf] = el.value; }
+    else return;
+    if (el.classList.contains('bad') && el.value) el.classList.remove('bad');
+  };
+  document.addEventListener('input', sync); document.addEventListener('change', sync);
+  document.addEventListener('keydown', e => { if (sdraft && e.key==='Escape') closeSpecModal(); });
+}
+
+/* ═══════════════════════════════════════════════════════
+ *  FORM (right-hand panel)
+ * ═══════════════════════════════════════════════════════ */
+function openForm(k, id){
+  const m = MOD[k], rec = id ? data[k].find(r=>r.id===id) : null;
+  ui[k].editId = rec ? rec.id : null;
+  document.getElementById(k+'-preview-title').textContent = (rec?'Edit ':'Add ') + m.label;
+  document.getElementById(k+'-save-lbl').textContent = rec ? 'Update' : 'Save';
+
+  const fields = m.fields.map(f=>{
+    const v = rec ? (rec[f.key] ?? '') : (f.type==='status' ? 'active' : '');
+    const id_ = `${k}-f-${f.key}`;
+    let input;
+    if (f.type==='textarea') input = `<textarea class="date-input" id="${id_}" placeholder="${esc(f.ph||'')}">${esc(v)}</textarea>`;
+    else if (f.type==='status') input = `<select class="date-input" id="${id_}"><option value="active"${v==='active'?' selected':''}>Active</option><option value="inactive"${v==='inactive'?' selected':''}>Inactive</option></select>`;
+    else input = `<input class="date-input" id="${id_}" type="text" placeholder="${esc(f.ph||'')}" value="${esc(v)}" autocomplete="off"/>`;
+    return `<div class="field" id="${id_}-wrap"><label for="${id_}">${esc(f.label)}${f.req?' <span class="req">*</span>':''}</label>${input}<div class="err"></div></div>`;
+  }).join('');
+
+  document.getElementById(k+'-preview-body').innerHTML =
+    `<div class="form-stack">
+       ${m.hint ? `<div class="form-hint" style="margin-top:0;"><i class="ti ti-info-circle"></i> ${esc(m.hint)}</div>` : ''}
+       <div class="edit-banner ${rec?'show':''}"><i class="ti ti-pencil"></i> Editing existing record</div>${fields}
+     </div>`;
+  openPreview(k);
+  const first = document.getElementById(`${k}-f-${m.fields[0].key}`);
+  if (first) setTimeout(()=>first.focus(), 260);
+}
+
+function saveForm(k){
+  if (!permRequire('save', k)) return;
+  if (!cacheReady()) return;
+  if (k==='itemlist') return saveEntry(false);
+  if (k==='dclist') return saveDC();
+  if (k==='specsetting') return saveSpec();
+  const m = MOD[k], s = ui[k];
+  const vals = {}; let ok = true;
+  m.fields.forEach(f=>{
+    const el = document.getElementById(`${k}-f-${f.key}`), wrap = document.getElementById(`${k}-f-${f.key}-wrap`);
+    vals[f.key] = (el.value||'').trim();
+    wrap.classList.remove('invalid');
+    if (f.req && !vals[f.key]){
+      wrap.classList.add('invalid'); wrap.querySelector('.err').textContent = f.label+' is required'; ok = false;
+    }
+  });
+  if (!ok) return showToast('Please fill the required fields','error');
+
+  const reqKeys = m.fields.filter(f=>f.req).map(f=>f.key);
+  const dup = data[k].find(r => r.id!==s.editId && reqKeys.every(key => String(r[key]).toLowerCase()===vals[key].toLowerCase()));
+  if (dup){
+    const first = document.getElementById(`${k}-f-${reqKeys[0]}-wrap`);
+    first.classList.add('invalid'); first.querySelector('.err').textContent = 'This record already exists';
+    return showToast('Duplicate record','error');
+  }
+
+  if (s.editId){
+    Object.assign(data[k].find(r=>r.id===s.editId), vals);
+    showToast(m.label+' updated','success');
+  } else {
+    data[k].unshift(Object.assign({ id:'r'+Date.now()+Math.floor(Math.random()*1000), created:Date.now() }, vals));
+    showToast(m.label+' added','success');
+  }
+  persist(); closeForm(k); render(k);
+}
+function closeForm(k){
+  if (k==='specsetting') return closeSpecModal();
+  if (k==='dclist') return closeDcPanel();
+  if (k==='itemlist') return closeListModal();
+  ui[k].editId = null; closePreview(k);
+}
+
+/* ═══════════════════════════════════════════════════════
+ *  GENERIC UI HELPERS (from structure)
+ * ═══════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+ *  ITEM LIST — one-time catalog, Medical Domain-wise
+ *  Each entry = Medical Branch + Item + Specs + optional Description,
+ *  shown merged as:  Item - Specs - Description
+ *  A flat, ready-to-use copy is published to localStorage["item_list_catalog_v1"]
+ *  every time something is saved, for Sale / Purchase / Item Mgmt / Store Mgmt modules.
+ * ═══════════════════════════════════════════════════════ */
+let draft = null;                 // entry being added / edited in the modal
+let lmErrs = new Set();           // fields flagged invalid
+const LABEL_SEP = ' - ';
+
+function liveName(kind, id, snap){
+  const r = id ? (data[kind]||[]).find(x => x.id===id) : null;
+  return r ? r.name : (snap || '');
+}
+function entryView(r){
+  if (r.rawLabel !== undefined){                                   // came from the sheet as ready-made text
+    return { mb:liveName('medbranch', r.medbranchId, r.medbranchName), item:r.rawLabel, specs:'', extras:[], desc:'', raw:true, label:r.rawLabel };
+  }
+  const mb = liveName('medbranch', r.medbranchId, r.medbranchName);
+  const item = liveName('item', r.itemId, r.itemName);
+  const specs = liveName('specs', r.specsId, r.specsName);
+  const desc = (r.desc || '').trim();
+  const ex = r.extras || {};
+  const ms  = ex.matsource ? liveName('matsource', ex.matsource, '') : '';
+  const cat = ex.itemcat   ? liveName('itemcat',   ex.itemcat,   '') : '';
+  const extras = Object.keys(ex).filter(key => key!=='matsource' && key!=='itemcat').map(key => liveName(key, ex[key], '')).filter(Boolean);
+  /* sequence:  Material Source - Item - Category - Specs - Description */
+  return { mb, ms, item, cat, specs, extras, desc, label:[ms, item, cat, specs, ...extras, desc].filter(Boolean).join(LABEL_SEP) };
+}
+
+/* flat list for other modules */
+function publishCatalog(){
+  try {
+    const out = data.itemlist.map(r => { const v = entryView(r);
+      return { id:r.id, medbranchId:r.medbranchId, medbranch:v.mb, itemId:r.itemId, item:v.item,
+               specsId:r.specsId, specs:v.specs, matsource:v.ms, itemcat:v.cat, desc:v.desc, label:v.label, status:r.status }; });
+    localStorage.setItem(CATALOG_KEY, JSON.stringify(out));
+  } catch(e){ console.warn('[module] catalog publish failed', e.message); }
+}
+
+/* older builds saved lists with "lines" — flatten them into entries once */
+function migrateLists(){
+  if (data.itemlist.some(r => Array.isArray(r.lines))){
+    const out = []; let n = 0;
+    data.itemlist.forEach(r => {
+      if (!Array.isArray(r.lines)){ out.push(r); return; }
+      r.lines.forEach(l => out.push({ id:'e'+Date.now()+(n++), medbranchId:r.medbranchId, medbranchName:r.medbranchName,
+        itemId:l.itemId, itemName:l.itemName, specsId:l.specsId, specsName:l.specsName, desc:l.note||'',
+        status:r.status, created:r.created||Date.now(), updated:r.updated||Date.now() }));
+    });
+    data.itemlist = out; persist();
+  } else publishCatalog();
+}
+
+function listPanel(m,i){
+  return `
+    <div class="tab-panel" id="tab-${m.key}" style="display:${i?'none':'flex'};flex-direction:column;gap:10px;flex:1;min-height:0;">
+      <div class="main-split">
+        <div class="doc-sidebar" id="${m.key}-sidebar"></div>
+        <div class="doc-center" id="${m.key}-center">
+          <div class="doc-center-header">
+            <h3><i class="ti ${m.icon}"></i>${esc(m.label)} <span class="badge purple" id="${m.key}-count">0</span></h3>
+            <span class="hist-tip"><i class="ti ti-info-circle"></i>${esc(m.hint)}</span>
+            <div class="hdr-actions">
+              ${hdrTools(m.key)}
+              <button class="btn btn-primary btn-sm" data-act="add-list" title="Add Item List"><i class="ti ti-playlist-add"></i><span class="lbl">Add Item List</span></button>
+            </div>
+          </div>
+          <div class="doc-center-body" id="${m.key}-body"></div>
+        </div>
+        <div class="doc-preview-panel" id="${m.key}-preview-panel"></div>
+      </div>
+    </div>`;
+}
+
+/* ── sidebar: status filters + one tile per Medical Branch ── */
+function renderListSidebar(k){
+  const s = ui[k], rows = data.itemlist;
+  const cnt = { all:rows.length, active:rows.filter(r=>r.status==='active').length, inactive:rows.filter(r=>r.status==='inactive').length };
+  const tile = (f, label, icon, cls, badgeCls) =>
+    `<button class="doc-side-btn ${cls} ${s.filter===f?'selected':''}" data-act="filter" data-k="${k}" data-v="${f}">
+       <i class="ti ${icon}"></i>${label}<span class="doc-count-badge ${badgeCls}">${cnt[f]}</span></button>`;
+  const mbs = data.medbranch.map(mb => {
+    const n = rows.filter(r => r.medbranchId===mb.id).length;
+    return `<button class="doc-side-btn ${s.mb===mb.id?'selected':''}" data-act="mbfilter" data-k="${k}" data-v="${esc(mb.id)}" title="${esc(mb.name)}">
+       <i class="ti ti-bone"></i><span style="max-width:84px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(mb.name)}</span>
+       <span class="doc-count-badge">${n}</span></button>`;
+  }).join('');
+  document.getElementById(k+'-sidebar').innerHTML =
+    `<button class="doc-side-btn ${!s.mb?'selected':''}" data-act="mbfilter" data-k="${k}" data-v="" title="All medical domains"><i class="ti ti-list"></i>All<span class="doc-count-badge">${rows.length}</span></button>` +
+    (mbs ? '<div class="sidebar-sep"></div>' + mbs : '');
+  renderFilters(k, rows);
+  renderDupFilter(k, dupListSet());
+}
+
+/* ── table: grouped by Medical Branch ── */
+function visibleEntries(){
+  const s = ui.itemlist, q = s.q.trim().toLowerCase();
+  const D = s.dup ? dupListSet() : null;
+  return data.itemlist.filter(r => (s.filter==='all' || r.status===s.filter) && (!s.mb || r.medbranchId===s.mb) && (!D || D.has(r.id)))
+    .map(r => ({ r, v:entryView(r) }))
+    .filter(x => !q || matchAll(q, x.v.mb+' '+x.v.label));
+}
+
+function renderListTable(k){
+  const body = document.getElementById(k+'-body'), rows = visibleEntries();
+  document.getElementById(k+'-count').textContent = rows.length + (rows.length!==data[k].length ? ' / '+data[k].length : '');
+  if (!rows.length){
+    const empty = !data[k].length;
+    body.innerHTML = `<div class="doc-center-placeholder"><i class="ti ${empty?'ti-list-check':'ti-search-off'}"></i>
+      <span>${empty ? 'No item list entries yet — pick a Medical Domain, an Item and its Specs' : 'No entries match your filter'}</span>
+      ${empty ? `<button class="btn btn-primary btn-sm" data-act="add-list"><i class="ti ti-playlist-add"></i> Add Item List</button>` : ''}</div>`;
+    return;
+  }
+  rows.sort((a,b) => a.v.mb.localeCompare(b.v.mb, undefined, {sensitivity:'base'}) || a.v.label.localeCompare(b.v.label, undefined, {sensitivity:'base'}));
+  const sep = `<span class="sep">${esc(LABEL_SEP.trim())}</span>`;
+  const DL = dupListSet();
+  const trs = rows.map(x => {
+    const r = x.r, v = x.v, armed = armedDelete && armedDelete.k===k && armedDelete.id===r.id;
+    return `<tr data-rid="${r.id}"${DL.has(r.id) ? ' class="dup-row"' : ''}>
+      <td><span class="spec-chip"><i class="ti ti-bone"></i>${esc(v.mb || '—')}</span></td>
+      <td class="merged" title="${esc(v.label)}">${DL.has(r.id) ? DUP_BADGE : ''}${v.raw ? esc(v.label) : [v.ms?esc(v.ms):'', v.item?`<strong>${esc(v.item)}</strong>`:'', v.cat?esc(v.cat):'', v.specs?esc(v.specs):'', ...(v.extras||[]).map(esc), v.desc?`<span class="d">${esc(v.desc)}</span>`:''].filter(Boolean).join(sep)}</td>
+      <td><span class="st-badge ${r.status}">${r.status==='active'?'Active':'Inactive'}</span></td>
+      <td class="acts"><div class="act-btns">
+        <button class="ib sm" title="Edit" data-act="edit" data-k="${k}" data-id="${r.id}"><i class="ti ti-pencil"></i></button>
+        ${DL.has(r.id) ? '' : `<button class="ib sm" title="Set ${r.status==='active'?'inactive':'active'}" data-act="toggle" data-k="${k}" data-id="${r.id}"><i class="ti ti-${r.status==='active'?'toggle-right':'toggle-left'}"></i></button>`}
+        <button class="ib sm danger ${armed?'armed':''}" title="${armed?'Click again to confirm':'Delete'}" data-act="del" data-k="${k}" data-id="${r.id}"><i class="ti ti-${armed?'check':'trash'}"></i></button>
+      </div></td></tr>`;
+  }).join('');
+  body.innerHTML = `<table class="log-table"><thead><tr><th style="width:190px;">Medical Domain</th><th>Material Source - Item - Category - Specs - Description</th><th style="width:90px;">Status</th><th style="width:110px;"></th></tr></thead><tbody>${trs}</tbody></table>`;
+}
+
+function exportCsv(){
+  const cell = x => '"' + String(x ?? '').replace(/"/g,'""') + '"';
+  const rows = [['Medical Domain','Material Source','Item Name','Category','Specs','Description','Item List Entry','Status']]
+    .concat(visibleEntries().map(x => [x.v.mb, x.v.ms, x.v.item, x.v.cat, x.v.specs, x.v.desc, x.v.label, x.r.status]));
+  if (rows.length === 1) return showToast('Nothing to export','error');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\ufeff' + rows.map(r => r.map(cell).join(',')).join('\r\n')], {type:'text/csv;charset=utf-8'}));
+  a.download = 'item_list.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  showToast('CSV downloaded','success');
+}
+
+/* ── add / edit modal ── */
+function openListModal(id, mbId){
+  const rec = id ? data.itemlist.find(r => r.id===id) : null;
+  draft = rec ? Object.assign({}, rec) : { id:null, status:'active' };
+  if (rec && rec.rawLabel !== undefined){                         // entry that came from the sheet as ready-made text
+    draft.raw = true; draft.rawLabel = rec.rawLabel;
+    draft.vals = { medbranch: liveName('medbranch', rec.medbranchId, rec.medbranchName) };
+    lmErrs = new Set(); renderListModal();
+    document.getElementById('itemlist-preview-panel').classList.add('open'); return;
+  }
+  const ex = (rec && rec.extras) || {};
+  const mbRef = rec ? rec.medbranchId : (mbId || ui.itemlist.mb || '');
+  draft.vals = {
+    medbranch: rec ? liveName('medbranch', rec.medbranchId, rec.medbranchName) : liveName('medbranch', mbRef, ''),
+    matsource: ex.matsource ? liveName('matsource', ex.matsource, '') : '',
+    item:      rec ? liveName('item', rec.itemId, rec.itemName) : '',
+    itemcat:   ex.itemcat ? liveName('itemcat', ex.itemcat, '') : ''
+  };
+  draft.rows = [{ specs: rec ? liveName('specs', rec.specsId, rec.specsName) : '', desc: rec ? (rec.desc||'') : '' }];
+  lmErrs = new Set();
+  renderListModal();
+  document.getElementById('itemlist-preview-panel').classList.add('open');
+}
+function closeListModal(){ document.getElementById('itemlist-preview-panel').classList.remove('open'); draft = null; }
+
+function selHTML(kind, field, cur, ph, snap, bad){
+  const opts = (data[kind]||[]).filter(o => o.status==='active' || o.id===cur);
+  const gone = cur && !opts.some(o => o.id===cur) ? `<option value="${esc(cur)}" selected>${esc(snap||'Removed record')} (removed)</option>` : '';
+  return `<select class="date-input${bad?' bad':''}" data-f="${field}"><option value="">${ph}</option>${gone}${
+    opts.map(o => `<option value="${esc(o.id)}"${o.id===cur?' selected':''}>${esc(o.name)}${o.status==='inactive'?' (inactive)':''}</option>`).join('')}</select>`;
+}
+function draftLabels(){
+  const v = draft.vals || {}, t = x => (x||'').trim();
+  return (draft.rows||[]).filter(r => t(r.specs))
+    .map(r => [t(v.matsource), t(v.item), t(v.itemcat), t(r.specs), t(r.desc)].filter(Boolean).join(LABEL_SEP));
+}
+function updateDraftPreview(){
+  const el = document.getElementById('lm-preview'); if (!el) return;
+  const t = draftLabels();
+  el.innerHTML = t.length ? t.map(x => `<div><i class="ti ti-arrows-join-2"></i> ${esc(x)}</div>`).join('') : '<i class="ti ti-arrows-join-2"></i> Material Source - Item - Category - Specs - Description will appear here';
+  el.classList.toggle('empty', !t.length);
+}
+
+function chipsHTML(kind, field, cur, snap, bad, toggleOk){
+  const opts = (data[kind]||[]).filter(o => o.status==='active' || o.id===cur);
+  if (!opts.length) return `<span class="chip-empty">No items yet — add them under Specs Settings</span>`;
+  return `<div class="chips${bad?' bad':''}">${opts.map(o => `<button type="button" class="chip${o.id===cur?' on':''}" data-act="chip" data-f="${field}" data-v="${esc(o.id)}">${esc(o.name)}${o.status==='inactive'?' (inactive)':''}</button>`).join('')}</div>`;
+}
+/* searchable drop-down: pick an existing record or type a new one (a new one is saved to Specs Settings on save) */
+function cbHTML(id, kind, val, ph, bad){
+  const v = (val||'').trim(), isNew = v && !(data[kind]||[]).some(o => o.name.trim().toLowerCase()===v.toLowerCase());
+  return `<div class="cb"><input class="date-input${bad?' bad':''}" data-cbi="${id}" data-cbk="${kind}" type="text" placeholder="${esc(ph)}" value="${esc(val||'')}" autocomplete="off" role="combobox" aria-autocomplete="list"/>
+    <div class="cb-pop"></div>
+    <div class="cb-hint${isNew?' show':''}"><i class="ti ti-circle-plus"></i> New — will be saved to Specs Settings</div></div>`;
+}
+function specRowsHTML(d){
+  const many = d.rows.length > 1;
+  return d.rows.map((r,i) => `
+    <div class="spec-row one">
+      <div class="rno">Specs ${i+1}</div>
+      ${cbHTML('r:'+i, 'specs', r.specs, 'Search or type specs…', lmErrs.has('r'+i))}
+      <input class="date-input" data-r="${i}" data-rf="desc" type="text" placeholder="Description (optional)" value="${esc(r.desc||'')}" autocomplete="off"/>
+      ${many && !d.id ? `<button class="ib sm danger" type="button" title="Remove row" data-act="row-del" data-i="${i}"><i class="ti ti-trash"></i></button>` : '<span></span>'}
+    </div>`).join('');
+}
+function chipGroups(d, bad){
+  const g = (label, req, inner, icon) => `<div class="field inl"><div class="fgrp-lbl"><i class="ti ${icon}"></i>${esc(label)}${req?' <span class="req">*</span>':''}</div>${inner}</div>`;
+  const v = d.vals;
+  return g('Medical Domain', true,  cbHTML('v:medbranch','medbranch',v.medbranch,'Search or type medical domain…',bad('medbranch')), 'ti-bone')
+    + g('Material Source', false, cbHTML('v:matsource','matsource',v.matsource,'Search or type material source…',false), 'ti-truck-delivery')
+    + g('Item', true,             cbHTML('v:item','item',v.item,'Search or type item…',bad('item')), 'ti-package')
+    + g('Category', false,        cbHTML('v:itemcat','itemcat',v.itemcat,'Search or type category…',false), 'ti-category')
+    + `<div class="field"><div class="fgrp-lbl"><i class="ti ti-list-details"></i>Specs <span class="req">*</span>
+        ${d.id ? '' : '<button class="btn btn-ghost btn-sm" type="button" data-act="row-add" style="margin-left:auto;"><i class="ti ti-plus"></i> Add row</button>'}</div>
+        <div class="form-stack" style="gap:8px;">${specRowsHTML(d)}</div></div>`;
+}
+
+/* combo behaviour */
+function cbSet(inp, val){
+  const [kind, key] = inp.dataset.cbi.split(':');
+  if (kind==='v') draft.vals[key] = val; else draft.rows[+key].specs = val;
+  inp.classList.remove('bad');
+  const v = val.trim(), hint = inp.parentElement.querySelector('.cb-hint');
+  hint.classList.toggle('show', !!v && !(data[inp.dataset.cbk]||[]).some(o => o.name.trim().toLowerCase()===v.toLowerCase()));
+  updateDraftPreview();
+}
+function cbClose(){ document.querySelectorAll('.cb.open').forEach(c => c.classList.remove('open')); }
+function cbOpen(inp){
+  cbClose();
+  const box = inp.parentElement, pop = box.querySelector('.cb-pop'), q = inp.value.trim(), ql = q.toLowerCase(), all = data[inp.dataset.cbk]||[];
+  const isSp = inp.dataset.cbk==='specs';
+  const list = all.filter(o => o.status==='active' && (!ql || o.name.toLowerCase().includes(ql) || (isSp && (o.description||'').toLowerCase().includes(ql))));
+  const canAdd = q && !all.some(o => o.name.trim().toLowerCase()===ql);
+  const optHTML = o => `<div class="cb-opt" data-v="${esc(o.name)}">${esc(o.name)}</div>`;
+  let inner;
+  if (isSp && list.some(o => (o.description||'').trim())){          // Specs: Description = heading, its Specs listed under it
+    const gm = new Map();
+    list.filter(o => (o.description||'').trim()).forEach(o => { const d = o.description.trim(), gk = dupNorm(d); if (!gm.has(gk)) gm.set(gk, { d, opts:[] }); gm.get(gk).opts.push(o); });
+    inner = list.filter(o => !(o.description||'').trim()).map(optHTML).join('')
+      + [...gm.values()].sort((p,r) => natCmp(p.d, r.d)).map(g => `<div class="cb-grp">${esc(g.d)}</div>` + g.opts.map(optHTML).join('')).join('');
+  } else inner = list.map(optHTML).join('');
+  pop.innerHTML = inner
+    + (canAdd ? `<div class="cb-opt add" data-v="${esc(q)}"><i class="ti ti-plus"></i>Add “${esc(q)}”</div>` : '')
+    + (!list.length && !canAdd ? '<div class="cb-none">Nothing yet — type to add</div>' : '');
+  box.classList.add('open');
+}
+function wireCombo(){
+  document.addEventListener('focusin', e => { if (draft && e.target.dataset && e.target.dataset.cbi) cbOpen(e.target); });
+  document.addEventListener('input',   e => { if (draft && e.target.dataset && e.target.dataset.cbi){ cbSet(e.target, e.target.value); cbOpen(e.target); } });
+  document.addEventListener('mousedown', e => {
+    const opt = e.target.closest && e.target.closest('.cb-opt');
+    if (opt){
+      e.preventDefault();
+      const inp = opt.closest('.cb').querySelector('input'); inp.value = opt.dataset.v; cbSet(inp, opt.dataset.v); cbClose(); return;
+    }
+    if (!(e.target.closest && e.target.closest('.cb'))) cbClose();
+  });
+  document.addEventListener('keydown', e => {
+    const inp = e.target; if (!draft || !inp.dataset || !inp.dataset.cbi) return;
+    const box = inp.parentElement, opts = [...box.querySelectorAll('.cb-opt')], cur = opts.findIndex(o => o.classList.contains('hl'));
+    const hl = i => { opts.forEach(o => o.classList.remove('hl')); if (opts[i]){ opts[i].classList.add('hl'); opts[i].scrollIntoView && opts[i].scrollIntoView({block:'nearest'}); } };
+    if (e.key==='ArrowDown'){ e.preventDefault(); if (!box.classList.contains('open')) cbOpen(inp); else hl(Math.min(opts.length-1, cur+1)); }
+    else if (e.key==='ArrowUp'){ e.preventDefault(); hl(Math.max(0, cur-1)); }
+    else if (e.key==='Enter'){
+      e.preventDefault(); e.stopPropagation();
+      if (cur>=0){ inp.value = opts[cur].dataset.v; cbSet(inp, inp.value); }
+      cbClose();
+    }
+    else if (e.key==='Escape' && box.classList.contains('open')){ e.stopPropagation(); cbClose(); }
+  }, true);
+}
+
+function renderRawModal(){
+  const d = draft, bad = k => lmErrs.has(k);
+  document.getElementById('itemlist-preview-panel').innerHTML = `
+    <div class="pph"><h3><i class="ti ti-playlist-add"></i><span>Edit Item List Entry</span></h3>
+      <button class="pph-close" data-act="modal-close" title="Close"><i class="ti ti-x"></i></button></div>
+    <div class="ppb"><div class="form-stack">
+      <div class="field inl"><div class="fgrp-lbl"><i class="ti ti-bone"></i>Medical Domain <span class="req">*</span></div>
+        ${cbHTML('v:medbranch','medbranch',d.vals.medbranch,'Search or type medical domain…',bad('medbranch'))}</div>
+      <div class="field inl"><div class="fgrp-lbl"><i class="ti ti-list-details"></i>Item - Specs - Description <span class="req">*</span></div>
+        <input class="date-input${bad('rawLabel')?' bad':''}" type="text" data-f="rawLabel" value="${esc(d.rawLabel)}" placeholder="Item - Specs - Description" autocomplete="off"/></div>
+      <div class="field inl"><label>Status</label>
+        <select class="date-input" data-f="status"${d.id && dupListSet().has(d.id) ? ' disabled title="Duplicate — status cannot be changed"' : ''}><option value="active"${d.status==='active'?' selected':''}>Active</option><option value="inactive"${d.status==='inactive'?' selected':''}>Inactive</option></select></div>
+    </div></div>
+    <div class="ppf form-actions">
+      <button class="btn btn-ghost" type="button" data-act="modal-close">Cancel</button>
+      <button class="btn btn-primary" type="button" data-act="modal-save"><i class="ti ti-device-floppy"></i> Update</button>
+    </div>`;
+}
+function saveRawEntry(){
+  if (!permRequire('modal-save')) return;
+  const d = draft; lmErrs = new Set();
+  const mbName = (d.vals.medbranch||'').trim(), text = (d.rawLabel||'').trim();
+  if (!mbName) lmErrs.add('medbranch');
+  if (!text) lmErrs.add('rawLabel');
+  const rawHit = !lmErrs.size ? data.itemlist.find(e => e.id!==d.id && entryView(e).label.trim().toLowerCase()===text.toLowerCase() && entryView(e).mb.trim().toLowerCase()===mbName.toLowerCase()) : null;
+  if (rawHit){
+    lmErrs.add('rawLabel'); renderRawModal();
+    if (rawHit.status==='inactive' && !d.id){ blinkRecord('itemlist', rawHit.id); return showToast(INACTIVE_MSG, 'info'); }
+    return showToast('Duplicate — this entry already exists','error');
+  }
+  if (lmErrs.size){ renderRawModal(); return showToast('Please fill the highlighted fields','error'); }
+  const now = Date.now();
+  let mb = data.medbranch.find(x => x.name.trim().toLowerCase()===mbName.toLowerCase());
+  if (!mb){ mb = { id:'r'+now+'medbranch', name:mbName, description:'', status:'active', created:now }; data.medbranch.unshift(mb); }
+  const rec = data.itemlist.find(x => x.id===d.id);
+  if (rec) Object.assign(rec, { rawLabel:text, medbranchId:mb.id, medbranchName:mb.name, status:d.status, updated:now });
+  persist(); syncSpecsSheet();
+  render('itemlist'); render('specsetting'); closeListModal(); showToast('Entry updated','success');
+}
+function renderListModal(){
+  if (draft && draft.raw) return renderRawModal();
+  const d = draft, bad = k => lmErrs.has(k);
+  document.getElementById('itemlist-preview-panel').innerHTML = `
+    <div class="pph"><h3><i class="ti ti-playlist-add"></i><span>${d.id?'Edit Item List Entry':'Add Item List'}</span></h3>
+      <button class="pph-close" data-act="modal-close" title="Close"><i class="ti ti-x"></i></button></div>
+    <div class="ppb"><div class="form-stack">
+      ${chipGroups(d, bad)}
+      <div class="field inl"><label>Status</label>
+        <select class="date-input" data-f="status"${d.id && dupListSet().has(d.id) ? ' disabled title="Duplicate — status cannot be changed"' : ''}><option value="active"${d.status==='active'?' selected':''}>Active</option><option value="inactive"${d.status==='inactive'?' selected':''}>Inactive</option></select></div>
+      <div class="merge-preview" id="lm-preview"></div>
+    </div></div>
+    <div class="ppf form-actions">
+      <button class="btn btn-ghost" type="button" data-act="modal-close">Cancel</button>
+      ${d.id ? '' : `<button class="btn btn-ghost" type="button" data-act="modal-save-new"><i class="ti ti-plus"></i> Save &amp; Add Another</button>`}
+      <button class="btn btn-primary" type="button" data-act="modal-save"><i class="ti ti-device-floppy"></i> ${d.id?'Update':'Save'}</button>
+    </div>`;
+  updateDraftPreview();
+}
+
+function saveEntry(another){
+  if (!permRequire('modal-save')) return;
+  if (!cacheReady()) return;
+  if (draft && draft.raw) return saveRawEntry();
+  const d = draft; lmErrs = new Set();
+  const v = {}; ['medbranch','matsource','item','itemcat'].forEach(k => v[k] = (d.vals[k]||'').trim());
+  if (!v.medbranch) lmErrs.add('medbranch');
+  if (!v.item) lmErrs.add('item');
+  const rows = d.rows.map((r,i) => ({ i, specs:(r.specs||'').trim(), desc:(r.desc||'').trim() })).filter(r => r.specs);
+  if (!rows.length) lmErrs.add('r0');
+  const find = (kind, name) => name ? (data[kind]||[]).find(x => x.name.trim().toLowerCase()===name.toLowerCase()) : null;
+  const seen = new Set(); let inactiveHit = null;
+  rows.forEach(r => {
+    let dup = seen.has(r.specs.toLowerCase()); seen.add(r.specs.toLowerCase());
+    if (!dup){
+      const mb = find('medbranch',v.medbranch), it = find('item',v.item), sp = find('specs',r.specs), ms = find('matsource',v.matsource), ic = find('itemcat',v.itemcat);
+      if (mb && it && sp && (!v.matsource || ms) && (!v.itemcat || ic))
+        { const hit = data.itemlist.find(e => e.id!==d.id && e.medbranchId===mb.id && e.itemId===it.id && e.specsId===sp.id
+          && ((e.extras||{}).matsource||'')===(ms?ms.id:'') && ((e.extras||{}).itemcat||'')===(ic?ic.id:'')
+          && (e.desc||'').trim().toLowerCase()===r.desc.toLowerCase());
+          if (hit){ dup = true; if (hit.status==='inactive' && !inactiveHit) inactiveHit = hit; } }
+      if (!dup && mb && it && sp){                                          // same merged text as an entry that came from the sheet?
+        const tv = entryView({ medbranchId:mb.id, medbranchName:mb.name, itemId:it.id, itemName:it.name, specsId:sp.id, specsName:sp.name,
+          extras:{ matsource: ms?ms.id:'', itemcat: ic?ic.id:'' }, desc:r.desc });
+        const hit = data.itemlist.find(e => e.id!==d.id && dupNorm(entryView(e).mb)===dupNorm(tv.mb) && dupNorm(entryView(e).label)===dupNorm(tv.label));
+        if (hit){ dup = true; if (hit.status==='inactive' && !inactiveHit) inactiveHit = hit; }
+      }
+    }
+    if (dup) lmErrs.add('r'+r.i);
+  });
+  if (lmErrs.size && inactiveHit && !d.id && !lmErrs.has('medbranch') && !lmErrs.has('item')){ renderListModal(); blinkRecord('itemlist', inactiveHit.id); return showToast(INACTIVE_MSG, 'info'); }
+  if (lmErrs.size){ renderListModal(); return showToast(lmErrs.has('medbranch')||lmErrs.has('item') ? 'Please fill the highlighted fields' : 'Check the highlighted Specs rows (required or already exists)','error'); }
+
+  const now = Date.now(); let n = 0, created = 0;
+  const ensure = (kind, name) => {              // missing → saved to Specs Settings (no description) and used right away
+    if (!name) return null;
+    let rec = find(kind, name);
+    if (!rec){ rec = { id:'r'+now+(n++)+kind, name, description:'', status:'active', created:now }; data[kind].unshift(rec); created++; }
+    return rec;
+  };
+  const mb = ensure('medbranch',v.medbranch), it = ensure('item',v.item), ms = ensure('matsource',v.matsource), ic = ensure('itemcat',v.itemcat);
+  const extras = {}; if (ms) extras.matsource = ms.id; if (ic) extras.itemcat = ic.id;
+  const wasEdit = !!d.id; let last = null;
+  rows.forEach(r => {
+    const sp = ensure('specs', r.specs);
+    const rec = {
+      id: d.id || 'e'+now+(n++)+Math.floor(Math.random()*1000),
+      medbranchId:mb.id, medbranchName:mb.name, itemId:it.id, itemName:it.name, specsId:sp.id, specsName:sp.name,
+      extras:Object.assign({}, extras), desc:r.desc, status:d.status, created:d.created || now, updated:now
+    };
+    const idx = data.itemlist.findIndex(x => x.id===rec.id);
+    if (idx >= 0) data.itemlist[idx] = rec; else data.itemlist.unshift(rec);
+    last = rec;
+  });
+  persist(); syncSpecsSheet();
+  switchTab('itemlist'); render('itemlist'); render('specsetting');
+  const note = created ? ` · ${created} new added to Specs Settings` : '';
+
+  if (another && !wasEdit){
+    draft = { id:null, status:d.status, vals:{ medbranch:mb.name, matsource:'', item:'', itemcat:'' }, rows:[{specs:'',desc:''}] };
+    lmErrs = new Set(); renderListModal();
+    showToast('Saved — add the next one'+note,'success');
+  } else {
+    closeListModal();
+    showToast((wasEdit ? 'Entry updated' : rows.length+(rows.length>1?' entries':' entry')+' saved')+note,'success');
+  }
+}
+
+function wireListEvents(){
+  const sync = e => {
+    const el = e.target;
+    if (draft && el.dataset && el.dataset.r !== undefined){
+      draft.rows[+el.dataset.r][el.dataset.rf] = el.value;
+      if (el.classList.contains('bad') && el.value) el.classList.remove('bad');
+      return updateDraftPreview();
+    }
+    const f = el.dataset && el.dataset.f;
+    if (!draft || !f) return;
+    draft[f] = el.value;
+    if (f==='medbranchId') draft.medbranchName = liveName('medbranch', el.value, '');
+    if (f==='itemId')      draft.itemName  = liveName('item',  el.value, '');
+    if (f==='specsId')     draft.specsName = liveName('specs', el.value, '');
+    if (el.classList.contains('bad') && el.value) el.classList.remove('bad');
+    updateDraftPreview();
+  };
+  document.addEventListener('input', sync);
+  document.addEventListener('change', sync);
+  document.addEventListener('keydown', e => { if (e.key==='Escape' && draft) closeListModal(); });
+}
+
+
+/* ═══════════════════════════════════════════════════════
+ *  DC LISTS — Delivery Challans built from the Item List
+ *  Stored in the same sheet, one row per DC item:
+ *      ID | DC List | <DC name> | <item text> | Status
+ *  Add DC = pick a name + tick items from the Item List. Search a DC → all its items are listed → Print.
+ * ═══════════════════════════════════════════════════════ */
+const natCmp = (a,b) => String(a).localeCompare(String(b), undefined, { numeric:true, sensitivity:'base' });
+const sidKey = r => String(r.sid || '').padStart(17,'0');
+const dcKey = n => dupNorm(n);
+const dupDcSet = () => dupIdsOf((data.dclist||[]).map(e => [e.id, dcKey(e.dcName) + '|' + dupNorm(e.label)]));
+/* rows → [{ key, name, items }]  DCs A→Z, items in the order they were added */
+function dcGroups(rows){
+  const m = new Map();
+  rows.forEach(e => { const k = dcKey(e.dcName); if (!m.has(k)) m.set(k, { key:k, name:e.dcName, items:[] }); m.get(k).items.push(e); });
+  const out = [...m.values()];
+  out.forEach(g => g.items.sort((a,b) => sidKey(a).localeCompare(sidKey(b)) || (a.created||0)-(b.created||0)));
+  return out.sort((a,b) => natCmp(a.name, b.name));
+}
+function dcPanel(m,i){
+  return `
+    <div class="tab-panel" id="tab-${m.key}" style="display:${i?'none':'flex'};flex-direction:column;gap:10px;flex:1;min-height:0;">
+      <div class="main-split">
+        <div class="doc-center" id="${m.key}-center">
+          <div class="doc-center-header">
+            <h3><i class="ti ${m.icon}"></i>${esc(m.label)} <span class="badge purple" id="${m.key}-count">0</span></h3>
+            <span class="hist-tip"><i class="ti ti-info-circle"></i>${esc(m.hint)}</span>
+            <div class="hdr-actions">
+              ${hdrTools(m.key)}
+              <button class="btn btn-primary btn-sm" data-act="dc-add" data-k="${m.key}" title="Add DC"><i class="ti ti-plus"></i><span class="lbl">Add DC</span></button>
+            </div>
+          </div>
+          <div class="doc-center-body" id="${m.key}-body"></div>
+        </div>
+        <div class="doc-preview-panel" id="${m.key}-preview-panel"></div>
+      </div>
+    </div>`;
+}
+function renderDcSidebar(){ /* no sidebar in this module */ }
+/* search matches the DC name (or any of its items) and then the WHOLE DC is listed */
+function visibleDcGroups(){
+  const q = ui.dclist.q.trim();
+  return dcGroups(data.dclist||[]).filter(g => !q || matchAll(q, g.name + ' ' + g.items.map(e => e.label).join(' ')));
+}
+function renderDcTable(){
+  const k = 'dclist', body = document.getElementById(k+'-body'), gs = visibleDcGroups(), total = dcGroups(data.dclist||[]).length;
+  document.getElementById(k+'-count').textContent = gs.length + (gs.length!==total ? ' / '+total : '');
+  if (!gs.length){
+    const empty = !total;
+    body.innerHTML = `<div class="doc-center-placeholder"><i class="ti ${empty?'ti-clipboard-list':'ti-search-off'}"></i>
+      <span>${empty ? 'No DC yet — create one and pick its items from the Item List' : 'No DC matches your search'}</span>
+      ${empty ? `<button class="btn btn-primary btn-sm" data-act="dc-add" data-k="${k}"><i class="ti ti-plus"></i> Add DC</button>` : ''}</div>`;
+    return;
+  }
+  body.innerHTML = `<div class="dc-list">${gs.map(g => {
+    const trs = g.items.map((e,i) => `<tr data-rid="${e.id}">
+        <td class="num" style="width:40px;">${i+1}</td>
+        <td class="merged" title="${esc(e.label)}">${esc(e.label)}</td>
+        <td style="width:90px;"><span class="st-badge ${e.status}">${e.status==='active'?'Active':'Inactive'}</span></td></tr>`).join('');
+    const act = g.items.filter(e => e.status==='active').length;
+    return `<div class="dc-card">
+      <div class="grp-hd"><i class="ti ti-clipboard-list" style="color:var(--accent);font-size:16px;"></i><strong>${esc(g.name)}</strong>
+        <span class="cnt-chip" title="${act} active of ${g.items.length}">${g.items.length}</span><span class="sp"></span>
+        <button class="btn btn-ghost btn-sm" type="button" data-act="dc-print" data-dc="${esc(g.key)}" title="Print this DC"><i class="ti ti-printer"></i> Print</button></div>
+      <table class="log-table"><thead><tr><th style="width:40px;cursor:default">#</th><th style="cursor:default">Item</th><th style="cursor:default">Status</th></tr></thead><tbody>${trs}</tbody></table></div>`;
+  }).join('')}</div>`;
+}
+function dcArm(id){
+  armedDelete = { k:'dclist', id }; renderDcTable();
+  clearTimeout(wireDelegation._t);
+  wireDelegation._t = setTimeout(() => { if (armedDelete && armedDelete.id===id){ armedDelete = null; renderDcTable(); } }, 2800);
+}
+
+/* ── print: opens the Print panel — tick / untick, qty (one click = 1, or a range), add / remove items, manual lines, switch to another DC ── */
+let pdraft = null;
+const prRow = id => pdraft && pdraft.rows.find(r => r.id===id);
+const prNew = (label, manual, grp) => ({ id:'r'+(++pdraft.n), label, grp:grp||'', qty: manual ? '1' : '', on:!!manual, manual:!!manual });
+const prShown = () => pdraft.rows.filter(r => r.manual || matchAll(pdraft.q, r.label));
+const prCount = () => { const c = document.getElementById('pr-count'); if (c && pdraft) c.textContent = pdraft.rows.filter(r => r.on && r.label.trim()).length + ' to print'; };
+function printDC(key){
+  const g = dcGroups((data.dclist||[]).filter(e => dcKey(e.dcName)===key))[0]; if (!g) return;
+  dcdraft = null; pdraft = { name:'', rows:[], n:0, src:'', q:'', pq:'', psel:new Map() };
+  renderPrintPanel(); prLoad(g.key); dcPanelEl().classList.add('open');
+}
+/* choosing a DC adds its items to the pane (unticked); lists chosen earlier keep only what was ticked */
+function prLoad(key){
+  const g = dcGroups((data.dclist||[]).filter(e => dcKey(e.dcName)===key))[0]; if (!g) return;
+  pdraft.src = key; const sel = dcPanelEl().querySelector('[data-prsrc]'); if (sel) sel.value = key;
+  pdraft.rows = pdraft.rows.filter(r => r.manual || r.on);
+  const have = new Set(pdraft.rows.map(r => dupNorm(r.label)));
+  g.items.filter(e => e.status==='active' && !have.has(dupNorm(e.label))).forEach(e => pdraft.rows.push(prNew(e.label, false, g.name)));
+  fillPrRows();
+}
+/* "5" → 6 · "5-10" → "6-11" · empty + → 1 */
+function stepQty(q, d){
+  q = String(q||'').trim(); if (!q) return d>0 ? '1' : '';
+  if (/^\d+$/.test(q)) return String(Math.max(1, +q + d));
+  const r = q.match(/^(\d+)\s*(?:-|–|to)\s*(\d+)$/i);
+  if (r){ const a = Math.max(1, +r[1]+d), b = Math.max(a, +r[2]+d); return a+'-'+b; }
+  return q;
+}
+function prSyncRow(t, r){
+  const row = t.closest('.pr-row'); if (!row) return;
+  row.classList.toggle('off', !r.on);
+  const i = row.querySelector('.pr-tg i'); if (i) i.className = 'ti ' + (r.on ? 'ti-square-check-filled' : 'ti-square');
+  prCount();
+}
+function fillPrRows(){
+  const el = document.getElementById('pr-rows'); if (!el || !pdraft) return;
+  const top = el.scrollTop, rows = prShown(), gm = new Map();
+  const rowHTML = r => `<div class="pr-row${r.on?'':' off'}">
+      <button class="ib sm pr-tg" type="button" data-act="pr-tog" data-id="${r.id}" title="${r.on?'Skip this item':'Print this item'}"><i class="ti ${r.on?'ti-square-check-filled':'ti-square'}"></i></button>
+      <input class="date-input pr-lbl" data-prl data-id="${r.id}" type="text" value="${esc(r.label)}" placeholder="Write item…" autocomplete="off" title="Click to edit"/>
+      <div class="pr-qty"><button class="ib sm" type="button" data-act="pr-qty" data-id="${r.id}" data-d="-1" title="Less"><i class="ti ti-minus"></i></button>
+        <input class="date-input" data-prq data-id="${r.id}" type="text" value="${esc(r.qty)}" placeholder="Qty" autocomplete="off" title="Click for 1 · type a number or a range, e.g. 5-10"/>
+        <button class="ib sm" type="button" data-act="pr-qty" data-id="${r.id}" data-d="1" title="More"><i class="ti ti-plus"></i></button></div>
+      <button class="ib sm danger" type="button" data-act="pr-del" data-id="${r.id}" title="${r.manual?'Remove manual item':'Remove from this print'}"><i class="ti ti-trash"></i></button></div>`;
+  rows.filter(r => !r.manual).forEach(r => { if (!gm.has(r.grp)) gm.set(r.grp, []); gm.get(r.grp).push(r); });
+  const parts = [...gm.entries()].map(([g,list]) => `<div class="dc-pg"><i class="ti ti-clipboard-list"></i>${esc(g)}</div>` + list.map(rowHTML).join(''));
+  const man = rows.filter(r => r.manual); if (man.length) parts.push(`<div class="dc-pg"><i class="ti ti-pencil"></i>Manual</div>` + man.map(rowHTML).join(''));
+  el.innerHTML = parts.join('') || `<div class="cb-none" style="padding:10px;">${pdraft.q ? 'No item matches your search' : 'Choose a DC above or add manual'}</div>`;
+  el.scrollTop = top; prCount();
+}
+/* search icon = pick items from the whole Item List (many at once) and add them to this print */
+function prOptions(){
+  const src = new Map();
+  (data.itemlist||[]).filter(e => e.status==='active').forEach(e => {
+    const v = entryView(e), kk = dupNorm(v.label); if (!kk || src.has(kk)) return;
+    src.set(kk, { key:kk, label:v.label, mb:v.mb || '' });
+  });
+  return [...src.values()].filter(o => matchAll(pdraft.pq, o.mb + ' ' + o.label));
+}
+function prPickCount(){ const b = document.getElementById('pr-pickadd'); if (b && pdraft) b.querySelector('b').textContent = pdraft.psel.size; }
+function fillPrPick(){
+  const el = document.getElementById('pr-pick'); if (!el || !pdraft) return;
+  const top = el.scrollTop, have = new Set(pdraft.rows.filter(r => r.label.trim()).map(r => dupNorm(r.label))), gm = new Map();
+  prOptions().forEach(o => { const g = o.mb || 'No Medical Domain'; if (!gm.has(g)) gm.set(g, []); gm.get(g).push(o); });
+  el.innerHTML = [...gm.keys()].sort(natCmp).map(g => `<div class="dc-pg"><i class="ti ti-bone"></i>${esc(g)}</div>` + gm.get(g).sort((a,b) => natCmp(a.label,b.label)).map(o => {
+    const added = have.has(o.key), on = added || pdraft.psel.has(o.key);
+    return `<div class="dc-opt${on?' on':''}"${added?' style="opacity:.55;cursor:default;" title="Already in this print"':''} data-act="${added?'':'pr-pick'}" data-key="${esc(o.key)}" data-label="${esc(o.label)}"><i class="ti ${on?'ti-square-check-filled':'ti-square'}"></i><span>${esc(o.label)}</span></div>`;
+  }).join('')).join('') || `<div class="cb-none" style="padding:10px;">${pdraft.pq ? 'No item matches your search' : 'No Item List entries yet'}</div>`;
+  el.scrollTop = top; prPickCount();
+}
+function prPickToggle(el){
+  const k = el.dataset.key, on = !el.classList.contains('on');
+  el.classList.toggle('on', on); el.querySelector('i').className = 'ti ' + (on ? 'ti-square-check-filled' : 'ti-square');
+  if (on) pdraft.psel.set(k, el.dataset.label); else pdraft.psel.delete(k);
+  prPickCount();
+}
+function prPickAll(){
+  const have = new Set(pdraft.rows.filter(r => r.label.trim()).map(r => dupNorm(r.label)));
+  prOptions().forEach(o => { if (!have.has(o.key)) pdraft.psel.set(o.key, o.label); }); fillPrPick();
+}
+function prPickAdd(){
+  if (!pdraft || !pdraft.psel.size) return showToast('Tick at least one item to add','error');
+  const have = new Set(pdraft.rows.filter(r => r.label.trim()).map(r => dupNorm(r.label))); let n = 0;
+  pdraft.psel.forEach((label,k) => { if (have.has(k)) return; const r = prNew(label, false, 'Added from Item List'); r.on = true; r.qty = '1'; pdraft.rows.push(r); n++; });
+  prSrch(); showToast(n + ' item' + (n===1?'':'s') + ' added','success');
+}
+function prSrch(){
+  const b = document.getElementById('pr-sbar'), w = document.getElementById('pr-pickwrap'), rows = document.getElementById('pr-rows'); if (!b || !w || !pdraft) return;
+  const show = w.style.display==='none', i = b.querySelector('input');
+  b.style.display = w.style.display = show ? '' : 'none'; rows.style.display = show ? 'none' : '';
+  document.querySelector('[data-act="pr-srch"]').classList.toggle('on', show);
+  pdraft.pq = ''; pdraft.psel = new Map(); i.value = '';
+  if (show){ fillPrPick(); i.focus(); } else fillPrRows();
+}
+function renderPrintPanel(){
+  const d = pdraft, srcs = dcGroups(data.dclist||[]);
+  dcPanelEl().innerHTML = `
+    <div class="pph"><h3><i class="ti ti-printer"></i><span>Print DC</span><span class="dc-cnt" id="pr-count" style="margin-left:8px;"></span></h3>
+      <button class="pph-close" data-act="pr-close" title="Close"><i class="ti ti-x"></i></button></div>
+    <div class="ppb"><div class="form-stack" style="gap:8px;">
+      <input class="date-input" data-prn type="text" placeholder="DC name to print" value="${esc(d.name)}" autocomplete="off"/>
+      <div class="dc-one">
+        <select class="date-input dc-nm" data-prsrc><option value="">Choose DC…</option>${srcs.map(g => `<option value="${esc(g.key)}">${esc(g.name)} · ${g.items.length}</option>`).join('')}</select>
+        <button class="ib" type="button" data-act="pr-srch" title="Search &amp; add items from the Item List"><i class="ti ti-search"></i></button>
+        <button class="btn btn-ghost btn-sm" type="button" data-act="pr-selall" title="Tick every item shown"><i class="ti ti-checks"></i><span class="lbl">All shown</span></button>
+        <button class="btn btn-ghost btn-sm" type="button" data-act="pr-addman" title="Write an item by hand"><i class="ti ti-pencil-plus"></i><span class="lbl">Add manual</span></button>
+      </div>
+      <div class="dc-sbar" id="pr-sbar" style="display:none;"><i class="ti ti-search"></i><input data-prs type="text" placeholder="Search items…" value="${esc(d.q)}" autocomplete="off"/></div>
+      <div id="pr-pickwrap" style="display:none;">
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+          <button class="btn btn-primary btn-sm" type="button" id="pr-pickadd" data-act="pr-pickadd"><i class="ti ti-plus"></i> Add selected (<b>0</b>)</button>
+          <button class="btn btn-ghost btn-sm" type="button" data-act="pr-srch"><i class="ti ti-arrow-back-up"></i> Back</button>
+        </div>
+        <div class="dc-pick" id="pr-pick" style="max-height:calc(100vh - 300px);min-height:240px;"></div>
+      </div>
+      <div class="pr-rows" id="pr-rows" style="max-height:calc(100vh - 250px);min-height:260px;"></div>
+    </div></div>
+    <div class="ppf form-actions">
+      <button class="btn btn-ghost" type="button" data-act="pr-close">Close</button>
+      <button class="btn btn-primary" type="button" data-act="pr-go"><i class="ti ti-printer"></i> Print</button>
+    </div>`;
+}
+function doPrint(){
+  const d = pdraft; if (!d) return;
+  const rows = d.rows.filter(r => r.on && r.label.trim());
+  if (!rows.length) return showToast('Nothing to print — tick or add at least one item','error');
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(d.name.trim() || 'Delivery Challan')}</title><style>
+    *{box-sizing:border-box;} body{font-family:Arial,Helvetica,sans-serif;color:#000;margin:0;padding:18mm 14mm;font-size:13px;}
+    h1{font-size:20px;margin:0 0 4px;letter-spacing:.04em;text-transform:uppercase;text-align:center;}
+    .meta{display:flex;justify-content:space-between;align-items:baseline;border-top:2px solid #000;border-bottom:1px solid #000;padding:8px 2px;margin:10px 0 14px;}
+    .meta b{font-size:16px;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #444;padding:7px 9px;text-align:left;vertical-align:top;}
+    th{background:#eee;font-size:12px;text-transform:uppercase;letter-spacing:.04em;} td.n,th.n{width:44px;text-align:center;} td.q,th.q{width:90px;text-align:center;} tr{page-break-inside:avoid;}
+  </style></head><body><h1>Delivery Challan</h1>
+  <div class="meta"><b>${esc(d.name.trim() || 'Delivery Challan')}</b><span>${esc(fmtDate(Date.now()))}</span></div>
+  <table><thead><tr><th class="n">#</th><th>Item</th><th class="q">Qty</th></tr></thead><tbody>${rows.map((r,i) => `<tr><td class="n">${i+1}</td><td>${esc(r.label.trim())}</td><td class="q">${esc(String(r.qty||'').trim())}</td></tr>`).join('')}</tbody></table></body></html>`;
+  const f = document.createElement('iframe');
+  f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+  document.body.appendChild(f);
+  const w = f.contentWindow; w.document.open(); w.document.write(html); w.document.close();
+  w.onafterprint = () => f.remove();
+  setTimeout(() => { try { w.focus(); w.print(); } catch(e){ showToast('Could not open the print dialog','error'); } setTimeout(() => f.remove(), 60000); }, 250);
+}
+
+/* ── Add / Edit DC — side panel: DC name + tick items from the Item List ── */
+let dcdraft = null;
+const dcPanelEl = () => document.getElementById('dclist-preview-panel');
+function openDcForm(key){
+  const rows = key ? (data.dclist||[]).filter(e => dcKey(e.dcName)===key) : [];
+  if (key && !rows.length) return;
+  const g = null;
+  pdraft = null; dcdraft = { orig:null, name:'', q:'', sel:new Map(), existing:new Map(), man:[], mn:0, target:'' };
+  renderDcPanel();
+  dcPanelEl().classList.add('open');
+  if (!g) setTimeout(() => { const f = dcPanelEl().querySelector('[data-dcn]'); if (f) f.focus(); }, 260);
+}
+/* Add DC: a name that already exists → its items load as ticked, the rest unticked, and Save becomes Update */
+function dcSyncTarget(){
+  const d = dcdraft; if (!d) return;
+  const nk = dcKey((d.name||'').trim()), g = nk ? dcGroups((data.dclist||[]).filter(e => dcKey(e.dcName)===nk))[0] : null;
+  d.target = g ? g.key : '';
+  d.existing = new Map(); if (g) g.items.forEach(e => d.existing.set(dupNorm(e.label), e));
+  fillDcPick(); dcModeUI();
+}
+function dcModeUI(){
+  const d = dcdraft; if (!d) return;
+  const h = document.getElementById('dc-hint'); if (!h) return;
+  if (d.target){ h.innerHTML = '<i class="ti ti-info-circle"></i> DC already exists — ticked items are added to it (items already in it are skipped)'; h.classList.add('show'); }
+  else h.innerHTML = '<i class="ti ti-circle-plus"></i> Not in the Delivery Challan list — used as typed';
+}
+function closeDcPanel(){ dcPanelEl().classList.remove('open'); dcdraft = null; pdraft = null; }
+/* options = active Item List entries (unique text) + anything already in this DC */
+function dcOptions(){
+  const src = new Map();
+  (data.itemlist||[]).filter(e => e.status==='active').forEach(e => {
+    const v = entryView(e), kk = dupNorm(v.label); if (!kk || src.has(kk)) return;
+    src.set(kk, { key:kk, label:v.label, mb:v.mb || '' });
+  });
+  return [...src.values()].filter(o => matchAll(dcdraft.q, o.mb + ' ' + o.label));
+}
+function dcPickHTML(){
+  const opts = dcOptions(), gm = new Map();
+  opts.forEach(o => { const g = o.gone ? 'Not in Item List (already in this DC)' : (o.mb || 'No Medical Domain'); if (!gm.has(g)) gm.set(g, []); gm.get(g).push(o); });
+  const items = [...gm.keys()].sort(natCmp).map(g => {
+    const list = gm.get(g).sort((a,b) => natCmp(a.label, b.label));
+    return `<div class="dc-pg"><i class="ti ti-bone"></i>${esc(g)}</div>` + list.map(o => {
+      const on = dcdraft.sel.has(o.key);
+      return `<div class="dc-opt${on?' on':''}" data-act="dc-pick" data-key="${esc(o.key)}" data-label="${esc(o.label)}"><i class="ti ${on?'ti-square-check-filled':'ti-square'}"></i><span>${esc(o.label)}</span></div>`;
+    }).join('');
+  }).join('');
+  const man = dcdraft.man.length ? `<div class="dc-pg"><i class="ti ti-pencil"></i>Manual</div>` + dcdraft.man.map(x => `<div class="dc-mrow"><input class="date-input pr-lbl" data-dcm data-id="${x.id}" type="text" value="${esc(x.text)}" placeholder="Write item…" autocomplete="off"/>
+      <button class="ib sm danger" type="button" data-act="dc-delman" data-id="${x.id}" title="Remove manual item"><i class="ti ti-trash"></i></button></div>`).join('') : '';
+  const none = (!opts.length && !man) ? `<div class="cb-none" style="padding:10px;">${dcdraft.q ? 'No item matches your search' : (data.itemlist||[]).length ? '' : 'No Item List entries yet — add them in the Item Lists tab first'}</div>` : '';
+  return items + man + none;
+}
+/* ticked items + the manually written ones (blank lines ignored, duplicates merged) */
+function dcSelAll(d){
+  const m = new Map(d.sel);
+  d.man.forEach(x => { const t = x.text.trim().replace(/\s+/g,' '), kk = dupNorm(t); if (t && !m.has(kk)) m.set(kk, t); });
+  return m;
+}
+function updateDcCount(){ const el = document.getElementById('dc-count'); if (el && dcdraft) el.textContent = dcSelAll(dcdraft).size + ' selected'; }
+function fillDcPick(){ const el = document.getElementById('dc-pick'); if (!el || !dcdraft) return; const top = el.scrollTop; el.innerHTML = dcPickHTML(); el.scrollTop = top; updateDcCount(); }
+/* search = icon; click shows / hides the search box that filters the list */
+function dcSrch(){
+  const b = document.getElementById('dc-sbar'); if (!b || !dcdraft) return;
+  const show = b.style.display==='none', i = b.querySelector('input');
+  b.style.display = show ? '' : 'none'; document.querySelector('[data-act="dc-srch"]').classList.toggle('on', show);
+  if (show) i.focus(); else if (dcdraft.q){ dcdraft.q = ''; i.value = ''; fillDcPick(); }
+}
+function renderDcPanel(){
+  const d = dcdraft, edit = d.orig !== null;
+  dcPanelEl().innerHTML = `
+    <div class="pph"><h3><i class="ti ti-clipboard-list"></i><span>Add DC</span><span class="dc-cnt" id="dc-count" style="margin-left:8px;"></span></h3>
+      <button class="pph-close" data-act="dc-close" title="Close"><i class="ti ti-x"></i></button></div>
+    <div class="ppb"><div class="form-stack" style="gap:8px;">
+      <div class="dc-one">
+        ${dcNameField(d)}
+        <button class="ib" type="button" data-act="dc-srch" title="Search items"><i class="ti ti-search"></i></button>
+        <button class="btn btn-ghost btn-sm" type="button" data-act="dc-selall" title="Tick every item shown"><i class="ti ti-checks"></i><span class="lbl">All shown</span></button>
+        <button class="btn btn-ghost btn-sm" type="button" data-act="dc-selnone" title="Untick every item shown"><i class="ti ti-eraser"></i><span class="lbl">Clear</span></button>
+        <button class="btn btn-ghost btn-sm" type="button" data-act="dc-addman" title="Write an item by hand"><i class="ti ti-pencil-plus"></i><span class="lbl">Add manual</span></button>
+      </div>
+      <div class="cb-hint${d.name && !dcNames().some(o => dcKey(o.v)===dcKey(d.name)) ? ' show' : ''}" id="dc-hint"><i class="ti ti-circle-plus"></i> Not in the Delivery Challan list — used as typed</div>
+      <div class="dc-sbar" id="dc-sbar" style="display:none;"><i class="ti ti-search"></i><input data-dcq type="text" placeholder="Search items…" value="${esc(d.q)}" autocomplete="off"/></div>
+      <div class="dc-pick" id="dc-pick" style="max-height:calc(100vh - 250px);min-height:260px;"></div>
+    </div></div>
+    <div class="ppf form-actions">
+      <button class="btn btn-ghost" type="button" data-act="dc-close">Cancel</button>
+      <button class="btn btn-primary" type="button" data-act="dc-save"><i class="ti ti-device-floppy"></i> Save</button>
+    </div>`;
+  fillDcPick();
+}
+
+/* DC names offered in Add DC = the Delivery Challan items of Specs Settings (THR, TNR, TEL …) */
+function dcNames(){
+  const cnt = n => (data.dclist||[]).filter(e => dcKey(e.dcName)===dcKey(n)).length;
+  return dcSources().map(o => { const n = cnt(o.name); return { v:o.name, sub: n ? n+' item'+(n>1?'s':'') : '' }; });
+}
+/* DC name = drop-down of that list (a name typed by hand is accepted too) */
+function dcNameField(d){
+  return `<div class="cb dc-nm"><input class="date-input" data-dcn type="text" style="padding-right:28px;" placeholder="Choose DC" value="${esc(d.name)}" autocomplete="off" role="combobox" aria-autocomplete="list"/>
+    <i class="ti ti-chevron-down" style="position:absolute;right:9px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--text3);"></i>
+    <div class="cb-pop"></div></div>`;
+}
+function dcCbOpen(inp){
+  const box = inp.closest('.cb'); if (!box.classList.contains('open')) cbClose();
+  const base = dcNames(), v = inp.value.trim().toLowerCase(), exact = base.some(o => o.v.toLowerCase()===v);   // a chosen name still shows the whole list
+  const list = base.filter(o => !v || exact || o.v.toLowerCase().includes(v));
+  box.querySelector('.cb-pop').innerHTML = list.map(o => `<div class="dc-cbo" data-v="${esc(o.v)}"><span>${esc(o.v)}</span><small>${esc(o.sub)}</small></div>`).join('') || '<div class="cb-none">No DC found</div>';
+  box.classList.add('open');
+}
+function dcNameHint(inp){
+  const h = document.getElementById('dc-hint'), v = inp.value.trim();
+  if (h) h.classList.toggle('show', !!v && (!dcNames().some(o => dcKey(o.v)===dcKey(v)) || !!(dcdraft && dcdraft.target)));
+}
+function dcCbPick(inp, v){
+  inp.value = v; cbClose();
+  if (dcdraft){ dcdraft.name = v; inp.classList.remove('bad'); dcSyncTarget(); dcNameHint(inp); }
+}
+function dcTogglePick(el){
+  const d = dcdraft; if (!d) return;
+  const on = !el.classList.contains('on');
+  el.classList.toggle('on', on);
+  el.querySelector('i').className = 'ti ' + (on ? 'ti-square-check-filled' : 'ti-square');
+  if (on) d.sel.set(el.dataset.key, el.dataset.label); else d.sel.delete(el.dataset.key);
+  const p = document.getElementById('dc-pick'); if (p) p.classList.remove('bad');
+  updateDcCount();
+}
+function dcSelect(on){
+  if (!dcdraft) return;
+  dcOptions().forEach(o => { if (on) dcdraft.sel.set(o.key, o.label); else dcdraft.sel.delete(o.key); });
+  fillDcPick();
+}
+function saveDC(){
+  const d = dcdraft; if (!d) return;
+  if (!AccessGuard.require(PERM_DATASET, 'add', PERM_LABEL)) return;
+  if (!cacheReady()) return;
+  const N = (d.name||'').trim().replace(/\s+/g,' '), nk = dcKey(N), all = data.dclist||[];
+  const p = dcPanelEl(), pick = p.querySelector('#dc-pick');
+  const sel = dcSelAll(d), badName = !N, badItems = !sel.size;
+  p.querySelectorAll('[data-dcn]').forEach(el => el.classList.toggle('bad', badName)); pick.classList.toggle('bad', badItems);
+  if (badName || badItems) return showToast(!N ? 'Enter the DC name' : 'Tick at least one item', 'error');
+  const mine = all.filter(e => dcKey(e.dcName)===nk), have = new Set(mine.map(e => dupNorm(e.label)));
+  const toAdd = [...sel.keys()].filter(kk => !have.has(kk));
+  if (!toAdd.length){ closeDcPanel(); return showToast('Those items are already in this DC','info'); }
+  const name = mine[0] ? mine[0].dcName : N, now = Date.now(), existed = mine.length > 0;
+  toAdd.forEach((kk,i) => data.dclist.push({ id:'dc'+now+'_'+i+Math.floor(Math.random()*1000), dcName:name, label:sel.get(kk), status:'active', created:now+i }));
+  persist(); render('dclist'); syncSpecsSheet(); closeDcPanel();
+  showToast((existed ? 'DC updated' : 'DC saved') + ' · ' + toAdd.length + ' item' + (toAdd.length>1?'s':'') + ' added', 'success');
+}
+function wireDcEvents(){
+  document.addEventListener('change', e => {
+    const t = e.target, ds = t.dataset; if (!ds) return;
+    if (ds.dvf !== undefined){ (ui.specsetting.dvf = ui.specsetting.dvf || {})[ds.dvf] = t.value; renderSpecTable(); return; }
+    if (ds.prsrc !== undefined && pdraft && t.value) prLoad(t.value);
+  });
+  document.addEventListener('input', e => {
+    const t = e.target, ds = t.dataset; if (!ds || (!dcdraft && !pdraft)) return;
+    if (dcdraft){
+      if (ds.dcn !== undefined){ dcdraft.name = t.value; t.classList.remove('bad'); dcSyncTarget(); dcNameHint(t); dcCbOpen(t); }
+      else if (ds.dcq !== undefined){ dcdraft.q = t.value; fillDcPick(); }
+      else if (ds.dcm !== undefined){ const x = dcdraft.man.find(m => m.id===ds.id); if (x){ x.text = t.value; updateDcCount(); } }
+    }
+    if (pdraft){
+      const r = ds.id ? prRow(ds.id) : null;
+      if (ds.prn !== undefined) pdraft.name = t.value;
+      else if (ds.prq !== undefined && r){ r.qty = t.value; if (t.value.trim() && !r.on){ r.on = true; prSyncRow(t, r); } }
+      else if (ds.prl !== undefined && r){ r.label = t.value; prCount(); }
+      else if (ds.prs !== undefined){ pdraft.pq = t.value; fillPrPick(); }
+    }
+  });
+  document.addEventListener('focusin', e => {
+    const t = e.target, ds = t.dataset; if (!ds) return;
+    if (dcdraft && ds.dcn !== undefined) dcCbOpen(t);
+    else if (pdraft && ds.prq !== undefined && !t.value.trim()){ const r = prRow(ds.id); if (r){ r.qty = '1'; r.on = true; t.value = '1'; t.select(); prSyncRow(t, r); } }   // one click on an empty Qty = 1 (and ticks the item)
+  });
+  document.addEventListener('click', e => {      // clicking an already-focused name box opens its drop-down again
+    const ds = e.target.dataset; if (dcdraft && ds && ds.dcn !== undefined) dcCbOpen(e.target);
+  });
+  document.addEventListener('mousedown', e => {
+    if (!dcdraft) return;
+    const o = e.target.closest && e.target.closest('.dc-cbo'); if (!o) return;
+    e.preventDefault(); dcCbPick(o.closest('.cb').querySelector('input'), o.dataset.v);
+  });
+  document.addEventListener('keydown', e => {
+    if (!dcdraft && !pdraft) return;
+    const t = e.target, ds = t.dataset || {};
+    if (ds.dcn !== undefined){
+      const box = t.closest('.cb'), opts = [...box.querySelectorAll('.dc-cbo')], cur = opts.findIndex(o => o.classList.contains('hl'));
+      const hl = i => { opts.forEach(o => o.classList.remove('hl')); if (opts[i]){ opts[i].classList.add('hl'); opts[i].scrollIntoView && opts[i].scrollIntoView({block:'nearest'}); } };
+      if (e.key==='ArrowDown'){ e.preventDefault(); if (!box.classList.contains('open')) dcCbOpen(t); else hl(Math.min(opts.length-1, cur+1)); return; }
+      if (e.key==='ArrowUp'){ e.preventDefault(); hl(Math.max(0, cur-1)); return; }
+      if (e.key==='Enter'){ e.preventDefault(); e.stopPropagation(); if (cur>=0) dcCbPick(t, opts[cur].dataset.v); else cbClose(); return; }
+    }
+    if (e.key==='Escape' && t.closest && t.closest('.cb.open')){ e.stopPropagation(); cbClose(); return; }   // Escape closes an open drop-down first
+    if (e.key==='Escape' && (ds.dcq !== undefined || ds.prs !== undefined)){ e.stopPropagation(); ds.dcq !== undefined ? dcSrch() : prSrch(); return; }   // …or the search box
+    if (e.key==='Enter' && (ds.dcq !== undefined || ds.dcm !== undefined || ds.prn !== undefined || ds.prq !== undefined || ds.prl !== undefined || ds.prs !== undefined)){ e.preventDefault(); e.stopPropagation(); }   // Enter in these fields must not save / print
+    else if (e.key==='Escape') closeDcPanel();
+  }, true);
+}
+
+/* ═══════════════════════════════════════════════════════
+ *  IMPORT — Upload icon → "Download template" or "Upload file" (CSV)
+ * ═══════════════════════════════════════════════════════ */
+function hdrTools(k){
+  const lbl = esc(MOD[k].label.toLowerCase());
+  return `<div class="hs" id="${k}-sdw">
+      <button class="ib" type="button" data-act="srch" data-k="${k}" title="Search ${lbl}" aria-haspopup="true"><i class="ti ti-search"></i></button>
+      <div class="hs-pop" id="${k}-pop">
+        <i class="ti ti-search"></i>
+        <input class="hs-in" id="${k}-search" type="text" placeholder="Type to search ${lbl}…" autocomplete="off" enterkeyhint="search"
+          oninput="filterDrop('${k}',this.value)" onkeydown="if(event.key==='Escape'||event.key==='Enter'){closeSearch(null);this.blur();}"/>
+        <button class="hs-x" type="button" data-act="srch-clear" data-k="${k}" title="Clear"><i class="ti ti-x"></i></button>
+      </div>
+    </div>`;
+}
+function closeSearch(target){
+  document.querySelectorAll('.hs.open').forEach(h => { if (!target || !h.contains(target)) h.classList.remove('open'); });
+}
+function closeMenus(exceptK){
+  document.querySelectorAll('.up-menu.open').forEach(m => { if (m.id !== exceptK+'-upmenu') m.classList.remove('open'); });
+}
+function csvCell(x){ return '"' + String(x ?? '').replace(/"/g,'""') + '"'; }
+function downloadCsv(name, rows){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\ufeff' + rows.map(r => r.map(csvCell).join(',')).join('\r\n')], {type:'text/csv;charset=utf-8'}));
+  a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+function downloadTemplate(k){
+  const m = MOD[k];
+  if (k==='dclist') downloadCsv('dc_list_template.csv', [['DC Name','Item','Status'], ['City Hospital - Trauma Set','Imported - Cortical Screw - Implant - 4.5mm','active']]);
+  else if (k==='specsetting') downloadCsv('specs_setting_template.csv', [['Specs','Item','Description','Status'], ['Medical Domain','Trauma','Fracture and injury care','active']]);
+  else if (m.custom) downloadCsv('item_list_template.csv', [['Medical Domain','Item Name','Specs','Description','Status'], ['Trauma','Surgical Gloves','Box of 100','Latex-free','active']]);
+  else downloadCsv(k+'_template.csv', [[m.fields[0].label,'Description','Status'], [m.fields[0].ph.replace(/^e\.g\.\s*/,''),'Short description','active']]);
+  showToast('Template downloaded','success');
+}
+function parseCsv(text){
+  text = text.replace(/^\ufeff/,'');
+  const first = text.split(/\r?\n/)[0] || '';
+  const d = (first.split(',').length < 2 && first.includes(';')) ? ';' : (first.split(',').length < 2 && first.includes('\t')) ? '\t' : ',';
+  const rows = []; let row = [], cur = '', q = false;
+  for (let i = 0; i < text.length; i++){
+    const c = text[i];
+    if (q){ if (c === '"'){ if (text[i+1] === '"'){ cur += '"'; i++; } else q = false; } else cur += c; }
+    else if (c === '"') q = true;
+    else if (c === d){ row.push(cur); cur = ''; }
+    else if (c === '\n' || c === '\r'){ if (c === '\r' && text[i+1] === '\n') i++; row.push(cur); cur = ''; rows.push(row); row = []; }
+    else cur += c;
+  }
+  if (cur !== '' || row.length){ row.push(cur); rows.push(row); }
+  return rows.filter(r => r.some(x => String(x).trim() !== ''));
+}
+const colIdx = (head, re, fallback) => { const i = head.findIndex(h => re.test(h)); return i >= 0 ? i : fallback; };
+const normStatus = v => /^(inactive|in-active|no|0|false|disabled)$/i.test(String(v||'').trim()) ? 'inactive' : 'active';
+
+function findOrCreate(kind, name, t, n){
+  const nm = name.trim().toLowerCase();
+  let r = data[kind].find(x => x.name.trim().toLowerCase() === nm);
+  if (!r){ r = { id:'r'+(t+n)+kind, name:name.trim(), description:'', status:'active', created:t }; data[kind].push(r); }
+  return r;
+}
+function importRows(k, rows){
+  const head = rows[0].map(h => String(h).trim().toLowerCase()), body = rows.slice(1), t = Date.now();
+  let added = 0, skipped = 0, n = 0;
+  if (k==='dclist'){
+    const ci = { dc:colIdx(head,/dc|name/,0), it:colIdx(head,/item/,1), st:colIdx(head,/status/,2) };
+    body.forEach(r => {
+      const dn = (r[ci.dc]||'').trim(), tx = (r[ci.it]||'').trim();
+      if (!dn || !tx || data.dclist.some(e => dcKey(e.dcName)===dcKey(dn) && dupNorm(e.label)===dupNorm(tx))){ skipped++; return; }
+      const known = data.dclist.find(e => dcKey(e.dcName)===dcKey(dn));
+      data.dclist.push({ id:'dc'+t+'_'+(n++), dcName: known ? known.dcName : dn, label:tx, status:normStatus(r[ci.st]), created:t+n });
+      added++;
+    });
+  } else if (k==='specsetting'){
+    const ci = { sp:colIdx(head,/spec|type/,0), it:colIdx(head,/item|name/,1), de:colIdx(head,/desc/,2), st:colIdx(head,/status/,3) };
+    body.forEach(r => {
+      const t0 = Date.now(), t = specTypeOf((r[ci.sp]||'').trim()), name = (r[ci.it]||'').trim();
+      if (!t || !name || data[t.key].some(x => x.name.trim().toLowerCase()===name.toLowerCase())){ skipped++; return; }
+      data[t.key].unshift({ id:'r'+t0+(n++)+t.key, name, description:(r[ci.de]||'').trim(), status:normStatus(r[ci.st]), created:Date.now() });
+      added++;
+    });
+  } else if (MOD[k].custom){
+    const ci = { mb:colIdx(head,/domain|branch/,0), it:colIdx(head,/item/,1), sp:colIdx(head,/spec/,2), de:colIdx(head,/desc/,3), st:colIdx(head,/status/,4) };
+    body.forEach(r => {
+      const mbN = (r[ci.mb]||'').trim(), itN = (r[ci.it]||'').trim(), spN = (r[ci.sp]||'').trim();
+      if (!mbN || !itN || !spN){ skipped++; return; }
+      const mb = findOrCreate('medbranch', mbN, t, n++), it = findOrCreate('item', itN, t, n++), sp = findOrCreate('specs', spN, t, n++);
+      if (data.itemlist.some(e => e.medbranchId===mb.id && e.itemId===it.id && e.specsId===sp.id)){ skipped++; return; }
+      data.itemlist.unshift({ id:'e'+t+(n++), medbranchId:mb.id, medbranchName:mb.name, itemId:it.id, itemName:it.name, specsId:sp.id, specsName:sp.name,
+        desc:(r[ci.de]||'').trim(), status:normStatus(r[ci.st]), created:t, updated:t });
+      added++;
+    });
+  } else {
+    const ci = { nm:colIdx(head,/name/,0), de:colIdx(head,/desc/,1), st:colIdx(head,/status/,2) };
+    body.forEach(r => {
+      const name = (r[ci.nm]||'').trim();
+      if (!name || data[k].some(x => x.name.trim().toLowerCase() === name.toLowerCase())){ skipped++; return; }
+      data[k].unshift({ id:'r'+t+(n++), name, description:(r[ci.de]||'').trim(), status:normStatus(r[ci.st]), created:t });
+      added++;
+    });
+  }
+  if (added){ persist(); if (k==='itemlist' || k==='specsetting' || k==='dclist') syncSpecsSheet(); }
+  renderAll();
+  showToast(added ? `Imported ${added} record${added>1?'s':''}` + (skipped ? ` · ${skipped} skipped` : '') : 'Nothing imported — ' + (skipped ? 'all rows were empty or duplicates' : 'file is empty'), added ? 'success' : 'error');
+}
+function wireImport(){
+  document.addEventListener('change', async e => {
+    const inp = e.target; if (!inp.classList || !inp.classList.contains('imp-file')) return;
+    const f = inp.files && inp.files[0]; if (!f) return;
+    try {
+      const rows = parseCsv(await f.text());
+      if (rows.length < 2) showToast('File has no data rows — download the template to see the format','error');
+      else importRows(inp.dataset.k, rows);
+    } catch(err){ showToast('Could not read that file','error'); }
+    inp.value = '';
+  });
+}
+
+function switchTop(top){ switchTab(top==='itemlist' ? 'itemlist' : top==='dclist' ? 'dclist' : 'specsetting'); }
+function switchTab(tab){
+  const m = MOD[tab]; if (!m) return;
+  closeSearch(null);
+  const top = m.group==='settings' ? 'settings' : m.group==='dclist' ? 'dclist' : 'itemlist';
+  document.querySelectorAll('.tab-panel').forEach(p=>p.style.display='none');
+  document.querySelectorAll('#tab-nav .tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+tab).style.display='flex';
+  document.getElementById('top-'+top+'-btn').classList.add('active');
+  const add = document.getElementById('btn-add-itemlist');
+  if (add) add.style.display = top==='itemlist' ? '' : 'none';
+  const addS = document.getElementById('btn-add-specsetting');
+  if (addS) addS.style.display = top==='settings' ? '' : 'none';
+  if (top==='settings') lastSettingsTab = tab;
+  activeTab=tab;
+}
+function openSearch(sdwId){ const el=document.getElementById(sdwId); if(el) el.querySelector('input').focus(); }
+function clearDrop(key){
+  const input=document.getElementById(key+'-search');
+  if(input) input.value='';
+  document.getElementById(key+'-sdw').classList.remove('has-val');
+  ui[key].q=''; renderTable(key);
+}
+function filterDrop(key,query){
+  ui[key].q=query;
+  document.getElementById(key+'-sdw').classList.toggle('has-val', !!query.trim());
+  renderTable(key);
+}
+function openPreview(scope){ const p=document.getElementById(scope+'-preview-panel'); if(p) p.classList.add('open'); }
+function closePreview(scope){ const p=document.getElementById(scope+'-preview-panel'); if(p) p.classList.remove('open'); }
+
+/* the record already exists but is Inactive: clear filters, scroll to it and blink its border so the user can activate it instead of adding a copy */
+function blinkRecord(k, rid){
+  const s = ui[k]; s.filter = 'all'; s.q = ''; s.dup = false; if (k==='specsetting') s.type = ''; else s.mb = '';
+  const inp = document.getElementById(k+'-search'); if (inp) inp.value = '';
+  render(k);
+  const tr = document.querySelector('#'+k+'-body tr[data-rid="'+rid+'"]'); if (!tr) return;
+  tr.scrollIntoView({ block:'center', behavior:'smooth' });
+  tr.classList.remove('blink-row'); void tr.offsetWidth; tr.classList.add('blink-row');
+  setTimeout(() => tr.classList.remove('blink-row'), 4800);
+}
+const INACTIVE_MSG = 'Already exists but is Inactive — activate it instead of adding again';
+/* Active ⇄ Inactive for rows stored in the sheet: save first-class, undo the change and show the reason if the sheet rejects it */
+const _toggleBusy = new Set();
+async function toggleStatus(r, k, label){
+  if (_toggleBusy.has(r.id)) return;
+  const old = r.status, next = old==='active' ? 'inactive' : 'active';
+  _toggleBusy.add(r.id); r.status = next; persist(); render(k);
+  const res = await syncSpecsSheet({ silent:true });
+  _toggleBusy.delete(r.id);
+  if (res.ok){ showToast(label + ' set to ' + next, 'success'); return; }
+  if (!res.fatal) return;                       // offline / temporary: change stays on this device, sync icon shows it is waiting
+  r.status = old; persist(); render('specsetting'); render('itemlist'); render('dclist');           // the server refused it → undo
+  if (!specsPendingCount()){ try { localStorage.removeItem(PENDING_KEY); localStorage.removeItem(FAILED_KEY); } catch(e){} }
+  updateSyncInd();
+  showToast('Status not changed — ' + res.error, 'error');
+}
+function showToast(msg,type){
+  const t=document.getElementById('toast'), icon=document.getElementById('toast-icon'), label=document.getElementById('toast-msg');
+  t.className='toast show'+(type?' '+type:'');
+  icon.className='ti '+(type==='error'?'ti-alert-circle':type==='success'?'ti-circle-check':'ti-info-circle');
+  label.textContent=msg;
+  clearTimeout(showToast._t);
+  showToast._t=setTimeout(()=>{ t.classList.remove('show'); },2600);
+}
+
+/* ═══════════════════════════════════════════════════════
+ *  EVENT DELEGATION
+ * ═══════════════════════════════════════════════════════ */
+const DC_ACTS = new Set(['dc-add','dc-close','dc-save','dc-pick','dc-selall','dc-selnone','dc-print','dc-srch','dc-addman','dc-delman','pr-close','pr-go','pr-srch','pr-tog','pr-qty','pr-del','pr-pick','pr-pickadd','pr-selall','pr-addman','srch','srch-clear']);
+function wireDelegation(){
+  document.addEventListener('click', e=>{
+    const el = e.target.closest('[data-act]');
+    closeMenus(el && el.dataset.act==='upmenu' ? el.dataset.k : null);
+    closeSearch(e.target);
+    if (!el) { if (armedDelete){ armedDelete=null; renderTable(activeTab); } return; }
+    const { act, k, id, v } = el.dataset;
+    const s = ui[k];
+    if (!DC_ACTS.has(act)) return;                          // this module only does Add DC + Print
+
+    if (!/^(del|ss-del|dc-del|dc-deldc)$/.test(act) && armedDelete){ const a=armedDelete; armedDelete=null; renderTable(a.k); }
+    if (!permRequire(act, k)) return;                       // no permission → stop here, before cache / network
+    if (LOCKED_ACTS.has(act) && !cacheReady()) return;
+
+    switch(act){
+      case 'add':    k==='specsetting' ? openSpecForm(null, el.dataset.t, el.dataset.d) : k==='itemlist' ? openListModal() : openForm(k); break;
+      case 'edit':   k==='specsetting' ? openSpecForm(id, el.dataset.t) : k==='itemlist' ? openListModal(id) : openForm(k, id); break;
+      case 'dc-add':     openDcForm(null); break;
+      case 'dc-close':   closeDcPanel(); break;
+      case 'dc-save':    saveDC(); break;
+      case 'dc-pick':    dcTogglePick(el); break;
+      case 'dc-selall':  dcSelect(true); break;
+      case 'dc-selnone': dcSelect(false); break;
+      case 'dc-print':   printDC(el.dataset.dc); break;
+      case 'dc-srch':    dcSrch(); break;
+      case 'dc-addman':  if (dcdraft){ cbClose(); let x = dcdraft.man.find(m => !m.text.trim()); if (!x){ x = { id:'m'+(++dcdraft.mn), text:'' }; dcdraft.man.push(x); } fillDcPick();
+                           const box = document.getElementById('dc-pick'); box.scrollTop = box.scrollHeight;
+                           const f = box.querySelector('[data-dcm][data-id="'+x.id+'"]'); if (f) f.focus(); } break;
+      case 'dc-delman':  if (dcdraft){ dcdraft.man = dcdraft.man.filter(x => x.id!==id); fillDcPick(); } break;
+      case 'pr-close':   closeDcPanel(); break;
+      case 'pr-go':      doPrint(); break;
+      case 'pr-srch':    prSrch(); break;
+      case 'pr-tog':     { const r = prRow(id); if (r){ r.on = !r.on; if (r.on && !String(r.qty).trim()) r.qty = '1'; fillPrRows(); } break; }
+      case 'pr-qty':     { const r = prRow(id); if (r){ r.qty = stepQty(r.qty, +el.dataset.d); if (String(r.qty).trim()) r.on = true; fillPrRows(); } break; }
+      case 'pr-del':     if (prRow(id)){ pdraft.rows = pdraft.rows.filter(r => r.id!==id); fillPrRows(); } break;
+      case 'pr-pick':    if (pdraft) prPickToggle(el); break;
+      case 'pr-pickadd': prPickAdd(); break;
+      case 'pr-selall':  if (pdraft && document.getElementById('pr-pickwrap').style.display!=='none'){ prPickAll(); break; } if (pdraft){ prShown().forEach(r => { r.on = true; if (!String(r.qty).trim()) r.qty = '1'; }); fillPrRows(); } break;
+      case 'pr-addman':  if (pdraft){ let r = pdraft.rows.find(x => x.manual && !x.label.trim()); if (!r){ r = prNew('', true, 'Manual'); pdraft.rows.push(r); } fillPrRows();
+                           const box = document.getElementById('pr-rows'); box.scrollTop = box.scrollHeight;
+                           const f = box.querySelector('[data-prl][data-id="'+r.id+'"]'); if (f) f.focus(); } break;
+      case 'dcfilter':   s.dc = (s.dc===v ? '' : v); render(k); break;
+      case 'grp-toggle': { const g = el.dataset.g; if (s.collapsed.has(g)) s.collapsed.delete(g); else s.collapsed.add(g); renderTable(k); break; }
+      case 'sm-close':    closeSpecModal(); break;
+      case 'sm-save':     saveSpec(false); break;
+      case 'sm-save-new': saveSpec(true); break;
+      case 'sm-type': {
+        if (!sdraft || sdraft.id) break;
+        if (v==='__new__'){ sdraft.isNew = !sdraft.isNew; if (sdraft.isNew) sdraft.t = ''; }
+        else { sdraft.isNew = false; sdraft.t = v; }
+        sdraft.errs = null;
+        renderSpecModal();
+        const f = specPanelEl().querySelector(sdraft.isNew ? '[data-sn]' : '[data-si]'); if (f) f.focus();
+        break;
+      }
+      case 'sm-addname': if (sdraft){ sdraft.newNames.push(''); renderSpecModal(); const a = specPanelEl().querySelectorAll('[data-sn]'); a[a.length-1].focus(); } break;
+      case 'sm-delname': if (sdraft && sdraft.newNames.length>1){ sdraft.newNames.splice(+el.dataset.i,1); sdraft.errs = null; renderSpecModal(); } break;
+      case 'sm-addrow':  if (sdraft){ sdraft.rows.push({ name:'', description:'' }); renderSpecModal(); const a = specPanelEl().querySelectorAll('[data-si][data-sk="name"]'); a[a.length-1].focus(); } break;
+      case 'sm-delrow':  if (sdraft && sdraft.rows.length>1){ sdraft.rows.splice(+el.dataset.i,1); sdraft.errs = null; renderSpecModal(); } break;
+      case 'ss-deltype': {
+        const t = el.dataset.t;
+        if ((data[t]||[]).length) break;
+        data.spectypes = (data.spectypes||[]).filter(x => x.key!==t); delete data[t];
+        persist(); render(k); showToast('Specs removed','success'); break;
+      }
+      case 'row-add': {
+        if (!draft) break;
+        draft.rows.push({ specs:'', desc:'' }); renderListModal();
+        const ins = document.querySelectorAll('#itemlist-preview-panel [data-rf="specs"]'); const last = ins[ins.length-1];
+        if (last){ last.focus(); if (last.scrollIntoView) last.scrollIntoView({block:'nearest'}); }
+        break;
+      }
+      case 'row-del': {
+        if (!draft || draft.rows.length<2) break;
+        draft.rows.splice(+el.dataset.i,1); lmErrs = new Set(); renderListModal(); break;
+      }
+      case 'chip': {
+        if (!draft) break;
+        const f = el.dataset.f;
+        if (f.startsWith('x:')){ const key = f.slice(2); draft.extras = draft.extras || {}; if (draft.extras[key]===v) delete draft.extras[key]; else draft.extras[key] = v; }
+        else { draft[f] = v; if (f==='medbranchId') draft.medbranchName = liveName('medbranch',v,''); if (f==='itemId') draft.itemName = liveName('item',v,''); if (f==='specsId') draft.specsName = liveName('specs',v,''); lmErrs.delete(f); }
+        renderListModal(); break;
+      }
+      case 'dupfilter': s.dup = !s.dup; render(k); break;
+      case 'ss-type':   s.type = (s.type===v ? '' : v); render(k); break;
+      case 'ss-toggle': {
+        const r = (data[el.dataset.t]||[]).find(x=>x.id===id); if(!r) break;
+        if (dupSpecSet().has(id)){ showToast('Duplicate — edit or delete it; status cannot be changed','error'); break; }
+        toggleStatus(r, 'specsetting', 'Specs setting'); break;
+      }
+      case 'ss-del': {
+        const t = el.dataset.t;
+        if (armedDelete && armedDelete.k==='specsetting' && armedDelete.id===id){
+          armedDelete=null;
+          data[t] = data[t].filter(x=>x.id!==id);
+          if (s.editId===id) closeForm(k);
+          persist(); render(k); syncSpecsSheet(); showToast('Specs setting deleted','success');
+        } else {
+          armedDelete = { k:'specsetting', id }; renderTable(k);
+          clearTimeout(wireDelegation._t);
+          wireDelegation._t = setTimeout(()=>{ if(armedDelete && armedDelete.id===id){ armedDelete=null; renderTable(k); } }, 2800);
+        }
+        break;
+      }
+      case 'add-list':       openListModal(null, el.dataset.mb); break;
+      case 'csv':            exportCsv(); break;
+      case 'mbfilter':       s.mb = (s.mb===v ? '' : v); render(k); break;
+      case 'modal-close':    closeListModal(); break;
+      case 'modal-save':     saveEntry(false); break;
+      case 'modal-save-new': saveEntry(true); break;
+      case 'cancel': closeForm(k); break;
+      case 'save':   saveForm(k); break;
+      case 'filter': s.filter = v; render(k); break;
+      case 'sfilter': s.filter = (s.filter===v ? 'all' : v); render(k); break;
+      case 'srch': {
+        const h = document.getElementById(k+'-sdw'), open = !h.classList.contains('open');
+        closeSearch(null);
+        h.classList.toggle('open', open);
+        if (open) setTimeout(() => { const i = document.getElementById(k+'-search'); if (i){ i.focus(); i.select(); } }, 0);
+        break;
+      }
+      case 'srch-clear': clearDrop(k); document.getElementById(k+'-search').focus(); break;
+      case 'upmenu':  document.getElementById(k+'-upmenu').classList.toggle('open'); break;
+      case 'tpl':     downloadTemplate(k); break;
+      case 'upload':  document.getElementById(k+'-file').click(); break;
+      case 'sort':   s.sortAsc = (s.sortKey===v) ? !s.sortAsc : true; s.sortKey = v; renderTable(k); break;
+      case 'toggle': {
+        const r = data[k].find(x=>x.id===id); if(!r) break;
+        if (k==='itemlist'){
+          if (dupListSet().has(id)){ showToast('Duplicate — edit or delete it; status cannot be changed','error'); break; }
+          toggleStatus(r, k, MOD[k].label); break;
+        }
+        r.status = r.status==='active' ? 'inactive' : 'active';
+        persist(); render(k);
+        showToast(MOD[k].label+' set to '+r.status,'success'); break;
+      }
+      case 'del': {
+        if (armedDelete && armedDelete.k===k && armedDelete.id===id){
+          armedDelete=null;
+          data[k] = data[k].filter(x=>x.id!==id);
+          if (s.editId===id || s.viewId===id) closeForm(k);
+          persist(); render(k); if (k==='itemlist') syncSpecsSheet(); showToast(MOD[k].label+' deleted','success');
+        } else {
+          armedDelete = { k, id }; renderTable(k);
+          clearTimeout(wireDelegation._t);
+          wireDelegation._t = setTimeout(()=>{ if(armedDelete && armedDelete.id===id){ armedDelete=null; renderTable(k); } }, 2800);
+        }
+        break;
+      }
+    }
+  });
+
+  // Enter submits the form (not inside textarea); Esc closes it
+  document.addEventListener('keydown', e=>{
+    const panel = e.target.closest && e.target.closest('.doc-preview-panel');
+    if (!panel) return;
+    if (e.key==='Enter' && e.target.tagName==='INPUT') e.preventDefault();
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+ *  INIT
+ * ═══════════════════════════════════════════════════════ */
+async function init(){
+  applyCacheLock();
+  load();
+  assignSids();
+  migrateLists();
+  if (!specsLoadSnap()) specsSaveSnap(specsCurrentMap());
+  buildUI();
+  wireDelegation();
+  wireCombo();
+  wireDcEvents();
+  renderAll();
+  startCache();
+  startSpecsRetry();
+}
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
