@@ -896,6 +896,18 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 :is(#pr,#pv,#pv2) .inv .tot .g{font-weight:700}
 :is(#pr,#pv,#pv2) .inv .nt{font-size:11px;white-space:pre-wrap}
 :is(#pr,#pv,#pv2) .inv .ct{font-size:11px;margin-top:2px}
+
+/* ═══ combobox: typeable input + arrow + filtered list ═══ */
+.cb{position:relative;width:100%}
+.cb input,.bw-f input[data-cb]{padding-right:32px!important}
+.cb-arrow{position:absolute;right:0;top:0;bottom:0;width:30px;display:flex;align-items:center;justify-content:center;background:none;border:0;padding:0;color:var(--text2);font-size:16px;cursor:pointer;border-radius:0 var(--radius) var(--radius) 0;z-index:2}
+.cb-arrow:hover,.cb.open .cb-arrow,.bw-f.open .cb-arrow{color:var(--accent)}
+.cb-arrow i{transition:transform .15s;pointer-events:none}
+.cb.open .cb-arrow i,.bw-f.open .cb-arrow i{transform:rotate(180deg)}
+.cb-panel{position:fixed;display:none;z-index:5000;background:var(--surface2);border:1.5px solid var(--border2);border-radius:var(--radius);box-shadow:var(--shadow-lg);max-height:260px;overflow-y:auto;overscroll-behavior:contain}
+.cb-panel.open{display:block}
+.cb-panel .di.act{background:var(--accent-dim)}
+.cb-panel .di{white-space:normal;word-break:break-word}
 </style>
 </head>
 <body>
@@ -954,9 +966,6 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 </div>
 
 <input type="file" id="imp" accept=".json,application/json" hidden onchange="importJSON(this)"/>
-<datalist id="dl-party"></datalist>
-<datalist id="dl-item"></datalist>
-<datalist id="dl-svc"><option>Service charge</option><option>Delivery</option><option>Handling</option><option>Packing</option><option>Installation</option><option>Consultation</option></datalist>
 <!-- WHATSAPP SEND -->
 <div class="wa-ov" id="wa-ov" role="dialog" aria-modal="true" aria-labelledby="wa-title"><div class="wa-box">
   <div class="wa-h"><i class="ti ti-brand-whatsapp lg"></i><span id="wa-title">Send bill on WhatsApp</span><button type="button" class="ib x" title="Close" aria-label="Close" onclick="waClose()"><i class="ti ti-x"></i></button></div>
@@ -1035,11 +1044,74 @@ function partyList(t){
   const names=parties.filter(p=>t==='doctor'?DR.test(p.type)||DR.test(p.label||''):!(DR.test(p.type)||DR.test(p.label||''))).map(p=>p.name);
   return [...new Set(names)].sort((a,b)=>a.localeCompare(b));
 }
-function fillLists(){
-  const dp=$('dl-party'),di=$('dl-item');
-  if(dp)dp.innerHTML=partyList(st.type).map(n=>'<option value="'+esc(n)+'">').join('');
-  if(di)di.innerHTML=[...new Set(items.map(i=>i.label))].sort((a,b)=>a.localeCompare(b)).map(n=>'<option value="'+esc(n)+'">').join('');
+function fillLists(){ if(window.cbRefresh)cbRefresh(); }
+
+
+/* ═══ COMBOBOX — click the arrow (or focus the box) to see the whole list; typing filters it; click / Enter picks ═══ */
+const SVC_LIST=['Service charge','Delivery','Handling','Packing','Installation','Consultation'];
+const cbSrc=k=>k==='party'?partyList(st.type):k==='item'?[...new Set(items.map(i=>i.label))].sort((a,b)=>a.localeCompare(b)):SVC_LIST;
+const CB={p:null,inp:null,all:[],list:[],i:-1,skipFocus:false};
+function cbPanel(){if(!CB.p){const d=document.createElement('div');d.className='cb-panel';d.addEventListener('mousedown',e=>{e.preventDefault();const o=e.target.closest('.di[data-v]');if(o)cbPick(o.dataset.v);});document.body.appendChild(d);CB.p=d;}return CB.p;}
+function cbAnchor(inp){return inp.parentElement;}
+function cbPlace(){
+  if(!CB.inp)return;const r=cbAnchor(CB.inp).getBoundingClientRect(),p=cbPanel(),vh=innerHeight;
+  const below=vh-r.bottom,above=r.top,h=Math.min(260,p.scrollHeight||260);
+  p.style.width=Math.max(r.width,200)+'px';
+  p.style.left=Math.min(r.left,Math.max(0,innerWidth-Math.max(r.width,200)-6))+'px';
+  if(below<Math.min(h,200)&&above>below){p.style.top='auto';p.style.bottom=(vh-r.top+4)+'px';p.style.maxHeight=Math.min(260,above-10)+'px';}
+  else{p.style.bottom='auto';p.style.top=(r.bottom+4)+'px';p.style.maxHeight=Math.min(260,below-10)+'px';}
 }
+function cbRender(filter){
+  const p=cbPanel(),q=(filter||'').trim();
+  CB.list=(q?CB.all.filter(n=>match(q,n)):CB.all).slice(0,300);CB.i=-1;
+  const hl=n=>{if(!q)return esc(n);let o=esc(n);q.split(/\s+/).filter(Boolean).forEach(w=>{o=o.replace(new RegExp('('+w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/&/g,'&amp;')+')','ig'),'<em>$1</em>');});return o;};
+  p.innerHTML=CB.list.length?CB.list.map((n,k)=>'<div class="di" data-k="'+k+'" data-v="'+esc(n)+'"><span class="dn">'+hl(n)+'</span></div>').join('')
+    :'<div class="di no-match">'+(CB.all.length?'No match — press Enter to use what you typed':'List is empty — type the name by hand')+'</div>';
+  p.scrollTop=0;cbPlace();
+}
+function cbOpen(inp,showAll){
+  if(CB.inp&&CB.inp!==inp)cbClose();
+  CB.inp=inp;CB.all=cbSrc(inp.dataset.cb);
+  const a=cbAnchor(inp);a.classList.add('open');
+  cbPanel().classList.add('open');cbRender(showAll?'':inp.value);
+}
+function cbClose(){
+  if(CB.inp)cbAnchor(CB.inp).classList.remove('open');
+  if(CB.p)CB.p.classList.remove('open');CB.inp=null;CB.i=-1;
+}
+function cbRefresh(){if(CB.inp&&CB.p&&CB.p.classList.contains('open')){CB.all=cbSrc(CB.inp.dataset.cb);cbRender(CB.inp.value);}}
+function cbMove(d){
+  if(!CB.list.length)return;CB.i=(CB.i+d+CB.list.length)%CB.list.length;
+  CB.p.querySelectorAll('.di').forEach((e,k)=>e.classList.toggle('act',k===CB.i));
+  const e=CB.p.children[CB.i];if(e)e.scrollIntoView({block:'nearest'});
+}
+function cbPick(v){
+  const inp=CB.inp;if(!inp)return;
+  inp.value=v;cbClose();
+  inp.dispatchEvent(new Event('input',{bubbles:true}));
+  inp.dispatchEvent(new Event('change',{bubbles:true}));
+}
+document.addEventListener('focusin',e=>{const t=e.target;if(t.matches&&t.matches('input[data-cb]')){if(CB.skipFocus){CB.skipFocus=false;return;}cbOpen(t,true);t.select();}});
+document.addEventListener('input',e=>{const t=e.target;if(t.matches&&t.matches('input[data-cb]')){if(CB.inp!==t)cbOpen(t,false);else cbRender(t.value);}});
+document.addEventListener('mousedown',e=>{
+  const b=e.target.closest&&e.target.closest('.cb-arrow');
+  if(b){e.preventDefault();const inp=b.parentElement.querySelector('input[data-cb]');if(!inp)return;
+    if(CB.inp===inp&&CB.p.classList.contains('open')){cbClose();return;}
+    if(document.activeElement===inp){cbOpen(inp,true);}else{CB.skipFocus=true;inp.focus();cbOpen(inp,true);}
+    return;}
+  if(CB.inp&&!(CB.p&&CB.p.contains(e.target))&&e.target!==CB.inp)cbClose();
+});
+document.addEventListener('keydown',e=>{
+  const t=e.target;if(!(t.matches&&t.matches('input[data-cb]')))return;
+  const open=CB.inp===t&&CB.p&&CB.p.classList.contains('open');
+  if(e.key==='ArrowDown'){e.preventDefault();if(!open)cbOpen(t,true);else cbMove(1);}
+  else if(e.key==='ArrowUp'){e.preventDefault();if(!open)cbOpen(t,true);else cbMove(-1);}
+  else if(e.key==='Enter'&&open&&CB.i>=0){e.preventDefault();e.stopPropagation();cbPick(CB.list[CB.i]);}
+  else if(e.key==='Escape'&&open){e.preventDefault();cbClose();}
+  else if(e.key==='Tab'&&open){cbClose();}
+},true);
+addEventListener('resize',()=>{cbPlace();});
+document.addEventListener('scroll',e=>{if(CB.inp&&!(CB.p&&CB.p.contains(e.target)))cbPlace();},true);
 
 /* ═══ STATE + STORAGE ═══ */
 const KEY='manual_bills_v1',SEQ='manual_bills_seq_v1';
@@ -1134,7 +1206,7 @@ const chipsHTML=(b,t)=>
   +`<div class="g"><span>Total ${CUR}</span><b>${money(t.total)}</b></div>`
   +(t.paid?`<div><span>Paid</span><b>${money(t.paid)}</b></div><div class="bal"><span>Balance</span><b>${money(t.bal)}</b></div>`:'');
 function drawForm(){
-  const T=TYPES;
+  const T=TYPES;if(window.cbClose)cbClose();
   $('form-host').innerHTML=`
   <div class="mh">
     <div class="nobox"><div class="bw-f"><i class="ti ti-hash"></i><input id="f-no" value="${esc(st.auto?curBill().no:st.no)}" ${st.auto?'readonly':''} placeholder="Bill number" title="Bill / invoice number" autocomplete="off" oninput="set('no',this.value)"/></div>
@@ -1143,7 +1215,7 @@ function drawForm(){
     <label class="bw-d" title="Bill date"><i class="ti ti-calendar"></i><input type="date" id="f-date" value="${esc(st.date)}" oninput="set('date',this.value)"/></label></div>
   <div class="mb">
     <div class="r3">
-      <div class="bw-f"><i class="ti ti-user"></i><input id="f-party" list="dl-party" value="${esc(st.party)}" placeholder="Select or type ${T[st.type].l.toLowerCase()} name…" autocomplete="off" oninput="set('party',this.value)"/></div>
+      <div class="bw-f"><i class="ti ti-user"></i><input id="f-party" data-cb="party" value="${esc(st.party)}" placeholder="Select or type ${T[st.type].l.toLowerCase()} name…" autocomplete="off" oninput="set('party',this.value)"/><button type="button" class="cb-arrow" tabindex="-1" aria-label="Show list" title="Show list"><i class="ti ti-chevron-down"></i></button></div>
       <div class="bw-f"><i class="ti ti-phone"></i><input id="f-contact" value="${esc(st.contact)}" placeholder="Phone / address (optional)" autocomplete="off" oninput="set('contact',this.value)"/></div>
       <div class="bw-f"><i class="ti ti-notes"></i><input id="f-ref" value="${esc(st.ref)}" placeholder="Reference / PO no." autocomplete="off" oninput="set('ref',this.value)"/></div>
     </div>
@@ -1182,7 +1254,7 @@ function upd(){
 }
 function set(k,v){st[k]=v;upd();}
 function setType(k){
-  st.type=k;
+  st.type=k;cbClose();
   document.querySelectorAll('#caps .bw-cap').forEach(b=>b.classList.toggle('on',b.dataset.k===k));
   fillLists();$('f-party').placeholder='Select or type '+TYPES[k].l.toLowerCase()+' name…';upd();
 }
@@ -1195,7 +1267,7 @@ function noToggle(){
 /* items */
 function drawLines(){
   $('lines').innerHTML=st.lines.map((l,i)=>`<tr><td class="num">${i+1}</td>
-    <td><input list="dl-item" value="${esc(l.item)}" placeholder="Item / service" autocomplete="off" oninput="ln(${i},'item',this.value)" onchange="pickItem(${i},this.value)"/></td>
+    <td><div class="cb"><input data-cb="item" value="${esc(l.item)}" placeholder="Item / service" autocomplete="off" oninput="ln(${i},'item',this.value)" onchange="pickItem(${i},this.value)"/><button type="button" class="cb-arrow" tabindex="-1" aria-label="Show items" title="Show items"><i class="ti ti-chevron-down"></i></button></div></td>
     <td><input type="number" min="0" step="any" inputmode="decimal" value="${esc(l.qty)}" placeholder="0" oninput="ln(${i},'qty',this.value)"/></td>
     <td><input type="number" min="0" step="any" inputmode="decimal" value="${esc(l.rate)}" placeholder="0.00" oninput="ln(${i},'rate',this.value)"/></td>
     <td class="n" id="lt${i}">0.00</td>
@@ -1223,7 +1295,7 @@ function pickItem(i,v){   // item chosen → fill the rate you used last time
 }
 /* service charges */
 function drawSvc(){
-  $('svc').innerHTML=st.svc.map((s,i)=>`<div class="srow"><input class="d" list="dl-svc" value="${esc(s.desc)}" placeholder="e.g. Delivery" autocomplete="off" oninput="sv(${i},'desc',this.value)"/>
+  $('svc').innerHTML=st.svc.map((s,i)=>`<div class="srow"><div class="cb d"><input data-cb="svc" value="${esc(s.desc)}" placeholder="e.g. Delivery" autocomplete="off" oninput="sv(${i},'desc',this.value)"/><button type="button" class="cb-arrow" tabindex="-1" aria-label="Show list" title="Show list"><i class="ti ti-chevron-down"></i></button></div>
     <select onchange="sv(${i},'t',this.value)"><option value="amt"${s.t==='amt'?' selected':''}>${CUR}</option><option value="pct"${s.t==='pct'?' selected':''}>%</option></select>
     <input type="number" min="0" step="any" inputmode="decimal" value="${esc(s.v)}" placeholder="Value" oninput="sv(${i},'v',this.value)"/>
     <button class="btn sm" type="button" title="Remove" onclick="delSvc(${i})"><i class="ti ti-x"></i></button></div>`).join('')||'<div class="hint">None yet — delivery, handling, packing… (amount, or % of net)</div>';
@@ -1476,10 +1548,17 @@ try{
   const cache=AP2Cache.create({
     indicator:'cache-ind',toast:(m,t)=>showToast(m,t),
     title:()=>'Up to date · '+items.length+' items · '+parties.length+' names · '+suppliers.length+' suppliers',
-    onRows:rows=>{applyRows(rows);fillLists();return items.length;}
+    onRows:rows=>{applyRows(rows);fillLists();return items.length+parties.length+suppliers.length;}
   });
+  window.masterCache=cache;
   cache.start();
-}catch(e){console.warn('Master cache not available — names can still be typed by hand.',e);$('cache-ind').title='Master list not available — type names by hand';}
+  /* click the database icon to retry loading the master list */
+  $('cache-ind').addEventListener('click',()=>{
+    const f=['refresh','reload','sync','fetch','start'].find(n=>typeof cache[n]==='function');
+    if(f){try{cache[f]();}catch(e){console.warn(e);}}
+    showToast($('cache-ind').title||'Checking master list…');
+  });
+}catch(e){console.warn('Master cache not available — names can still be typed by hand.',e);$('cache-ind').title='Master list not available — type names by hand';$('cache-ind').classList.remove('warn');$('cache-ind').classList.add('err');}
 </script>
 </body>
 </html>
