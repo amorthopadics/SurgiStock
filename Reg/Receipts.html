@@ -63,13 +63,28 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
 .rt{max-width:110px;margin-left:auto;font-family:var(--mono);text-align:right}
 .tot{margin-left:auto;width:min(340px,100%);font-size:13px}.tot div{display:flex;justify-content:space-between;padding:3px 0}.tot .g{font:700 15px var(--mono);border-top:1px solid var(--border2);margin-top:4px;padding-top:6px}
 .pr-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) auto;gap:8px;align-items:end}
-.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border2);padding:9px 16px;border-radius:var(--radius);z-index:99;display:none;font-size:13px}.toast.error{border-color:var(--red);color:var(--red)}.toast.success{border-color:var(--teal)}
 #pr{display:none}
 @media(max-width:700px){.fg,.pr-row{grid-template-columns:1fr 1fr}.modal{border-radius:0;border:0}.ov{padding:0}.bar .btn .lbl{display:none}}
 .nav a{text-decoration:none}.vh{display:none}
 
 .sk{height:34px;border-radius:6px;margin-bottom:8px;background:linear-gradient(90deg,var(--bg3),var(--surface),var(--bg3));background-size:200% 100%;animation:sk 1.2s linear infinite}@keyframes sk{to{background-position:-200% 0}}
 
+
+/* ── toast: same place + look as Master (bottom-right, icon + message) ── */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--surface);color:var(--text);border:1px solid var(--border2);padding:10px 16px;border-radius:var(--radius-lg);font-size:12.5px;font-weight:500;z-index:999;opacity:0;transform:translateY(10px);transition:all .25s cubic-bezier(.34,1.56,.64,1);pointer-events:none;display:flex;align-items:center;gap:9px;box-shadow:0 8px 32px rgba(0,0,0,.45);max-width:340px;left:auto}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:var(--teal-dim);color:var(--teal);border-color:rgba(57,211,83,.25);backdrop-filter:blur(8px)}
+.toast.error{background:rgba(248,81,73,.12);color:var(--red);border-color:rgba(248,81,73,.25);backdrop-filter:blur(8px)}
+@keyframes spin{to{transform:rotate(360deg)}}.spinner{animation:spin 1s linear infinite;display:inline-flex}
+.sync-ind,.sync-ind:hover{position:relative;background:none;border:0;box-shadow:none;color:var(--red)}
+.sync-ind .ping{position:absolute;top:2px;right:2px;width:9px;height:9px;border-radius:50%;background:var(--red)}
+.sync-ind .ping::after{content:'';position:absolute;inset:0;border-radius:50%;background:var(--red);animation:pingo 1.4s ease-out infinite}
+.sync-ind .sync-n{position:absolute;bottom:-3px;right:-2px;min-width:14px;height:14px;padding:0 3px;border-radius:7px;background:var(--red);color:#fff;font-size:9px;line-height:14px;text-align:center;font-family:var(--mono)}
+.sync-ind.busy>i{animation:spin 1s linear infinite}
+@keyframes pingo{0%{transform:scale(1);opacity:.75}100%{transform:scale(3.2);opacity:0}}
+/* ── KPI cards live in the top bar ── */
+.bar h1{margin-right:0}.bar .kpi{margin:0 auto 0 0;flex:1 1 auto;gap:6px;flex-wrap:wrap;justify-content:flex-start;min-width:0}
+.bar .kpi div{flex:0 1 auto;min-width:118px;padding:4px 10px;border-radius:var(--radius);font-size:11px}.bar .kpi b{font-size:13px;margin-top:0;white-space:nowrap}
 /* ── final module: icon buttons · header chips · date · party picker · list actions ── */
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .ib{flex-shrink:0;font-size:15px;transition:color .15s,border-color .15s,background .15s}.ib:hover{border-color:var(--accent);color:var(--accent)}
@@ -180,10 +195,11 @@ td.acts .ib{margin-left:3px}
 </style>
 </head>
 <body>
-<div class="bar"><h1><i class="ti ti-cash"></i>Receipts &amp; Payments</h1>
+<div class="bar"><h1><i class="ti ti-cash"></i>Receipts &amp; Payments</h1><div class="kpi" id="kpi"></div>
+<button class="ib sync-ind" id="sync-ind" type="button" style="display:none" title=""><i class="ti ti-cloud-upload"></i><span class="ping"></span><b class="sync-n">0</b></button>
 
-<button class="btn in" onclick="openF('out')"><i class="ti ti-arrow-down-left"></i>Receive</button><button class="btn out" onclick="openF('in')"><i class="ti ti-arrow-up-right"></i>Pay</button><button class="btn" onclick="openC()"><i class="ti ti-plus"></i>Add charge</button></div>
-<main><div class="kpi" id="kpi"></div><div class="tools"><div class="tabs"><button class="tab on" data-f="all" onclick="setF('all')">All</button><button class="tab" data-f="out" onclick="setF('out')">Received</button><button class="tab" data-f="in" onclick="setF('in')">Paid</button></div><input id="q" placeholder="Search party, receipt no, reference, comments…" oninput="render()"/></div><div class="tw" id="view"></div></main>
+<button class="btn in" onclick="openF('out')"><i class="ti ti-arrow-down-left"></i>Receive</button><button class="btn out" onclick="openF('in')"><i class="ti ti-arrow-up-right"></i>Pay</button></div>
+<main><div class="tools"><div class="tabs"><button class="tab on" data-f="all" onclick="setF('all')">All</button><button class="tab" data-f="out" onclick="setF('out')">Received</button><button class="tab" data-f="in" onclick="setF('in')">Paid</button></div><input id="q" placeholder="Search party, receipt no, reference, comments…" oninput="render()"/></div><div class="tw" id="view"></div></main>
 <div class="ov" id="ov"><div class="modal fm">
 <div class="mh">
   <div class="ttl in" id="f-ttl"><i class="ti ti-arrow-down-left" id="m-ico"></i><span id="m-title">Receive Money — Customer</span></div>
@@ -199,18 +215,7 @@ td.acts .ib{margin-left:3px}
   <div><label>Reference (cheque / transfer no.)</label><input id="f-r" autocomplete="off"/></div>
   <div style="grid-column:1/-1"><label>Comments</label><input id="f-c" autocomplete="off"/></div></div>
   <div class="dim" style="font-size:12px">This only records the money. Match it to orders in the Allocation module (FIFO or manual). Unallocated money stays as the party's advance.</div></div>
-<div class="mf"><button type="button" class="ib lg" title="Cancel" aria-label="Cancel" onclick="closeF()"><i class="ti ti-x"></i></button><button type="button" class="ib lg" id="svp" title="Save &amp; Print" aria-label="Save and print" onclick="save(1)"><i class="ti ti-printer"></i></button><button type="button" class="ib lg pri" id="sv" title="Save" aria-label="Save" onclick="save(0)"><i class="ti ti-check"></i></button></div></div></div>
-
-<div class="ov" id="ov2"><div class="modal fm">
-<div class="mh"><div class="ttl" style="color:var(--accent)"><i class="ti ti-plus"></i><span>Add Charge</span></div><div class="chips" id="c-types"></div><button type="button" class="ib x" title="Close" aria-label="Close" onclick="$('ov2').classList.remove('open')"><i class="ti ti-x"></i></button></div>
-<div class="mb"><div class="fg" style="grid-template-columns:repeat(2,minmax(0,1fr))">
-  <div class="pk" id="c-pk" style="grid-column:1/-1"><label id="c-lp"></label><input id="c-p" autocomplete="off"/><div class="dd" id="c-dd"></div></div>
-  <div><label>Entry type</label><select id="c-ty"><option value="Opening">Opening balance</option><option value="Manual">Manual charge</option><option value="Credit">Credit (reduces balance)</option></select></div>
-  <div><label>Date</label><input id="c-d" type="date"/></div>
-  <div><label>Amount (<span class="cu"></span>)</label><input id="c-a" type="number" min="0" step="any" inputmode="decimal"/></div>
-  <div><label>Description</label><input id="c-ds" autocomplete="off" placeholder="e.g. Balance from old register"/></div>
-  <div style="grid-column:1/-1"><label>Comments / reference</label><input id="c-c" autocomplete="off"/></div></div></div>
-<div class="mf"><button type="button" class="ib lg" title="Cancel" aria-label="Cancel" onclick="$('ov2').classList.remove('open')"><i class="ti ti-x"></i></button><button type="button" class="ib lg pri" id="sv2" title="Save" aria-label="Save" onclick="saveC()"><i class="ti ti-check"></i></button></div></div></div>
+<div class="mf"><button type="button" class="btn" onclick="closeF()">Cancel</button><button type="button" class="btn pri" id="sv" onclick="save()"><i class="ti ti-device-floppy"></i>Save</button></div></div></div>
 
 <div class="ov" id="ov3"><div class="modal fm" style="max-width:860px;height:100%">
 <div class="mh"><div class="ttl" style="color:var(--accent)"><i class="ti ti-file-invoice"></i><span id="v-title"></span></div><button type="button" class="ib x" title="Close" aria-label="Close" onclick="closeV()"><i class="ti ti-x"></i></button></div>
@@ -233,7 +238,7 @@ td.acts .ib{margin-left:3px}
   </div>
 </div></div>
 <div id="pr"></div>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="alert"><i id="toast-icon" class="ti ti-circle-check"></i><span id="toast-msg">Saved</span></div>
 <script>
 'use strict';
 /* ═══ LEDGER STORE — local-cache mode (no backend). Same data shape as the Apps Script backend,
@@ -284,7 +289,7 @@ const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,
 const money=n=>(+n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),r2=n=>Math.round((+n||0)*100)/100,p2=n=>String(n).padStart(2,'0');
 const tsId=t=>{const d=new Date(t);return''+d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate())+p2(d.getHours())+p2(d.getMinutes())+p2(d.getSeconds())+String(d.getMilliseconds()).padStart(3,'0')};
 const today=()=>{const d=new Date();return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());},post=(a,p)=>Ledger.post(a,p),errText=m=>String(m);
-function showToast(m,t){const e=$('toast');e.textContent=m;e.className='toast '+(t||'');e.style.display='block';clearTimeout(showToast.t);showToast.t=setTimeout(()=>e.style.display='none',t==='error'?9000:3000);}
+function showToast(m,t){const e=$('toast');e.className='toast show'+(t?' '+t:'');$('toast-icon').className='ti '+(t==='error'?'ti-alert-circle':t==='success'?'ti-circle-check':'ti-info-circle');$('toast-msg').textContent=m;clearTimeout(showToast.t);showToast.t=setTimeout(()=>e.classList.remove('show'),t==='error'?5000:2600);}
 let L={Charges:[],Receipts:[],Allocations:[]},busy=false,flt='all',vid=null;
 const rw=(a,h)=>(a||[]).filter(r=>Array.isArray(r)&&r[0]!==''&&String(r[0])!==h);
 function loadParties(){refreshForms();}
@@ -302,7 +307,7 @@ SRC.specs={key:'ap2_specsData',label:'Parties',shape:d=>isObj(d)&&Array.isArray(
 const SV=Object.values(SRC);SV.forEach(s=>Object.assign(s,{ts:0,fp:'',painted:false,err:''}));
 const ST={state:'loading',err:'',booting:false};
 const ready=()=>SRC.ledger.painted;
-function after(){loadParties();render();}
+function after(){refreshForms();render();if(PEND.length&&!flushing)flushPending();}
 function unpackS(s,r){if(!isObj(r))return null;if(s.shape(r))return{data:r,ts:0};if(s.shape(r.data))return{data:r.data,ts:+r.ts||0};return null;}
 function applySrc(s,r,from,force){
  const u=unpackS(s,r);if(!u)return false;
@@ -358,17 +363,18 @@ async function load(){
   if(USE_BACKEND){try{await freshLedger();}catch(e){showToast('Could not refresh the ledger: '+errText(e.message),'error');}after();return;}
  try{const j=await Ledger.get();L={Charges:j.Charges||[],Receipts:j.Receipts||[],Allocations:j.Allocations||[]};}
   catch(e){showToast('Could not load the ledger: '+errText(e.message),'error');}loadParties();render();}
-function recs(){const al={};rw(L.Allocations,'AllocID').forEach(a=>al[a[1]]=r2((al[a[1]]||0)+(+a[11]||0)));
+function recs0(){const al={};rw(L.Allocations,'AllocID').forEach(a=>al[a[1]]=r2((al[a[1]]||0)+(+a[11]||0)));
   return rw(L.Receipts,'PaymentID').map(r=>({id:String(r[0]),no:r[1],dir:r[2],ptype:r[3],party:r[4],date:r[5],mode:r[6],ref:r[7],amt:+r[8]||0,note:r[9],type:r[10],alloc:al[r[0]]||0})).map(r=>({...r,un:r2(r.amt-r.alloc)})).sort((a,b)=>b.id.localeCompare(a.id));}
+const recs=()=>{const R0=recs0(),ids=new Set(R0.map(x=>x.id));return PEND.filter(p=>!ids.has(p.id)).map(p=>({id:p.id,no:'—',dir:p.dir,ptype:p.ptype,party:p.party,date:p.date,mode:p.mode,ref:p.ref,amt:+p.amount||0,note:p.comments,type:p.type,alloc:0,un:+p.amount||0,pending:true})).concat(R0).sort((a,b)=>b.id.localeCompare(a.id));};
 function render(){
   if(USE_BACKEND&&!ready()){$('kpi').innerHTML='';$('view').innerHTML=stateHTML();return;}
   const R=recs(),q=$('q').value.toLowerCase().split(/\s+/).filter(Boolean);
   const S=(d,k)=>r2(R.filter(r=>r.dir===d).reduce((a,r)=>a+r[k],0));
-  $('kpi').innerHTML=`<div>Received from customers<b>${CUR} ${money(S('out','amt'))}</b></div><div>Paid to suppliers<b>${CUR} ${money(S('in','amt'))}</b></div><div>Customer advance (unallocated)<b>${CUR} ${money(S('out','un'))}</b></div><div>Supplier advance (unallocated)<b>${CUR} ${money(S('in','un'))}</b></div>`;
+  $('kpi').innerHTML=`<div>Received<b>${CUR} ${money(S('out','amt'))}</b></div><div>Paid<b>${CUR} ${money(S('in','amt'))}</b></div><div>Customer advance<b>${CUR} ${money(S('out','un'))}</b></div><div>Supplier advance<b>${CUR} ${money(S('in','un'))}</b></div>`;
   document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.toggle('on',t.dataset.f===flt));
   const V=R.filter(r=>(flt==='all'||r.dir===flt)&&q.every(w=>[r.no,r.party,r.ptype,r.ref,r.note,r.mode,r.date,fmtD(r.date)].join(' ').toLowerCase().includes(w)));
-  $('view').innerHTML=V.length?`<table><thead><tr><th>No</th><th>Date</th><th>Party</th><th>Mode · Ref</th><th class="n">Amount</th><th class="n">Allocated</th><th class="n">Unallocated</th><th>Status</th><th>Comments</th><th></th></tr></thead><tbody>${V.map(r=>{const s=r.un<=.005?['paid','Allocated']:r.alloc>0?['part','Partial']:['unpaid','Unallocated'];
-   return `<tr><td class="mono">${esc(r.no)} <span class="badge ${r.dir}">${r.dir==='out'?'Received':'Paid'}</span>${r.type==='Opening'?' <span class="badge">Opening</span>':''}</td><td>${esc(fmtD(r.date))}</td><td>${esc(r.party)}<div class="dim" style="font-size:11px">${esc(r.ptype)}</div></td><td>${esc(r.mode)}${r.ref?' · '+esc(r.ref):''}</td><td class="n">${money(r.amt)}</td><td class="n">${money(r.alloc)}</td><td class="n ${r.un>.005?'neg':''}">${money(r.un)}</td><td><span class="badge ${s[0]}">${s[1]}</span></td><td>${esc(r.note)}</td><td class="acts"><button class="ib sm" title="View" aria-label="View" onclick="viewR('${esc(r.id)}')"><i class="ti ti-eye"></i></button><button class="ib sm" title="Print" aria-label="Print" onclick="printR('${esc(r.id)}')"><i class="ti ti-printer"></i></button><button class="ib sm wa" title="Send on WhatsApp" aria-label="Send on WhatsApp" onclick="waOpen('${esc(r.id)}')"><i class="ti ti-brand-whatsapp"></i></button></td></tr>`;}).join('')}</tbody></table>`:'<div class="empty">No receipts yet. Use Receive or Pay above.</div>';}
+  $('view').innerHTML=V.length?`<table><thead><tr><th>No</th><th>Date</th><th>Party</th><th>Mode · Ref</th><th class="n">Amount</th><th class="n">Allocated</th><th class="n">Unallocated</th><th>Status</th><th>Comments</th><th></th></tr></thead><tbody>${V.map(r=>{const s=r.pending?['part','Syncing…']:r.un<=.005?['paid','Allocated']:r.alloc>0?['part','Partial']:['unpaid','Unallocated'];
+   return `<tr><td class="mono">${esc(r.no)} <span class="badge ${r.dir}">${r.dir==='out'?'Received':'Paid'}</span>${r.type==='Opening'?' <span class="badge">Opening</span>':''}</td><td>${esc(fmtD(r.date))}</td><td>${esc(r.party)}<div class="dim" style="font-size:11px">${esc(r.ptype)}</div></td><td>${esc(r.mode)}${r.ref?' · '+esc(r.ref):''}</td><td class="n">${money(r.amt)}</td><td class="n">${money(r.alloc)}</td><td class="n ${r.un>.005?'neg':''}">${money(r.un)}</td><td><span class="badge ${s[0]}">${r.pending?'<i class="ti ti-loader-2 spinner"></i> ':''}${s[1]}</span></td><td>${esc(r.note)}</td><td class="acts"><button class="ib sm"${r.pending?' disabled':''} title="View" aria-label="View" onclick="viewR('${esc(r.id)}')"><i class="ti ti-eye"></i></button><button class="ib sm"${r.pending?' disabled':''} title="Print" aria-label="Print" onclick="printR('${esc(r.id)}')"><i class="ti ti-printer"></i></button><button class="ib sm wa"${r.pending?' disabled':''} title="Send on WhatsApp" aria-label="Send on WhatsApp" onclick="waOpen('${esc(r.id)}')"><i class="ti ti-brand-whatsapp"></i></button></td></tr>`;}).join('')}</tbody></table>`:'<div class="empty">No receipts yet. Use Receive or Pay above.</div>';}
 /* ═══ PARTIES — read from the "ap2_specsData" cache (same record shape {ts,data:{Specs:[…]}}).
    row = [ID, Category, Name, Description, Status]
    Customers = any category whose Description is "Customer" (Doctor · Hospital · Vendor …) → one chip per category
@@ -388,7 +394,7 @@ function applySpecs(rows){const cu=[],su=[],T=new Map(),seen=new Set();
   CUST=cu.sort((x,y)=>x.name.localeCompare(y.name));SUPP=su.sort((x,y)=>x.localeCompare(y));TYPES=[...T.values()].sort((x,y)=>x.l.localeCompare(y.l));}
 const needParties=()=>{if(!SRC.specs.painted){showToast('Parties (ap2_specsData) not loaded yet — press sync / Retry','error');return true;}return false;};
 
-/* ═══ FORMS — two separate windows (Receive = customer · Pay = supplier) + Add charge, all fed from the parties above ═══ */
+/* ═══ FORMS — two separate windows (Receive = customer · Pay = supplier), both fed from the parties above ═══ */
 const FM={f:{dir:'out',type:'',party:''},c:{dir:'out',type:'',party:''}};
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const fmtD=s=>{const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(s||'');return m?(+m[3])+' '+MON[+m[2]-1]+' '+m[1]:(s||'');};
@@ -407,8 +413,8 @@ function drawLabels(p){const out=FM[p].dir==='out';
 function ddDraw(p){const q=norm($(p+'-p').value),all=pList(p),L=all.filter(x=>!q||norm(x.name).includes(q)).slice(0,100);
   $(p+'-dd').innerHTML=L.length?L.map(x=>`<div class="di" data-n="${esc(x.name)}">${esc(x.name)}</div>`).join(''):`<div class="di mute">${all.length?'No match':'None in Specs for this selection'}</div>`;}
 function resetParty(p){FM[p].party='';$(p+'-p').value='';ddDraw(p);}
-function refreshForms(){['f','c'].forEach(p=>{if(!$(p==='f'?'ov':'ov2').classList.contains('open'))return;ensureType(p);drawChips(p);ddDraw(p);});}
-['f','c'].forEach(p=>{const i=$(p+'-p'),pk=$(p+'-pk');
+function refreshForms(){['f'].forEach(p=>{if(!$('ov').classList.contains('open'))return;ensureType(p);drawChips(p);ddDraw(p);});}
+['f'].forEach(p=>{const i=$(p+'-p'),pk=$(p+'-pk');
   const sync=()=>{const v=norm(i.value),m=pList(p).find(x=>norm(x.name)===v);FM[p].party=m?m.name:'';i.classList.remove('bad');};
   i.addEventListener('focus',()=>{pk.classList.add('open');ddDraw(p);});
   i.addEventListener('input',()=>{pk.classList.add('open');sync();ddDraw(p);});
@@ -426,25 +432,36 @@ function openF(d){if(notReady()||needParties())return;const s=FM.f;s.dir=d;s.typ
   drawChips('f');drawLabels('f');ddDraw('f');$('ov').classList.add('open');}
 function closeF(){$('ov').classList.remove('open');}
 const ptypeOf=p=>FM[p].dir==='in'?'Supplier':((TYPES.find(t=>t.k===FM[p].type)||{}).l||'');
-async function save(pr){if(busy||notReady())return;const s=FM.f;
+/* ═══ SAVE — same flow as Master: authorisation checked first → the row shows at once → the sheet is updated in the background.
+   Network trouble is not an error: the receipt stays saved on this device (red cloud icon = waiting), retried automatically.
+   Only a refusal from the server (no permission / session expired) is toasted and the row is taken back. ═══ */
+const PEND_KEY='receipts_pending_sync_v1',FAILED_KEY='receipts_sync_failed',FATAL=/unauthori[sz]ed|forbidden|not logged in|not authori[sz]ed|permission|session/i,NETERR=/network|fetch|offline|timeout|timed out|load failed|internet|connection|failed to/i;
+let PEND=(()=>{try{const j=JSON.parse(localStorage.getItem(PEND_KEY));return Array.isArray(j)?j:[];}catch(e){return[];}})(),flushing=null;
+const savePend=()=>{try{localStorage.setItem(PEND_KEY,JSON.stringify(PEND));}catch(e){}};
+const permCan=a=>{try{return !!(window.AccessGuard&&AccessGuard.can('ap2_ledger',a));}catch(e){return false;}};
+function updateSyncInd(){const el=$('sync-ind'),n=PEND.length;el.style.display=n?'':'none';el.querySelector('.sync-n').textContent=n;el.title=n?n+' receipt'+(n>1?'s':'')+' saved on this device, waiting to sync — click to retry now':'';}
+function flushPending(){if(flushing)return flushing;
+  flushing=(async()=>{const ind=$('sync-ind');ind.classList.add('busy');let posted=0,stuck=false;
+    try{while(PEND.length){const r=PEND[0];
+      if(recs0().some(x=>x.id===r.id)){PEND.shift();savePend();continue;}                       // already in the ledger (reply was lost)
+      if(!permCan('add')){PEND.shift();savePend();showToast('⛔ Not authorized to add Receipts','error');continue;}
+      try{const j=await post('addReceipt',{receipt:r});if(j&&j.error)throw new Error(j.error);PEND.shift();savePend();posted++;}
+      catch(e){const m=String((e&&e.message)||e);
+        if(!FATAL.test(m)&&(NETERR.test(m)||!navigator.onLine)){try{localStorage.setItem(FAILED_KEY,'1');}catch(_){}stuck=true;break;}   // temporary → stays local, retried
+        PEND.shift();savePend();showToast((FATAL.test(m)?'⛔ ':'Not saved: ')+m,'error');}}}                                    // refused → row is taken back
+    finally{ind.classList.remove('busy');updateSyncInd();}
+    try{await freshLedger();}catch(e){render();}
+    if(!stuck&&!PEND.length){let had=false;try{had=localStorage.getItem(FAILED_KEY)==='1';if(had)localStorage.removeItem(FAILED_KEY);}catch(e){}if(had)showToast('Saved — all pending changes are now synced','success');}
+  })().finally(()=>{flushing=null;});
+  return flushing;}
+function save(){if(busy||notReady())return;const s=FM.f;
+  if(!(window.AccessGuard&&AccessGuard.require('ap2_ledger','add','Receipts')))return;            // fail closed, toasts when not allowed
   if(!s.party){$('f-p').classList.add('bad');return showToast('Pick the '+(s.dir==='out'?'customer':'supplier')+' from the list','error');}
   const amount=r2($('f-a').value);if(!(amount>0))return showToast('Enter an amount above zero','error');
-  const w=pr?window.open('','_blank'):null,id=tsId(Date.now());busy=true;$('sv').disabled=$('svp').disabled=true;   // print window opens inside the tap (popup-safe)
-  try{const j=await post('addReceipt',{receipt:{id,dir:s.dir,ptype:ptypeOf('f'),party:s.party,date:$('f-date').value||today(),mode:$('f-m').value,ref:$('f-r').value.trim(),amount,comments:$('f-c').value.trim(),type:$('f-ty').value}});
-    const no=(j&&j.receipt&&j.receipt.no)||'';closeF();await load();showToast('Saved '+no,'success');if(pr)printR(id,w,no);}
-  catch(e){if(w)w.close();showToast('Not saved: '+errText(e.message),'error');}
-  busy=false;$('sv').disabled=$('svp').disabled=false;}
-function openC(){if(notReady()||needParties())return;const s=FM.c;s.dir='out';s.type='';s.party='';ensureType('c');
-  ['c-p','c-a','c-ds','c-c'].forEach(i=>$(i).value='');$('c-p').classList.remove('bad');$('c-ty').value='Opening';$('c-d').value=today();document.querySelectorAll('.cu').forEach(e=>e.textContent=CUR);
-  drawChips('c');drawLabels('c');ddDraw('c');$('ov2').classList.add('open');}
-async function saveC(){if(busy||notReady())return;const s=FM.c,a=r2($('c-a').value),ty=$('c-ty').value;
-  if(!s.party){$('c-p').classList.add('bad');return showToast('Pick the '+(s.dir==='out'?'customer':'supplier')+' from the list','error');}
-  if(!(a>0))return showToast('Enter an amount above zero','error');
-  busy=true;$('sv2').disabled=true;
-  try{await post('addCharges',{rows:[{type:ty,dir:s.dir,date:$('c-d').value||today(),ptype:ptypeOf('c'),party:s.party,desc:$('c-ds').value.trim()||ty,amount:ty==='Credit'?-a:a,comments:$('c-c').value.trim()}]});
-    $('ov2').classList.remove('open');await load();showToast('Charge recorded','success');}
-  catch(e){showToast('Not saved: '+errText(e.message),'error');}
-  busy=false;$('sv2').disabled=false;}
+  PEND.push({id:tsId(Date.now()),dir:s.dir,ptype:ptypeOf('f'),party:s.party,date:$('f-date').value||today(),mode:$('f-m').value,ref:$('f-r').value.trim(),amount,comments:$('f-c').value.trim(),type:$('f-ty').value});
+  savePend();updateSyncInd();closeF();render();                                                  // impact shows on the spot
+  showToast((s.dir==='out'?'Receipt':'Payment')+' saved — '+CUR+' '+money(amount),'success');
+  flushPending();}
 function setF(f){flt=f;render();}
 
 /* ═══ VOUCHER (same layout as the Bills invoice) · view · print · WhatsApp ═══ */
@@ -488,7 +505,7 @@ function printR(id,w,no){const r=findR(id,no);if(!r){if(w)w.close();return showT
 function viewR(id){const r=findR(id);if(!r)return;vid=r.id;$('v-title').textContent=r.no+' · '+r.party;
   $('v-body').innerHTML='<div class="vbody" id="pv">'+voucherHTML(r)+'</div>';$('ov3').classList.add('open');}
 function closeV(){$('ov3').classList.remove('open');vid=null;}
-document.addEventListener('keydown',e=>{if(e.key!=='Escape'||$('wa-ov').classList.contains('open'))return;if($('ov3').classList.contains('open'))closeV();else if($('ov2').classList.contains('open'))$('ov2').classList.remove('open');else closeF();});
+document.addEventListener('keydown',e=>{if(e.key!=='Escape'||$('wa-ov').classList.contains('open'))return;if($('ov3').classList.contains('open'))closeV();else closeF();});
 /* ── WhatsApp (copied from Bills, adapted to receipts / vouchers) ── */
 const WA_LOG='receipts_wa_log_v1',WA_CC='receipts_wa_cc_v1',WA_NUMS='receipts_wa_nums_v1';
 let waId=null,waFile=null,waBusy=false,waNum='',waMsg='',waNo='',waTok=0;
@@ -600,6 +617,9 @@ async function waShare(){
 }
 
 /* ═══ BOOT ═══ */
+updateSyncInd();$('sync-ind').addEventListener('click',()=>flushPending());
+try{if(window.AP2Api&&AP2Api.startRetry)AP2Api.startRetry(()=>flushPending(),()=>PEND.length);}catch(e){}
+window.addEventListener('online',()=>{if(PEND.length)flushPending();});
 if(USE_BACKEND){
  window.addEventListener('message',onCacheMessage);
  document.addEventListener('visibilitychange',()=>{if(document.hidden)return;if(!ready()&&!ST.booting)bootAll();else SV.forEach(applyFromIDB);});
@@ -611,8 +631,8 @@ if(USE_BACKEND){
 PermGate.init({
   dataset:'ap2_ledger',
   controls:[
-    { sel:'[onclick^="openF("],[onclick^="openC("]', need:'add', fn:['openF','openC'] },   /* Receive · Pay · Add charge */
-    { sel:'#sv,#svp,#sv2',                                 need:'add', fn:['save','saveC'] }      /* Save / Save & Print / Add-charge save */
+    { sel:'[onclick^="openF("]', need:'add', fn:['openF'] },   /* Receive · Pay */
+    { sel:'#sv', need:'add', fn:['save'] }      /* Save */
   ]
 });
 </script>
@@ -620,7 +640,7 @@ PermGate.init({
 /* shared/syncQueue.js — offline hold & sync + cache / sync buttons */
 AP2Sync.init({
   key:'receipts',
-  queue:['addReceipt','addCharges'],            /* held on this device while offline (both carry their own data) */
+  queue:[],            /* held on this device while offline (both carry their own data) */
   state:()=> ready() ? {state:'ok',title:'Up to date'} : (ST.state==='error' ? {state:'err',title:'Could not load — '+ST.err} : {state:'warn',title:'Loading…'}),
   refresh:()=>{ ST.booting=false; SV.forEach(applyFromIDB); },
   onSynced:()=>load()
