@@ -1942,7 +1942,7 @@ function dcArm(id){
 /* ── print: opens the Print panel — tick / untick, qty (one click = 1, or a range), add / remove items, manual lines, switch to another DC ── */
 let pdraft = null;
 const prRow = id => pdraft && pdraft.rows.find(r => r.id===id);
-const prNew = (label, manual, grp) => ({ id:'r'+(++pdraft.n), label, grp:grp||'', qty: manual ? '1' : '', on:!!manual, manual:!!manual });
+const prNew = (label, manual, grp) => ({ id:'r'+(++pdraft.n), label, grp:grp||'', qty:'1', on:true, manual:!!manual });
 const prShown = () => pdraft.rows.filter(r => r.manual || matchAll(pdraft.q, r.label));
 const prCount = () => { const c = document.getElementById('pr-count'); if (c && pdraft) c.textContent = pdraft.rows.filter(r => r.on && r.label.trim()).length + ' to print'; };
 function printDC(key){
@@ -1950,14 +1950,16 @@ function printDC(key){
   dcdraft = null; pdraft = { name:'', rows:[], n:0, src:'', q:'', pq:'', psel:new Map() };
   renderPrintPanel(); prLoad(g.key); dcPanelEl().classList.add('open');
 }
-/* choosing a DC adds its items to the pane (unticked); lists chosen earlier keep only what was ticked */
+/* choosing a DC adds its items to the pane — all ticked, qty 1. Earlier lists stay; pick another DC to add more */
 function prLoad(key){
   const g = dcGroups((data.dclist||[]).filter(e => dcKey(e.dcName)===key))[0]; if (!g) return;
-  pdraft.src = key; const sel = dcPanelEl().querySelector('[data-prsrc]'); if (sel) sel.value = key;
-  pdraft.rows = pdraft.rows.filter(r => r.manual || r.on);
-  const have = new Set(pdraft.rows.map(r => dupNorm(r.label)));
-  g.items.filter(e => e.status==='active' && !have.has(dupNorm(e.label))).forEach(e => pdraft.rows.push(prNew(e.label, false, g.name)));
+  pdraft.src = key;
+  const have = new Set(pdraft.rows.map(r => dupNorm(r.label))); let n = 0;
+  g.items.filter(e => e.status==='active' && !have.has(dupNorm(e.label))).forEach(e => { pdraft.rows.push(prNew(e.label, false, g.name)); n++; });
+  const sel = dcPanelEl().querySelector('[data-prsrc]');
+  if (sel){ sel.value = ''; sel.options[0].textContent = '+ Add another DC…'; }
   fillPrRows();
+  if (pdraft.rows.length > n) showToast(n + ' item' + (n===1?'':'s') + ' added from ' + g.name,'success');
 }
 /* "5" → 6 · "5-10" → "6-11" · empty + → 1 */
 function stepQty(q, d){
@@ -1970,14 +1972,14 @@ function stepQty(q, d){
 function prSyncRow(t, r){
   const row = t.closest('.pr-row'); if (!row) return;
   row.classList.toggle('off', !r.on);
-  const i = row.querySelector('.pr-tg i'); if (i) i.className = 'ti ' + (r.on ? 'ti-square-check-filled' : 'ti-square');
+  const i = row.querySelector('.pr-tg i'); if (i) i.className = 'ti ' + (r.on ? 'ti-square-check' : 'ti-square');
   prCount();
 }
 function fillPrRows(){
   const el = document.getElementById('pr-rows'); if (!el || !pdraft) return;
   const top = el.scrollTop, rows = prShown(), gm = new Map();
   const rowHTML = r => `<div class="pr-row${r.on?'':' off'}">
-      <button class="ib sm pr-tg" type="button" data-act="pr-tog" data-id="${r.id}" title="${r.on?'Skip this item':'Print this item'}"><i class="ti ${r.on?'ti-square-check-filled':'ti-square'}"></i></button>
+      <button class="ib sm pr-tg" type="button" data-act="pr-tog" data-id="${r.id}" title="${r.on?'Skip this item':'Print this item'}"><i class="ti ${r.on?'ti-square-check':'ti-square'}"></i></button>
       <input class="date-input pr-lbl" data-prl data-id="${r.id}" type="text" value="${esc(r.label)}" placeholder="Write item…" autocomplete="off" title="Click to edit"/>
       <div class="pr-qty"><button class="ib sm" type="button" data-act="pr-qty" data-id="${r.id}" data-d="-1" title="Less"><i class="ti ti-minus"></i></button>
         <input class="date-input" data-prq data-id="${r.id}" type="text" value="${esc(r.qty)}" placeholder="Qty" autocomplete="off" title="Click for 1 · type a number or a range, e.g. 5-10"/>
@@ -2005,13 +2007,13 @@ function fillPrPick(){
   prOptions().forEach(o => { const g = o.mb || 'No Medical Domain'; if (!gm.has(g)) gm.set(g, []); gm.get(g).push(o); });
   el.innerHTML = [...gm.keys()].sort(natCmp).map(g => `<div class="dc-pg"><i class="ti ti-bone"></i>${esc(g)}</div>` + gm.get(g).sort((a,b) => natCmp(a.label,b.label)).map(o => {
     const added = have.has(o.key), on = added || pdraft.psel.has(o.key);
-    return `<div class="dc-opt${on?' on':''}"${added?' style="opacity:.55;cursor:default;" title="Already in this print"':''} data-act="${added?'':'pr-pick'}" data-key="${esc(o.key)}" data-label="${esc(o.label)}"><i class="ti ${on?'ti-square-check-filled':'ti-square'}"></i><span>${esc(o.label)}</span></div>`;
+    return `<div class="dc-opt${on?' on':''}"${added?' style="opacity:.55;cursor:default;" title="Already in this print"':''} data-act="${added?'':'pr-pick'}" data-key="${esc(o.key)}" data-label="${esc(o.label)}"><i class="ti ${on?'ti-square-check':'ti-square'}"></i><span>${esc(o.label)}</span></div>`;
   }).join('')).join('') || `<div class="cb-none" style="padding:10px;">${pdraft.pq ? 'No item matches your search' : 'No Item List entries yet'}</div>`;
   el.scrollTop = top; prPickCount();
 }
 function prPickToggle(el){
   const k = el.dataset.key, on = !el.classList.contains('on');
-  el.classList.toggle('on', on); el.querySelector('i').className = 'ti ' + (on ? 'ti-square-check-filled' : 'ti-square');
+  el.classList.toggle('on', on); el.querySelector('i').className = 'ti ' + (on ? 'ti-square-check' : 'ti-square');
   if (on) pdraft.psel.set(k, el.dataset.label); else pdraft.psel.delete(k);
   prPickCount();
 }
@@ -2125,7 +2127,7 @@ function dcPickHTML(){
     const list = gm.get(g).sort((a,b) => natCmp(a.label, b.label));
     return `<div class="dc-pg"><i class="ti ti-bone"></i>${esc(g)}</div>` + list.map(o => {
       const on = dcdraft.sel.has(o.key);
-      return `<div class="dc-opt${on?' on':''}" data-act="dc-pick" data-key="${esc(o.key)}" data-label="${esc(o.label)}"><i class="ti ${on?'ti-square-check-filled':'ti-square'}"></i><span>${esc(o.label)}</span></div>`;
+      return `<div class="dc-opt${on?' on':''}" data-act="dc-pick" data-key="${esc(o.key)}" data-label="${esc(o.label)}"><i class="ti ${on?'ti-square-check':'ti-square'}"></i><span>${esc(o.label)}</span></div>`;
     }).join('');
   }).join('');
   const man = dcdraft.man.length ? `<div class="dc-pg"><i class="ti ti-pencil"></i>Manual</div>` + dcdraft.man.map(x => `<div class="dc-mrow"><input class="date-input pr-lbl" data-dcm data-id="${x.id}" type="text" value="${esc(x.text)}" placeholder="Write item…" autocomplete="off"/>
@@ -2202,7 +2204,7 @@ function dcTogglePick(el){
   const d = dcdraft; if (!d) return;
   const on = !el.classList.contains('on');
   el.classList.toggle('on', on);
-  el.querySelector('i').className = 'ti ' + (on ? 'ti-square-check-filled' : 'ti-square');
+  el.querySelector('i').className = 'ti ' + (on ? 'ti-square-check' : 'ti-square');
   if (on) d.sel.set(el.dataset.key, el.dataset.label); else d.sel.delete(el.dataset.key);
   const p = document.getElementById('dc-pick'); if (p) p.classList.remove('bad');
   updateDcCount();
