@@ -70,17 +70,59 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
 #pr table,#pv table{border:1px solid #000;margin:8px 0}#pr th,#pr td,#pv th,#pv td{border:1px solid #888;padding:5px 7px;font-size:12px}#pr th,#pv th{background:#eee!important}#pv .hd{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:10px}#pv .tot{width:300px}#pv h2{font-size:20px}#pv{font-size:12px}
 #pr .tot{width:300px}#pr .sig{display:flex;justify-content:space-between;margin-top:50px}#pr .sig span{border-top:1px solid #000;padding-top:4px;width:30%;text-align:center}
 @media print{@page{margin:8mm}body>*:not(#pr){display:none!important}html,body{height:auto;overflow:visible}#pr{display:block}}
-.seg{display:inline-flex}.seg .tab{border-radius:0}.seg .tab:first-child{border-radius:8px 0 0 8px}.seg .tab:last-child{border-radius:0 8px 8px 0}.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:12px}@media(max-width:800px){.cols{grid-template-columns:1fr}}.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:10px}.rcp{display:flex;gap:8px;align-items:center;padding:7px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;cursor:pointer}.rcp.on{border-color:var(--accent);background:var(--accent-dim)}td input{max-width:120px;text-align:right}
+.seg{display:inline-flex}.seg .tab{border-radius:0}.seg .tab:first-child{border-radius:8px 0 0 8px}.seg .tab:last-child{border-radius:0 8px 8px 0}.cols{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:10px}.rcp{display:flex;gap:8px;align-items:center;padding:7px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;cursor:pointer}.rcp.on{border-color:var(--accent);background:var(--accent-dim)}td input{max-width:120px;text-align:right}
+
+/* ── allocation filters ── */
+.fbar{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr);gap:10px;align-items:end}
+.fbar .sel{min-height:34px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 10px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg3);font-size:13px}
+.fbar .sel.on{border-color:var(--accent);background:var(--accent-dim)}
+.fbar .sel b{font-weight:600}
+.fbar .sel .none{color:var(--text2)}
+.tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:600;border:1px solid transparent}
+.tag.cus{background:var(--teal-dim);color:var(--teal);border-color:var(--teal)}
+.tag.sup{background:var(--orange-dim);color:var(--orange);border-color:var(--orange)}
+.tag.sub{background:var(--bg2);color:var(--text2);border-color:var(--border2)}
+.frow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.frow .sp{margin-left:auto}
+.itb{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin:8px 0 10px}
+.itb>div{min-width:0}.itb select{width:auto;min-width:130px}.itb input[type=date]{width:150px}
+.itb .cnt{margin-left:auto;font:500 12px var(--mono);color:var(--text2);align-self:center}
+.rtw{max-height:270px;overflow:auto;border:1px solid var(--border);border-radius:var(--radius)}
+.rtw table{border:0}.rtw th{position:sticky;top:0;z-index:1}
+.rrow{cursor:pointer}.rrow:hover{background:var(--accent-dim)}.rrow.on{background:var(--accent-dim);box-shadow:inset 3px 0 0 var(--accent)}
+.rrow input{width:auto;pointer-events:none}
+.dtw{max-height:380px;overflow:auto}
+@media(max-width:800px){.fbar{grid-template-columns:1fr}}
 
 .sk{height:34px;border-radius:6px;margin-bottom:8px;background:linear-gradient(90deg,var(--bg3),var(--surface),var(--bg3));background-size:200% 100%;animation:sk 1.2s linear infinite}@keyframes sk{to{background-position:-200% 0}}
 </style>
 </head>
 <body>
 <div class="bar"><h1><i class="ti ti-arrows-split"></i>Amount Allocation</h1></div>
-<main><div class="tools"><input id="party" list="dl" placeholder="Party name (customer / supplier)…" oninput="setParty(this.value)"/><datalist id="dl"></datalist>
-<span class="seg"><button class="tab on" id="m-auto" onclick="setMode('auto')">Automatic (FIFO)</button><button class="tab" id="m-man" onclick="setMode('man')">Manual</button></span><button class="btn" onclick="syncBills()" title="Create charges for bills that have none yet"><i class="ti ti-refresh"></i>Sync bills</button></div>
-<div class="cols"><div class="card"><b>1. Receipt / payment to allocate</b><div id="rc" style="margin-top:8px"></div></div>
-<div class="card"><b>2. Open items <span class="dim" style="font-weight:400">(oldest first)</span></b><div class="tw" id="items" style="margin-top:8px"></div>
+<main>
+<div class="card" style="margin-bottom:12px">
+ <div class="fbar">
+  <div><label for="fc"><i class="ti ti-user"></i> Customer <span class="dim">(Hospital · Doctor · Vendor)</span></label><input id="fc" list="dlc_c" placeholder="Select / type customer…" autocomplete="off" oninput="setSide('c',this.value)"/><datalist id="dlc_c"></datalist></div>
+  <div><label for="fs"><i class="ti ti-truck-delivery"></i> Supplier</label><input id="fs" list="dlc_s" placeholder="Select / type supplier…" autocomplete="off" oninput="setSide('s',this.value)"/><datalist id="dlc_s"></datalist></div>
+  <div><label>Selected person / entity</label><div class="sel" id="sel"></div></div>
+ </div>
+ <div class="frow">
+  <span class="seg"><button class="tab on" id="m-auto" onclick="setMode('auto')">Automatic (FIFO)</button><button class="tab" id="m-man" onclick="setMode('man')">Manual</button></span>
+  <button class="btn" onclick="clearAll()" title="Clear customer / supplier / date filters"><i class="ti ti-filter-off"></i>Clear all</button>
+  <button class="btn sp" onclick="syncBills()" title="Create charges for bills that have none yet"><i class="ti ti-refresh"></i>Sync bills</button>
+ </div>
+</div>
+<div class="cols"><div class="card"><b>1. Receipt / payment to allocate</b> <span class="dim" id="rcnt" style="font-size:12px"></span><div id="rc" style="margin-top:8px"></div></div>
+<div class="card"><b>2. Open items <span class="dim" id="ordl" style="font-weight:400">(oldest first)</span></b>
+<div class="itb">
+ <div><label for="so">Order</label><select id="so" onchange="onFilt()"><option value="asc">Oldest first (ascending)</option><option value="desc">Newest first (descending)</option></select></div>
+ <div><label for="dm">Date filter</label><select id="dm" onchange="onFilt()"><option value="all">All dates</option><option value="range">From – To</option><option value="one">Single date</option></select></div>
+ <div id="w1"><label for="d1" id="l1">From</label><input type="date" id="d1" onchange="onFilt()"/></div>
+ <div id="w2"><label for="d2">To</label><input type="date" id="d2" onchange="onFilt()"/></div>
+ <button class="btn" onclick="clearDates()" title="Reset order and dates"><i class="ti ti-x"></i>Reset</button>
+ <span class="cnt" id="icnt"></span>
+</div>
+<div class="tw dtw" id="items"></div>
 <div class="tools" style="margin-top:10px"><span class="mono" id="ctr"></span><input id="cm" placeholder="Comments (optional)" style="max-width:260px;margin-left:auto"/><button class="btn pri" id="sv" onclick="save()"><i class="ti ti-device-floppy"></i>Save allocation</button></div></div></div>
 <h3 style="margin:16px 0 8px;font-size:14px">Allocation history for this party</h3><div class="tw" id="hist"></div></main>
 <div class="toast" id="toast"></div>
@@ -135,7 +177,7 @@ function data(){
  const al=rw(L.Allocations,'AllocID').map(a=>({id:String(a[0]),pid:String(a[1]),rno:a[2],billNo:a[4],cid:String(a[5]),orderNo:a[7],party:a[9],date:String(a[10]),amt:+a[11]||0,note:a[12],rev:String(a[13]||'')}));
  const rvC={};rw(L.Charges,'ChargeID').forEach(c=>{if(c[1]==='Reversal')rvC[String(c[12]).replace('rev:','')]=+c[11]||0;});const bC={},bP={};al.forEach(a=>{bC[a.cid]=r2((bC[a.cid]||0)+a.amt);bP[a.pid]=r2((bP[a.pid]||0)+a.amt);});
  const ch=rw(L.Charges,'ChargeID').map(c=>({id:String(c[0]),type:c[1],billId:String(c[2]||''),billNo:String(c[3]||''),orderNo:String(c[5]||''),ptype:c[6],party:String(c[7]).trim(),dir:c[8],date:String(c[9]),desc:c[10],amt:+c[11]||0,note:c[12]})).map(c=>({...c,paid:bC[c.id]||0,due:r2(c.amt-(bC[c.id]||0)+(rvC[c.id]||0))}));
- const rc=rw(L.Receipts,'PaymentID').map(r=>({id:String(r[0]),no:r[1],dir:r[2],party:String(r[4]).trim(),date:String(r[5]),mode:r[6],ref:r[7],amt:+r[8]||0,note:r[9],type:r[10]})).map(r=>({...r,alloc:bP[r.id]||0,un:r2(r.amt-(bP[r.id]||0))}));
+ const rc=rw(L.Receipts,'PaymentID').map(r=>({id:String(r[0]),no:r[1],dir:r[2],ptype:String(r[3]||''),party:String(r[4]).trim(),date:String(r[5]),mode:r[6],ref:r[7],amt:+r[8]||0,note:r[9],type:r[10]})).map(r=>({...r,alloc:bP[r.id]||0,un:r2(r.amt-(bP[r.id]||0))}));
  return{al,ch,rc};}
 const fifo=(a,b)=>a.date.localeCompare(b.date)||((b.type==='Opening')-(a.type==='Opening'))||a.billNo.localeCompare(b.billNo)||a.id.localeCompare(b.id);
 let BL={Bills:[],Payments:[]};
@@ -242,28 +284,62 @@ const chargeRow=v=>({type:'Bill',billId:v.billId,billNo:v.billNo,orderId:'',orde
 async function syncBills(){if(notReady())return;const V=virt(D());if(!V.length)return showToast('Every bill already has charges','success');
  if(!confirm('Create bill-level charges for '+V.length+' bill(s) that have none yet? (They then appear in Reports too.)'))return;
  try{await post('addCharges',{rows:V.map(chargeRow)});await load();showToast(V.length+' bill(s) synced','success');}catch(e){showToast('Not synced: '+errText(e.message),'error');}}
-let party='',rid=null,mode='auto',amts={},busy=false;
+let party='',side='',rid=null,mode='auto',amts={},busy=false,sortDir='asc',dm='all',d1='',d2='';
 const D=()=>data();
-function after(){const d=D();$('dl').innerHTML=[...new Set([...d.ch.map(c=>c.party),...d.rc.map(r=>r.party)])].sort().map(n=>`<option value="${esc(n)}">`).join('');render();}
-function setParty(v){party=v.trim();rid=null;amts={};render();}
+function names(d,dir){const t=new Set();d.ch.forEach(c=>c.dir===dir&&t.add(c.party));d.rc.forEach(r=>r.dir===dir&&t.add(r.party));
+ rw(BL.Bills,'ID').forEach(a=>String(a[2])===dir&&t.add(String(a[5]).trim()));return[...t].filter(Boolean).sort((a,b)=>a.localeCompare(b));}
+function after(){const d=D(),o=n=>`<option value="${esc(n)}">`;
+ $('dlc_c').innerHTML=names(d,'out').map(o).join('');$('dlc_s').innerHTML=names(d,'in').map(o).join('');render();}
+/* party type: Supplier for the 'in' direction, otherwise Hospital / Doctor / Vendor taken from the ledger or the bills */
+function ptMap(d){const m={};const put=(dir,p,t)=>{const k=dir+'|'+p;if(t&&!m[k])m[k]=String(t).trim();};
+ d.ch.forEach(c=>put(c.dir,c.party,c.ptype));d.rc.forEach(r=>put(r.dir,r.party,r.ptype));
+ rw(BL.Bills,'ID').forEach(a=>put(String(a[2]),String(a[5]).trim(),a[4]));return m;}
+const sideDir=s=>s==='c'?'out':s==='s'?'in':'';
+function tagsFor(dir,pt){return dir==='in'?'<span class="tag sup">Supplier</span>':`<span class="tag cus">Customer</span>${pt&&pt.toLowerCase()!=='customer'?` <span class="tag sub">${esc(pt)}</span>`:''}`;}
+function syncInputs(){$('fc').value=side==='c'?party:'';$('fs').value=side==='s'?party:'';}
+function setSide(sd,v){v=v.trim();if(v){side=sd;party=v;$(sd==='c'?'fs':'fc').value='';}else if(side===sd){party='';side='';}else return;rid=null;amts={};render();}
+function clearAll(){party='';side='';rid=null;amts={};sortDir='asc';dm='all';d1='';d2='';syncInputs();$('so').value='asc';$('dm').value='all';$('d1').value='';$('d2').value='';render();}
+function clearDates(){sortDir='asc';dm='all';d1='';d2='';$('so').value='asc';$('dm').value='all';$('d1').value='';$('d2').value='';onFilt();}
+function onFilt(){sortDir=$('so').value;dm=$('dm').value;d1=$('d1').value;d2=$('d2').value;
+ const{d,r}=cur();if(r){if(mode==='auto')fill();else{const ok=new Set(items(d,r).map(c=>c.id));Object.keys(amts).forEach(k=>{if(!ok.has(k))delete amts[k];});}}render();}
 function setMode(m){mode=m;if(m==='auto')fill();render();}
-function cur(){const d=D();return{d,r:d.rc.find(x=>x.id===rid&&x.party===party),R:d.rc.filter(r=>r.party===party&&r.un>.005)};}
-function open_(d,r){return d.ch.filter(c=>c.party===party&&r&&c.dir===r.dir&&c.due>.005).concat(virt(d).filter(v=>r&&v.party===party&&v.dir===r.dir)).sort(fifo);}
-function why(d,r){const mine=d.ch.filter(c=>c.party===party),same=mine.filter(c=>c.dir===r.dir);
- if(same.length)return `All ${same.length} charge(s) for “${esc(party)}” are already fully allocated.`;
- if(mine.length)return `“${esc(party)}” only has ${r.dir==='out'?'supplier':'customer'} charges — this receipt is a ${r.dir==='out'?'customer receipt':'supplier payment'}.`;
- return `Nothing open for “${esc(party)}” in Bills &amp; Payments or the ledger. Check the spelling of the name (it must match the party on the bill), and that the bill is in the same direction as this receipt.`;}
-function fill(){const{d,r}=cur();amts={};if(!r)return;let rem=r.un;open_(d,r).forEach(c=>{const a=Math.min(c.due,rem);if(a>.005){amts[c.id]=r2(a);rem=r2(rem-a);}});}
-function pickR(id){rid=id;if(mode==='auto')fill();else amts={};render();}
+function cur(){const d=D(),sd=sideDir(side);
+ const R=d.rc.filter(r=>r.un>.005&&(!party||r.party===party)&&(!sd||r.dir===sd)).sort((a,b)=>a.date.localeCompare(b.date)||String(a.no).localeCompare(String(b.no)));
+ return{d,r:R.find(x=>x.id===rid),R};}
+function open_(d,r){return d.ch.filter(c=>c.party===r.party&&c.dir===r.dir&&c.due>.005).concat(virt(d).filter(v=>v.party===r.party&&v.dir===r.dir)).sort(fifo);}
+const dOf=c=>String(c.date).slice(0,10);
+function items(d,r){let I=open_(d,r);
+ if(dm==='range')I=I.filter(c=>(!d1||dOf(c)>=d1)&&(!d2||dOf(c)<=d2));
+ else if(dm==='one'&&d1)I=I.filter(c=>dOf(c)===d1);
+ return I;}
+function why(d,r){const mine=d.ch.filter(c=>c.party===r.party),same=mine.filter(c=>c.dir===r.dir);
+ if(same.length)return `All ${same.length} charge(s) for “${esc(r.party)}” are already fully allocated.`;
+ if(mine.length)return `“${esc(r.party)}” only has ${r.dir==='out'?'supplier':'customer'} charges — this receipt is a ${r.dir==='out'?'customer receipt':'supplier payment'}.`;
+ return `Nothing open for “${esc(r.party)}” in Bills &amp; Payments or the ledger. Check the spelling of the name (it must match the party on the bill), and that the bill is in the same direction as this receipt.`;}
+function fill(){const{d,r}=cur();amts={};if(!r)return;let rem=r.un;items(d,r).forEach(c=>{const a=Math.min(c.due,rem);if(a>.005){amts[c.id]=r2(a);rem=r2(rem-a);}});}
+function pickR(id){const x=D().rc.find(q=>q.id===id);
+ if(x&&(x.party!==party||sideDir(side)!==x.dir)){party=x.party;side=x.dir==='in'?'s':'c';syncInputs();}
+ rid=id;if(mode==='auto')fill();else amts={};render();}
 function sum(){return r2(Object.values(amts).reduce((a,x)=>a+(+x||0),0));}
 function ctr(){const{r}=cur();if(!r){$('ctr').textContent='';return;}const u=r2(r.un-sum());$('ctr').innerHTML=`Allocating ${money(sum())} of ${money(r.un)} · <span class="${u<-.005?'neg':''}">Left (advance): ${money(u)}</span>`;}
 function render(){
  if(USE_BACKEND&&!ready()){$('rc').innerHTML=stateHTML();$('items').innerHTML='';$('hist').innerHTML='';$('ctr').textContent='';return;}
- const{d,r,R}=cur();
+ const{d,r,R}=cur(),pm=ptMap(d);
  $('m-auto').classList.toggle('on',mode==='auto');$('m-man').classList.toggle('on',mode==='man');
- $('rc').innerHTML=!party?'<div class="empty">Enter a party name</div>':R.length?R.map(x=>`<div class="rcp${x.id===rid?' on':''}" onclick="pickR('${x.id}')"><input type="radio" ${x.id===rid?'checked':''}/><div><b class="mono">${esc(x.no)}</b> <span class="badge ${x.dir}">${x.dir==='out'?'In':'Out'}</span><div class="dim" style="font-size:12px">${esc(x.date)} · ${esc(x.mode||'')} ${esc(x.note||'')}</div></div><div class="mono" style="margin-left:auto">${money(x.un)}</div></div>`).join(''):'<div class="empty">No unallocated receipts for this party</div>';
- const I=open_(d,r),ro=mode==='auto'?'readonly':'';
- $('items').innerHTML=!r?'<div class="empty">Select a receipt</div>':I.length?`<table><thead><tr><th>Date</th><th>Bill</th><th>Order / item</th><th class="n">Charge</th><th class="n">Due</th><th class="n">Allocate</th></tr></thead><tbody>${I.map(c=>`<tr><td>${esc(c.date)}</td><td class="mono">${esc(c.billNo)||'–'} ${c.type!=='Order'?`<span class="badge">${esc(c.type)}</span>`:''}</td><td>${esc(c.orderNo||c.desc)}</td><td class="n">${money(c.amt)}</td><td class="n">${money(c.due)}</td><td><input type="number" min="0" step="any" ${ro} value="${amts[c.id]||''}" oninput="amts['${c.id}']=Math.min(+this.value||0,${c.due});ctr()" onchange="if(+this.value>${c.due})this.value=${c.due}"/></td></tr>`).join('')}</tbody></table>`:`<div class="empty">${why(d,r)}</div>`;
+ /* selected person / entity box */
+ const sd=sideDir(side),se=$('sel');
+ if(party){const known=names(d,sd).includes(party);se.className='sel on';se.innerHTML=`<i class="ti ti-${sd==='in'?'truck-delivery':'building-hospital'}"></i><b>${esc(party)}</b> ${tagsFor(sd,pm[sd+'|'+party])}${known?'':' <span class="warn">not found in list</span>'}`;}
+ else{se.className='sel';se.innerHTML='<span class="none">None selected — showing all payments to allocate</span>';}
+ /* receipts: one row per payment */
+ $('rcnt').textContent=R.length?`· ${R.length} payment${R.length>1?'s':''} · ${CUR} ${money(R.reduce((a,x)=>a+x.un,0))} unallocated`:'';
+ $('rc').innerHTML=R.length?`<div class="rtw"><table><thead><tr><th></th><th>Receipt</th><th>Date</th><th>Party</th><th>Type</th><th>Mode / Ref</th><th class="n">Amount</th><th class="n">To allocate</th></tr></thead><tbody>${R.map(x=>`<tr class="rrow${x.id===rid?' on':''}" onclick="pickR('${x.id}')"><td><input type="radio" ${x.id===rid?'checked':''}/></td><td class="mono">${esc(x.no)}</td><td>${esc(x.date)}</td><td>${esc(x.party)}</td><td>${tagsFor(x.dir,pm[x.dir+'|'+x.party]||x.ptype)}</td><td>${esc([x.mode,x.ref].filter(Boolean).join(' · '))}${x.note?` <span class="dim">${esc(x.note)}</span>`:''}</td><td class="n">${money(x.amt)}</td><td class="n">${money(x.un)}</td></tr>`).join('')}</tbody></table></div>`
+  :`<div class="empty">${party?'No unallocated receipts for this '+(sd==='in'?'supplier':'customer'):side?'No unallocated receipts for this side':'No unallocated receipts'}</div>`;
+ /* open items: sort + date filter */
+ $('ordl').textContent=sortDir==='asc'?'(oldest first)':'(newest first)';
+ $('w1').style.display=dm==='all'?'none':'';$('w2').style.display=dm==='range'?'':'none';$('l1').textContent=dm==='one'?'Date':'From';
+ const all=r?open_(d,r):[],I0=r?items(d,r):[],I=sortDir==='desc'?I0.slice().reverse():I0,ro=mode==='auto'?'readonly':'';
+ $('icnt').textContent=r?`${I.length}${I.length!==all.length?' of '+all.length:''} item${I.length===1?'':'s'} · due ${money(I.reduce((a,c)=>a+c.due,0))}`:'';
+ $('items').innerHTML=!r?'<div class="empty">Select a receipt / payment above</div>':I.length?`<table><thead><tr><th>Date</th><th>Bill</th><th>Order / item</th><th class="n">Charge</th><th class="n">Due</th><th class="n">Allocate</th></tr></thead><tbody>${I.map(c=>`<tr><td>${esc(c.date)}</td><td class="mono">${esc(c.billNo)||'–'} ${c.type!=='Order'?`<span class="badge">${esc(c.type)}</span>`:''}</td><td>${esc(c.orderNo||c.desc)}</td><td class="n">${money(c.amt)}</td><td class="n">${money(c.due)}</td><td><input type="number" min="0" step="any" ${ro} value="${amts[c.id]||''}" oninput="amts['${c.id}']=Math.min(+this.value||0,${c.due});ctr()" onchange="if(+this.value>${c.due})this.value=${c.due}"/></td></tr>`).join('')}</tbody></table>`:`<div class="empty">${all.length?'No open items match the date filter.':why(d,r)}</div>`;
  ctr();
  const rv=new Set(d.al.filter(a=>a.rev).map(a=>a.rev)),H=d.al.filter(a=>a.party===party).sort((a,b)=>b.id.localeCompare(a.id));
  $('hist').innerHTML=!party?'':H.length?`<table><thead><tr><th>Date</th><th>Receipt</th><th>Bill</th><th>Order</th><th class="n">Amount</th><th>Note</th><th></th></tr></thead><tbody>${H.map(a=>`<tr><td>${esc(a.date)}</td><td class="mono">${esc(a.rno)}</td><td class="mono">${esc(a.billNo)}</td><td>${esc(a.orderNo)}</td><td class="n ${a.amt<0?'neg':''}">${money(a.amt)}</td><td>${esc(a.note)}${a.rev?' <span class="badge unpaid">Reversal</span>':rv.has(a.id)?' <span class="badge">Reversed</span>':''}</td><td class="acts">${a.amt>0&&!rv.has(a.id)?`<button class="btn sm dng" onclick="rev('${a.id}')">Reverse</button>`:''}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">No allocations yet</div>';}

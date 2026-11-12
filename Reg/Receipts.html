@@ -160,7 +160,7 @@ const money=n=>(+n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFr
 const tsId=t=>{const d=new Date(t);return''+d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate())+p2(d.getHours())+p2(d.getMinutes())+p2(d.getSeconds())+String(d.getMilliseconds()).padStart(3,'0')};
 const today=()=>new Date().toISOString().slice(0,10),post=(a,p)=>Ledger.post(a,p),errText=m=>String(m);
 function showToast(m,t){const e=$('toast');e.textContent=m;e.className='toast '+(t||'');e.style.display='block';clearTimeout(showToast.t);showToast.t=setTimeout(()=>e.style.display='none',t==='error'?9000:3000);}
-let L={Charges:[],Receipts:[],Allocations:[]},dir='out',busy=false,PM=new Map(),SUP=new Map(),CUS=new Map(),cbAct=-1;
+let L={Charges:[],Receipts:[],Allocations:[]},dir='out',busy=false,PM=new Map(),SUP=new Map(),CUS=new Map(),cbAct=-1,SPECS=[];
 const rw=(a,h)=>(a||[]).filter(r=>Array.isArray(r)&&r[0]!==''&&String(r[0])!==h);
 const dirOf=a=>{for(const v of a.slice(0,16)){const t=String(v).trim().toLowerCase();if(t==='incoming'||t==='in')return'in';if(t==='outgoing'||t==='out')return'out';}return'';};
 function loadParties(){SUP=new Map();CUS=new Map();
@@ -168,9 +168,18 @@ function loadParties(){SUP=new Map();CUS=new Map();
   try{JSON.parse(localStorage.getItem('orders_sheet_cache_v2')||'[]').forEach(a=>{if(Array.isArray(a)&&a[8]){PM.set(String(a[8]),String(a[6]||''));const d=dirOf(a);if(d==='in')add(SUP,a[8],a[6]);else if(d==='out')add(CUS,a[8],a[6]);}});}catch(e){}
   rw(L.Charges,'ChargeID').forEach(c=>{if(c[7]&&!PM.has(String(c[7])))PM.set(String(c[7]),String(c[6]||''));if(c[8]==='in')add(SUP,c[7],c[6]);else if(c[8]==='out')add(CUS,c[7],c[6]);});
   rw(L.Receipts,'PaymentID').forEach(c=>{if(c[4]&&!PM.has(String(c[4])))PM.set(String(c[4]),String(c[3]||''));if(c[2]==='in')add(SUP,c[4],c[3]);else if(c[2]==='out')add(CUS,c[4],c[3]);});
+  if(SPECS.length){SUP=new Map();CUS=new Map();   // Master list (ap2_specsData) is the source of truth when loaded
+    SPECS.forEach(r=>{if(!Array.isArray(r)||String(r[4]||'Active').toLowerCase()==='inactive')return;const n=String(r[2]??'').trim();if(!n)return;
+      if(r[1]==='Supplier')add(SUP,n,'Supplier');else if(r[3]==='Customer')add(CUS,n,r[1]);});}
   $('dl-p').innerHTML=[...PM.keys()].sort().map(n=>`<option value="${esc(n)}">`).join('');
   $('dl-t').innerHTML=[...new Set([...PM.values()].filter(Boolean))].sort().map(n=>`<option value="${esc(n)}">`).join('');
   if($('cb').classList.contains('open'))cbDraw();}
+const SP={key:'ap2_specsData'};
+const specsFrom=r=>{const d=isObj(r)&&isObj(r.data)&&!Array.isArray(r.Specs)?r.data:r;return isObj(d)&&Array.isArray(d.Specs)?d.Specs:null;};
+async function loadSpecs(){let a=specsFrom(await readIDB(SP));
+  if(!a){try{if(window.AdminPro&&typeof AdminPro.get==='function')a=specsFrom(await AdminPro.get(SP.key));}catch(e){}}
+  if(a){const fp=JSON.stringify(a);if(fp!==loadSpecs.fp){loadSpecs.fp=fp;SPECS=a;loadParties();}}
+  return !!a;}
 /* ═══ PARTY DROPDOWN — Pay = suppliers only, Receive = customers only; icon toggles it, typing filters it ═══ */
 const cbMap=()=>dir==='in'?SUP:CUS;
 const cbItems=()=>{const q=$('f-p').value.trim().toLowerCase();return[...cbMap().keys()].sort((a,b)=>a.localeCompare(b)).filter(n=>!q||n.toLowerCase().includes(q));};
@@ -240,7 +249,7 @@ function onCacheMessage(e){                                     // same-origin p
   if(!got)setTimeout(()=>applyFromIDB(s),250);});}
 function watchSrc(){
  const W=window.AP2CacheWatcher;if(!W||typeof W.subscribe!=='function')return;
- const cb=k=>{const key=(k&&k.key)||k;const hit=typeof key==='string'?SV.filter(s=>s.key===key):SV;hit.forEach(applyFromIDB);};
+ const cb=k=>{const key=(k&&k.key)||k;if(typeof key!=='string'||key===SP.key)loadSpecs();const hit=typeof key==='string'?SV.filter(s=>s.key===key):SV;hit.forEach(applyFromIDB);};
  try{W.subscribe(cb);}catch(e){SV.forEach(s=>{try{W.subscribe(s.key,()=>applyFromIDB(s));}catch(x){}});}}
 async function bootSrc(s){
  let ok=await applyFromIDB(s);
@@ -272,7 +281,7 @@ function render(){
   $('view').innerHTML=V.length?`<table><thead><tr><th>No</th><th>Date</th><th>Party</th><th>Mode · Ref</th><th class="n">Amount</th><th class="n">Allocated</th><th class="n">Unallocated</th><th>Status</th><th>Comments</th></tr></thead><tbody>${V.map(r=>{const s=r.un<=.005?['paid','Allocated']:r.alloc>0?['part','Partial']:['unpaid','Unallocated'];
    return `<tr><td class="mono">${esc(r.no)} <span class="badge ${r.dir}">${r.dir==='out'?'In':'Out'}</span>${r.type==='Opening'?' <span class="badge">Opening</span>':''}</td><td>${esc(r.date)}</td><td>${esc(r.party)}<div class="dim" style="font-size:11px">${esc(r.ptype)}</div></td><td>${esc(r.mode)}${r.ref?' · '+esc(r.ref):''}</td><td class="n">${money(r.amt)}</td><td class="n">${money(r.alloc)}</td><td class="n ${r.un>.005?'neg':''}">${money(r.un)}</td><td><span class="badge ${s[0]}">${s[1]}</span></td><td>${esc(r.note)}</td></tr>`;}).join('')}</tbody></table>`:'<div class="empty">No receipts yet. Use Receive or Pay above.</div>';}
 function openF(d){if(notReady())return;dir=d;$('m-title').textContent=d==='out'?'Receive money from customer':'Pay money to supplier';$('l-p').textContent=d==='out'?'Customer name':'Supplier';$('cur').textContent=CUR;
-  ['f-pt','f-p','f-a','f-r','f-c'].forEach(i=>$(i).value='');const sup=d==='in';$('f-pt').readOnly=sup;if(sup)$('f-pt').value='Supplier';$('pt-w').classList.toggle('pt-lock',sup);$('pt-i').style.display=sup?'':'none';$('f-p').placeholder=sup?'Search supplier…':'Search customer…';cbClose();$('f-d').value=today();$('f-ty').value='Receipt';$('ov').classList.add('open');}
+  ['f-pt','f-p','f-a','f-r','f-c'].forEach(i=>$(i).value='');loadSpecs();const sup=d==='in';$('f-pt').readOnly=sup;if(sup)$('f-pt').value='Supplier';$('pt-w').classList.toggle('pt-lock',sup);$('pt-i').style.display=sup?'':'none';$('f-p').placeholder=sup?'Search supplier…':'Search customer…';cbClose();$('f-d').value=today();$('f-ty').value='Receipt';$('ov').classList.add('open');}
 function pick(){if(dir==='in')return;const t=PM.get($('f-p').value);if(t!==undefined&&!$('f-pt').value)$('f-pt').value=t;}
 async function save(){if(busy||notReady())return;let party=$('f-p').value.trim();const amount=r2($('f-a').value);
   if(!party)return showToast(dir==='in'?'Choose a supplier':'Enter the party name','error');
@@ -295,7 +304,8 @@ async function saveC(){if(busy||notReady())return;const party=$('c-p').value.tri
 if(USE_BACKEND){
  window.addEventListener('message',onCacheMessage);
  document.addEventListener('visibilitychange',()=>{if(document.hidden)return;if(!ready()&&!ST.booting)bootAll();else SV.forEach(applyFromIDB);});
- watchSrc();bootAll();setInterval(()=>{if(ready())SV.forEach(applyFromIDB);},15000);   // safety net behind the subscription
+ watchSrc();bootAll();(async()=>{for(const d of [0,...DELAYS]){if(d)await sleep(d);if(await loadSpecs())break;}})();
+ setInterval(()=>{if(ready())SV.forEach(applyFromIDB);loadSpecs();},15000);   // safety net behind the subscription
 }else load();
 </script>
 <script>
