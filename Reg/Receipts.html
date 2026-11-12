@@ -70,6 +70,15 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
 #pr table,#pv table{border:1px solid #000;margin:8px 0}#pr th,#pr td,#pv th,#pv td{border:1px solid #888;padding:5px 7px;font-size:12px}#pr th,#pv th{background:#eee!important}#pv .hd{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:10px}#pv .tot{width:300px}#pv h2{font-size:20px}#pv{font-size:12px}
 #pr .tot{width:300px}#pr .sig{display:flex;justify-content:space-between;margin-top:50px}#pr .sig span{border-top:1px solid #000;padding-top:4px;width:30%;text-align:center}
 @media print{@page{margin:8mm}body>*:not(#pr){display:none!important}html,body{height:auto;overflow:visible}#pr{display:block}}
+.cb{position:relative}.cb input{padding-right:34px}
+.cb-ic{position:absolute;right:1px;top:1px;bottom:1px;width:32px;display:flex;align-items:center;justify-content:center;border:0;background:transparent;color:var(--text2);cursor:pointer;border-radius:0 var(--radius) var(--radius) 0}
+.cb-ic i{transition:transform .15s}.cb.open .cb-ic i{transform:rotate(180deg)}.cb.open input{border-color:var(--accent)}
+.cb-list{position:absolute;left:0;right:0;top:calc(100% + 4px);max-height:220px;overflow:auto;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);z-index:60;display:none;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.cb.open .cb-list{display:block}
+.cb-o{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)}.cb-o:last-child{border-bottom:0}
+.cb-o.act,.cb-o:hover{background:var(--accent-dim)}.cb-o i{color:var(--text2)}.cb-o mark{background:transparent;color:var(--accent);font-weight:700}
+.cb-e{padding:10px;color:var(--text2);font-size:12px}
+.pt-lock{position:relative}.pt-lock input{padding-left:32px;cursor:not-allowed}.pt-lock>i{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--orange);pointer-events:none}
 .nav a{text-decoration:none}.vh{display:none}
 
 .sk{height:34px;border-radius:6px;margin-bottom:8px;background:linear-gradient(90deg,var(--bg3),var(--surface),var(--bg3));background-size:200% 100%;animation:sk 1.2s linear infinite}@keyframes sk{to{background-position:-200% 0}}
@@ -83,8 +92,8 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
 <div class="ov" id="ov"><div class="modal" style="max-width:560px;height:auto;max-height:100%">
 <div class="mh"><span id="m-title"></span><button class="btn sm x" onclick="$('ov').classList.remove('open')"><i class="ti ti-x"></i></button></div>
 <div class="mb"><div class="fg" style="grid-template-columns:repeat(2,minmax(0,1fr))">
-<div><label>Party type</label><input id="f-pt" list="dl-t" autocomplete="off"/></div>
-<div><label id="l-p">Party</label><input id="f-p" list="dl-p" autocomplete="off" oninput="pick()"/></div>
+<div><label>Party type</label><div id="pt-w"><i class="ti ti-truck-delivery" id="pt-i" style="display:none"></i><input id="f-pt" list="dl-t" autocomplete="off"/></div></div>
+<div><label id="l-p">Party</label><div class="cb" id="cb"><input id="f-p" autocomplete="off" role="combobox" aria-expanded="false"/><button type="button" class="cb-ic" id="cb-b" tabindex="-1" aria-label="Show list"><i class="ti ti-chevron-down"></i></button><div class="cb-list" id="cb-l"></div></div></div>
 <div><label>Date</label><input id="f-d" type="date"/></div>
 <div><label>Amount (<span id="cur"></span>)</label><input id="f-a" type="number" min="0" step="any"/></div>
 <div><label>Mode</label><select id="f-m"><option>Cash</option><option>Bank transfer</option><option>Cheque</option><option>Card</option><option>Other</option></select></div>
@@ -151,13 +160,38 @@ const money=n=>(+n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFr
 const tsId=t=>{const d=new Date(t);return''+d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate())+p2(d.getHours())+p2(d.getMinutes())+p2(d.getSeconds())+String(d.getMilliseconds()).padStart(3,'0')};
 const today=()=>new Date().toISOString().slice(0,10),post=(a,p)=>Ledger.post(a,p),errText=m=>String(m);
 function showToast(m,t){const e=$('toast');e.textContent=m;e.className='toast '+(t||'');e.style.display='block';clearTimeout(showToast.t);showToast.t=setTimeout(()=>e.style.display='none',t==='error'?9000:3000);}
-let L={Charges:[],Receipts:[],Allocations:[]},dir='out',busy=false,PM=new Map();
+let L={Charges:[],Receipts:[],Allocations:[]},dir='out',busy=false,PM=new Map(),SUP=new Map(),CUS=new Map(),cbAct=-1;
 const rw=(a,h)=>(a||[]).filter(r=>Array.isArray(r)&&r[0]!==''&&String(r[0])!==h);
-function loadParties(){try{JSON.parse(localStorage.getItem('orders_sheet_cache_v2')||'[]').forEach(a=>{if(Array.isArray(a)&&a[8])PM.set(String(a[8]),String(a[6]||''));});}catch(e){}
-  rw(L.Charges,'ChargeID').forEach(c=>{if(c[7]&&!PM.has(String(c[7])))PM.set(String(c[7]),String(c[6]||''));});
-  rw(L.Receipts,'PaymentID').forEach(c=>{if(c[4]&&!PM.has(String(c[4])))PM.set(String(c[4]),String(c[3]||''));});
+const dirOf=a=>{for(const v of a.slice(0,16)){const t=String(v).trim().toLowerCase();if(t==='incoming'||t==='in')return'in';if(t==='outgoing'||t==='out')return'out';}return'';};
+function loadParties(){SUP=new Map();CUS=new Map();
+  const add=(m,n,t)=>{n=String(n||'').trim();if(n&&!m.has(n))m.set(n,String(t||''));};
+  try{JSON.parse(localStorage.getItem('orders_sheet_cache_v2')||'[]').forEach(a=>{if(Array.isArray(a)&&a[8]){PM.set(String(a[8]),String(a[6]||''));const d=dirOf(a);if(d==='in')add(SUP,a[8],a[6]);else if(d==='out')add(CUS,a[8],a[6]);}});}catch(e){}
+  rw(L.Charges,'ChargeID').forEach(c=>{if(c[7]&&!PM.has(String(c[7])))PM.set(String(c[7]),String(c[6]||''));if(c[8]==='in')add(SUP,c[7],c[6]);else if(c[8]==='out')add(CUS,c[7],c[6]);});
+  rw(L.Receipts,'PaymentID').forEach(c=>{if(c[4]&&!PM.has(String(c[4])))PM.set(String(c[4]),String(c[3]||''));if(c[2]==='in')add(SUP,c[4],c[3]);else if(c[2]==='out')add(CUS,c[4],c[3]);});
   $('dl-p').innerHTML=[...PM.keys()].sort().map(n=>`<option value="${esc(n)}">`).join('');
-  $('dl-t').innerHTML=[...new Set([...PM.values()].filter(Boolean))].sort().map(n=>`<option value="${esc(n)}">`).join('');}
+  $('dl-t').innerHTML=[...new Set([...PM.values()].filter(Boolean))].sort().map(n=>`<option value="${esc(n)}">`).join('');
+  if($('cb').classList.contains('open'))cbDraw();}
+/* ═══ PARTY DROPDOWN — Pay = suppliers only, Receive = customers only; icon toggles it, typing filters it ═══ */
+const cbMap=()=>dir==='in'?SUP:CUS;
+const cbItems=()=>{const q=$('f-p').value.trim().toLowerCase();return[...cbMap().keys()].sort((a,b)=>a.localeCompare(b)).filter(n=>!q||n.toLowerCase().includes(q));};
+function cbDraw(){const box=$('cb-l'),q=$('f-p').value.trim(),items=cbItems(),ic=dir==='in'?'ti-truck-delivery':'ti-user';
+  if(!items.length){cbAct=-1;box.innerHTML=`<div class="cb-e">${cbMap().size?'No match':(dir==='in'?'No suppliers found in cache':'No customers found in cache')}</div>`;return;}
+  if(cbAct>=items.length)cbAct=-1;
+  const hl=n=>{const i=q?n.toLowerCase().indexOf(q.toLowerCase()):-1;return i<0?esc(n):esc(n.slice(0,i))+'<mark>'+esc(n.slice(i,i+q.length))+'</mark>'+esc(n.slice(i+q.length));};
+  box.innerHTML=items.map((n,i)=>`<div class="cb-o${i===cbAct?' act':''}" data-n="${esc(n)}"><i class="ti ${ic}"></i><span>${hl(n)}</span></div>`).join('');}
+function cbOpen(){$('cb').classList.add('open');$('f-p').setAttribute('aria-expanded','true');cbDraw();}
+function cbClose(){$('cb').classList.remove('open');$('f-p').setAttribute('aria-expanded','false');cbAct=-1;}
+function cbPick(n){$('f-p').value=n;cbClose();pick();}
+(function(){const inp=$('f-p'),box=$('cb-l');
+  inp.addEventListener('focus',cbOpen);inp.addEventListener('click',cbOpen);inp.addEventListener('blur',cbClose);
+  inp.addEventListener('input',()=>{cbAct=-1;cbOpen();pick();});
+  $('cb-b').addEventListener('mousedown',e=>{e.preventDefault();if($('cb').classList.contains('open'))cbClose();else{inp.focus();cbOpen();}});
+  box.addEventListener('mousedown',e=>{e.preventDefault();const o=e.target.closest('.cb-o');if(o)cbPick(o.dataset.n);});
+  inp.addEventListener('keydown',e=>{const n=cbItems().length;
+    if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(!$('cb').classList.contains('open'))cbOpen();if(!n)return;cbAct=e.key==='ArrowDown'?(cbAct+1)%n:(cbAct<=0?n-1:cbAct-1);cbDraw();const a=box.querySelector('.act');if(a)a.scrollIntoView({block:'nearest'});}
+    else if(e.key==='Enter'&&$('cb').classList.contains('open')&&cbAct>=0){e.preventDefault();cbPick(cbItems()[cbAct]);}
+    else if(e.key==='Escape'&&$('cb').classList.contains('open')){e.stopPropagation();cbClose();}});
+})();
 /* ═══ CACHE SOURCE — "ap2_ledger" (same three-path loader as userPortal.html / Bills.html / Allocation.html)
    1. parent push   : ap-cache-request → index.html answers ap-cache-ready / ap-cache-preload (same-origin only)
    2. IndexedDB read: AP2CacheWatcher.readKey('ap2_ledger'), 6 retries (300 · 500 · 800 · 1200 · 2000 · 3000 ms)
@@ -238,12 +272,13 @@ function render(){
   $('view').innerHTML=V.length?`<table><thead><tr><th>No</th><th>Date</th><th>Party</th><th>Mode · Ref</th><th class="n">Amount</th><th class="n">Allocated</th><th class="n">Unallocated</th><th>Status</th><th>Comments</th></tr></thead><tbody>${V.map(r=>{const s=r.un<=.005?['paid','Allocated']:r.alloc>0?['part','Partial']:['unpaid','Unallocated'];
    return `<tr><td class="mono">${esc(r.no)} <span class="badge ${r.dir}">${r.dir==='out'?'In':'Out'}</span>${r.type==='Opening'?' <span class="badge">Opening</span>':''}</td><td>${esc(r.date)}</td><td>${esc(r.party)}<div class="dim" style="font-size:11px">${esc(r.ptype)}</div></td><td>${esc(r.mode)}${r.ref?' · '+esc(r.ref):''}</td><td class="n">${money(r.amt)}</td><td class="n">${money(r.alloc)}</td><td class="n ${r.un>.005?'neg':''}">${money(r.un)}</td><td><span class="badge ${s[0]}">${s[1]}</span></td><td>${esc(r.note)}</td></tr>`;}).join('')}</tbody></table>`:'<div class="empty">No receipts yet. Use Receive or Pay above.</div>';}
 function openF(d){if(notReady())return;dir=d;$('m-title').textContent=d==='out'?'Receive money from customer':'Pay money to supplier';$('l-p').textContent=d==='out'?'Customer name':'Supplier';$('cur').textContent=CUR;
-  ['f-pt','f-p','f-a','f-r','f-c'].forEach(i=>$(i).value='');$('f-d').value=today();$('f-ty').value='Receipt';$('ov').classList.add('open');}
-function pick(){const t=PM.get($('f-p').value);if(t!==undefined&&!$('f-pt').value)$('f-pt').value=t;}
-async function save(){if(busy||notReady())return;const party=$('f-p').value.trim(),amount=r2($('f-a').value);
-  if(!party)return showToast('Enter the party name','error');if(!(amount>0))return showToast('Enter an amount above zero','error');
+  ['f-pt','f-p','f-a','f-r','f-c'].forEach(i=>$(i).value='');const sup=d==='in';$('f-pt').readOnly=sup;if(sup)$('f-pt').value='Supplier';$('pt-w').classList.toggle('pt-lock',sup);$('pt-i').style.display=sup?'':'none';$('f-p').placeholder=sup?'Search supplier…':'Search customer…';cbClose();$('f-d').value=today();$('f-ty').value='Receipt';$('ov').classList.add('open');}
+function pick(){if(dir==='in')return;const t=PM.get($('f-p').value);if(t!==undefined&&!$('f-pt').value)$('f-pt').value=t;}
+async function save(){if(busy||notReady())return;let party=$('f-p').value.trim();const amount=r2($('f-a').value);
+  if(!party)return showToast(dir==='in'?'Choose a supplier':'Enter the party name','error');
+  if(dir==='in'&&SUP.size){const m=[...SUP.keys()].find(n=>n.toLowerCase()===party.toLowerCase());if(!m)return showToast('Choose a supplier from the list','error');party=m;}if(!(amount>0))return showToast('Enter an amount above zero','error');
   busy=true;$('sv').disabled=true;
-  try{const j=await post('addReceipt',{receipt:{id:tsId(Date.now()),dir,ptype:$('f-pt').value.trim(),party,date:$('f-d').value||today(),mode:$('f-m').value,ref:$('f-r').value.trim(),amount,comments:$('f-c').value.trim(),type:$('f-ty').value}});
+  try{const j=await post('addReceipt',{receipt:{id:tsId(Date.now()),dir,ptype:dir==='in'?'Supplier':$('f-pt').value.trim(),party,date:$('f-d').value||today(),mode:$('f-m').value,ref:$('f-r').value.trim(),amount,comments:$('f-c').value.trim(),type:$('f-ty').value}});
     $('ov').classList.remove('open');await load();showToast('Saved '+((j&&j.receipt&&j.receipt.no)||''),'success');}
   catch(e){showToast('Not saved: '+errText(e.message),'error');}
   busy=false;$('sv').disabled=false;}
