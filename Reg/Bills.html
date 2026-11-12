@@ -666,11 +666,34 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 /* ═══ Bills additions (list + form content; layout/menu/panels come from the Orders structure above) ═══ */
 #pr{display:none}
 .kpi{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}.kpi div{flex:1;min-width:150px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:9px 12px;font-size:12px;color:var(--text2)}.kpi b{display:block;font:600 16px var(--mono);color:var(--text);margin-top:2px}
-.hdr-actions .kpi-h{display:flex;flex-wrap:nowrap;gap:6px;margin:0;flex-shrink:0}
-.hdr-actions .kpi-h div{flex:0 0 auto;min-width:0;padding:3px 10px;font-size:10.5px;line-height:1.25;white-space:nowrap;border-radius:var(--radius)}
-.hdr-actions .kpi-h b{font-size:13px;margin-top:0}
+/* ── summary cards + controls live in ONE scrollable bar ── */
+.doc-center-header .hdr-actions{justify-content:flex-start;align-items:center;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;padding:2px 0}
+.hdr-actions .kpi-h{display:flex;flex-wrap:nowrap;gap:8px;margin:0;flex:0 0 auto;align-items:stretch}
+.hdr-actions .kpi-h .kc{display:flex;align-items:center;gap:9px;flex:0 0 auto;padding:5px 14px 5px 8px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--kc,var(--accent));border-radius:var(--radius-lg);white-space:nowrap}
+.hdr-actions .kpi-h .kc>i{display:grid;place-items:center;flex:0 0 auto;width:28px;height:28px;border-radius:50%;background:var(--bg3);color:var(--kc,var(--accent));font-size:15px}
+.hdr-actions .kpi-h .kt{display:flex;flex-direction:column;line-height:1.2;min-width:0}
+.hdr-actions .kpi-h .kl{font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3)}
+.hdr-actions .kpi-h .kv{font:700 13.5px var(--mono);color:var(--text)}
+.hdr-actions .kpi-h .kv small{font:600 9.5px var(--font);color:var(--text3);margin-right:3px}
+.hdr-actions .kpi-h .ks{font-size:9.5px;color:var(--text3)}
 .hdr-actions .kpi-h:empty{display:none}
-@media(max-width:700px){.hdr-actions .kpi-h div{padding:2px 7px;font-size:9.5px}.hdr-actions .kpi-h b{font-size:11.5px}}
+.hs-sc{flex:0 0 auto;height:28px;max-width:104px;padding:0 6px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--bg3);color:var(--text);font:600 12px var(--font);outline:none;cursor:pointer}
+.hdr-actions .btn.out,.hdr-actions .btn.in{padding:6px 10px}
+.hdr-actions .btn i,.tools .btn i{font-size:15px}
+.om .bw-f select:disabled{opacity:.55;cursor:not-allowed}
+#w-type{flex:1 1 auto;min-width:0}
+@container dch (max-width:1250px){.doc-center-header .hist-tip{display:none}}
+@container dch (max-width:700px){.doc-center-header h3{display:none}.doc-center-header .hdr-actions{margin-left:0;width:100%}.hdr-actions .kpi-h{order:2}}
+@media(max-width:700px){
+  .doc-center-header .hdr-actions{margin-left:0;width:100%;gap:6px}
+  .hdr-actions .kpi-h{order:2;gap:6px}
+  .hdr-actions .kpi-h .kc{padding:4px 10px 4px 6px;gap:6px}
+  .hdr-actions .kpi-h .kc>i{width:24px;height:24px;font-size:13px}
+  .hdr-actions .kpi-h .kv{font-size:12px}
+  .hdr-actions .btn .lbl,.tools .btn .lbl{display:none}
+  .hdr-actions .btn,.tools .btn.sm{padding:6px 9px}
+  .hs-sc{font-size:16px;height:32px}
+}
 .tools{display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap}
 .warn{color:var(--amber);font-size:12px}
 .tw{overflow-x:auto}
@@ -827,8 +850,8 @@ select.date-input option{background:var(--surface2);color:var(--text);}
           <h3><i class="ti ti-file-description"></i>Unbilled orders <span class="badge purple" id="orders-count">0</span></h3>
           <span class="hist-tip"><i class="ti ti-info-circle"></i>Orders not billed yet — bill one, or search and bill them together</span>
           <div class="hdr-actions"><div class="kpi kpi-h" id="orders-kpi"></div><div class="hs" id="orders-sdw"><button class="ib" type="button" data-srch="orders" title="Search" aria-haspopup="true"><i class="ti ti-search"></i></button>
-        <div class="hs-pop"><i class="ti ti-search"></i><input class="hs-in" id="orders-search" data-sin="orders" type="text" placeholder="Type to search…" autocomplete="off" enterkeyhint="search"/>
-        <button class="hs-x" type="button" data-sclr="orders" title="Clear"><i class="ti ti-x"></i></button></div></div><button class="btn out btn-sm" type="button" data-add="out" title="New Bill (Outgoing)"><i class="ti ti-arrow-up-right"></i><span class="lbl">New Bill (Outgoing)</span></button><button class="btn in btn-sm" type="button" data-add="in" title="New Bill (Incoming)"><i class="ti ti-arrow-down-left"></i><span class="lbl">New Bill (Incoming)</span></button></div>
+        <div class="hs-pop"><select class="hs-sc" data-ssc="orders" aria-label="Search in"><option value="all">All</option><option value="received">Received</option><option value="paid">Paid</option></select><i class="ti ti-search"></i><input class="hs-in" id="orders-search" data-sin="orders" type="text" placeholder="Type to search…" autocomplete="off" enterkeyhint="search"/>
+        <button class="hs-x" type="button" data-sclr="orders" title="Clear"><i class="ti ti-x"></i></button></div></div><button class="btn out btn-sm" type="button" data-add="out" title="New Bill (Outgoing)"><i class="ti ti-arrow-up-right"></i></button><button class="btn in btn-sm" type="button" data-add="in" title="New Bill (Incoming)"><i class="ti ti-arrow-down-left"></i></button></div>
         </div>
         <div class="doc-center-body" id="orders-body"></div>
       </div>
@@ -841,8 +864,8 @@ select.date-input option{background:var(--surface2);color:var(--text);}
           <h3><i class="ti ti-list-details"></i>All bills <span class="badge purple" id="all-count">0</span></h3>
           <span class="hist-tip"><i class="ti ti-info-circle"></i>Every bill with its total, paid amount and balance</span>
           <div class="hdr-actions"><div class="kpi kpi-h" id="all-kpi"></div><div class="hs" id="all-sdw"><button class="ib" type="button" data-srch="all" title="Search" aria-haspopup="true"><i class="ti ti-search"></i></button>
-        <div class="hs-pop"><i class="ti ti-search"></i><input class="hs-in" id="all-search" data-sin="all" type="text" placeholder="Type to search…" autocomplete="off" enterkeyhint="search"/>
-        <button class="hs-x" type="button" data-sclr="all" title="Clear"><i class="ti ti-x"></i></button></div></div><button class="btn out btn-sm" type="button" data-add="out" title="New Bill (Outgoing)"><i class="ti ti-arrow-up-right"></i><span class="lbl">New Bill (Outgoing)</span></button><button class="btn in btn-sm" type="button" data-add="in" title="New Bill (Incoming)"><i class="ti ti-arrow-down-left"></i><span class="lbl">New Bill (Incoming)</span></button></div>
+        <div class="hs-pop"><select class="hs-sc" data-ssc="all" aria-label="Search in"><option value="all">All</option><option value="received">Received</option><option value="paid">Paid</option></select><i class="ti ti-search"></i><input class="hs-in" id="all-search" data-sin="all" type="text" placeholder="Type to search…" autocomplete="off" enterkeyhint="search"/>
+        <button class="hs-x" type="button" data-sclr="all" title="Clear"><i class="ti ti-x"></i></button></div></div><button class="btn out btn-sm" type="button" data-add="out" title="New Bill (Outgoing)"><i class="ti ti-arrow-up-right"></i></button><button class="btn in btn-sm" type="button" data-add="in" title="New Bill (Incoming)"><i class="ti ti-arrow-down-left"></i></button></div>
         </div>
         <div class="doc-center-body" id="all-body"></div>
       </div>
@@ -856,7 +879,7 @@ select.date-input option{background:var(--surface2);color:var(--text);}
           <span class="hist-tip"><i class="ti ti-info-circle"></i>Bills to customers — amounts to receive</span>
           <div class="hdr-actions"><div class="kpi kpi-h" id="out-kpi"></div><div class="hs" id="out-sdw"><button class="ib" type="button" data-srch="out" title="Search" aria-haspopup="true"><i class="ti ti-search"></i></button>
         <div class="hs-pop"><i class="ti ti-search"></i><input class="hs-in" id="out-search" data-sin="out" type="text" placeholder="Type to search…" autocomplete="off" enterkeyhint="search"/>
-        <button class="hs-x" type="button" data-sclr="out" title="Clear"><i class="ti ti-x"></i></button></div></div><button class="btn out btn-sm" type="button" data-add="out" title="New Bill (Outgoing)"><i class="ti ti-arrow-up-right"></i><span class="lbl">New Bill (Outgoing)</span></button></div>
+        <button class="hs-x" type="button" data-sclr="out" title="Clear"><i class="ti ti-x"></i></button></div></div><button class="btn out btn-sm" type="button" data-add="out" title="New Bill (Outgoing)"><i class="ti ti-arrow-up-right"></i></button></div>
         </div>
         <div class="doc-center-body" id="out-body"></div>
       </div>
@@ -870,7 +893,7 @@ select.date-input option{background:var(--surface2);color:var(--text);}
           <span class="hist-tip"><i class="ti ti-info-circle"></i>Bills from suppliers — amounts to pay</span>
           <div class="hdr-actions"><div class="kpi kpi-h" id="in-kpi"></div><div class="hs" id="in-sdw"><button class="ib" type="button" data-srch="in" title="Search" aria-haspopup="true"><i class="ti ti-search"></i></button>
         <div class="hs-pop"><i class="ti ti-search"></i><input class="hs-in" id="in-search" data-sin="in" type="text" placeholder="Type to search…" autocomplete="off" enterkeyhint="search"/>
-        <button class="hs-x" type="button" data-sclr="in" title="Clear"><i class="ti ti-x"></i></button></div></div><button class="btn in btn-sm" type="button" data-add="in" title="New Bill (Incoming)"><i class="ti ti-arrow-down-left"></i><span class="lbl">New Bill (Incoming)</span></button></div>
+        <button class="hs-x" type="button" data-sclr="in" title="Clear"><i class="ti ti-x"></i></button></div></div><button class="btn in btn-sm" type="button" data-add="in" title="New Bill (Incoming)"><i class="ti ti-arrow-down-left"></i></button></div>
         </div>
         <div class="doc-center-body" id="in-body"></div>
       </div>
@@ -894,9 +917,8 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 
 <div id="hold" hidden>
 <!-- NEW BILL -->
-<div class="doc-preview-panel" id="ov"><div class="om" role="dialog" aria-labelledby="m-title">
-  <div class="mh"><div class="ttl" id="bw-ttl"><i class="ti ti-receipt"></i><span id="m-title"></span></div>
-    <div id="w-type"><div class="bw-caps" id="bw-caps"></div><select id="f-type" style="display:none" onchange="f.ptype=this.value;f.party='';fillNames();rOrders();rTypeCaps()"></select></div>
+<div class="doc-preview-panel" id="ov"><div class="om" role="dialog" aria-label="New bill">
+  <div class="mh"><div id="w-type"><div class="bw-caps" id="bw-caps"></div><select id="f-type" style="display:none" onchange="f.ptype=this.value;f.party='';fillNames();rOrders();rTypeCaps()"></select></div>
     <label class="bw-d" title="Bill date"><i class="ti ti-calendar"></i><input type="date" id="f-date"/></label>
     <button type="button" class="ib x" title="Close" aria-label="Close" onclick="closeForm()"><i class="ti ti-x"></i></button></div>
   <div class="mb">
@@ -993,7 +1015,7 @@ const fixO=a=>(a||[]).map(o=>({...o,store:o.store||o.storeName||''}));
 let orders=(()=>{try{return fixO(JSON.parse(localStorage.getItem(OK)))}catch(e){return[]}})(),bills=[],pays=[],tab='orders',busy=false,vid=null;
 const BILLS_KEY='ap2_bills';
 const BILLS_BACKEND=true;   // true: bills come from the ap2_bills cache, writes go to the API · false: old local-only mode (localStorage)
-const LS={ts:0,fp:'',painted:false,err:'',by:{},list:{}};   // ledger mirror (ap2_ledger) — allocations per bill
+const LS={ts:0,fp:'',painted:false,err:'',by:{},list:{},rc:{ro:0,ao:0,ri:0,ai:0}};   // ledger mirror (ap2_ledger) — allocations per bill
 const S={ts:0,fp:'',painted:false,state:'loading',err:'',src:'',booting:false,raw:{Bills:[],Payments:[]}};
 let items=[],stores=[],parties=[],types=[],suppliers=[];     // from the cache (Master / Specs Settings)
 
@@ -1362,12 +1384,15 @@ function setLedger(d){
     const bid=String(a[3]||'');if(!bid)return;
     by[bid]=r2((by[bid]||0)+(+a[11]||0));
     (list[bid]=list[bid]||[]).push({id:String(a[0]),rno:String(a[2]||''),date:String(a[10]||''),amount:+a[11]||0,orderNo:String(a[7]||''),note:String(a[12]||''),rev:String(a[13]||'')});});
-  LS.by=by;LS.list=list;LS.painted=true;}
+  const rd={},rc={ro:0,ao:0,ri:0,ai:0};   // receipts: Dir out = received from customers, in = paid to suppliers
+  (d.Receipts||[]).forEach(r=>{if(!Array.isArray(r)||r[0]===''||String(r[0])==='PaymentID')return;const dr=String(r[2])==='in'?'in':'out',k=dr==='in'?'ri':'ro';rd[String(r[0])]=dr;rc[k]=r2(rc[k]+(+r[8]||0));});
+  (d.Allocations||[]).forEach(a=>{if(!Array.isArray(a)||a[0]===''||String(a[0])==='AllocID')return;const dr=rd[String(a[1])];if(!dr)return;const k=dr==='in'?'ai':'ao';rc[k]=r2(rc[k]+(+a[11]||0));});
+  LS.by=by;LS.list=list;LS.rc=rc;LS.painted=true;}
 function applyLedger(r,src,force){
   const u=unpackLg(r);if(!u)return false;
   if(!force&&LS.painted&&u.ts&&u.ts<=LS.ts)return true;
   LS.ts=force?Date.now():(u.ts||Math.max(LS.ts,Date.now()));
-  const fp=JSON.stringify([u.data.Charges,u.data.Allocations]);   // receipts alone don't change a bill
+  const fp=JSON.stringify([u.data.Charges,u.data.Allocations,u.data.Receipts]);   // receipts feed the summary cards
   if(!force&&LS.painted&&fp===LS.fp)return true;
   LS.fp=fp;LS.err='';setLedger(u.data);
   if(allReady()){S.state='ready';S.err='';}
@@ -1454,9 +1479,20 @@ const TABS=[{k:'orders',label:'Unbilled',icon:'ti-file-description',title:'Unbil
             {k:'out',label:'Outgoing',icon:'ti-arrow-up-right',title:'Outgoing bills'},{k:'in',label:'Incoming',icon:'ti-arrow-down-left',title:'Incoming bills'},
             {k:'rates',label:'Fix Rate',icon:'ti-adjustments-dollar',title:'Fix Rate'}];
 const SQ={orders:'',all:'',out:'',in:'',rates:''};          // search text per tab
+const SC={orders:'all',all:'all'};                          // search scope: all · received (outgoing) · paid (incoming)
+const scOk=(k,d)=>!SC[k]||SC[k]==='all'||(SC[k]==='received'?d==='out':d==='in');
+const scOn=k=>!!(SQ[k]||'').trim()||(!!SC[k]&&SC[k]!=='all');
 const V=()=>$(tab+'-body');
 const balOf=d=>r2(bills.filter(b=>b.dir===d).reduce((a,b)=>a+tb(b).total-paidOf(b),0));
-const kpiInner=()=>`<div>To receive (outgoing)<b>${CUR} ${money(balOf('out'))}</b></div><div>To pay (incoming)<b>${CUR} ${money(balOf('in'))}</b></div><div>Bills<b>${bills.length}</b></div>`;
+const kc=(ic,col,l,v,sub,cnt)=>`<span class="kc" style="--kc:var(${col})" title="${esc(l)}${sub?' — '+esc(sub):''}"><i class="ti ${ic}"></i><span class="kt"><span class="kl">${l}</span><span class="kv">${cnt?v:'<small>'+CUR+'</small>'+money(v)}</span>${sub?`<span class="ks">${sub}</span>`:''}</span></span>`;
+const kpiInner=()=>{const c=LS.rc||{ro:0,ao:0,ri:0,ai:0},advO=r2(c.ro-c.ao),advI=r2(c.ri-c.ai),bo=balOf('out'),bi=balOf('in');
+  return kc('ti-cash','--teal','Received',c.ro,'Allocated '+money(c.ao))
+   +kc('ti-wallet','--amber','Paid',c.ri,'Allocated '+money(c.ai))
+   +kc('ti-user','--accent','Customer advance',advO,'Received, not allocated')
+   +kc('ti-truck','--orange','Supplier advance',advI,'Paid, not allocated')
+   +kc('ti-arrow-up-right','--teal','To receive',bo,advO>0?'Net '+money(r2(bo-advO))+' after advance':'Outstanding')
+   +kc('ti-arrow-down-left','--red','To pay',bi,advI>0?'Net '+money(r2(bi-advI))+' after advance':'Outstanding')
+   +kc('ti-receipt','--text3','Bills',bills.length,'',1);};
 const setKpi=()=>{const k=$(tab+'-kpi');if(k)k.innerHTML=(tab==='rates')?'':kpiInner();};
 /* ═══ TABS / SEARCH / PANELS — same behaviour as Orders ═══ */
 function drawNav(){
@@ -1474,12 +1510,13 @@ document.addEventListener('click',e=>{
   const s=e.target.closest('[data-srch]');
   if(s){const h=$(s.dataset.srch+'-sdw');h.classList.toggle('open');if(h.classList.contains('open'))setTimeout(()=>h.querySelector('input').focus(),0);}
   const c=e.target.closest('[data-sclr]');
-  if(c){const k=c.dataset.sclr;SQ[k]='';$(k+'-search').value='';$(k+'-sdw').classList.remove('has-val');render();}
+  if(c){const k=c.dataset.sclr;SQ[k]='';$(k+'-search').value='';if(SC[k]){SC[k]='all';const sc=document.querySelector('[data-ssc="'+k+'"]');if(sc)sc.value='all';}$(k+'-sdw').classList.remove('has-val');render();}
   const a=e.target.closest('[data-add]');
   if(a)openForm(a.dataset.add);
 });
 document.addEventListener('input',e=>{const i=e.target.closest('[data-sin]');if(!i)return;
-  SQ[i.dataset.sin]=i.value;$(i.dataset.sin+'-sdw').classList.toggle('has-val',!!i.value.trim());render();});
+  SQ[i.dataset.sin]=i.value;$(i.dataset.sin+'-sdw').classList.toggle('has-val',scOn(i.dataset.sin));render();});
+document.addEventListener('change',e=>{const c=e.target.closest('[data-ssc]');if(!c)return;const k=c.dataset.ssc;SC[k]=c.value;$(k+'-sdw').classList.toggle('has-val',scOn(k));render();});
 document.addEventListener('keydown',e=>{if((e.key==='Escape'||e.key==='Enter')&&e.target.matches('.hs-in')){e.target.closest('.hs').classList.remove('open');e.target.blur();}});
 /* the New Bill / View Bill window is ONE panel that slides in from the right inside the tab that opened it */
 function mountPanel(id){
@@ -1499,7 +1536,7 @@ function render(){
   setKpi();const kpi='';
   const q=SQ[tab];
   if(tab==='orders')return renderOrders(q);
-  const L=bills.filter(b=>(tab==='all'||b.dir===tab)&&match(q,[b.no,b.party,b.ptype,b.note,b.oids.map(i=>(orders.find(o=>o.id===i)||{}).no).join(' '),b.lines.map(l=>l.label).join(' ')].join(' ')));
+  const L=bills.filter(b=>(tab==='all'||b.dir===tab)&&scOk(tab,b.dir)&&match(q,[b.no,b.party,b.ptype,b.note,b.oids.map(i=>(orders.find(o=>o.id===i)||{}).no).join(' '),b.lines.map(l=>l.label).join(' ')].join(' ')));
   V().innerHTML=kpi+(L.length?`<table class="log-table"><thead><tr><th>Bill No</th><th>Date</th><th>Party</th><th class="n">Orders</th><th class="n">Total</th><th class="n">Paid</th><th class="n">Balance</th><th>Status</th><th></th></tr></thead><tbody>${L.map(b=>{
     const t=tb(b).total,p=paidOf(b),s=stOf(b),dr=drift(b).length;
     return `<tr><td class="mono">${esc(b.no)} <span class="badge ${b.dir}">${b.dir==='out'?'Out':'In'}</span></td><td>${esc(b.date)}</td>
@@ -1518,9 +1555,9 @@ const otxt=o=>[o.no,o.party,o.partyType,o.store,o.date,o.note,o.lines.map(l=>l.l
 const odir=o=>kd(o,'out')?'out':kd(o,'in')?'in':null;
 function oAmt(o){const d=odir(o),sg=kd(o,d)==='r'?-1:1;let a=0,ok=true;
   const L=o.lines.map(l=>{const r=lastRate(l.itemId,d);if(!r)ok=false;a+=sg*l.qty*(+r||0);return{...l,r,amt:sg*l.qty*(+r||0)};});return{L,a:r2(a),ok,sg};}
-function renderOrders(q){const bb=billedBy(),L=orders.filter(o=>odir(o)&&!bb[o.id]&&match(q,otxt(o))).sort((a,b)=>b.date.localeCompare(a.date)||b.no.localeCompare(a.no));
+function renderOrders(q){const bb=billedBy(),L=orders.filter(o=>odir(o)&&!bb[o.id]&&scOk('orders',odir(o))&&match(q,otxt(o))).sort((a,b)=>b.date.localeCompare(a.date)||b.no.localeCompare(a.no));
   const dirs=[...new Set(L.map(odir))];
-  setKpi();V().innerHTML=(L.length?`<div class="tools"><span class="dim" style="font-size:12px">${L.length} unbilled order${L.length>1?'s':''}</span>${dirs.length==1?`<button class="btn sm pri" onclick="billThese()"><i class="ti ti-receipt"></i>Bill these ${L.length}</button>`:'<span class="warn">Narrow to Outgoing or Incoming to bill them together</span>'}</div>`:'')
+  setKpi();V().innerHTML=(L.length?`<div class="tools"><span class="dim" style="font-size:12px">${L.length} unbilled order${L.length>1?'s':''}</span>${dirs.length==1?`<button class="btn sm pri" onclick="billThese()" title="Bill these ${L.length}"><i class="ti ti-receipt"></i><span class="lbl">Bill these ${L.length}</span></button>`:'<span class="warn">Narrow to Outgoing or Incoming to bill them together</span>'}</div>`:'')
   +(L.length?`<table class="log-table"><thead><tr><th>Order No</th><th>Date</th><th>Party</th><th>Items · qty × rate</th><th class="n">Amount</th><th></th></tr></thead><tbody>${L.map(o=>{const x=oAmt(o),d=odir(o);
     return `<tr><td class="mono">${esc(o.no)}<div><span class="badge ${d}">${d==='out'?'Out':'In'}</span>${x.sg<0?' <span class="badge out">'+(d==='out'?'Returned':'Claim')+'</span>':''}</div></td><td>${esc(o.date)}</td>
     <td>${esc(o.party)}<div class="dim" style="font-size:11px">${esc(o.partyType)}${o.store?' · '+esc(o.store):''}</div></td>
@@ -1530,31 +1567,34 @@ function renderOrders(q){const bb=billedBy(),L=orders.filter(o=>odir(o)&&!bb[o.i
   :'<div class="empty">No unbilled orders match. Rates shown come from your previous bills.</div>');}
 function preset(L){const ps=[...new Set(L.map(o=>o.party))],pt=[...new Set(L.map(o=>o.partyType))];return{ptype:pt.length==1?pt[0]:'',party:ps.length==1?ps[0]:'',ids:L.map(o=>o.id)};}
 function billOne(id){const o=orders.find(x=>x.id===id);if(o)openForm(odir(o),preset([o]));}
-function billThese(){const bb=billedBy(),q=SQ.orders,L=orders.filter(o=>odir(o)&&!bb[o.id]&&match(q,otxt(o)));if(L.length)openForm(odir(L[0]),preset(L));}
+function billThese(){const bb=billedBy(),q=SQ.orders,L=orders.filter(o=>odir(o)&&!bb[o.id]&&scOk('orders',odir(o))&&match(q,otxt(o)));if(L.length)openForm(odir(L[0]),preset(L));}
 
 /* ═══ NEW BILL ═══ */
 const inRange=o=>(!f.from||o.date>=f.from)&&(!f.to||o.date<=f.to);
-const elig=()=>orders.filter(o=>kd(o,f.dir)&&(!f.ptype||norm(o.partyType)===norm(f.ptype))&&(!f.party||norm(o.party)===norm(f.party))&&inRange(o)&&match($('f-q').value,otxt(o))).sort((a,b)=>a.date.localeCompare(b.date)||a.no.localeCompare(b.no));
+const tm=o=>!f.ptype||norm(o.partyType)===norm(f.ptype)||(f.dir==='in'&&!o.partyType&&/supplier|vendor/i.test(f.ptype));
+const elig=()=>{const bb=billedBy();return orders.filter(o=>!bb[o.id]&&kd(o,f.dir)&&tm(o)&&(!f.party||norm(o.party)===norm(f.party))&&inRange(o)&&match($('f-q').value,otxt(o))).sort((a,b)=>a.date.localeCompare(b.date)||a.no.localeCompare(b.no));};
 function openForm(dir,pre){
   if(!billsReady())return;
   if(!cache.requireReady('Still loading — please wait'))return;
   try{if(cache.requestRefresh)cache.requestRefresh(true);}catch(e){}
   Object.assign(f,{dir,from:'',to:'',ptype:pre?pre.ptype:'',party:pre?pre.party:'',sel:new Set(pre?pre.ids:[]),extras:[],rates:{},disc:0,dt:'amt',vat:0});
-  $('m-title').textContent=dir==='out'?'New Bill — Outgoing (customer)':'New Bill — Incoming (supplier)';
-  $('w-type').style.display=dir==='out'?'':'none';$('bw-ttl').classList.toggle('sr-only',dir==='out');bwTab('o');
+  bwTab('o');
   $('f-date').value=today();$('f-note').value='';$('f-q').value='';$('f-from').value='';$('f-to').value='';$('f-disc').value=0;$('f-dt').value='amt';$('f-vat').value=0;
   fillTypes();fillNames();rEx();rOrders();mountPanel('ov');
 }
-function fillTypes(){const m=new Map(types.map(t=>[t.k,t.l]));orders.filter(o=>kd(o,'out')).forEach(o=>{if(!m.has(norm(o.partyType)))m.set(norm(o.partyType),o.partyType);});
+function fillTypes(){const m=new Map(f.dir==='out'?types.map(t=>[t.k,t.l]):[]);orders.filter(o=>kd(o,f.dir)).forEach(o=>{if(o.partyType&&!m.has(norm(o.partyType)))m.set(norm(o.partyType),o.partyType);});
+  if(f.dir==='in'&&!m.size)m.set('supplier','Supplier');
   const cur=f.ptype;$('f-type').innerHTML='<option value="">All types</option>'+[...m].filter(([k,l])=>k&&l).sort((a,b)=>a[1].localeCompare(b[1])).map(([k,l])=>`<option value="${esc(l)}">${esc(l)}</option>`).join('');$('f-type').value=cur;rTypeCaps();}
 const tIcon=l=>{const n=norm(l);return /doctor|dr\b|physician|surgeon/.test(n)?'ti-stethoscope':/hospital|clinic/.test(n)?'ti-building-hospital':/vendor|supplier/.test(n)?'ti-truck':'ti-user';};
 function rTypeCaps(){$('bw-caps').innerHTML=[...$('f-type').options].filter(o=>o.value).map(o=>`<button type="button" class="bw-cap${norm(o.value)===norm(f.ptype||'')?' on':''}" data-v="${esc(o.value)}"><i class="ti ${tIcon(o.value)}"></i>${esc(o.value)}</button>`).join('');}
 $('bw-caps').addEventListener('click',e=>{const c=e.target.closest('.bw-cap');if(!c)return;const v=c.dataset.v;f.ptype=norm(f.ptype||'')===norm(v)?'':v;f.party='';$('f-type').value=f.ptype;fillNames();rOrders();rTypeCaps();});
 function bwTab(k){$('bw-p-o').style.display=k==='o'?'':'none';$('bw-p-i').style.display=k==='i'?'':'none';$('bw-sel').style.visibility=k==='o'?'':'hidden';$('bw-t-o').classList.toggle('on',k==='o');$('bw-t-i').classList.toggle('on',k==='i');}
-function fillNames(){const fromOrders=orders.filter(o=>kd(o,f.dir)&&(!f.ptype||norm(o.partyType)===norm(f.ptype))).map(o=>o.party);
-  const fromCache=f.dir==='in'?suppliers:parties.filter(p=>!f.ptype||p.type===norm(f.ptype)).map(p=>p.name);
+function fillNames(){const gate=!f.ptype&&!f.party;      // Type must be chosen first (Outgoing and Incoming)
+  const fromOrders=orders.filter(o=>kd(o,f.dir)&&tm(o)).map(o=>o.party);
+  const supOk=f.dir==='in'&&(!f.ptype||/supplier|vendor/i.test(f.ptype)||!orders.some(o=>kd(o,'in')&&o.partyType));
+  const fromCache=f.dir==='in'?(supOk?suppliers:[]):parties.filter(p=>!f.ptype||p.type===norm(f.ptype)).map(p=>p.name);
   const N=[...new Map([...fromCache,...fromOrders].filter(Boolean).map(n=>[norm(n),n])).values()].sort((a,b)=>a.localeCompare(b));
-  $('f-party').innerHTML=`<option value="">All ${f.dir==='out'?'names':'suppliers'}</option>`+N.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');$('f-party').value=f.party;}
+  $('f-party').innerHTML=`<option value="">${gate?'Select type first':'All '+(f.dir==='out'?'names':'suppliers')}</option>`+N.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');$('f-party').value=f.party;$('f-party').disabled=gate;}
 function closeForm(){$('ov').classList.remove('open');}
 function rOrders(){
   const bb=billedBy(),L=elig();
