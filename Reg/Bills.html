@@ -681,6 +681,15 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 .hdr-actions .btn.out,.hdr-actions .btn.in{padding:6px 10px}
 .hdr-actions .btn i,.tools .btn i{font-size:15px}
 .om .bw-f select:disabled{opacity:.55;cursor:not-allowed}
+/* search + new-bill controls live in the view-bar, between the tabs and the cache indicator */
+.vb-grp{display:none;align-items:center;gap:8px;margin-left:auto;flex:0 0 auto}
+.vb-grp.on{display:flex}
+.view-bar .cache-ind{margin-left:0}
+.vb-grp .btn{white-space:nowrap}
+.vb-grp .ib{width:30px;height:30px;font-size:15px}
+.vb-grp .btn.out,.vb-grp .btn.in{padding:6px 10px}
+.vb-grp .btn i{font-size:15px}
+@media(max-width:700px){.vb-grp{gap:6px}.vb-grp .btn .lbl{display:none}.vb-grp .btn{padding:6px 9px}}
 #w-type{flex:1 1 auto;min-width:0}
 @container dch (max-width:1250px){.doc-center-header .hist-tip{display:none}}
 @container dch (max-width:700px){.doc-center-header h3{display:none}.doc-center-header .hdr-actions{margin-left:0;width:100%}.hdr-actions .kpi-h{order:2}}
@@ -839,6 +848,21 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 <div class="view-bar">
   <div class="vb-brand" title="Bills &amp; Payments"><i class="ti ti-receipt"></i></div>
   <div class="tab-nav tabs-fixed five" id="tab-nav"></div>
+  <div class="vb-grp" id="vb-orders"><div class="hs" id="orders-sdw"><button class="ib" type="button" data-srch="orders" title="Search" aria-haspopup="true"><i class="ti ti-search"></i></button>
+        <div class="hs-pop"><select class="hs-sc" data-ssc="orders" aria-label="Search in"><option value="all">All</option><option value="received">Received</option><option value="paid">Paid</option></select><i class="ti ti-search"></i><input class="hs-in" id="orders-search" data-sin="orders" type="text" placeholder="Type to search…" autocomplete="off" enterkeyhint="search"/>
+        <button class="hs-x" type="button" data-sclr="orders" title="Clear"><i class="ti ti-x"></i></button></div></div><button class="btn out btn-sm" type="button" data-add="out" title="New Bill (Outgoing)"><i class="ti ti-arrow-up-right"></i></button><button class="btn in btn-sm" type="button" data-add="in" title="New Bill (Incoming)"><i class="ti ti-arrow-down-left"></i></button></div>
+  <div class="vb-grp" id="vb-all"><div class="hs" id="all-sdw"><button class="ib" type="button" data-srch="all" title="Search" aria-haspopup="true"><i class="ti ti-search"></i></button>
+        <div class="hs-pop"><select class="hs-sc" data-ssc="all" aria-label="Search in"><option value="all">All</option><option value="received">Received</option><option value="paid">Paid</option></select><i class="ti ti-search"></i><input class="hs-in" id="all-search" data-sin="all" type="text" placeholder="Type to search…" autocomplete="off" enterkeyhint="search"/>
+        <button class="hs-x" type="button" data-sclr="all" title="Clear"><i class="ti ti-x"></i></button></div></div><button class="btn out btn-sm" type="button" data-add="out" title="New Bill (Outgoing)"><i class="ti ti-arrow-up-right"></i></button><button class="btn in btn-sm" type="button" data-add="in" title="New Bill (Incoming)"><i class="ti ti-arrow-down-left"></i></button></div>
+  <div class="vb-grp" id="vb-out"><div class="hs" id="out-sdw"><button class="ib" type="button" data-srch="out" title="Search" aria-haspopup="true"><i class="ti ti-search"></i></button>
+        <div class="hs-pop"><i class="ti ti-search"></i><input class="hs-in" id="out-search" data-sin="out" type="text" placeholder="Type to search…" autocomplete="off" enterkeyhint="search"/>
+        <button class="hs-x" type="button" data-sclr="out" title="Clear"><i class="ti ti-x"></i></button></div></div><button class="btn out btn-sm" type="button" data-add="out" title="New Bill (Outgoing)"><i class="ti ti-arrow-up-right"></i></button></div>
+  <div class="vb-grp" id="vb-in"><div class="hs" id="in-sdw"><button class="ib" type="button" data-srch="in" title="Search" aria-haspopup="true"><i class="ti ti-search"></i></button>
+        <div class="hs-pop"><i class="ti ti-search"></i><input class="hs-in" id="in-search" data-sin="in" type="text" placeholder="Type to search…" autocomplete="off" enterkeyhint="search"/>
+        <button class="hs-x" type="button" data-sclr="in" title="Clear"><i class="ti ti-x"></i></button></div></div><button class="btn in btn-sm" type="button" data-add="in" title="New Bill (Incoming)"><i class="ti ti-arrow-down-left"></i></button></div>
+  <div class="vb-grp" id="vb-rates"><div class="hs" id="rates-sdw"><button class="ib" type="button" data-srch="rates" title="Search" aria-haspopup="true"><i class="ti ti-search"></i></button>
+        <div class="hs-pop"><i class="ti ti-search"></i><input class="hs-in" id="rates-search" data-sin="rates" type="text" placeholder="Type to search…" autocomplete="off" enterkeyhint="search"/>
+        <button class="hs-x" type="button" data-sclr="rates" title="Clear"><i class="ti ti-x"></i></button></div></div><button class="btn btn-primary btn-sm" type="button" onclick="RT.open()" title="Add Rate"><i class="ti ti-plus"></i><span class="lbl">Add Rate</span></button></div>
   <button class="ib cache-ind warn" id="cache-ind" type="button" title="Loading…"><i class="ti ti-database"></i></button>
   <button class="ib sync-ind" id="sync-ind" type="button" style="display:none"><i class="ti ti-cloud-upload"></i><span class="ping"></span><b class="sync-n">0</b></button>
 </div>
@@ -849,9 +873,7 @@ select.date-input option{background:var(--surface2);color:var(--text);}
         <div class="doc-center-header">
           <h3><i class="ti ti-file-description"></i>Unbilled orders <span class="badge purple" id="orders-count">0</span></h3>
           <span class="hist-tip"><i class="ti ti-info-circle"></i>Orders not billed yet — bill one, or search and bill them together</span>
-          <div class="hdr-actions"><div class="kpi kpi-h" id="orders-kpi"></div><div class="hs" id="orders-sdw"><button class="ib" type="button" data-srch="orders" title="Search" aria-haspopup="true"><i class="ti ti-search"></i></button>
-        <div class="hs-pop"><select class="hs-sc" data-ssc="orders" aria-label="Search in"><option value="all">All</option><option value="received">Received</option><option value="paid">Paid</option></select><i class="ti ti-search"></i><input class="hs-in" id="orders-search" data-sin="orders" type="text" placeholder="Type to search…" autocomplete="off" enterkeyhint="search"/>
-        <button class="hs-x" type="button" data-sclr="orders" title="Clear"><i class="ti ti-x"></i></button></div></div><button class="btn out btn-sm" type="button" data-add="out" title="New Bill (Outgoing)"><i class="ti ti-arrow-up-right"></i></button><button class="btn in btn-sm" type="button" data-add="in" title="New Bill (Incoming)"><i class="ti ti-arrow-down-left"></i></button></div>
+          <div class="hdr-actions"><div class="kpi kpi-h" id="orders-kpi"></div></div>
         </div>
         <div class="doc-center-body" id="orders-body"></div>
       </div>
@@ -863,9 +885,7 @@ select.date-input option{background:var(--surface2);color:var(--text);}
         <div class="doc-center-header">
           <h3><i class="ti ti-list-details"></i>All bills <span class="badge purple" id="all-count">0</span></h3>
           <span class="hist-tip"><i class="ti ti-info-circle"></i>Every bill with its total, paid amount and balance</span>
-          <div class="hdr-actions"><div class="kpi kpi-h" id="all-kpi"></div><div class="hs" id="all-sdw"><button class="ib" type="button" data-srch="all" title="Search" aria-haspopup="true"><i class="ti ti-search"></i></button>
-        <div class="hs-pop"><select class="hs-sc" data-ssc="all" aria-label="Search in"><option value="all">All</option><option value="received">Received</option><option value="paid">Paid</option></select><i class="ti ti-search"></i><input class="hs-in" id="all-search" data-sin="all" type="text" placeholder="Type to search…" autocomplete="off" enterkeyhint="search"/>
-        <button class="hs-x" type="button" data-sclr="all" title="Clear"><i class="ti ti-x"></i></button></div></div><button class="btn out btn-sm" type="button" data-add="out" title="New Bill (Outgoing)"><i class="ti ti-arrow-up-right"></i></button><button class="btn in btn-sm" type="button" data-add="in" title="New Bill (Incoming)"><i class="ti ti-arrow-down-left"></i></button></div>
+          <div class="hdr-actions"><div class="kpi kpi-h" id="all-kpi"></div></div>
         </div>
         <div class="doc-center-body" id="all-body"></div>
       </div>
@@ -876,10 +896,7 @@ select.date-input option{background:var(--surface2);color:var(--text);}
       <div class="doc-center">
         <div class="doc-center-header">
           <h3><i class="ti ti-arrow-up-right"></i>Outgoing bills <span class="badge purple" id="out-count">0</span></h3>
-          <span class="hist-tip"><i class="ti ti-info-circle"></i>Bills to customers — amounts to receive</span>
-          <div class="hdr-actions"><div class="kpi kpi-h" id="out-kpi"></div><div class="hs" id="out-sdw"><button class="ib" type="button" data-srch="out" title="Search" aria-haspopup="true"><i class="ti ti-search"></i></button>
-        <div class="hs-pop"><i class="ti ti-search"></i><input class="hs-in" id="out-search" data-sin="out" type="text" placeholder="Type to search…" autocomplete="off" enterkeyhint="search"/>
-        <button class="hs-x" type="button" data-sclr="out" title="Clear"><i class="ti ti-x"></i></button></div></div><button class="btn out btn-sm" type="button" data-add="out" title="New Bill (Outgoing)"><i class="ti ti-arrow-up-right"></i></button></div>
+          <div class="hdr-actions"><div class="kpi kpi-h" id="out-kpi"></div></div>
         </div>
         <div class="doc-center-body" id="out-body"></div>
       </div>
@@ -891,9 +908,7 @@ select.date-input option{background:var(--surface2);color:var(--text);}
         <div class="doc-center-header">
           <h3><i class="ti ti-arrow-down-left"></i>Incoming bills <span class="badge purple" id="in-count">0</span></h3>
           <span class="hist-tip"><i class="ti ti-info-circle"></i>Bills from suppliers — amounts to pay</span>
-          <div class="hdr-actions"><div class="kpi kpi-h" id="in-kpi"></div><div class="hs" id="in-sdw"><button class="ib" type="button" data-srch="in" title="Search" aria-haspopup="true"><i class="ti ti-search"></i></button>
-        <div class="hs-pop"><i class="ti ti-search"></i><input class="hs-in" id="in-search" data-sin="in" type="text" placeholder="Type to search…" autocomplete="off" enterkeyhint="search"/>
-        <button class="hs-x" type="button" data-sclr="in" title="Clear"><i class="ti ti-x"></i></button></div></div><button class="btn in btn-sm" type="button" data-add="in" title="New Bill (Incoming)"><i class="ti ti-arrow-down-left"></i></button></div>
+          <div class="hdr-actions"><div class="kpi kpi-h" id="in-kpi"></div></div>
         </div>
         <div class="doc-center-body" id="in-body"></div>
       </div>
@@ -905,9 +920,7 @@ select.date-input option{background:var(--surface2);color:var(--text);}
         <div class="doc-center-header">
           <h3><i class="ti ti-adjustments-dollar"></i>Fix Rate <span class="badge purple" id="rates-count">0</span></h3>
           <span class="hist-tip"><i class="ti ti-info-circle"></i>Min / max rate per Type, Name and Item</span>
-          <div class="hdr-actions"><div class="hs" id="rates-sdw"><button class="ib" type="button" data-srch="rates" title="Search" aria-haspopup="true"><i class="ti ti-search"></i></button>
-        <div class="hs-pop"><i class="ti ti-search"></i><input class="hs-in" id="rates-search" data-sin="rates" type="text" placeholder="Type to search…" autocomplete="off" enterkeyhint="search"/>
-        <button class="hs-x" type="button" data-sclr="rates" title="Clear"><i class="ti ti-x"></i></button></div></div><button class="btn btn-primary btn-sm" type="button" onclick="RT.open()" title="Add Rate"><i class="ti ti-plus"></i><span class="lbl">Add Rate</span></button></div>
+          <div class="hdr-actions"></div>
         </div>
         <div class="doc-center-body" id="rates-body"></div>
       </div>
@@ -1501,7 +1514,7 @@ function drawNav(){
 function switchTop(k){
   closeForm();closeView();closeRate();
   document.querySelectorAll('.hs.open').forEach(h=>h.classList.remove('open'));
-  tab=k;drawNav();
+  tab=k;drawNav();document.querySelectorAll('.vb-grp').forEach(g=>g.classList.toggle('on',g.id==='vb-'+k));
   TABS.forEach(t=>$('tab-'+t.k).style.display=t.k===k?'flex':'none');
   render();
 }
