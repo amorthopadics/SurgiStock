@@ -331,8 +331,8 @@ tr.blink-row>td:first-child{box-shadow:inset 2px 0 0 var(--accent);}
 }
 
 /* ═══ MODULE-SPECIFIC ADDITIONS (Master Setup) ═══ */
-.tabs-fixed.four{width:200px;flex-shrink:0;}
-.tabs-fixed.four .tab-btn.active span{max-width:120px;}
+.tabs-fixed.four{width:290px;flex-shrink:0;}
+.tabs-fixed.four .tab-btn.active span{max-width:150px;}
 @media(max-width:700px){   /* keep the active label visible on phones, inactive stays icon-only */
   .tabs-fixed.four{width:auto;}
   .tabs-fixed.four .tab-btn{flex:0 0 38px;padding:7px 0;}
@@ -755,6 +755,38 @@ select.date-input option{background:var(--surface2);color:var(--text);}
   .tabs-fixed.four .tab-btn.active{padding:7px 9px;font-size:11px}
   .view-bar .ib{width:30px;height:30px}
 }
+
+/* ═══ Receipts-style controls: search + actions sit in the view bar, per tab ═══ */
+.vb-grp{display:none;align-items:center;gap:8px;margin-left:auto;flex:0 0 auto}
+.vb-grp.on{display:flex}
+.view-bar .cache-ind{margin-left:0}
+.vb-grp .btn{white-space:nowrap}
+.vb-grp .ib{width:30px;height:30px;font-size:15px}
+.vb-grp .btn.out,.vb-grp .btn.in{padding:6px 10px}
+.vb-grp .btn i{font-size:15px}
+@media(max-width:700px){.vb-grp{gap:6px}.vb-grp .btn .lbl{display:none}.vb-grp .btn{padding:6px 9px}}
+/* store pills (Stock header · Min Stock add window) */
+.st-pills{display:flex;flex-wrap:nowrap;gap:6px;align-items:center}
+.st-pills .chip{flex:none;padding:4px 10px;font-size:11.5px;gap:5px}
+.st-pills .chip i{font-size:14px}
+.ms-pills{display:flex;flex-wrap:wrap;gap:6px}
+.ms-pills.lock{pointer-events:none;opacity:.6}
+/* row selection → details panel */
+.doc-center-body .log-table tbody tr[data-oid]{cursor:pointer}
+.log-table tr.sel>td{background:var(--accent-dim)}
+.log-table tr.sel>td:first-child{box-shadow:inset 2px 0 0 var(--accent)}
+@media(min-width:1101px){#od.open{width:520px}}
+@media(min-width:901px) and (max-width:1100px){#od.open{width:440px}}
+.mh .odt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+.od-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.od-meta .c{padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-lg);min-width:0}
+.od-meta .c.w2{grid-column:1/-1}
+.od-meta .k{font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3)}
+.od-meta .v{font-size:13px;font-weight:600;overflow-wrap:anywhere}
+.od-tbl{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:auto}
+.od-tbl .log-table th{position:static;cursor:default}
+.od-tbl .log-table th:hover{color:var(--text3)}
+.od-tbl tfoot td{font-weight:700;background:var(--bg3);border-bottom:0}
 </style>
 </head>
 <body>
@@ -762,6 +794,18 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 <div class="view-bar">
   <div class="vb-brand" title="Orders"><i class="ti ti-truck-delivery"></i></div>
   <div class="tab-nav tabs-fixed four" id="tab-nav"></div>
+  <div class="vb-grp" id="vb-out"><div class="hs" id="out-sdw"><button class="ib" type="button" data-srch="out" title="Search" aria-label="Search" aria-haspopup="true"><i class="ti ti-search"></i></button>
+        <div class="hs-pop"><i class="ti ti-search"></i><input class="hs-in" id="out-search" data-sin="out" type="text" placeholder="Search order no, store, name, item…" autocomplete="off" enterkeyhint="search"/>
+        <button class="hs-x" type="button" data-sclr="out" title="Clear"><i class="ti ti-x"></i></button></div></div><button class="btn out btn-sm" type="button" data-add="out" title="New Order (Outgoing)"><i class="ti ti-arrow-up-right"></i><span class="lbl">New Order</span></button></div>
+  <div class="vb-grp" id="vb-in"><div class="hs" id="in-sdw"><button class="ib" type="button" data-srch="in" title="Search" aria-label="Search" aria-haspopup="true"><i class="ti ti-search"></i></button>
+        <div class="hs-pop"><i class="ti ti-search"></i><input class="hs-in" id="in-search" data-sin="in" type="text" placeholder="Search order no, store, supplier, item…" autocomplete="off" enterkeyhint="search"/>
+        <button class="hs-x" type="button" data-sclr="in" title="Clear"><i class="ti ti-x"></i></button></div></div><button class="btn in btn-sm" type="button" data-add="in" title="New Order (Incoming)"><i class="ti ti-arrow-down-left"></i><span class="lbl">New Order</span></button></div>
+  <div class="vb-grp" id="vb-stock"><div class="hs" id="stock-sdw"><button class="ib" type="button" data-srch="stock" title="Search" aria-label="Search" aria-haspopup="true"><i class="ti ti-search"></i></button>
+        <div class="hs-pop"><i class="ti ti-search"></i><input class="hs-in" id="stock-search" data-sin="stock" type="text" placeholder="Search store, item, domain…" autocomplete="off" enterkeyhint="search"/>
+        <button class="hs-x" type="button" data-sclr="stock" title="Clear"><i class="ti ti-x"></i></button></div></div><button class="ib flt" id="stock-low" type="button" title="Show only low stock (below the minimum)"><i class="ti ti-alert-triangle"></i></button></div>
+  <div class="vb-grp" id="vb-min"><div class="hs" id="min-sdw"><button class="ib" type="button" data-srch="min" title="Search" aria-label="Search" aria-haspopup="true"><i class="ti ti-search"></i></button>
+        <div class="hs-pop"><i class="ti ti-search"></i><input class="hs-in" id="min-search" data-sin="min" type="text" placeholder="Search store, item, domain…" autocomplete="off" enterkeyhint="search"/>
+        <button class="hs-x" type="button" data-sclr="min" title="Clear"><i class="ti ti-x"></i></button></div></div><button class="btn btn-primary btn-sm" type="button" data-add="min" title="Add Item"><i class="ti ti-plus"></i><span class="lbl">Add Item</span></button></div>
   <button class="ib cache-ind warn" id="cache-ind" type="button" title="Loading…"><i class="ti ti-database"></i></button>
   <button class="ib sync-ind" id="sync-ind" type="button" style="display:none"><i class="ti ti-cloud-upload"></i><span class="ping"></span><b class="sync-n">0</b></button>
   <span id="ldg" class="sr-only"></span>
@@ -773,9 +817,6 @@ select.date-input option{background:var(--surface2);color:var(--text);}
         <div class="doc-center-header">
           <h3><i class="ti ti-arrow-up-right"></i>Outgoing <span class="badge purple" id="out-count">0</span></h3>
           <span class="hist-tip"><i class="ti ti-info-circle"></i>Goods sent out to customers — hospital / doctor / department</span>
-          <div class="hdr-actions"><div class="hs" id="out-sdw"><button class="ib" type="button" data-srch="out" title="Search" aria-haspopup="true"><i class="ti ti-search"></i></button>
-        <div class="hs-pop"><i class="ti ti-search"></i><input class="hs-in" id="out-search" data-sin="out" type="text" placeholder="Type to search…" autocomplete="off" enterkeyhint="search"/>
-        <button class="hs-x" type="button" data-sclr="out" title="Clear"><i class="ti ti-x"></i></button></div></div><button class="btn out btn-sm" type="button" data-add="out" title="New Order (Outgoing)"><i class="ti ti-arrow-up-right"></i><span class="lbl">New Order (Outgoing)</span></button></div>
         </div>
         <div class="doc-center-body" id="out-body"></div>
       </div>
@@ -787,9 +828,6 @@ select.date-input option{background:var(--surface2);color:var(--text);}
         <div class="doc-center-header">
           <h3><i class="ti ti-arrow-down-left"></i>Incoming <span class="badge purple" id="in-count">0</span></h3>
           <span class="hist-tip"><i class="ti ti-info-circle"></i>Items received from suppliers</span>
-          <div class="hdr-actions"><div class="hs" id="in-sdw"><button class="ib" type="button" data-srch="in" title="Search" aria-haspopup="true"><i class="ti ti-search"></i></button>
-        <div class="hs-pop"><i class="ti ti-search"></i><input class="hs-in" id="in-search" data-sin="in" type="text" placeholder="Type to search…" autocomplete="off" enterkeyhint="search"/>
-        <button class="hs-x" type="button" data-sclr="in" title="Clear"><i class="ti ti-x"></i></button></div></div><button class="btn in btn-sm" type="button" data-add="in" title="New Order (Incoming)"><i class="ti ti-arrow-down-left"></i><span class="lbl">New Order (Incoming)</span></button></div>
         </div>
         <div class="doc-center-body" id="in-body"></div>
       </div>
@@ -801,9 +839,7 @@ select.date-input option{background:var(--surface2);color:var(--text);}
         <div class="doc-center-header">
           <h3><i class="ti ti-packages"></i>Stock <span class="badge purple" id="stock-count">0</span></h3>
           <span class="hist-tip"><i class="ti ti-info-circle"></i>Store-wise stock = incoming − outgoing</span>
-          <div class="hdr-actions"><div class="hs" id="stock-sdw"><button class="ib" type="button" data-srch="stock" title="Search" aria-haspopup="true"><i class="ti ti-search"></i></button>
-        <div class="hs-pop"><i class="ti ti-search"></i><input class="hs-in" id="stock-search" data-sin="stock" type="text" placeholder="Type to search…" autocomplete="off" enterkeyhint="search"/>
-        <button class="hs-x" type="button" data-sclr="stock" title="Clear"><i class="ti ti-x"></i></button></div></div><div class="vb-sel" title="Store"><i class="ti ti-building-store"></i><select id="stock-store"><option value="">All stores</option></select></div><button class="ib flt" id="stock-low" type="button" title="Show only low stock (below the minimum)"><i class="ti ti-alert-triangle"></i></button></div>
+          <div class="hdr-actions"><div class="st-pills" id="stock-pills"></div></div>
         </div>
         <div class="doc-center-body" id="stock-body"></div>
       </div>
@@ -815,9 +851,6 @@ select.date-input option{background:var(--surface2);color:var(--text);}
         <div class="doc-center-header">
           <h3><i class="ti ti-alert-triangle"></i>Minimum Stock Levels <span class="badge purple" id="min-count">0</span></h3>
           <span class="hist-tip"><i class="ti ti-info-circle"></i>Item-wise minimum quantity to keep in store — the low-stock threshold</span>
-          <div class="hdr-actions"><div class="hs" id="min-sdw"><button class="ib" type="button" data-srch="min" title="Search" aria-haspopup="true"><i class="ti ti-search"></i></button>
-        <div class="hs-pop"><i class="ti ti-search"></i><input class="hs-in" id="min-search" data-sin="min" type="text" placeholder="Type to search…" autocomplete="off" enterkeyhint="search"/>
-        <button class="hs-x" type="button" data-sclr="min" title="Clear"><i class="ti ti-x"></i></button></div></div><button class="btn btn-primary btn-sm" type="button" data-add="min" title="Add Item"><i class="ti ti-plus"></i><span class="lbl">Add Item</span></button></div>
         </div>
         <div class="doc-center-body" id="min-body"></div>
       </div>
@@ -828,6 +861,7 @@ select.date-input option{background:var(--surface2);color:var(--text);}
           <div class="field"><label for="ms-item">Item <span class="req">*</span></label>
             <div class="ms-combo"><input class="date-input" id="ms-item" placeholder="Search item…" autocomplete="off"/><div class="dropdown-list" id="ms-list"></div></div>
             <div class="ms-meta" id="ms-meta"></div></div>
+          <div class="field"><label>Store</label><div class="ms-pills" id="ms-pills"></div></div>
           <div class="ms-note" id="ms-note"><i class="ti ti-alert-circle"></i><span></span></div>
           <div class="field"><label for="ms-qty">Minimum quantity in store <span class="req">*</span></label>
             <input class="date-input" id="ms-qty" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 20"/></div>
@@ -875,6 +909,17 @@ select.date-input option{background:var(--surface2);color:var(--text);}
   </div>
  </div>
 </div>
+<div class="doc-preview-panel" id="od">
+ <div class="om" role="dialog" aria-labelledby="od-title">
+  <div class="mh">
+    <div class="ttl"><i class="ti" id="od-ico"></i></div>
+    <span class="odt" id="od-title"></span>
+    <button type="button" class="ib x" title="Close" aria-label="Close" onclick="closeO()"><i class="ti ti-x"></i></button>
+  </div>
+  <div class="mb" id="od-body"></div>
+  <div class="mf"><button type="button" class="btn btn-ghost" onclick="closeO()"><i class="ti ti-x"></i><span class="lbl">Close</span></button></div>
+ </div>
+</div>
 </div>
 <div class="toast" id="toast" role="alert"><i id="toast-icon" class="ti ti-circle-check"></i><span id="toast-msg">Saved</span></div>
 
@@ -899,7 +944,22 @@ const session=AP2Api.session,post=AP2Api.post,errText=m=>AP2Api.errText(m);
 
 /* ═══ STATE ═══ */
 let items=[],domains=[],inames=[],msources=[],stores=[],parties=[],types=[],suppliers=[],supplierKind='Supplier',pendingSup=[];     // from the cache
-let orders=rd(OK,[]),ordersLoaded=false;          // from the sheet
+let srvOrders=rd(OK,[]),orders=[],ordersLoaded=false;
+/* Orders saved on this device but not in the sheet yet (same idea as Receipts): they show at once — in the list and in Stock — and are posted in the background.
+   orders = sheet orders + these. Network trouble keeps them here and retries; only a refusal from the server takes the row back. */
+const OPK='orders_pending_sync_v1',FATALO=/unauthori[sz]ed|forbidden|not logged in|not authori[sz]ed|permission|session/i,NETERRO=/network|fetch|offline|timeout|timed out|load failed|internet|connection|failed to/i;
+let PENDO=rd(OPK,[]),flushingO=null;
+if(!Array.isArray(PENDO))PENDO=[];
+const savePO=()=>{wr(OPK,PENDO);msInd();};
+function rebuildOrders(){
+  const ids=new Set(srvOrders.map(o=>o.id)),m=srvOrders.slice();
+  PENDO.forEach(p=>{const q=p.order;if(!q)return;
+    const o={id:q.id,no:'—',type:q.type,date:q.date,storeId:q.storeId,storeName:q.storeName,partyType:q.partyType,partyId:q.partyId,party:q.party,note:q.note,lines:(q.lines||[]).map(l=>({...l})),ts:'',by:'',pending:true};
+    if(p.kind==='update'){const i=m.findIndex(x=>x.id===q.id);if(i>=0)m[i]={...o,no:m[i].no,ts:m[i].ts,by:m[i].by};}
+    else if(!ids.has(q.id))m.push(o);});
+  orders=m.sort((a,b)=>b.id.localeCompare(a.id));
+}
+rebuildOrders();          // from the sheet
 let tab='out',formType='out',draft=null,pcomb=null,picked=new Set(),busy=false,lastPType='';
 
 /* ═══ CACHE → items / stores / customer-type parties ═══
@@ -963,12 +1023,36 @@ function groupRows(rows){
 /* orders come from the local cache (kept current by the cache layer) — no live request when the module opens */
 const OrdersFeed=AP2Read.watch('ap2_orders',{
   pick:d=>d&&Array.isArray(d.Orders)?d:null, apiType:'orders',
-  onData:d=>{orders=groupRows(d.Orders||[]);ordersLoaded=true;wr(OK,orders);$('ldg').textContent='';render();}
+  onData:d=>{srvOrders=groupRows(d.Orders||[]);ordersLoaded=true;wr(OK,srvOrders);rebuildOrders();$('ldg').textContent='';render();}
 });
 async function loadOrders(force){            // force = after our own save: update the cache once, then re-read it
   try{return force?await OrdersFeed.refreshFromServer():await OrdersFeed.read();}catch(e){return false;}
 }
-AP2Api.onSession(()=>{loadOrders();setTimeout(()=>msRefresh(),0);});
+function flushOrders(){
+  if(flushingO)return flushingO;
+  flushingO=(async()=>{
+    const ind=$('sync-ind');ind.classList.add('busy');let did=false;
+    try{
+      while(PENDO.length){
+        const p=PENDO[0];
+        if(p.kind==='add'&&srvOrders.some(o=>o.id===p.order.id)){PENDO.shift();savePO();continue;}      // already in the sheet (reply was lost)
+        try{
+          const j=await post(p.kind==='update'?'updateOrder':'addOrder',{order:p.order});
+          if(j&&j.error)throw new Error(j.error);
+          PENDO.shift();savePO();did=true;
+        }catch(e){
+          const m=String((e&&e.message)||e);
+          if(!FATALO.test(m)&&(NETERRO.test(m)||!navigator.onLine))break;                                  // temporary → stays on this device, retried later
+          PENDO.shift();savePO();showToast((FATALO.test(m)?'⛔ ':'Not saved: ')+errText(m),'error');       // refused → the row is taken back
+        }
+      }
+    }finally{ind.classList.remove('busy');msInd();}
+    rebuildOrders();render();
+    if(did){await loadOrders(true);if(!PENDO.length)showToast('Saved — all pending orders are synced','success');}
+  })().finally(()=>{flushingO=null;});
+  return flushingO;
+}
+AP2Api.onSession(()=>{flushOrders();loadOrders();setTimeout(()=>msRefresh(),0);});
 
 /* ═══ STOCK = incoming − outgoing, per store + item (the order being edited is left out) ═══ */
 const stockKey=(s,i)=>s+'|'+i;
@@ -997,29 +1081,30 @@ function render(){
   $('stock-count').textContent=stockRows().length;
   $('min-count').textContent=msRows.length;
   if(tab==='out'||tab==='in')renderOrders(tab);else if(tab==='stock')renderStock();else msRender();
+  if(oid)syncO();
 }
 /* Outgoing / Incoming report */
 function renderOrders(t){
   const out=t==='out',q=S[t];
   const list=orders.filter(o=>o.type===t&&match(q,[o.no,o.storeName,o.party,o.partyType,o.note,o.lines.map(l=>l.label).join(' ')].join(' ')));
-  $(t+'-body').innerHTML=list.length?`<table class="log-table"><thead><tr><th>Order No</th><th>Date</th><th>Store</th><th>${out?'Name':'Supplier'}</th><th>Items</th><th class="n">Total qty</th><th></th></tr></thead><tbody>${list.map(o=>`
-    <tr><td class="mono">${esc(o.no)}</td><td>${esc(o.date)}</td><td>${esc(o.storeName)}</td>
+  $(t+'-body').innerHTML=list.length?`<table class="log-table"><thead><tr><th>Order No</th><th>Date</th><th>Store</th><th>${out?'Name':'Supplier'}</th><th class="n">Items</th><th class="n">Total qty</th><th></th></tr></thead><tbody>${list.map(o=>{const pd=o.pending?' disabled':'';return `
+    <tr data-oid="${esc(o.id)}"${o.id===oid?' class="sel"':''}><td class="mono">${esc(o.no)}${o.pending?' <span class="badge out"><i class="ti ti-loader-2 spinner"></i> Syncing…</span>':''}</td><td>${esc(o.date)}</td><td>${esc(o.storeName)}</td>
     <td>${esc(o.party)}${out&&o.partyType?` <span class="dim" style="font-size:11px">· ${esc(o.partyType)}</span>`:''}${o.note?`<div class="dim" style="font-size:11.5px">${esc(o.note)}</div>`:''}</td>
-    <td>${o.lines.map(l=>`<div>${esc(l.label)} <span class="mono dim">× ${l.qty}</span></div>`).join('')}</td>
+    <td class="n">${o.lines.length}</td>
     <td class="n">${o.lines.reduce((a,l)=>a+l.qty,0)}</td>
-    <td class="acts"><span class="act-btns"><button class="ib sm" title="Edit / add items" onclick="openForm(null,'${esc(o.id)}')"><i class="ti ti-pencil"></i></button>
-      <button class="ib sm dng" id="del-${esc(o.id)}" title="Delete" onclick="delOrder('${esc(o.id)}')"><i class="ti ti-trash"></i></button></span></td></tr>`).join('')}</tbody></table>`
-    :`<div class="empty">${ordersLoaded?(orders.some(o=>o.type===t)?'No match.':'No '+(out?'outgoing':'incoming')+' orders yet — use <b>New Order ('+(out?'Outgoing':'Incoming')+')</b>.'):'Loading orders…'}</div>`;
+    <td class="acts"><span class="act-btns"><button class="ib sm"${pd} title="Edit / add items" onclick="openForm(null,'${esc(o.id)}')"><i class="ti ti-pencil"></i></button>
+      <button class="ib sm dng"${pd} id="del-${esc(o.id)}" title="Delete" onclick="delOrder('${esc(o.id)}')"><i class="ti ti-trash"></i></button></span></td></tr>`;}).join('')}</tbody></table>`
+    :`<div class="empty">${ordersLoaded?(orders.some(o=>o.type===t)?'No match.':'No '+(out?'outgoing':'incoming')+' orders yet — use <b>New Order</b>.'):'Loading orders…'}</div>`;
 }
 /* Stock — store-wise report (incoming − outgoing), with the minimum level beside it */
+function storeOpts(all){const m=new Map(stores.map(s=>[s.id,s.name]));all.forEach(r=>{if(!m.has(r.sid))m.set(r.sid,r.sn);});return[...m].sort((a,b)=>a[1].localeCompare(b[1]));}
 function renderStock(){
-  const all=stockRows(),q=S.stock,mm=new Map(msRows.map(r=>[r[1],r[4]]));
-  const sel=$('stock-store'),stz=new Map();all.forEach(r=>stz.set(r.sid,r.sn));
-  const sig=[...stz].map(x=>x.join(':')).join('|');
-  if(sel.dataset.sig!==sig){sel.dataset.sig=sig;sel.innerHTML='<option value="">All stores</option>'+[...stz].sort((a,b)=>a[1].localeCompare(b[1])).map(([id,n])=>`<option value="${esc(id)}">${esc(n)}</option>`).join('');}
-  if(stockStore&&!stz.has(stockStore))stockStore='';
-  sel.value=stockStore;$('stock-low').classList.toggle('on',lowOnly);
-  const isLow=r=>mm.has(r.iid)&&r.qty<mm.get(r.iid);
+  const all=stockRows(),q=S.stock;
+  const so=storeOpts(all);if(stockStore&&!so.some(x=>x[0]===stockStore))stockStore='';
+  $('stock-pills').innerHTML=`<button type="button" class="chip${stockStore===''?' on':''}" data-spill="" title="All stores"><i class="ti ti-layout-grid"></i>All stores</button>`
+    +so.map(([id,n])=>`<button type="button" class="chip${stockStore===id?' on':''}" data-spill="${esc(id)}" title="${esc(n)}"><i class="ti ti-building-store"></i>${esc(n)}</button>`).join('');
+  $('stock-low').classList.toggle('on',lowOnly);
+  const mn=r=>minFor(r.sid,r.iid),isLow=r=>{const m=mn(r);return m!==undefined&&r.qty<m;};
   const rows=all.filter(r=>(!stockStore||r.sid===stockStore)&&(!lowOnly||isLow(r))&&match(q,r.sn+' '+r.lbl+' '+r.dom));
   if(!rows.length){$('stock-body').innerHTML='<div class="empty">'+(all.length?'No match.':'No stock yet — add items with an Incoming order.')+'</div>';return;}
   const g=new Map();rows.forEach(r=>{(g.get(r.sid)||g.set(r.sid,{sn:r.sn,rows:[]}).get(r.sid)).rows.push(r);});
@@ -1030,7 +1115,7 @@ function renderStock(){
       <span class="cnt-chip">${s.rows.length} item${s.rows.length>1?'s':''} · ${tot} qty</span>${low?`<span class="badge red">${low} low</span>`:''}</div>
       <table class="log-table"><thead><tr><th>#</th><th>Medical Domain</th><th>Item</th><th class="n">Qty in stock</th><th class="n">Min</th><th></th></tr></thead><tbody>${s.rows.map((r,i)=>`
       <tr><td class="num">${i+1}</td><td class="ms-dm">${esc(r.dom)}</td><td>${esc(r.lbl)}</td><td class="n ${r.qty<0?'neg':''}">${r.qty}</td>
-      <td class="n dim">${mm.has(r.iid)?mm.get(r.iid):'—'}</td><td>${isLow(r)?'<span class="badge red">Low</span>':''}</td></tr>`).join('')}</tbody></table></div>`;}).join('');
+      <td class="n dim">${mn(r)!==undefined?mn(r):'—'}</td><td>${isLow(r)?'<span class="badge red">Low</span>':''}</td></tr>`).join('')}</tbody></table></div>`;}).join('');
 }
 
 /* ═══ TABS (Master-style: icon tabs, the active one shows its label) ═══ */
@@ -1038,9 +1123,9 @@ function drawNav(){
   $('tab-nav').innerHTML=TABS.map(t=>`<button class="tab-btn${tab===t.k?' active':''}" title="${esc(t.title||t.label)}" onclick="switchTop('${t.k}')"><i class="ti ${t.icon}"></i><span>${esc(t.label)}</span></button>`).join('');
 }
 function switchTop(k){
-  if(draft)closeForm();msClose();
+  if(draft)closeForm();closeO();msClose();
   document.querySelectorAll('.hs.open').forEach(h=>h.classList.remove('open'));
-  tab=k;drawNav();
+  tab=k;drawNav();document.querySelectorAll('.vb-grp').forEach(g=>g.classList.toggle('on',g.id==='vb-'+k));
   TABS.forEach(t=>$('tab-'+t.k).style.display=t.k===k?'flex':'none');
   render();
 }
@@ -1053,17 +1138,47 @@ document.addEventListener('click',e=>{
   const a=e.target.closest('[data-add]');
   if(a){if(a.dataset.add==='min')msOpen(null);else openForm(a.dataset.add);}
   if(e.target.closest('#stock-low')){lowOnly=!lowOnly;render();}
+  const sp=e.target.closest('[data-spill]');if(sp){stockStore=sp.dataset.spill;render();}
 });
 document.addEventListener('input',e=>{const i=e.target.closest('[data-sin]');if(!i)return;
   S[i.dataset.sin]=i.value;$(i.dataset.sin+'-sdw').classList.toggle('has-val',!!i.value.trim());render();});
 document.addEventListener('keydown',e=>{if((e.key==='Escape'||e.key==='Enter')&&e.target.matches('.hs-in')){e.target.closest('.hs').classList.remove('open');e.target.blur();}});
-$('stock-store').addEventListener('change',e=>{stockStore=e.target.value;render();});
-/* the order form is ONE panel that slides in from the right inside the tab that opened it */
-function mountOv(){
-  const ov=$('ov'),host=$('tab-'+formType).querySelector('.main-split');
-  if(ov.parentNode!==host){ov.classList.remove('open');host.appendChild(ov);}
-  void ov.offsetWidth;ov.classList.add('open');
+/* ═══ ORDER DETAILS — click a row: a side panel opens with the order's details in the header and the items table below (same panel pattern as Receipts) ═══ */
+let oid=null;
+const fmtO=s=>{const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(s||'');return m?(+m[3])+' '+MON[+m[2]-1]+' '+m[1]:(s||'—');};
+function fillO(o){
+  const out=o.type==='out',tot=o.lines.reduce((a,l)=>a+l.qty,0);
+  $('od-ico').className='ti '+(out?'ti-arrow-up-right':'ti-arrow-down-left');
+  const tt=$('od-ico').parentNode;tt.classList.toggle('out',out);tt.classList.toggle('in',!out);
+  $('od-title').textContent='Order '+o.no+' · '+(out?'Outgoing':'Incoming');
+  const c=(k,v,w)=>`<div class="c${w?' w2':''}"><div class="k">${k}</div><div class="v">${v}</div></div>`;
+  $('od-body').innerHTML='<div class="od-meta">'
+    +c('Order No',esc(o.no)+(o.pending?' <span class="badge out"><i class="ti ti-loader-2 spinner"></i> Syncing…</span>':''))
+    +c('Date',esc(fmtO(o.date)))
+    +c('Store',esc(o.storeName||o.storeId))
+    +c(out?'Name':'Supplier',esc(o.party||'—')+(out&&o.partyType?` <span class="dim" style="font-size:11px">· ${esc(o.partyType)}</span>`:''))
+    +(o.note?c('Note / Reference',esc(o.note),1):'')
+    +((o.ts||o.by)?c('Updated',esc([o.ts,o.by].filter(Boolean).join(' · ')),1):'')
+    +'</div><div class="od-tbl"><table class="log-table"><thead><tr><th>#</th><th>Item</th><th>Medical Domain</th><th class="n">Qty</th></tr></thead><tbody>'
+    +o.lines.map((l,i)=>`<tr><td class="num">${i+1}</td><td class="cell-item"><b>${esc(l.label)}</b></td><td class="ms-dm">${esc(l.domain)}</td><td class="n">${l.qty}</td></tr>`).join('')
+    +`</tbody><tfoot><tr><td></td><td colspan="2">Total · ${o.lines.length} item${o.lines.length>1?'s':''}</td><td class="n">${tot}</td></tr></tfoot></table></div>`;
 }
+function markSel(){document.querySelectorAll('tr[data-oid]').forEach(r=>r.classList.toggle('sel',r.dataset.oid===oid));}
+function viewO(id){const o=orders.find(x=>x.id===id);if(!o)return;oid=id;fillO(o);mountPanel('od',o.type);markSel();}
+function closeO(){$('od').classList.remove('open');oid=null;markSel();}
+function syncO(){const o=orders.find(x=>x.id===oid);if(o)fillO(o);else closeO();}
+['out','in'].forEach(k=>$(k+'-body').addEventListener('click',e=>{
+  if(e.target.closest('.act-btns'))return;
+  const tr=e.target.closest('tr[data-oid]');if(tr)viewO(tr.dataset.oid);}));
+/* ONE panel at a time (order form · order details) slides in beside the list, inside the tab that opened it */
+function mountPanel(id,type){
+  [['ov',()=>{if(draft)closeForm();else $('ov').classList.remove('open');}],['od',closeO]].forEach(([o,fn])=>{if(o!==id&&$(o).classList.contains('open'))fn();});
+  const el=$(id),host=$('tab-'+type).querySelector('.main-split');
+  if(el.parentNode!==host){el.classList.remove('open');host.appendChild(el);}
+  void el.offsetWidth;el.classList.add('open');
+}
+/* the order form is ONE panel that slides in from the right inside the tab that opened it */
+function mountOv(){mountPanel('ov',formType);}
 
 /* ═══════════════════════════════════════════════════════
  *  MINIMUM STOCK LEVELS — item-wise threshold (sheet "Min Stock")
@@ -1071,17 +1186,22 @@ function mountOv(){
  *  rows = [[id, itemListId, domain, item, minQty, by, at], …]
  * ═══════════════════════════════════════════════════════ */
 const MS_PEND='minstock_pending_v2';
-let msRows=[],msPicked=null,msArmed=null,msFlushing=false;
+let msRows=[],msPicked=null,msArmed=null,msFlushing=false,msSt='';
 const idbReq=r=>new Promise((ok,no)=>{r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error);});
 const msDb=new Promise((ok,no)=>{const o=indexedDB.open('ap2_minStock',1);
   o.onupgradeneeded=()=>{if(!o.result.objectStoreNames.contains('kv'))o.result.createObjectStore('kv');};o.onsuccess=()=>ok(o.result);o.onerror=()=>no(o.error);});
 const idbSet=async(k,v)=>{try{const db=await msDb;await idbReq(db.transaction('kv','readwrite').objectStore('kv').put(v,k));}catch(e){console.warn('[minstock] idb write',e&&e.message);}};
 const idbGet=async k=>{try{const db=await msDb;return await idbReq(db.transaction('kv').objectStore('kv').get(k));}catch(e){return undefined;}};
 const msByItem=id=>msRows.find(r=>r[1]===String(id).trim());
+/* store-level minimum: same sheet, same actions — the row key is "<itemId>@<storeId>"; a plain "<itemId>" row = all stores (default) */
+const msKey=(i,s)=>s?String(i)+'@'+s:String(i);
+const msSplit=r=>{const k=String(r[1]),n=k.lastIndexOf('@');return n>0?{itemId:k.slice(0,n),storeId:k.slice(n+1)}:{itemId:k,storeId:''};};
+const storeName=id=>{const s=stores.find(x=>x.id===id);return s?s.name:((orders.find(o=>o.storeId===id)||{}).storeName||id);};
+const minFor=(sid,iid)=>{const r=msByItem(msKey(iid,sid))||msByItem(iid);return r?r[4]:undefined;};   // store's own minimum, else the all-stores default
 const msSaveLocal=()=>idbSet('rows',{rows:msRows,ts:Date.now()});
 const msGetQ=()=>rd(MS_PEND,[]);
 const msSetQ=q=>{wr(MS_PEND,q);msInd();};
-function msInd(){const n=msGetQ().length,el=$('sync-ind');el.style.display=n?'':'none';el.querySelector('.sync-n').textContent=n;el.title=n+' minimum-stock change(s) waiting to sync — click to retry';}
+function msInd(){const n=msGetQ().length+PENDO.length,el=$('sync-ind');el.style.display=n?'':'none';el.querySelector('.sync-n').textContent=n;el.title=n+' change(s) saved on this device, waiting to sync — click to retry now';}
 const msFatal=m=>/unauthori[sz]ed|forbidden|not logged in/i.test(String(m));
 function msMerge(list){(list||[]).forEach(r=>{const i=msRows.findIndex(x=>x[1]===r[1]);if(i>=0)msRows[i]=r.slice();else msRows.push(r.slice());});}
 async function msFlush(){
@@ -1117,18 +1237,26 @@ async function msRefresh(force){
 }
 function msRender(){
   const pend=new Set(msGetQ().filter(o=>o.action==='minStockSave').map(o=>o.payload.rows[0].itemId));
-  const list=msRows.filter(r=>match(S.min,r[2]+' '+r[3]+' '+r[4])).sort((a,b)=>a[2].localeCompare(b[2])||a[3].localeCompare(b[3]));
+  const sn=r=>{const s=msSplit(r).storeId;return s?storeName(s):'All stores';};
+  const list=msRows.filter(r=>match(S.min,sn(r)+' '+r[2]+' '+r[3]+' '+r[4])).sort((a,b)=>a[2].localeCompare(b[2])||a[3].localeCompare(b[3])||sn(a).localeCompare(sn(b)));
   $('min-body').innerHTML=!list.length?'<div class="empty">'+(msRows.length?'No match.':'No minimum stock set yet — click <b>Add Item</b>.')+'</div>':
-    '<table class="log-table"><thead><tr><th>#</th><th>Medical Domain</th><th>Item</th><th>Min Qty</th><th>Updated by</th><th>Updated at</th><th></th></tr></thead><tbody>'+
-    list.map((r,i)=>`<tr><td class="num">${i+1}</td><td class="ms-dm">${esc(r[2])}</td>
+    '<table class="log-table"><thead><tr><th>#</th><th>Store</th><th>Medical Domain</th><th>Item</th><th>Min Qty</th><th>Updated by</th><th>Updated at</th><th></th></tr></thead><tbody>'+
+    list.map((r,i)=>`<tr><td class="num">${i+1}</td><td>${msSplit(r).storeId?esc(sn(r)):'<span class="dim">All stores</span>'}</td><td class="ms-dm">${esc(r[2])}</td>
       <td class="cell-item"><b>${esc(r[3])}</b>${pend.has(r[1])?'<span class="ms-pend">● pending</span>':''}</td>
       <td class="ms-q">${esc(r[4])}</td><td class="cell-muted">${esc(r[5])}</td><td class="cell-muted">${esc(r[6])}</td>
       <td class="acts"><span class="act-btns"><button class="ib sm" data-medit="${esc(r[0])}" title="Edit"><i class="ti ti-pencil"></i></button>
       <button class="ib sm${msArmed===r[0]?' dng armed':''}" data-mdel="${esc(r[0])}" title="${msArmed===r[0]?'Click again to delete':'Delete'}"><i class="ti ${msArmed===r[0]?'ti-check':'ti-trash'}"></i></button></span></td></tr>`).join('')+'</tbody></table>';
 }
+function msPills(){
+  const el=$('ms-pills'),o=[{id:'',n:'All stores',ic:'ti-layout-grid'}].concat(stores.map(s=>({id:s.id,n:s.name,ic:'ti-building-store'})));
+  if(msSt&&!o.some(x=>x.id===msSt))o.push({id:msSt,n:storeName(msSt),ic:'ti-building-store'});
+  el.innerHTML=o.map(x=>`<button type="button" class="chip${msSt===x.id?' on':''}" data-mst="${esc(x.id)}" title="${esc(x.n)}"><i class="ti ${x.ic}"></i>${esc(x.n)}</button>`).join('');
+  el.classList.toggle('lock',!!(msPicked&&msPicked.edit));
+}
 function msOpen(row){
   if(!row&&!cache.requireReady('Still loading — please wait'))return;
-  msPicked=row?{id:row[1],domain:row[2],label:row[3]}:null;
+  if(row){const p=msSplit(row);msSt=p.storeId;msPicked={itemId:p.itemId,id:row[1],domain:row[2],label:row[3],edit:true};}
+  else{msSt='';msPicked=null;}
   $('ms-item').value=msPicked?msPicked.label:'';$('ms-item').readOnly=!!row;
   $('ms-qty').value=row?row[4]:'';
   $('ms-title').textContent=row?'Edit Minimum Stock':'Add Minimum Stock';
@@ -1137,16 +1265,18 @@ function msOpen(row){
 }
 function msClose(){$('ms-panel').classList.remove('open');msDrop(false);msPicked=null;}
 function msShow(){
+  if(msPicked)msPicked.id=msKey(msPicked.itemId,msSt);
   const ex=msPicked&&msByItem(msPicked.id);
   $('ms-meta').textContent=msPicked&&msPicked.domain?'Medical Domain: '+msPicked.domain:'';
   const n=$('ms-note');n.classList.toggle('show',!!ex);
-  if(ex)n.querySelector('span').innerHTML='Already in the list — current minimum is <b>'+esc(ex[4])+'</b>. Saving will update it.';
+  if(ex)n.querySelector('span').innerHTML='Already in the list'+(msSt?' for <b>'+esc(storeName(msSt))+'</b>':' (all stores)')+' — current minimum is <b>'+esc(ex[4])+'</b>. Saving will update it.';
   $('ms-lbl').textContent=ex?'Update':'Save';
+  msPills();
 }
 function msDrop(open){
   const l=$('ms-list');if(!open||$('ms-item').readOnly){l.classList.remove('open');return;}
   const hits=items.filter(it=>match($('ms-item').value,it.domain+' '+it.label)).slice(0,80);
-  l.innerHTML=hits.length?hits.map(it=>{const r=msByItem(it.id);
+  l.innerHTML=hits.length?hits.map(it=>{const r=msByItem(msKey(it.id,msSt));
     return `<div class="di" data-pick="${esc(it.id)}"><span class="dn">${esc(it.label)}</span>${r?`<span class="q">already · min ${esc(r[4])}</span>`:''}<span class="dm">${esc(it.domain)}</span></div>`;}).join('')
     :'<div class="di no-match">No matching item in the Item List</div>';
   l.classList.add('open');
@@ -1155,11 +1285,12 @@ function msSave(){
   const qty=Number($('ms-qty').value);
   if(!msPicked){showToast('Pick an item from the list','error');return;}
   if($('ms-qty').value===''||!isFinite(qty)||qty<0){showToast('Enter a minimum quantity (0 or more)','error');return;}
-  const q=Math.floor(qty),ex=msByItem(msPicked.id),upd=!!ex;
-  if(ex)ex[4]=q;else msRows.push(['tmp'+Date.now(),msPicked.id,msPicked.domain,msPicked.label,q,'','']);
-  const queue=msGetQ().filter(o=>!(o.action==='minStockSave'&&o.payload.rows[0].itemId===msPicked.id));
-  queue.push({action:'minStockSave',payload:{rows:[{itemId:msPicked.id,domain:msPicked.domain,item:msPicked.label,minQty:q}]}});msSetQ(queue);
-  msSaveLocal();msClose();render();showToast((upd?'Updated':'Added')+' — minimum '+q,'success');msFlush();
+  msPicked.id=msKey(msPicked.itemId,msSt);
+  const key=msPicked.id,q=Math.floor(qty),ex=msByItem(key),upd=!!ex;
+  if(ex)ex[4]=q;else msRows.push(['tmp'+Date.now(),key,msPicked.domain,msPicked.label,q,'','']);
+  const queue=msGetQ().filter(o=>!(o.action==='minStockSave'&&o.payload.rows[0].itemId===key));
+  queue.push({action:'minStockSave',payload:{rows:[{itemId:key,domain:msPicked.domain,item:msPicked.label,minQty:q}]}});msSetQ(queue);
+  msSaveLocal();msClose();render();showToast((upd?'Updated':'Added')+' — minimum '+q+(msSt?' · '+storeName(msSt):''),'success');msFlush();
 }
 function msDel(id){
   const r=msRows.find(x=>x[0]===id);if(!r)return;
@@ -1172,10 +1303,14 @@ function msDel(id){
 (function msWire(){
   const fi=$('ms-item');
   $('ms-close').onclick=$('ms-cancel').onclick=msClose;$('ms-save').onclick=msSave;
+  $('ms-pills').addEventListener('click',e=>{const b=e.target.closest('[data-mst]');if(!b)return;
+    msSt=b.dataset.mst;msShow();
+    if(msPicked&&!msPicked.edit){const ex=msByItem(msPicked.id);$('ms-qty').value=ex?ex[4]:'';}});
   fi.addEventListener('focus',()=>msDrop(true));
   fi.addEventListener('input',()=>{msPicked=null;msDrop(true);msShow();});
   $('ms-list').addEventListener('mousedown',e=>{const d=e.target.closest('[data-pick]');if(!d)return;e.preventDefault();
-    msPicked=items.find(it=>it.id===d.dataset.pick)||null;if(!msPicked)return;
+    const it=items.find(x=>x.id===d.dataset.pick);if(!it)return;
+    msPicked={itemId:it.id,id:msKey(it.id,msSt),domain:it.domain,label:it.label};
     fi.value=msPicked.label;const ex=msByItem(msPicked.id);$('ms-qty').value=ex?ex[4]:'';
     msDrop(false);msShow();$('ms-qty').focus();$('ms-qty').select();});
   document.addEventListener('click',e=>{if(!e.target.closest('.ms-combo'))msDrop(false);});
@@ -1188,8 +1323,8 @@ function msDel(id){
     if(dl){const id=dl.dataset.mdel;if(msArmed===id){msArmed=null;msDel(id);}else{msArmed=id;msRender();}return;}
     if(msArmed){msArmed=null;msRender();}
   });
-  $('sync-ind').onclick=msFlush;
-  window.addEventListener('online',msFlush);
+  $('sync-ind').onclick=()=>{flushOrders();msFlush();};
+  window.addEventListener('online',()=>{flushOrders();msFlush();});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)msRefresh();});
 })();
 
@@ -1468,36 +1603,29 @@ function checkWarn(){
    · Edit order  → same order row is updated (updateOrder)
    · Returned (outgoing) → NEW order, type Incoming, Note "Returned"  → adds back to stock
    · Claim / Damaged (incoming) → NEW order, type Outgoing, Note "Claim/Damaged" → minus from stock (goes back to the supplier) */
-async function saveEdit(){
+function saveEdit(){
   if(busy||!draft)return;
   const d=draft,o=d.src,out=o.type==='out';
   const ed=d.lines.filter(l=>l.mode==='edit'),rt=d.lines.filter(l=>l.mode==='ret');
   if(d.lines.some(l=>l.mode&&!(l.qty>0)))return showToast('Every quantity must be 1 or more','error');
   const changed=ed.filter(l=>l.qty!==l.orig);
   if(!changed.length&&!rt.length)return showToast('No changes to save','error');
-  const L=l=>({itemId:l.itemId,label:l.label,domain:l.domain,qty:l.qty});
-  busy=true;$('m-save').disabled=true;
-  let step='',msg=[];
-  try{
-    if(changed.length){step='update';
-      await post('updateOrder',{order:{id:o.id,type:o.type,date:o.date,storeId:o.storeId,storeName:o.storeName,partyType:o.partyType,partyId:o.partyId,party:o.party,note:o.note,
-        lines:d.lines.map(l=>({itemId:l.itemId,label:l.label,domain:l.domain,qty:l.mode==='edit'?l.qty:l.orig}))}});
-      msg.push('Order '+o.no+' updated');}
-    if(rt.length){step='return';
-      const j=await post('addOrder',{order:{id:tsId(Date.now()+1),type:out?'in':'out',date:new Date().toISOString().slice(0,10),storeId:o.storeId,storeName:o.storeName,
-        partyType:o.partyType,partyId:o.partyId,party:o.party,note:out?'Returned':'Claim/Damaged',lines:rt.map(L)}});
-      msg.push((out?'Returned':'Claim/Damaged')+' saved'+((j&&j.order&&j.order.no)?': '+j.order.no:''));}
-    await loadOrders(true);closeForm();render();showToast(msg.join(' · '),'success');
-  }catch(e){
-    if(msg.length){await loadOrders(true);render();}
-    console.error('saveEdit failed at',step,e);
-    showToast((step==='return'?'Return/claim not saved: ':'Not saved: ')+errText(e.message)+(msg.length?' ('+msg[0]+')':''),'error');
-  }
-  busy=false;$('m-save').disabled=false;
+  const L=l=>({itemId:l.itemId,label:l.label,domain:l.domain,qty:l.qty}),msg=[];
+  if(changed.length){
+    PENDO.push({kind:'update',order:{id:o.id,type:o.type,date:o.date,storeId:o.storeId,storeName:o.storeName,partyType:o.partyType,partyId:o.partyId,party:o.party,note:o.note,
+      lines:d.lines.map(l=>({itemId:l.itemId,label:l.label,domain:l.domain,qty:l.mode==='edit'?l.qty:l.orig}))}});
+    msg.push('Order '+o.no+' updated');}
+  if(rt.length){
+    PENDO.push({kind:'add',order:{id:tsId(Date.now()+1),type:out?'in':'out',date:new Date().toISOString().slice(0,10),storeId:o.storeId,storeName:o.storeName,
+      partyType:o.partyType,partyId:o.partyId,party:o.party,note:out?'Returned':'Claim/Damaged',lines:rt.map(L)}});
+    msg.push((out?'Returned':'Claim/Damaged')+' saved');}
+  savePO();rebuildOrders();closeForm();render();                                   // impact shows on the spot
+  showToast(msg.join(' · '),'success');
+  flushOrders();
 }
 
 /* ═══ SAVE / DELETE → Google Sheet ═══ */
-async function saveOrder(){
+function saveOrder(){
   if(busy||!draft)return;
   if(draft.id)return saveEdit();
   const d=draft,out=formType==='out',storeId=$('f-store').value,date=$('f-date').value;
@@ -1509,18 +1637,13 @@ async function saveOrder(){
   const st=stores.find(s=>s.id===storeId);
   const tl=out?(types.find(t=>t.k===d.ptype)||{l:d.ptypeLabel||d.ptype}).l:'';
   const order={
-    id:d.id||tsId(Date.now()),type:formType,date,storeId,storeName:st?st.name:(d.storeName||storeId),
+    id:tsId(Date.now()),type:formType,date,storeId,storeName:st?st.name:(d.storeName||storeId),
     partyType:out?tl:supplierKind,partyId:d.party.sid||'',party:d.party.text,
     note:$('f-note').value.trim(),lines:d.lines.map(l=>({itemId:l.itemId,label:l.label,domain:l.domain,qty:l.qty}))};
-  busy=true;$('m-save').disabled=true;
-  try{
-    const j=await post(d.id?'updateOrder':'addOrder',{order});
-    const no=(j&&j.order&&j.order.no)||d.no;
-    await loadOrders(true);
-    closeForm();render();
-    showToast((d.id?'Order updated: ':'Order saved: ')+no,'success');
-  }catch(e){showToast('Not saved: '+errText(e.message),'error');}
-  busy=false;$('m-save').disabled=false;
+  PENDO.push({kind:'add',order});savePO();rebuildOrders();
+  closeForm();render();                                                           // impact shows on the spot (list + stock)
+  showToast('Order saved — '+order.lines.length+' item'+(order.lines.length>1?'s':'')+' · '+order.lines.reduce((a,l)=>a+l.qty,0)+' qty','success');
+  flushOrders();
 }
 let armed=null;
 async function delOrder(id){
@@ -1530,7 +1653,7 @@ async function delOrder(id){
   try{await post('deleteOrder',{ids:[id]});await loadOrders(true);showToast('Order deleted — stock recalculated','success');}
   catch(e){showToast('Not deleted: '+errText(e.message),'error');render();}
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('ov').classList.contains('open'))closeForm();});
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if($('ov').classList.contains('open'))closeForm();else if($('od').classList.contains('open'))closeO();});
 
 
 (async function init(){
@@ -1566,9 +1689,9 @@ PermGate.init({
 /* shared/syncQueue.js — offline hold & sync + cache / sync buttons */
 AP2Sync.init({
   key:'orders',
-  queue:['addOrder','updateOrder','deleteOrder'],
-  extraPending:()=>msGetQ().length,             /* Stock Threshold already keeps its own queue — counted on the same button */
-  extraFlush:()=>msFlush(),
+  queue:['deleteOrder'],                         /* add / update are held by this page's own pending list (like Receipts) */
+  extraPending:()=>msGetQ().length+PENDO.length, /* Stock Threshold and pending orders keep their own queues — counted on the same button */
+  extraFlush:()=>{flushOrders();return msFlush();},
   onSynced:()=>loadOrders(true)
 });
 </script>
