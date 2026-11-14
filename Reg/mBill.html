@@ -905,6 +905,10 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 :is(#pr,#pv,#pv2) .inv .tot .g{font-weight:700}
 :is(#pr,#pv,#pv2) .inv .nt{font-size:11px;white-space:pre-wrap}
 :is(#pr,#pv,#pv2) .inv .ct{font-size:11px;margin-top:2px}
+/* watermark: centred on the bill area (details · items · totals · signatures — header and footer excluded) and sized to it */
+:is(#pr,#pv,#pv2) .inv .ibody{position:relative}
+:is(#pr,#pv,#pv2) .inv .ibody>*:not(.iwm){position:relative;z-index:1}
+:is(#pr,#pv,#pv2) .inv .iwm{position:absolute;left:50%;top:50%;height:75%;width:auto;aspect-ratio:1/1;max-width:60%;transform:translate(-50%,-50%);object-fit:contain;opacity:.1;z-index:0;pointer-events:none}   /* ≈ 3/4 of the bill-area height (a tall bill is capped at 60% of its width) */
 
 /* ═══ combobox: typeable input + arrow + filtered list ═══ */
 .cb{position:relative;width:100%}
@@ -1280,13 +1284,13 @@ function docHTML(b,full){
   const ft=[[CO_PHONE&&'Ph: '+CO_PHONE,CO_EMAIL&&'Email: '+CO_EMAIL].filter(Boolean).join(' ')].filter(Boolean).map(esc).join('<br>');
   return `<div class="inv"><div class="ihd"><div class="ico">${CO_LOGO?`<img class="ilogo" src="${esc(CO_LOGO)}" alt="">`:''}<div><div class="icn">${esc(CO)}</div>${CO_TAG?`<div class="itag">${esc(CO_TAG)}</div>`:''}${contact?`<div class="itag">${contact}</div>`:''}</div></div>
   <div class="itt"><div class="ititle">${T.title}</div><div class="ist">${s[1].toUpperCase()}</div></div></div>
-  <div class="imeta"><div class="ibox"><div class="ilb">${T.to} · ${T.l}</div><div class="ipn">${esc(b.party||'—')}</div>${b.contact?`<div class="ct">${esc(b.contact)}</div>`:''}${b.ref?`<div><b>Ref:</b> ${esc(b.ref)}</div>`:''}</div>
+  <div class="ibody">${CO_LOGO?`<img class="iwm" src="${esc(CO_LOGO)}" alt="">`:''}<div class="imeta"><div class="ibox"><div class="ilb">${T.to} · ${T.l}</div><div class="ipn">${esc(b.party||'—')}</div>${b.contact?`<div class="ct">${esc(b.contact)}</div>`:''}${b.ref?`<div><b>Ref:</b> ${esc(b.ref)}</div>`:''}</div>
   <div class="ibox"><table class="mt"><tr><td>${b.type==='vendor'?'Bill No':'Invoice No'}</td><td><b>${esc(b.no)}</b></td></tr><tr><td>Date</td><td>${esc(b.date)}</td></tr><tr><td>Currency</td><td>${esc(CUR)}</td></tr></table></div></div>
   <table class="it"><thead><tr><th style="width:32px">#</th><th>Description</th><th class="n">Qty</th><th class="n">Rate</th><th class="n">Amount</th></tr></thead><tbody>${
     b.lines.length?b.lines.map((l,i)=>`<tr><td>${i+1}</td><td>${esc(l.item)}</td><td class="n">${l.qty}</td><td class="n">${money(l.rate)}</td><td class="n">${money(r2(l.qty*l.rate))}</td></tr>`).join(''):'<tr><td>1</td><td>&nbsp;</td><td class="n"></td><td class="n"></td><td class="n"></td></tr>'}</tbody></table>
   <div class="ibot"><div class="iwords"><div class="w"><b>Amount in words</b>${esc(amtWords(t.total))}</div>${b.note?`<div class="w"><b>Notes</b><div class="nt">${esc(b.note)}</div></div>`:''}${t.paid?`<div class="pay"><b>Payment</b>${money(t.paid)} received · ${esc(b.pmode||'')}</div>`:''}</div>
   <div class="tot">${totsHTML(b,t,true)}</div></div>`
-  +(full?`<div class="sig"><span>Prepared by</span><span>Received by</span><div style="width:30%;text-align:center">${CO_STAMP?`<img src="${esc(CO_STAMP)}" alt="">`:''}<span style="display:block;width:100%">Authorized Signature &amp; Stamp</span></div></div><div class="ift"><b>Thank you for your business. ${esc(CO)}</b><br>${ft}</div>`:'')
+  +(full?`<div class="sig"><span>Prepared by</span><span>Received by</span><div style="width:30%;text-align:center">${CO_STAMP?`<img src="${esc(CO_STAMP)}" alt="">`:''}<span style="display:block;width:100%">Authorized Signature &amp; Stamp</span></div></div>`:'')+`</div>`+(full?`<div class="ift"><b>Thank you for your business. ${esc(CO)}</b><br>${ft}</div>`:'')
   +`</div>`;
 }
 /* Print in its own window (window.print() inside a shell would print the whole shell) */
