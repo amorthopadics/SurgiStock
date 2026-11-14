@@ -908,7 +908,7 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 /* watermark: centred on the bill area (details · items · totals · signatures — header and footer excluded) and sized to it */
 :is(#pr,#pv,#pv2) .inv .ibody{position:relative}
 :is(#pr,#pv,#pv2) .inv .ibody>*:not(.iwm){position:relative;z-index:1}
-:is(#pr,#pv,#pv2) .inv .iwm{position:absolute;left:50%;top:50%;height:75%;width:auto;aspect-ratio:1/1;max-width:60%;transform:translate(-50%,-50%);object-fit:contain;opacity:.1;z-index:0;pointer-events:none}   /* ≈ 3/4 of the bill-area height (a tall bill is capped at 60% of its width) */
+:is(#pr,#pv,#pv2) .inv .iwm{position:absolute;left:50%;top:50%;width:50%;height:auto;aspect-ratio:1/1;max-height:90%;transform:translate(-50%,-50%);object-fit:contain;opacity:.09;z-index:0;pointer-events:none}   /* full colour, 9% opacity (the look you approved) · ≈ 44% of the bill width · centred on the bill area */
 
 /* ═══ combobox: typeable input + arrow + filtered list ═══ */
 .cb{position:relative;width:100%}
