@@ -934,12 +934,12 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 <div id="hold" hidden>
 <!-- NEW BILL -->
 <div class="doc-preview-panel" id="ov"><div class="om" role="dialog" aria-label="New bill">
-  <div class="mh"><div id="w-type"><div class="bw-caps" id="bw-caps"></div><select id="f-type" style="display:none" onchange="f.ptype=this.value;f.party='';fillNames();rOrders();rTypeCaps()"></select></div>
+  <div class="mh"><div id="w-type"><div class="bw-caps" id="bw-caps"></div><select id="f-type" style="display:none" onchange="f.ptype=this.value;f.party='';resetAmts();fillNames();rOrders();rTypeCaps()"></select></div>
     <label class="bw-d" title="Bill date"><i class="ti ti-calendar"></i><input type="date" id="f-date"/></label>
     <button type="button" class="ib x" title="Close" aria-label="Close" onclick="closeForm()"><i class="ti ti-x"></i></button></div>
   <div class="mb">
     <div class="fg">
-      <div class="bw-f"><i class="ti ti-user"></i><select id="f-party" aria-label="Name" onchange="f.party=this.value;rOrders()"></select></div>
+      <div class="bw-f"><i class="ti ti-user"></i><select id="f-party" aria-label="Name" onchange="f.party=this.value;resetAmts();rOrders()"></select></div>
       <div class="bw-f"><i class="ti ti-notes"></i><input id="f-note" placeholder="Note…" aria-label="Reference / note" autocomplete="off"/></div>
     </div>
     <div class="bw-box">
@@ -1663,7 +1663,7 @@ function fillTypes(){const m=new Map(f.dir==='out'?types.map(t=>[t.k,t.l]):[]);o
   const cur=f.ptype;$('f-type').innerHTML='<option value="">All types</option>'+[...m].filter(([k,l])=>k&&l).sort((a,b)=>a[1].localeCompare(b[1])).map(([k,l])=>`<option value="${esc(l)}">${esc(l)}</option>`).join('');$('f-type').value=cur;rTypeCaps();}
 const tIcon=l=>{const n=norm(l);return /doctor|dr\b|physician|surgeon/.test(n)?'ti-stethoscope':/hospital|clinic/.test(n)?'ti-building-hospital':/vendor|supplier/.test(n)?'ti-truck':'ti-user';};
 function rTypeCaps(){$('bw-caps').innerHTML=[...$('f-type').options].filter(o=>o.value).map(o=>`<button type="button" class="bw-cap${norm(o.value)===norm(f.ptype||'')?' on':''}" data-v="${esc(o.value)}"><i class="ti ${tIcon(o.value)}"></i>${esc(o.value)}</button>`).join('');}
-$('bw-caps').addEventListener('click',e=>{const c=e.target.closest('.bw-cap');if(!c)return;const v=c.dataset.v;f.ptype=norm(f.ptype||'')===norm(v)?'':v;f.party='';$('f-type').value=f.ptype;fillNames();rOrders();rTypeCaps();});
+$('bw-caps').addEventListener('click',e=>{const c=e.target.closest('.bw-cap');if(!c)return;const v=c.dataset.v;f.ptype=norm(f.ptype||'')===norm(v)?'':v;f.party='';resetAmts();$('f-type').value=f.ptype;fillNames();rOrders();rTypeCaps();});
 function bwTab(k){['o','i','p'].forEach(x=>{$('bw-p-'+x).style.display=x===k?'':'none';$('bw-t-'+x).classList.toggle('on',x===k);});$('bw-sel').style.visibility=k==='o'?'':'hidden';if(k==='p')rPrev();}
 function fillNames(){const gate=!f.ptype&&!f.party;      // Type must be chosen first (Outgoing and Incoming)
   const fromOrders=orders.filter(o=>kd(o,f.dir)&&tm(o)).map(o=>o.party);
@@ -1781,8 +1781,12 @@ const Ledger=LEDGER_BACKEND?{get:async()=>{await freshLedger();return{};},post:(
 
 /* ═══ ACCOUNTS: other charges + one Charge row per order (add-only ledger) ═══ */
 const exT=()=>r2(f.extras.reduce((a,x)=>a+(+x.amt||0),0));
+function resetAmts(){f.rates={};f.od={};f.extras=[];rEx();}   /* Type / Name switched → every rate, discount, VAT and other charge starts again */
+const exUsed=skip=>new Set(f.extras.map((x,i)=>i===skip?'':norm(x.desc)).filter(Boolean));
+function exDL(skip){$('ex-dl').innerHTML=['Fuel','Delivery','Assistance'].filter(n=>!exUsed(skip).has(norm(n))).map(n=>`<option>${n}</option>`).join('');}
+function exDesc(i,el){const v=el.value.trim();if(v&&exUsed(i).has(norm(v))){showToast('"'+v+'" is already added — each charge can be used once','error');el.value='';f.extras[i].desc='';}exDL(i);}
 function addEx(){f.extras.push({desc:'',amt:''});rEx();}
-function rEx(){$('f-ex').innerHTML=f.extras.map((x,i)=>`<div style="display:flex;gap:8px;margin-bottom:6px"><input list="ex-dl" placeholder="Description" value="${esc(x.desc)}" oninput="f.extras[${i}].desc=this.value"/><input type="number" min="0" step="any" placeholder="Amount" value="${esc(x.amt)}" style="max-width:140px" oninput="f.extras[${i}].amt=this.value;tot()"/><button class="btn sm" type="button" onclick="f.extras.splice(${i},1);rEx();tot()"><i class="ti ti-x"></i></button></div>`).join('');}
+function rEx(){$('f-ex').innerHTML=f.extras.map((x,i)=>`<div style="display:flex;gap:8px;margin-bottom:6px"><input list="ex-dl" placeholder="Description" value="${esc(x.desc)}" oninput="f.extras[${i}].desc=this.value" onfocus="exDL(${i})" onchange="exDesc(${i},this)"/><input type="number" min="0" step="any" placeholder="Amount" value="${esc(x.amt)}" style="max-width:140px" oninput="f.extras[${i}].amt=this.value;tot()"/><button class="btn sm" type="button" onclick="f.extras.splice(${i},1);rEx();tot()"><i class="ti ti-x"></i></button></div>`).join('');}
 /* ═══ SAVE — same as Orders: the bill shows on the spot (list, unbilled → billed) and is posted to the sheet in the background ═══ */
 function saveBill(pr){
   if(busy)return;
@@ -1853,7 +1857,7 @@ const docHTML=(b,full)=>{const t=tb(b),p=paidOf(b),os=b.oids.map(i=>orders.find(
   return `<div class="inv"><div class="ihd"><div class="ico">${CO_LOGO?`<img class="ilogo" src="${esc(CO_LOGO)}" alt="">`:''}<div><div class="icn">${esc(CO)}</div>${CO_TAG?`<div class="itag">${esc(CO_TAG)}</div>`:''}${contact?`<div class="itag">${contact}</div>`:''}</div></div>
   <div class="itt"><div class="ititle">${out?'INVOICE':'PURCHASE BILL'}</div><div class="ist">${esc(st[1].toUpperCase())}</div></div></div>
   <div class="ibody">${CO_LOGO?`<img class="iwm" src="${esc(CO_LOGO)}" alt="">`:''}<div class="imeta"><div class="ibox"><div class="ilb">${out?'Bill to':'Supplier'}</div><div class="ipn">${esc(b.party)}</div>${b.ptype?`<div>${esc(b.ptype)}</div>`:''}${b.note?`<div><b>Ref:</b> ${esc(b.note)}</div>`:''}</div>
-  <div class="ibox"><table class="mt"><tr><td>Invoice No</td><td><b>${esc(no)}</b></td></tr><tr><td>Date</td><td>${esc(b.date)}</td></tr>${b.no&&b.no!==no?`<tr><td>Bill Ref</td><td>${esc(b.no)}</td></tr>`:''}<tr><td>Currency</td><td>${esc(CUR)}</td></tr></table></div></div>
+  <div class="ibox"><table class="mt"><tr><td>Invoice No</td><td><b>${esc(no)}</b></td></tr><tr><td>Date</td><td>${esc(b.date)}</td></tr>${b.no&&b.no!==no?`<tr><td>Bill Ref</td><td>${esc(b.no)}</td></tr>`:''}</table></div></div>
   <table class="it"><thead><tr><th style="width:32px">#</th><th>Description</th>${hr?'<th class="n">Ordered</th><th class="n">Returned</th>':''}<th class="n">Qty</th><th class="n">Rate</th><th class="n">Amount</th></tr></thead><tbody>${b.lines.map((l,i)=>`<tr><td>${i+1}</td><td>${esc(l.label)}</td>${hr?`<td class="n">${l.oq}</td><td class="n">${l.rq||''}</td>`:''}<td class="n">${l.oq-l.rq}</td><td class="n">${money(l.rate)}</td><td class="n">${money((l.oq-l.rq)*l.rate)}</td></tr>`).join('')}</tbody></table>
   <div class="ibot"><div class="iwords"><div class="w"><b>Amount in words</b>${esc(amtWords(t.total))}</div>
   ${(ps.length||al.length)?`<div class="pay"><b>Payments received</b>${ps.map(x=>`<div>${esc(x.date)} · ${esc(x.mode)}${x.ref?' · '+esc(x.ref):''} · ${money(x.amount)}</div>`).join('')}${al.map(x=>`<div>${esc(x.date)} · Receipt ${esc(x.rno)}${x.orderNo?' · '+esc(x.orderNo):''} · ${money(x.amount)}</div>`).join('')}</div>`:''}</div>

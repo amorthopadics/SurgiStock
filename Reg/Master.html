@@ -1999,7 +1999,7 @@ function prLoad(key){
   pdraft.src = key; const sel = dcPanelEl().querySelector('[data-prsrc]'); if (sel) sel.value = key;
   pdraft.rows = pdraft.rows.filter(r => r.manual || r.on);
   const have = new Set(pdraft.rows.map(r => dupNorm(r.label)));
-  g.items.filter(e => e.status==='active' && !have.has(dupNorm(e.label))).forEach(e => { const r = prNew(e.label, false, g.name); r.on = true; r.qty = '1'; pdraft.rows.push(r); });   // whole DC selected, Qty 1 — untick what is not needed
+  g.items.filter(e => { const k = dupNorm(e.label); if (e.status!=='active' || have.has(k)) return false; have.add(k); return true; }).forEach(e => { const r = prNew(e.label, false, g.name); r.on = true; r.qty = '1'; pdraft.rows.push(r); });   // whole DC selected, Qty 1 — untick what is not needed
   fillPrRows();
 }
 /* "5" → 6 · "5-10" → "6-11" · empty + → 1 */
@@ -2110,33 +2110,37 @@ function doPrint(){
   if (!rows.length) return showToast('Nothing to print — tick or add at least one item','error');
   const contact = [CO_ADDR, CO_TRN && 'NTN NO: ' + CO_TRN].filter(Boolean).map(esc).join('<br>');
   const ft = [[CO_PHONE && 'Ph: ' + CO_PHONE, CO_EMAIL && 'Email: ' + CO_EMAIL].filter(Boolean).join(' ')].filter(Boolean).map(esc).join('<br>');
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(d.name.trim() || 'Delivery Challan')}</title><style>
-    *{box-sizing:border-box;} html,body{margin:0;height:auto;} html{background:#fff;} body{font-family:Arial,Helvetica,sans-serif;color:#000;font-size:13px;}
-    @page{size:A4;margin:8mm;} .doc{padding:6mm 8mm;position:relative;}
+  const nm = d.name.trim() || 'Delivery Challan';
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(nm)}</title><style>
+    *{box-sizing:border-box;} html,body{margin:0;height:auto;} html{background:#fff;} body{font-family:Arial,Helvetica,sans-serif;color:#000;font-size:12px;line-height:1.45;}
+    @page{size:A4;margin:8mm;} .doc{padding:6mm 8mm;}
+    .doc{position:relative;}
+    /* watermark: centred on the document area (details · items · totals · signatures — header and footer excluded) and sized to it */
+    .ibody{position:relative;} .ibody>*:not(.iwm){position:relative;z-index:1;}
+    .iwm{position:absolute;top:50%;left:50%;width:70%;max-width:560px;height:auto;max-height:90%;object-fit:contain;transform:translate(-50%,-50%);opacity:.09;z-index:0;pointer-events:none;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     .ihd{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:3px solid #000;padding-bottom:10px;margin-bottom:12px;}
     .ico{display:flex;gap:12px;align-items:center;} .ilogo{max-height:64px;max-width:120px;object-fit:contain;}
     .icn{font-size:22px;font-weight:700;letter-spacing:.3px;} .itag{font-size:10px;margin-top:2px;}
     .itt{text-align:right;flex-shrink:0;} .ititle{font-size:24px;font-weight:700;letter-spacing:2px;white-space:nowrap;}
+    .imeta{display:flex;gap:12px;margin-bottom:12px;} .ibox{flex:1;border:1px solid #888;border-radius:6px;padding:8px 10px;}
+    .ilb{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #ccc;padding-bottom:3px;margin-bottom:5px;} .ipn{font-size:15px;font-weight:700;}
+    table{width:100%;border-collapse:collapse;} table.mt td{border:0;padding:2px 0;} table.mt td:first-child{width:38%;font-weight:700;}
+    table.it{border:1px solid #000;margin-bottom:10px;} table.it th,table.it td{border:1px solid #888;padding:6px 8px;text-align:left;vertical-align:top;}
+    table.it th{background:#e9e9e9;font-size:11px;text-transform:uppercase;letter-spacing:.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    table.it td.n,table.it th.n{text-align:center;} table.it tr{page-break-inside:avoid;}
+    .sig{display:flex;justify-content:space-between;align-items:flex-end;margin-top:34px;page-break-inside:avoid;}
+    .sig>span{border-top:1px solid #000;padding-top:4px;width:30%;text-align:center;font-size:11px;} .sig .st{width:30%;text-align:center;} .sig .st span{display:block;width:100%;border-top:1px solid #000;padding-top:4px;font-size:11px;} .sig img{max-height:90px;max-width:150px;}
     .ift{margin-top:18px;padding-top:8px;border-top:1px solid #000;text-align:center;font-size:10.5px;}
-    /* watermark: centred on the document area (details · items · totals · signatures — header and footer excluded) and sized to it */
-    .ibody{position:relative;} .ibody>*:not(.iwm){position:relative;z-index:1;}
-    .iwm{position:absolute;top:50%;left:50%;width:70%;max-width:560px;height:auto;max-height:90%;object-fit:contain;transform:translate(-50%,-50%);opacity:.09;z-index:0;pointer-events:none;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    .meta{display:flex;justify-content:space-between;align-items:baseline;border-top:2px solid #000;border-bottom:1px solid #000;padding:8px 2px;margin:10px 0 14px;}
-    .meta b{font-size:16px;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #444;padding:7px 9px;text-align:left;vertical-align:top;}
-    th{background:#eee;font-size:12px;text-transform:uppercase;letter-spacing:.04em;-webkit-print-color-adjust:exact;print-color-adjust:exact;} td.n,th.n{width:44px;text-align:center;} td.q,th.q{width:90px;text-align:center;} tr{page-break-inside:avoid;}
-    .sg{display:flex;gap:10mm;margin-top:14mm;page-break-inside:avoid;} .sg>div{flex:1;}
-    .sg h4{margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;}
-    .sg .bx{height:26mm;border:1px solid #444;display:flex;align-items:center;justify-content:center;font-size:10px;color:#777;} .sg .bx img{max-height:24mm;max-width:90%;object-fit:contain;}
-    .sg .ln{border-top:1px solid #000;margin-top:11mm;padding-top:3px;font-size:11px;} .sg .nm{margin-top:7mm;font-size:11px;border-top:1px solid #000;padding-top:3px;} .sg .dt{margin-top:7mm;font-size:11px;border-top:1px solid #000;padding-top:3px;}
+    @media screen{.doc{max-width:794px;margin:0 auto;} .pbtn{display:block;margin:12px auto;padding:10px 22px;font:600 15px Arial,sans-serif;border:0;border-radius:8px;background:#0550ae;color:#fff;cursor:pointer;}}
+    @media screen and (max-width:700px){.ihd,.imeta{flex-direction:column;} .itt{text-align:left;}}
+    @media print{.pbtn{display:none!important;}}
   </style></head><body><div class="doc">
   <div class="ihd"><div class="ico">${CO_LOGO ? `<img class="ilogo" src="${esc(CO_LOGO)}" alt="">` : ''}<div><div class="icn">${esc(CO)}</div>${contact ? `<div class="itag">${contact}</div>` : ''}</div></div>
     <div class="itt"><div class="ititle">DELIVERY CHALLAN</div></div></div>
-  <div class="ibody">${CO_LOGO ? `<img class="iwm" src="${esc(CO_LOGO)}" alt="">` : ''}<div class="meta"><b>${esc(d.name.trim() || 'Delivery Challan')}</b><span>${esc(fmtDate(Date.now()))}</span></div>
-  <table><thead><tr><th class="n">#</th><th>Item</th><th class="q">Qty</th></tr></thead><tbody>${rows.map((r,i) => `<tr><td class="n">${i+1}</td><td>${esc(r.label.trim())}</td><td class="q">${esc(String(r.qty||'').trim())}</td></tr>`).join('')}</tbody></table>
-  <div class="sg">
-    <div><h4>Delivered by</h4><div class="bx">${CO_STAMP ? `<img src="${esc(CO_STAMP)}" alt="">` : 'Stamp'}</div><div class="ln">Signature (Delivery Person) *</div><div class="nm">Name:</div><div class="dt">Date:</div></div>
-    <div><h4>Received by</h4><div class="bx">Receiver Stamp</div><div class="ln">Signature (Receiver) *</div><div class="nm">Name:</div><div class="dt">Date:</div></div>
-  </div></div>
+  <div class="ibody">${CO_LOGO ? `<img class="iwm" src="${esc(CO_LOGO)}" alt="">` : ''}<div class="imeta"><div class="ibox"><div class="ilb">DC Name</div><div class="ipn">${esc(nm)}</div></div>
+    <div class="ibox"><table class="mt"><tr><td>Date</td><td><b>${esc(fmtDate(Date.now()))}</b></td></tr><tr><td>Total Items</td><td>${rows.length}</td></tr></table></div></div>
+  <table class="it"><thead><tr><th class="n" style="width:36px">#</th><th>Description</th><th class="n" style="width:90px">Qty</th></tr></thead><tbody>${rows.map((r,i) => `<tr><td class="n">${i+1}</td><td>${esc(r.label.trim())}</td><td class="n">${esc(String(r.qty||'').trim())}</td></tr>`).join('')}</tbody></table>
+  <div class="sig"><span>Prepared by</span><span>Received by</span><div class="st">${CO_STAMP ? `<img src="${esc(CO_STAMP)}" alt="">` : ''}<span>Authorized Signature &amp; Stamp</span></div></div></div>
   <div class="ift"><b>Thank you for your business. ${esc(CO)}</b><br>${ft}</div></div></body></html>`;
   const f = document.createElement('iframe');
   f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';

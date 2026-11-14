@@ -1955,7 +1955,7 @@ function prLoad(key){
   const g = dcGroups((data.dclist||[]).filter(e => dcKey(e.dcName)===key))[0]; if (!g) return;
   pdraft.src = key;
   const have = new Set(pdraft.rows.map(r => dupNorm(r.label))); let n = 0;
-  g.items.filter(e => e.status==='active' && !have.has(dupNorm(e.label))).forEach(e => { pdraft.rows.push(prNew(e.label, false, g.name)); n++; });
+  g.items.filter(e => { const k = dupNorm(e.label); if (e.status!=='active' || have.has(k)) return false; have.add(k); return true; }).forEach(e => { pdraft.rows.push(prNew(e.label, false, g.name)); n++; });
   const sel = dcPanelEl().querySelector('[data-prsrc]');
   if (sel){ sel.value = ''; sel.options[0].textContent = '+ Add another DC…'; }
   fillPrRows();

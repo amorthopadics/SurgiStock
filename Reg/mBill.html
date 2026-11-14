@@ -1070,7 +1070,10 @@ function fillLists(){ if(window.cbRefresh)cbRefresh(); }
 
 
 /* ═══ COMBOBOX — click the arrow (or focus the box) to see the whole list; typing filters it; click / Enter picks ═══ */
-const cbSrc=k=>k==='party'?partyList(st.type):k==='item'?[...new Set(items.map(i=>i.label))].sort((a,b)=>a.localeCompare(b)):charges.slice();
+const cbRowIdx=(sel)=>{const r=CB.inp&&CB.inp.closest(sel);return r&&r.parentElement?[...r.parentElement.children].indexOf(r):-1;};
+const usedItems=skip=>new Set(st.lines.map((l,i)=>i===skip?'':norm(l.item)).filter(Boolean));
+const usedSvc=skip=>new Set(st.svc.map((x,i)=>i===skip?'':norm(x.desc)).filter(Boolean));
+const cbSrc=k=>k==='party'?partyList(st.type):k==='item'?(u=>[...new Set(items.map(i=>i.label))].filter(n=>!u.has(norm(n))).sort((a,b)=>a.localeCompare(b)))(usedItems(cbRowIdx('tr'))):(u=>charges.filter(n=>!u.has(norm(n))))(usedSvc(cbRowIdx('.srow')));
 const CB={p:null,inp:null,all:[],list:[],i:-1,skipFocus:false,addQ:null};
 function cbPanel(){if(!CB.p){const d=document.createElement('div');d.className='cb-panel';d.addEventListener('mousedown',e=>{e.preventDefault();const ad=e.target.closest('.di[data-add]');if(ad){cbAddNew(ad.dataset.add);return;}const o=e.target.closest('.di[data-v]');if(o)cbPick(o.dataset.v);});document.body.appendChild(d);CB.p=d;}return CB.p;}
 function cbAnchor(inp){return inp.parentElement;}
@@ -1287,7 +1290,7 @@ function docHTML(b,full){
   return `<div class="inv"><div class="ihd"><div class="ico">${CO_LOGO?`<img class="ilogo" src="${esc(CO_LOGO)}" alt="">`:''}<div><div class="icn">${esc(CO)}</div>${CO_TAG?`<div class="itag">${esc(CO_TAG)}</div>`:''}${contact?`<div class="itag">${contact}</div>`:''}</div></div>
   <div class="itt"><div class="ititle">${T.title}</div><div class="ist">${s[1].toUpperCase()}</div></div></div>
   <div class="ibody">${CO_LOGO?`<img class="iwm" src="${esc(CO_LOGO)}" alt="">`:''}<div class="imeta"><div class="ibox"><div class="ilb">${T.to} · ${T.l}</div><div class="ipn">${esc(b.party||'—')}</div>${b.contact?`<div class="ct">${esc(b.contact)}</div>`:''}${b.ref?`<div><b>Ref:</b> ${esc(b.ref)}</div>`:''}</div>
-  <div class="ibox"><table class="mt"><tr><td>${b.type==='vendor'?'Bill No':'Invoice No'}</td><td><b>${esc(b.no)}</b></td></tr><tr><td>Date</td><td>${esc(b.date)}</td></tr><tr><td>Currency</td><td>${esc(CUR)}</td></tr></table></div></div>
+  <div class="ibox"><table class="mt"><tr><td>${b.type==='vendor'?'Bill No':'Invoice No'}</td><td><b>${esc(b.no)}</b></td></tr><tr><td>Date</td><td>${esc(b.date)}</td></tr></table></div></div>
   <table class="it"><thead><tr><th style="width:32px">#</th><th>Description</th><th class="n">Qty</th><th class="n">Rate</th><th class="n">Amount</th></tr></thead><tbody>${
     b.lines.length?b.lines.map((l,i)=>`<tr><td>${i+1}</td><td>${esc(l.item)}</td><td class="n">${l.qty}</td><td class="n">${money(l.rate)}</td><td class="n">${money(r2(l.qty*l.rate))}</td></tr>`).join(''):'<tr><td>1</td><td>&nbsp;</td><td class="n"></td><td class="n"></td><td class="n"></td></tr>'}</tbody></table>
   <div class="ibot"><div class="iwords"><div class="w"><b>Amount in words</b>${esc(amtWords(t.total))}</div>${b.note?`<div class="w"><b>Notes</b><div class="nt">${esc(b.note)}</div></div>`:''}${t.paid?`<div class="pay"><b>Payment</b>${money(t.paid)} received · ${esc(b.pmode||'')}</div>`:''}</div>
@@ -1330,7 +1333,7 @@ function drawForm(){
     <label class="bw-d" title="Bill date"><i class="ti ti-calendar"></i><input type="date" id="f-date" value="${esc(st.date)}" oninput="set('date',this.value)"/></label></div>
   <div class="mb">
     <div class="r3">
-      <div class="bw-f"><i class="ti ti-user"></i><input id="f-party" data-cb="party" value="${esc(st.party)}" placeholder="Select or type ${T[st.type].l.toLowerCase()} name…" autocomplete="off" oninput="set('party',this.value)"/><button type="button" class="cb-arrow" tabindex="-1" aria-label="Show list" title="Show list"><i class="ti ti-chevron-down"></i></button></div>
+      <div class="bw-f"><i class="ti ti-user"></i><input id="f-party" data-cb="party" value="${esc(st.party)}" placeholder="Select or type ${T[st.type].l.toLowerCase()} name…" autocomplete="off" oninput="set('party',this.value)" onchange="partyChanged(this.value)"/><button type="button" class="cb-arrow" tabindex="-1" aria-label="Show list" title="Show list"><i class="ti ti-chevron-down"></i></button></div>
       <div class="bw-f"><i class="ti ti-phone"></i><input id="f-contact" value="${esc(st.contact)}" placeholder="Phone / address (optional)" autocomplete="off" oninput="set('contact',this.value)"/></div>
       <div class="bw-f"><i class="ti ti-notes"></i><input id="f-ref" value="${esc(st.ref)}" placeholder="Reference / PO no." autocomplete="off" oninput="set('ref',this.value)"/></div>
     </div>
@@ -1369,10 +1372,15 @@ function upd(){
   fxRefresh();
 }
 function set(k,v){st[k]=v;upd();}
+function partyChanged(v){const n=norm(v),p=st._pp||'';if(p&&n!==p){resetAmts();drawForm();}st._pp=n;}
+function resetAmts(){   /* Doctor / Customer / Vendor or Name switched → rates, charges, discount, tax and paid start again */
+  st.lines.forEach(l=>l.rate='');st.svc.forEach(x=>x.v='');st.disc='';st.vat='';st.paid='';
+}
 function setType(k){
+  if(k!==st.type){st.party='';st.contact='';resetAmts();st._pp='';}
   st.type=k;cbClose();
   document.querySelectorAll('#caps .bw-cap').forEach(b=>b.classList.toggle('on',b.dataset.k===k));
-  fillLists();$('f-party').placeholder='Select or type '+TYPES[k].l.toLowerCase()+' name…';upd();
+  fillLists();drawForm();upd();
 }
 function noToggle(){
   if(st.auto){st.auto=false;st.no=curBill().no;}else{st.auto=true;}
@@ -1405,7 +1413,9 @@ function lastRate(name,party,onlyParty){
   return'';
 }
 function pickItem(i,v){   // item chosen → fill the rate you used last time
-  const l=st.lines[i];if(!l||l.rate!=='')return;
+  const l=st.lines[i];if(!l)return;
+  if(v.trim()&&usedItems(i).has(norm(v))){showToast('"'+v.trim()+'" is already on this bill — change its quantity instead','error');l.item='';const e=$('lines').children[i].querySelector('input[data-cb]');if(e)e.value='';upd();return;}
+  if(l.rate!=='')return;
   const fr=st.party.trim()?rateFor(partyType(st.party),st.party,v):null;
   let r=lastRate(v,st.party,!!fr);if(r===''&&fr&&fr.min===fr.max)r=fr.min;   // fixed rate: this party's last rate (or the single fixed value)
   if(r==='')return;
@@ -1413,13 +1423,14 @@ function pickItem(i,v){   // item chosen → fill the rate you used last time
 }
 /* service charges */
 function drawSvc(){
-  $('svc').innerHTML=st.svc.map((s,i)=>`<div class="srow"><div class="cb d"><input data-cb="svc" value="${esc(s.desc)}" placeholder="Select or type charge…" autocomplete="off" oninput="sv(${i},'desc',this.value)"/><button type="button" class="cb-arrow" tabindex="-1" aria-label="Show list" title="Show list"><i class="ti ti-chevron-down"></i></button></div>
+  $('svc').innerHTML=st.svc.map((s,i)=>`<div class="srow"><div class="cb d"><input data-cb="svc" value="${esc(s.desc)}" placeholder="Select or type charge…" autocomplete="off" oninput="sv(${i},'desc',this.value)" onchange="svDup(${i},this)"/><button type="button" class="cb-arrow" tabindex="-1" aria-label="Show list" title="Show list"><i class="ti ti-chevron-down"></i></button></div>
     <select onchange="sv(${i},'t',this.value)"><option value="amt"${s.t==='amt'?' selected':''}>${CUR}</option><option value="pct"${s.t==='pct'?' selected':''}>%</option></select>
     <input type="number" min="0" step="any" inputmode="decimal" value="${esc(s.v)}" placeholder="Value" oninput="sv(${i},'v',this.value)"/>
     <button class="btn sm" type="button" title="Remove" onclick="delSvc(${i})"><i class="ti ti-x"></i></button></div>`).join('')||'<div class="hint">None yet — pick from the Add Charges list (amount, or % of net)</div>';
   upd();
 }
 function sv(i,k,v){st.svc[i][k]=v;upd();}
+function svDup(i,el){const v=el.value.trim();if(v&&usedSvc(i).has(norm(v))){showToast('"'+v+'" is already added — each charge can be used once','error');el.value='';st.svc[i].desc='';upd();}}
 function addSvc(){st.svc.push({desc:'',t:'amt',v:''});drawSvc();const r=$('svc').lastElementChild;if(r)r.querySelector('input').focus();}
 function delSvc(i){st.svc.splice(i,1);drawSvc();}
 
