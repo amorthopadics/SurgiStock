@@ -288,6 +288,7 @@ tr.blink-row>td:first-child{box-shadow:inset 2px 0 0 var(--accent);}
 .log-table th:hover{color:var(--accent);}
 .log-table td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
 .log-table tbody tr:hover{background:var(--surface2);}
+.log-table tr.row{cursor:pointer}
 .txn-mono{font-family:var(--mono);font-size:10.5px;color:var(--accent);}
 .portal-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:20px;font-size:9.5px;font-weight:700;}
 .doc-link-btn{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:var(--radius);background:var(--accent-dim);color:var(--accent);border:1px solid rgba(88,166,255,.25);font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .14s;}
@@ -820,9 +821,6 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 :is(#pr,#pv,#fpv) .inv table.mt{border:0}
 :is(#pr,#pv,#fpv) .inv table.mt td{border:0;padding:2px 0;font-size:12px}
 :is(#pr,#pv,#fpv) .inv table.mt td:first-child{width:38%;font-weight:700}
-:is(#pr,#pv,#fpv) .inv .iwm{position:relative;margin-bottom:10px}
-:is(#pr,#pv,#fpv) .inv .iwm table.it{margin-bottom:0}
-:is(#pr,#pv,#fpv) .inv .iwmk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);max-width:55%;max-height:75%;object-fit:contain;opacity:.09;filter:grayscale(1);pointer-events:none;z-index:2;background:transparent!important}
 :is(#pr,#pv,#fpv) .inv table.it{border:1px solid #000;margin-bottom:10px}
 :is(#pr,#pv,#fpv) .inv table.it th,:is(#pr,#pv,#fpv) .inv table.it td{border:1px solid #888;padding:6px 8px;font-size:12px;text-align:left}
 :is(#pr,#pv,#fpv) .inv table.it th{background:#e9e9e9!important;font-size:11px;text-transform:uppercase;letter-spacing:.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -840,6 +838,12 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 :is(#pr,#pv,#fpv) .inv .sig img{max-height:90px;max-width:150px}
 :is(#pr,#pv,#fpv) .inv .ift{margin-top:18px;padding-top:8px;border-top:1px solid #000;text-align:center;font-size:10.5px}
 @media print{@page{margin:8mm}body>*:not(#pr){display:none!important}html,body{height:auto;overflow:visible}#pr{display:block}}
+/* watermark: centred on the bill area (details · items · totals · signatures — header and footer excluded) and sized to it */
+:is(#pr,#pv,#fpv) .inv .ibody{position:relative}
+:is(#pr,#pv,#fpv) .inv .ibody>*:not(.iwm){position:relative;z-index:1}
+/* the blanket white background on #pr * would paint over the watermark — let the bill body show through (table header grey keeps its own rule) */
+:is(#pr,#pv,#fpv) .inv .ibody *{background:transparent!important}
+:is(#pr,#pv,#fpv) .inv .iwm{position:absolute;top:50%;left:50%;width:70%;max-width:560px;height:auto;max-height:90%;object-fit:contain;transform:translate(-50%,-50%);opacity:.09;z-index:0;pointer-events:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .sk{height:34px;border-radius:6px;margin-bottom:8px;background:linear-gradient(90deg,var(--bg3),var(--surface),var(--bg3));background-size:200% 100%;animation:sk 1.2s linear infinite}@keyframes sk{to{background-position:-200% 0}}
 </style>
 </head>
@@ -1565,11 +1569,11 @@ function render(){
   const L=bills.filter(b=>(tab==='all'||b.dir===tab)&&scOk(tab,b.dir)&&match(q,[b.no,b.party,b.ptype,b.note,b.oids.map(i=>(orders.find(o=>o.id===i)||{}).no).join(' '),b.lines.map(l=>l.label).join(' ')].join(' ')));
   V().innerHTML=kpi+(L.length?`<table class="log-table"><thead><tr><th>Bill No</th><th>Date</th><th>Party</th><th class="n">Orders</th><th class="n">Total</th><th class="n">Paid</th><th class="n">Balance</th><th>Status</th><th></th></tr></thead><tbody>${L.map(b=>{
     const t=tb(b).total,p=paidOf(b),s=stOf(b),dr=drift(b).length;
-    return `<tr><td class="mono">${esc(b.no)} <span class="badge ${b.dir}">${b.dir==='out'?'Out':'In'}</span>${b.pending?' <span class="badge out"><i class="ti ti-loader-2 spinner"></i> Syncing…</span>':''}</td><td>${esc(b.date)}</td>
+    return `<tr class="row" onclick="viewBill('${b.id}')"><td class="mono">${esc(b.no)} <span class="badge ${b.dir}">${b.dir==='out'?'Out':'In'}</span>${b.pending?' <span class="badge out"><i class="ti ti-loader-2 spinner"></i> Syncing…</span>':''}</td><td>${esc(b.date)}</td>
     <td>${esc(b.party)}${b.ptype?` <span class="dim" style="font-size:11px">· ${esc(b.ptype)}</span>`:''}${dr?'<div class="warn">⚠ orders changed since billing</div>':''}</td>
     <td class="n">${b.oids.length}</td><td class="n">${money(t)}</td><td class="n">${money(p)}</td><td class="n ${t-p>.005?'neg':''}">${money(t-p)}</td>
     <td><span class="badge ${s[0]}">${s[1]}</span></td>
-    <td class="acts"><span class="act-btns"><button class="ib sm" title="View / payments" onclick="viewBill('${b.id}')"><i class="ti ti-eye"></i></button>
+    <td class="acts" onclick="event.stopPropagation()"><span class="act-btns"><button class="ib sm" title="View / payments" onclick="viewBill('${b.id}')"><i class="ti ti-eye"></i></button>
     <button class="ib sm" title="Print" onclick="printBill('${b.id}')"><i class="ti ti-printer"></i></button>
     <button class="ib sm wa" title="Send on WhatsApp" aria-label="Send on WhatsApp" onclick="waOpen('${b.id}')"><i class="ti ti-brand-whatsapp"></i></button>
     <button class="ib sm dng" id="del-${b.id}"${b.pending?' disabled':''} title="Delete" onclick="delBill('${b.id}')"><i class="ti ti-trash"></i></button></span></td></tr>`;}).join('')}</tbody></table>`
@@ -1843,17 +1847,20 @@ const w3=x=>x<20?ONES[x]:x<100?TENS[Math.floor(x/10)]+(x%10?' '+ONES[x%10]:''):O
 const words=n=>{if(!n)return'Zero';let r='',i=0;while(n>0){const c=n%1000;if(c)r=w3(c)+(SCL[i]?' '+SCL[i]:'')+(r?' '+r:'');n=Math.floor(n/1000);i++;}return r;};
 const amtWords=v=>{v=r2(Math.abs(v));const i=Math.floor(v),f=Math.round((v-i)*100);return 'UAE Dirhams '+words(i)+(f?' and '+words(f)+' Fils':'')+' Only';};
 const invNo=(b,os)=>os.length?os.map(o=>o.no).join(', '):b.no;   // invoice number = order number(s)
-const docHTML=b=>{const t=tb(b),p=paidOf(b),os=b.oids.map(i=>orders.find(o=>o.id===i)).filter(Boolean),ps=pays.filter(x=>x.billId===b.id),out=b.dir==='out',al=allocList(b),hr=b.lines.some(l=>l.rq),st=stOf(b),no=invNo(b,os);
+const docHTML=(b,full)=>{const t=tb(b),p=paidOf(b),os=b.oids.map(i=>orders.find(o=>o.id===i)).filter(Boolean),ps=pays.filter(x=>x.billId===b.id),out=b.dir==='out',al=allocList(b),hr=b.lines.some(l=>l.rq),st=stOf(b),no=invNo(b,os);
   const contact=[CO_ADDR,CO_TRN&&'NTN NO: '+CO_TRN].filter(Boolean).map(esc).join('<br>');
+  const ft=[[CO_PHONE&&'Ph: '+CO_PHONE,CO_EMAIL&&'Email: '+CO_EMAIL].filter(Boolean).join(' ')].filter(Boolean).map(esc).join('<br>');
   return `<div class="inv"><div class="ihd"><div class="ico">${CO_LOGO?`<img class="ilogo" src="${esc(CO_LOGO)}" alt="">`:''}<div><div class="icn">${esc(CO)}</div>${CO_TAG?`<div class="itag">${esc(CO_TAG)}</div>`:''}${contact?`<div class="itag">${contact}</div>`:''}</div></div>
   <div class="itt"><div class="ititle">${out?'INVOICE':'PURCHASE BILL'}</div><div class="ist">${esc(st[1].toUpperCase())}</div></div></div>
-  <div class="imeta"><div class="ibox"><div class="ilb">${out?'Bill to':'Supplier'}</div><div class="ipn">${esc(b.party)}</div>${b.ptype?`<div>${esc(b.ptype)}</div>`:''}${b.note?`<div><b>Ref:</b> ${esc(b.note)}</div>`:''}</div>
+  <div class="ibody">${CO_LOGO?`<img class="iwm" src="${esc(CO_LOGO)}" alt="">`:''}<div class="imeta"><div class="ibox"><div class="ilb">${out?'Bill to':'Supplier'}</div><div class="ipn">${esc(b.party)}</div>${b.ptype?`<div>${esc(b.ptype)}</div>`:''}${b.note?`<div><b>Ref:</b> ${esc(b.note)}</div>`:''}</div>
   <div class="ibox"><table class="mt"><tr><td>Invoice No</td><td><b>${esc(no)}</b></td></tr><tr><td>Date</td><td>${esc(b.date)}</td></tr>${b.no&&b.no!==no?`<tr><td>Bill Ref</td><td>${esc(b.no)}</td></tr>`:''}<tr><td>Currency</td><td>${esc(CUR)}</td></tr></table></div></div>
-  <div class="iwm">${CO_LOGO?`<img class="iwmk" src="${esc(CO_LOGO)}" alt="">`:''}<table class="it"><thead><tr><th style="width:32px">#</th><th>Description</th>${hr?'<th class="n">Ordered</th><th class="n">Returned</th>':''}<th class="n">Qty</th><th class="n">Rate</th><th class="n">Amount</th></tr></thead><tbody>${b.lines.map((l,i)=>`<tr><td>${i+1}</td><td>${esc(l.label)}</td>${hr?`<td class="n">${l.oq}</td><td class="n">${l.rq||''}</td>`:''}<td class="n">${l.oq-l.rq}</td><td class="n">${money(l.rate)}</td><td class="n">${money((l.oq-l.rq)*l.rate)}</td></tr>`).join('')}</tbody></table></div>
+  <table class="it"><thead><tr><th style="width:32px">#</th><th>Description</th>${hr?'<th class="n">Ordered</th><th class="n">Returned</th>':''}<th class="n">Qty</th><th class="n">Rate</th><th class="n">Amount</th></tr></thead><tbody>${b.lines.map((l,i)=>`<tr><td>${i+1}</td><td>${esc(l.label)}</td>${hr?`<td class="n">${l.oq}</td><td class="n">${l.rq||''}</td>`:''}<td class="n">${l.oq-l.rq}</td><td class="n">${money(l.rate)}</td><td class="n">${money((l.oq-l.rq)*l.rate)}</td></tr>`).join('')}</tbody></table>
   <div class="ibot"><div class="iwords"><div class="w"><b>Amount in words</b>${esc(amtWords(t.total))}</div>
   ${(ps.length||al.length)?`<div class="pay"><b>Payments received</b>${ps.map(x=>`<div>${esc(x.date)} · ${esc(x.mode)}${x.ref?' · '+esc(x.ref):''} · ${money(x.amount)}</div>`).join('')}${al.map(x=>`<div>${esc(x.date)} · Receipt ${esc(x.rno)}${x.orderNo?' · '+esc(x.orderNo):''} · ${money(x.amount)}</div>`).join('')}</div>`:''}</div>
   <div class="tot"><div><span>Subtotal</span><span>${money(t.sub)}</span></div>${t.d?`<div><span>Discount${b.dt==='pct'?' ('+b.disc+'%)':''}</span><span>− ${money(t.d)}</span></div>`:''}${b.vat?`<div><span>VAT (${b.vat}%)</span><span>${money(t.v)}</span></div>`:''}
-  <div class="g"><span>Total ${CUR}</span><span>${money(t.total)}</span></div><div><span>Paid</span><span>${money(p)}</span></div><div><b>Balance Due</b><b>${money(t.total-p)}</b></div></div></div></div>`;};
+  <div class="g"><span>Total ${CUR}</span><span>${money(t.total)}</span></div><div><span>Paid</span><span>${money(p)}</span></div><div><b>Balance Due</b><b>${money(t.total-p)}</b></div></div></div>`
+  +(full?`<div class="sig"><span>Prepared by</span><span>Received by</span><div style="width:30%;text-align:center">${CO_STAMP?`<img src="${esc(CO_STAMP)}" alt="">`:''}<span style="display:block;width:100%">Authorized Signature &amp; Stamp</span></div></div>`:'')+`</div>`+(full?`<div class="ift"><b>Thank you for your business. ${esc(CO)}</b><br>${ft}</div>`:'')
+  +`</div>`;};
 
 /* Print in its own standalone window. window.print() inside the portal shell prints the WHOLE shell
    (top bar, bottom nav) as a screenshot, esp. on iPhone. A separate document prints only the bill. */
@@ -1878,8 +1885,7 @@ function printBill(id){const b=bills.find(x=>x.id===id);if(!b)return;const w=win
   (async()=>{
     // phone may have no/old order cache → Invoice No would fall back to the bill no. Refresh orders first.
     if(USE_BACKEND&&b.oids.some(x=>!orders.some(o=>o.id===x))){try{idbTs=0;await loadIDB();}catch(e){}}
-  const ft=[[CO_PHONE&&'Ph: '+CO_PHONE,CO_EMAIL&&'Email: '+CO_EMAIL].filter(Boolean).join(' ')].filter(Boolean).map(esc).join('<br>');
-  $('pr').innerHTML=docHTML(b).replace(/<\/div>$/,'')+`<div class="sig"><span>Prepared by</span><span>Received by</span><div style="width:30%;text-align:center">${CO_STAMP?`<img src="${esc(CO_STAMP)}" alt="">`:''}<span style="display:block;width:100%">Authorized Signature &amp; Stamp</span></div></div><div class="ift"><b>Thank you for your business. ${esc(CO)}</b><br>${ft}</div></div>`;openPrint('Bill '+(b.no||''),w);})();}
+  $('pr').innerHTML=docHTML(b,true);openPrint('Bill '+(b.no||''),w);})();}
 /* ═══ WHATSAPP SEND — number → PDF (same layout as Print) saved + path logged → result window → Share opens WhatsApp ═══ */
 const WA_LOG='bills_wa_log_v1',WA_CC='bills_wa_cc_v1',WA_NUMS='bills_wa_nums_v1';
 let waId=null,waFile=null,waBusy=false,waNum='',waMsg='',waNo='',waTok=0;
@@ -1926,7 +1932,7 @@ function waOpen(id){
 async function waPrepare(b){
   if(waBusy)return;waBusy=true;const tok=waTok;
   const os=b.oids.map(i=>orders.find(o=>o.id===i)).filter(Boolean),no=invNo(b,os);
-  const name='Invoice_'+waSafe(no)+'_'+waSafe(b.party)+'.pdf',msg=waMessage(b,no),sig=waHash(docHTML(b)+'|'+msg);
+  const name='Invoice_'+waSafe(no)+'_'+waSafe(b.party)+'.pdf',msg=waMessage(b,no),sig=waHash(docHTML(b,true)+'|'+msg);
   const S=[['run','Creating…']];waSteps(S);
   let ok=false;
   try{
@@ -1969,9 +1975,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('wa-ov').classLis
 async function waBuildPdf(b){
   if(typeof html2canvas==='undefined'||!window.jspdf)throw new Error('PDF library not loaded (check internet)');
   if(USE_BACKEND&&b.oids.some(x=>!orders.some(o=>o.id===x))){try{idbTs=0;await loadIDB();}catch(e){}}
-  const ft=[[CO_PHONE&&'Ph: '+CO_PHONE,CO_EMAIL&&'Email: '+CO_EMAIL].filter(Boolean).join(' ')].filter(Boolean).map(esc).join('<br>');
   const sty=[...document.querySelectorAll('style')].map(x=>x.textContent).join('\n'),css=sty.slice(sty.indexOf('/* ── print: only the bill ── */'));
-  const inner=docHTML(b).replace(/<\/div>$/,'')+`<div class="sig"><span>Prepared by</span><span>Received by</span><div style="width:30%;text-align:center">${CO_STAMP?`<img src="${esc(CO_STAMP)}" alt="">`:''}<span style="display:block;width:100%">Authorized Signature &amp; Stamp</span></div></div><div class="ift"><b>Thank you for your business. ${esc(CO)}</b><br>${ft}</div></div>`;
+  const inner=docHTML(b,true);
   const W=733,PX_MM=W/194;                                   // 733 css px = A4 width (210) − 2×8 mm margins → 1:1 with print
   const fr=document.createElement('iframe');
   fr.setAttribute('aria-hidden','true');fr.style.cssText='position:fixed;left:0;top:0;width:'+W+'px;height:1200px;border:0;opacity:0;pointer-events:none;z-index:-1';
