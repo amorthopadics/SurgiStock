@@ -908,6 +908,8 @@ select.date-input option{background:var(--surface2);color:var(--text);}
 /* watermark: centred on the bill area (details · items · totals · signatures — header and footer excluded) and sized to it */
 :is(#pr,#pv,#pv2) .inv .ibody{position:relative}
 :is(#pr,#pv,#pv2) .inv .ibody>*:not(.iwm){position:relative;z-index:1}
+/* the blanket white background on #pr * would paint over the watermark — let the bill body show through (table header grey keeps its own rule) */
+:is(#pr,#pv,#pv2) .inv .ibody *{background:transparent!important}
 :is(#pr,#pv,#pv2) .inv .iwm{position:absolute;top:50%;left:50%;width:70%;max-width:560px;height:auto;max-height:90%;object-fit:contain;transform:translate(-50%,-50%);opacity:.09;z-index:0;pointer-events:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}   /* same settings as DC_Lists (70% · max 560px · 9% opacity · full colour) — centred on THIS bill's area */
 
 /* ═══ combobox: typeable input + arrow + filtered list ═══ */
