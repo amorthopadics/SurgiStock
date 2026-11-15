@@ -78,7 +78,7 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
 [hidden]{display:none!important}
 .bar{position:relative;z-index:30;flex-wrap:nowrap;gap:10px;align-items:center;padding:9px 14px}
 .bar>*{flex:none}
-.bar>.bar-scroll{flex:1 1 0;min-width:0}
+.bar>.bar-scroll{flex:0 1 auto;min-width:0;margin-right:auto}
 .bar-scroll{display:flex;align-items:center;gap:10px;overflow-x:auto;overflow-y:hidden;padding:3px 2px;scrollbar-width:none;-ms-overflow-style:none}
 .bar-scroll>*{flex:none}
 .bar h1{margin-right:2px;white-space:nowrap}
@@ -178,6 +178,16 @@ tr.cmr td{background:var(--bg3);padding:6px 10px}
 }
 @media(max-width:900px){.cols{grid-template-columns:1fr}.ft input{max-width:none;flex:1 1 100%}.ft .btn{flex:1 1 100%;justify-content:center}}
 @media(max-width:600px){.qchip{display:none}}
+/* v5 — all toolbar controls live in ONE pill (scrolls sideways inside it, no scrollbar) */
+.bar-scroll{gap:4px;padding:2px 4px;background:var(--bg3);border:1px solid var(--border);border-radius:99px}
+.bar-scroll .bw-caps{background:transparent;border:0;padding:0;gap:2px}
+.bar-scroll .bw-cap{height:30px}
+.bar-scroll .bw-caps:not([hidden])+.ps{margin-left:4px;padding-left:6px;border-left:1px solid var(--border)}
+.bar-scroll .ps-b,.bar-scroll .bw-d,.bar-scroll .ib{height:30px;border:0;background:transparent;border-radius:99px}
+.bar-scroll .ib{width:30px}
+.bar-scroll .ps-b:hover,.bar-scroll .ps.open .ps-b,.bar-scroll .bw-d:hover,.bar-scroll .ib:hover{background:var(--bg2)}
+.bar-scroll .ps-b.act,.bar-scroll .bw-d.has{background:var(--accent-dim);color:var(--accent)}
+.bar-scroll .qchip{height:26px}
 </style>
 </head>
 <body>
@@ -203,7 +213,7 @@ tr.cmr td{background:var(--bg3);padding:6px 10px}
 <div class="cols">
 <div class="card"><div class="ch"><b>1. Receipt / payment to allocate</b><span class="sp" id="rc-sum"></span></div><div class="rl" id="rc"></div></div>
 <div class="card"><div class="ch"><b>2. Open items <span class="dim" style="font-weight:400">(oldest first)</span></b><div class="ctr" id="ctr"></div><span class="sp" id="it-sum"></span></div><div id="items"></div>
-<div class="ft"><input id="cm" placeholder="Comments for all rows (optional)"/><button class="btn pri" id="sv" onclick="save()"><i class="ti ti-device-floppy"></i>Save allocation</button></div></div>
+</div>
 </div>
 <h3 class="hh"><i class="ti ti-history"></i>Allocation history <span class="dim" id="hist-h" style="font-weight:400"></span></h3><div class="tw" id="hist"></div></main>
 <div class="tip" id="tip" hidden></div>
@@ -520,8 +530,7 @@ function render(){
  if(USE_BACKEND&&!ready()){$('rc').innerHTML=stateHTML();$('rc-sum').innerHTML='';$('it-sum').innerHTML='';$('items').innerHTML='';$('hist').innerHTML='';$('ctr').innerHTML='';return;}
  syncSeg();drawPills();renderRc();renderItems();ctr();renderHist();cap5();}
 async function doSave(ids,one){if(busy||notReady())return;const{r}=cur();if(!r)return showToast('Select a receipt','error');
- const gc=$('cm').value.trim();   // "all rows" comment is the fallback for rows without their own
- const rows=ids.filter(k=>+amts[k]>0).map(k=>({chargeId:k,amount:r2(amts[k]),comments:(cmts[k]||'').trim()||gc}));
+  const rows=ids.filter(k=>+amts[k]>0).map(k=>({chargeId:k,amount:r2(amts[k]),comments:(cmts[k]||'').trim()}));
  if(!rows.length)return showToast(one?'Enter an allocate amount for this row first':'Nothing to allocate','error');
  if(r2(rows.reduce((a,x)=>a+x.amount,0))>r.un+.005)return showToast('More than the receipt balance','error');
  busy=true;try{
@@ -533,7 +542,6 @@ async function doSave(ids,one){if(busy||notReady())return;const{r}=cur();if(!r)r
   if(one){delete amts[one];delete cmts[one];cOpen.delete(one);await load();keepSel();if(mode==='auto'&&rid)fill();render();showToast('Row allocated','success');}
   else{amts={};cmts={};cOpen.clear();rid=null;await load();showToast('Allocation saved','success');}
  }catch(e){showToast('Not saved: '+errText(e.message),'error');}busy=false;}
-function save(){return doSave(Object.keys(amts));}
 function saveRow(id){return doSave([id],id);}
 async function rev(id){if(notReady())return;const a=D().al.find(x=>x.id===id);if(!a||!confirm('Reverse this allocation of '+money(a.amt)+'? A negative row is added; the original stays.'))return;
  try{await post('addAllocations',{paymentId:a.pid,date:today(),rows:[{chargeId:a.cid,amount:-a.amt,reverses:a.id,comments:'Reversal of '+a.id}]});await load();showToast('Reversed','success');}catch(e){showToast('Not reversed: '+errText(e.message),'error');}}
@@ -551,7 +559,6 @@ if(USE_BACKEND){
 PermGate.init({
   dataset:'ap2_ledger',
   controls:[
-    { sel:'#sv',                       need:'add',            fn:'save' },        /* Save allocation */
     { sel:'[onclick*="saveRow("]',      need:'add',            fn:'saveRow' },     /* Save one row */
     { sel:'[onclick^="rev("]',         need:'add&editDelete', fn:'rev' }          /* Reverse an allocation */
   ]
