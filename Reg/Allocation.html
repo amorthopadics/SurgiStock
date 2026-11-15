@@ -73,16 +73,114 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
 .seg{display:inline-flex}.seg .tab{border-radius:0}.seg .tab:first-child{border-radius:8px 0 0 8px}.seg .tab:last-child{border-radius:0 8px 8px 0}.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:12px}@media(max-width:800px){.cols{grid-template-columns:1fr}}.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:10px}.rcp{display:flex;gap:8px;align-items:center;padding:7px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;cursor:pointer}.rcp.on{border-color:var(--accent);background:var(--accent-dim)}td input{max-width:120px;text-align:right}
 
 .sk{height:34px;border-radius:6px;margin-bottom:8px;background:linear-gradient(90deg,var(--bg3),var(--surface),var(--bg3));background-size:200% 100%;animation:sk 1.2s linear infinite}@keyframes sk{to{background-position:-200% 0}}
+
+/* ═══ v2 — toolbar filters, party combobox, one-row receipts, selectable open items ═══ */
+[hidden]{display:none!important}
+.bar{position:relative;z-index:30;gap:10px 12px}
+.bar h1{margin-right:0;white-space:nowrap}
+.bar-f{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1 1 560px;min-width:0}
+.bar-t{display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap}
+main{max-width:1600px;width:100%;margin:0 auto}
+/* party search (dropdown / dropup) */
+.ps{position:relative;flex:1 1 260px;min-width:220px;max-width:380px}
+.ps>input{height:36px;padding:0 64px 0 34px;border-radius:var(--radius)}
+.ps-i{position:absolute;left:3px;top:3px;width:30px;height:30px;border:0;background:transparent;color:var(--text2);cursor:pointer;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:16px}.ps-i:hover{background:var(--surface);color:var(--accent)}
+.ps-t,.ps-x{position:absolute;top:3px;height:30px;width:28px;border:0;background:transparent;color:var(--text2);cursor:pointer;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:16px}
+.ps-t{right:3px}.ps-x{right:31px}.ps-t:hover,.ps-x:hover{background:var(--surface);color:var(--text)}
+.ps.open>input{border-color:var(--accent)}
+.ps-m{position:absolute;left:0;top:calc(100% + 6px);width:max(100%,400px);max-width:calc(100vw - 24px);max-height:320px;overflow:auto;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);box-shadow:0 14px 34px rgba(0,0,0,.35);display:none;z-index:60}
+.ps.open .ps-m{display:block}.ps.up .ps-m{top:auto;bottom:calc(100% + 6px)}
+.pm-h{position:sticky;top:0;background:var(--bg2);padding:7px 12px;font-size:11px;color:var(--text2);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.05em}
+.pi{display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border)}.pi:last-child{border-bottom:0}
+.pi:hover,.pi.hl{background:var(--accent-dim)}.pi.sel{box-shadow:inset 3px 0 0 var(--accent)}
+.pi>i{width:30px;height:30px;border-radius:50%;background:var(--bg3);color:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:16px;flex:none}
+.pn{min-width:0;flex:1}.pn b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pn span{font-size:11.5px;color:var(--text2)}
+.pa{margin-left:auto;text-align:right;font-size:12.5px;white-space:nowrap}.pa small{display:block;color:var(--text2);font:400 11px var(--font)}.pa0{font-size:11.5px;white-space:nowrap}
+/* filter pills */
+.bw-caps{display:inline-flex;gap:3px;padding:3px;background:var(--bg3);border:1px solid var(--border);border-radius:99px;flex-wrap:wrap}
+.bw-cap{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 12px;border-radius:99px;border:1px solid transparent;background:transparent;color:var(--text2);font:inherit;font-size:12.5px;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s}
+.bw-cap i{font-size:15px}.bw-cap:hover{color:var(--text)}
+.bw-cap.on{background:var(--accent-dim);color:var(--accent);border-color:var(--accent)}
+.bw-cap.fixed{cursor:default}
+.bw-d{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 10px;margin:0;border:1px solid var(--border);background:var(--bg3);border-radius:var(--radius);color:var(--text2);cursor:pointer}
+.bw-d:focus-within{border-color:var(--accent)}
+.bw-d input{width:auto;height:auto;border:0;background:transparent;padding:0;color:var(--text);font-size:13px}
+.ib{border-radius:var(--radius)}
+.bar .seg .tab{height:36px}.bar .btn{height:36px}
+/* cards */
+.cols{display:block}.cols .card{margin-bottom:12px;padding:12px 14px}
+.ch{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;font-weight:600}
+.ch .no{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none}
+.ch .sp{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;background:var(--bg3);border:1px solid var(--border);font:500 11.5px var(--mono);color:var(--text2)}
+.chip.on{background:var(--accent-dim);color:var(--accent);border-color:var(--accent)}
+/* receipts: ONE row per entry */
+.rl{display:flex;flex-direction:column;gap:6px;max-height:min(320px,38vh);overflow:auto;padding:1px}
+.rcp{display:grid;grid-template-columns:22px 86px 46px minmax(160px,1.6fr) 104px 80px minmax(0,1fr) 120px;align-items:center;gap:10px;padding:9px 12px;margin:0;background:var(--bg2);transition:border-color .15s,background .15s}
+.rcp:hover{border-color:var(--border2)}.rcp.on{border-color:var(--accent);background:var(--accent-dim)}
+.rd{width:18px;height:18px;border-radius:50%;border:2px solid var(--border2);display:inline-flex;align-items:center;justify-content:center;color:transparent;font-size:12px}
+.rcp.on .rd{background:var(--accent);border-color:var(--accent);color:#fff}
+.rp{display:flex;align-items:center;gap:7px;min-width:0}.rp>i{color:var(--accent);font-size:16px;flex:none}.rp>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.rp em{font-style:normal;font-size:10.5px;padding:1px 7px;border-radius:99px;background:var(--bg3);color:var(--text2);flex:none}
+.rcp .dim{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rdt i{margin-right:4px}
+.rcp .badge{justify-self:start}.ra{text-align:right;font-size:14px}
+/* open items: selectable rows */
+.itl{border:1px solid var(--border);border-radius:var(--radius-lg);max-height:min(440px,52vh);overflow:auto}
+.ith,.it{display:grid;grid-template-columns:34px 96px minmax(110px,1fr) minmax(120px,1.4fr) 110px 110px 130px;gap:10px;align-items:center;padding:8px 12px}
+.ith{position:sticky;top:0;z-index:2;background:var(--bg3);border-bottom:1px solid var(--border);font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.ith .sa{display:none}
+.it{border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s}.it:last-child{border-bottom:0}
+.it:hover{background:var(--accent-dim)}.it.on{background:var(--accent-dim);box-shadow:inset 3px 0 0 var(--accent)}
+.ckb{width:18px;height:18px;padding:0;accent-color:var(--accent);cursor:pointer}
+.it .c-al input{max-width:none;width:100%;text-align:right;font-family:var(--mono);height:32px}
+.it .c-or{overflow-wrap:anywhere}
+/* footer */
+.ft{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
+.ctr{flex:1 1 280px;min-width:0;font-size:12.5px}.ctr .ct{margin-bottom:5px}
+.pg{height:6px;border-radius:99px;background:var(--bg3);overflow:hidden}.pg i{display:block;height:100%;background:var(--teal);border-radius:99px;transition:width .2s}.pg i.bad{background:var(--red)}
+.ft input{max-width:260px}
+.hh{margin:6px 0 8px;font-size:14px;display:flex;align-items:center;gap:8px}
+.empty i{color:var(--text2)}
+@media(max-width:1100px){.bar-t{margin-left:0}.ps{max-width:none}}
+@media(max-width:760px){
+ .bar{padding:10px}.bar-f{flex-basis:100%}.ps{flex-basis:100%}.ps-m{width:100%}
+ .bar-f .bw-caps{flex:1 1 auto;justify-content:center}.bar-t{width:100%}.bar-t .seg{flex:1}.bar-t .seg .tab{flex:1;justify-content:center}
+ .rcp{grid-template-columns:22px 1fr auto auto;grid-template-areas:"rd rn bd ra" "rd rp rp rp" "rd dt md md";row-gap:4px}
+ .rcp .rd{grid-area:rd}.rcp .rn{grid-area:rn}.rcp .badge{grid-area:bd}.rcp .ra{grid-area:ra}.rcp .rp{grid-area:rp}.rcp .rdt{grid-area:dt}.rcp .rmd{grid-area:md}.rcp .rnt{display:none}
+ .ith{grid-template-columns:34px 1fr}.ith>:not(.ckb):not(.sa){display:none}.ith .sa{display:inline}
+ .it{grid-template-columns:34px 1fr auto;grid-template-areas:"ck bl du" "ck or or" "ck dt ch" "ck al al";row-gap:5px}
+ .it .ckb{grid-area:ck}.it .c-bl{grid-area:bl}.it .c-or{grid-area:or}.it .c-dt{grid-area:dt}.it .c-ch{grid-area:ch}.it .c-du{grid-area:du;font-weight:600}.it .c-al{grid-area:al}
+ .it [data-l]::before{content:attr(data-l) ": ";color:var(--text2);font:400 11px var(--font)}
+ .ft input{max-width:none;flex:1 1 100%}.ft .btn{flex:1 1 100%;justify-content:center}
+}
+
+.bw-cap .cn{font:600 10.5px var(--mono);padding:1px 6px;border-radius:99px;background:var(--bg2);color:var(--text2)}.bw-cap.on .cn{background:var(--accent);color:#fff}
 </style>
 </head>
 <body>
-<div class="bar"><h1><i class="ti ti-arrows-split"></i>Amount Allocation</h1></div>
-<main><div class="tools"><input id="party" list="dl" placeholder="Party name (customer / supplier)…" oninput="setParty(this.value)"/><datalist id="dl"></datalist>
-<span class="seg"><button class="tab on" id="m-auto" onclick="setMode('auto')">Automatic (FIFO)</button><button class="tab" id="m-man" onclick="setMode('man')">Manual</button></span><button class="btn" onclick="syncBills()" title="Create charges for bills that have none yet"><i class="ti ti-refresh"></i>Sync bills</button></div>
-<div class="cols"><div class="card"><b>1. Receipt / payment to allocate</b><div id="rc" style="margin-top:8px"></div></div>
-<div class="card"><b>2. Open items <span class="dim" style="font-weight:400">(oldest first)</span></b><div class="tw" id="items" style="margin-top:8px"></div>
-<div class="tools" style="margin-top:10px"><span class="mono" id="ctr"></span><input id="cm" placeholder="Comments (optional)" style="max-width:260px;margin-left:auto"/><button class="btn pri" id="sv" onclick="save()"><i class="ti ti-device-floppy"></i>Save allocation</button></div></div></div>
-<h3 style="margin:16px 0 8px;font-size:14px">Allocation history for this party</h3><div class="tw" id="hist"></div></main>
+<div class="bar">
+<h1><i class="ti ti-arrows-split"></i>Amount Allocation</h1>
+<div class="bar-f">
+ <div class="ps" id="ps">
+  <button type="button" class="ps-i" title="Search party" aria-label="Open party list" onclick="psOpenIcon()"><i class="ti ti-search"></i></button>
+  <input id="party" autocomplete="off" placeholder="Search party (customer / supplier)…" aria-label="Party" oninput="setParty(this.value)" onfocus="psShow(true)" onclick="psShow(true)" onkeydown="psKey(event)"/>
+  <button type="button" class="ps-x" id="ps-x" hidden title="Clear" aria-label="Clear party" onclick="clearParty()"><i class="ti ti-x"></i></button>
+  <button type="button" class="ps-t" title="Show parties" aria-label="Toggle party list" onclick="psToggle()"><i class="ti ti-chevron-down" id="ps-c"></i></button>
+  <div class="ps-m" id="ps-m"></div>
+ </div>
+ <div class="bw-caps" id="f-types" hidden></div>
+ <label class="bw-d" title="Date"><i class="ti ti-calendar"></i><input type="date" id="f-date" aria-label="Date"></label>
+ <button type="button" class="ib" id="f-clear" hidden title="Clear all filters" aria-label="Clear filters" onclick="clearAll()"><i class="ti ti-filter-off"></i></button>
+</div>
+<div class="bar-t"><span class="seg"><button class="tab on" id="m-auto" onclick="setMode('auto')"><i class="ti ti-wand"></i>Automatic (FIFO)</button><button class="tab" id="m-man" onclick="setMode('man')"><i class="ti ti-hand-click"></i>Manual</button></span></div>
+</div>
+<main>
+<div class="cols">
+<div class="card"><div class="ch"><span class="no">1</span>Receipt / payment to allocate<span class="sp" id="rc-sum"></span></div><div class="rl" id="rc"></div></div>
+<div class="card"><div class="ch"><span class="no">2</span>Open items <span class="dim" style="font-weight:400">(oldest first)</span><span class="sp" id="it-sum"></span></div><div id="items"></div>
+<div class="ft"><div class="ctr" id="ctr"></div><input id="cm" placeholder="Comments (optional)"/><button class="btn pri" id="sv" onclick="save()"><i class="ti ti-device-floppy"></i>Save allocation</button></div></div>
+</div>
+<h3 class="hh"><i class="ti ti-history"></i>Allocation history <span class="dim" id="hist-h" style="font-weight:400"></span></h3><div class="tw" id="hist"></div></main>
 <div class="toast" id="toast"></div>
 <script>
 'use strict';
@@ -135,7 +233,8 @@ function data(){
  const al=rw(L.Allocations,'AllocID').map(a=>({id:String(a[0]),pid:String(a[1]),rno:a[2],billNo:a[4],cid:String(a[5]),orderNo:a[7],party:a[9],date:String(a[10]),amt:+a[11]||0,note:a[12],rev:String(a[13]||'')}));
  const rvC={};rw(L.Charges,'ChargeID').forEach(c=>{if(c[1]==='Reversal')rvC[String(c[12]).replace('rev:','')]=+c[11]||0;});const bC={},bP={};al.forEach(a=>{bC[a.cid]=r2((bC[a.cid]||0)+a.amt);bP[a.pid]=r2((bP[a.pid]||0)+a.amt);});
  const ch=rw(L.Charges,'ChargeID').map(c=>({id:String(c[0]),type:c[1],billId:String(c[2]||''),billNo:String(c[3]||''),orderNo:String(c[5]||''),ptype:c[6],party:String(c[7]).trim(),dir:c[8],date:String(c[9]),desc:c[10],amt:+c[11]||0,note:c[12]})).map(c=>({...c,paid:bC[c.id]||0,due:r2(c.amt-(bC[c.id]||0)+(rvC[c.id]||0))}));
- const rc=rw(L.Receipts,'PaymentID').map(r=>({id:String(r[0]),no:r[1],dir:r[2],party:String(r[4]).trim(),date:String(r[5]),mode:r[6],ref:r[7],amt:+r[8]||0,note:r[9],type:r[10]})).map(r=>({...r,alloc:bP[r.id]||0,un:r2(r.amt-(bP[r.id]||0))}));
+ const rc=rw(L.Receipts,'PaymentID').map(r=>({id:String(r[0]),no:r[1],dir:r[2],party:String(r[4]).trim(),date:String(r[5]),mode:r[6],ref:r[7],amt:+r[8]||0,note:r[9],type:r[10],ptype:String(r[3]||'')})).map(r=>({...r,alloc:bP[r.id]||0,un:r2(r.amt-(bP[r.id]||0))}));
+ const pm={};ch.forEach(c=>{if(c.ptype&&!pm[c.party])pm[c.party]=String(c.ptype);});rc.forEach(r=>{if(!r.ptype)r.ptype=pm[r.party]||'';});
  return{al,ch,rc};}
 const fifo=(a,b)=>a.date.localeCompare(b.date)||((b.type==='Opening')-(a.type==='Opening'))||a.billNo.localeCompare(b.billNo)||a.id.localeCompare(b.id);
 let BL={Bills:[],Payments:[]};
@@ -153,9 +252,10 @@ const SRC={
   set:d=>{L={Charges:d.Charges,Receipts:d.Receipts,Allocations:d.Allocations};}},
  bills:{key:'ap2_bills',label:'Bills',shape:d=>isObj(d)&&Array.isArray(d.Bills)&&(d.Payments===undefined||Array.isArray(d.Payments)),
   set:d=>{BL={Bills:d.Bills,Payments:d.Payments||[]};}}};
+SRC.specs={key:'ap2_specsData',label:'Parties',shape:d=>isObj(d)&&Array.isArray(d.Specs),set:d=>{applySpecs(d.Specs);}};   // parties / categories — optional: the page works without it, just no pills
 const SV=Object.values(SRC);SV.forEach(s=>Object.assign(s,{ts:0,fp:'',painted:false,err:''}));
 const S={state:'loading',err:'',booting:false};
-const ready=()=>SV.every(s=>s.painted);
+const REQ=[SRC.ledger,SRC.bills],ready=()=>REQ.every(s=>s.painted);   // parties (specs) load alongside but never block the page
 function unpackS(s,r){if(!isObj(r))return null;if(s.shape(r))return{data:r,ts:0};if(s.shape(r.data))return{data:r.data,ts:+r.ts||0};return null;}
 function applySrc(s,r,from,force){
  const u=unpackS(s,r);if(!u)return false;
@@ -200,7 +300,7 @@ async function bootAll(){
  if(S.booting)return;S.booting=true;S.state='loading';S.err='';render();askParent();
  await Promise.all(SV.filter(s=>!s.painted).map(bootSrc));
  S.booting=false;
- if(!ready()){S.state='error';S.err=SV.filter(s=>!s.painted).map(s=>(s.err&&console.warn('[load]',s.label,s.err),s.label)).join(' · ');render();showToast('Not loaded — '+S.err,'error');}}
+ if(!ready()){S.state='error';S.err=REQ.filter(s=>!s.painted).map(s=>(s.err&&console.warn('[load]',s.label,s.err),s.label)).join(' · ');render();showToast('Not loaded — '+S.err,'error');}}
 function retryAll(){S.booting=false;bootAll();}
 const stateHTML=()=>S.state==='error'
  ?`<div class="empty">Ledger / bills data isn’t available yet.<div class="dim" style="margin:6px 0 10px;font-size:12px">${esc(S.err||'Data isn’t available right now. Check your connection and try again.')}</div><button class="btn pri" onclick="retryAll()"><i class="ti ti-refresh"></i>Retry</button></div>`
@@ -239,34 +339,126 @@ function virt(d){const m=new Map(),have=new Set(d.ch.map(c=>c.billId));
  return[...m.values()].filter(b=>!have.has(b.id)).map(b=>{const tot=calcB(b.lines,b.disc,b.dt,b.vat),due=r2(tot-(pay[b.id]||0));
   return{id:'V'+b.id,virtual:true,billId:b.id,type:'Bill',billNo:b.no,orderNo:'',desc:'Bill '+b.no+(pay[b.id]?' (net of earlier payments)':''),ptype:'',party:b.party,dir:b.dir,date:b.date,amt:due,due,note:'Auto-created from Bills when allocating'};}).filter(v=>v.due>.005);}
 const chargeRow=v=>({type:'Bill',billId:v.billId,billNo:v.billNo,orderId:'',orderNo:'',ptype:v.ptype,party:v.party,dir:v.dir,date:v.date,desc:v.desc,amount:v.amt,comments:v.note});
-async function syncBills(){if(notReady())return;const V=virt(D());if(!V.length)return showToast('Every bill already has charges','success');
- if(!confirm('Create bill-level charges for '+V.length+' bill(s) that have none yet? (They then appear in Reports too.)'))return;
- try{await post('addCharges',{rows:V.map(chargeRow)});await load();showToast(V.length+' bill(s) synced','success');}catch(e){showToast('Not synced: '+errText(e.message),'error');}}
-let party='',rid=null,mode='auto',amts={},busy=false;
+let party='',qtxt='',rid=null,mode='auto',amts={},busy=false,pill='',dateF='',psL=[],psIdx=-1;
 const D=()=>data();
-function after(){const d=D();$('dl').innerHTML=[...new Set([...d.ch.map(c=>c.party),...d.rc.map(r=>r.party)])].sort().map(n=>`<option value="${esc(n)}">`).join('');render();}
-function setParty(v){party=v.trim();rid=null;amts={};render();}
+/* ── PARTIES — read from the "ap2_specsData" cache, same rules as Receipts.html
+   row = [ID, Category, Name, Description, Status]
+   Customers = any category whose Description is "Customer" (Doctor · Hospital · Vendor …) → one pill per category
+   Suppliers = category "Supplier" → one "Supplier" pill. Nothing is hard-coded: new categories / parties appear by themselves. ── */
+let CUST=[],SUPP=[],TYPES=[],PM=new Map();
+const norm=s=>String(s==null?'':s).trim().replace(/\s+/g,' ').toLowerCase();
+const IGN=/^(item\s*names?|item\s*lists?|item\s*categor(y|ies)|stores?(\s*branch)?|medical\s*domains?|material\s*sources?|specs|delivery\s*challan|dc\s*lists?|add\s*charges?)$/i;
+const cap=s=>{s=String(s||'');return s.charAt(0).toUpperCase()+s.slice(1);},d10=s=>String(s||'').slice(0,10);
+const TICO={doctor:'ti-stethoscope',hospital:'ti-building-hospital',vendor:'ti-truck-delivery',supplier:'ti-truck-delivery'};
+const tIcon=k=>TICO[norm(k)]||'ti-user';
+function applySpecs(rows){const cu=[],su=[],T=new Map(),seen=new Set();
+ (rows||[]).forEach(r=>{if(!Array.isArray(r)||String(r[0]).toLowerCase()==='id')return;
+  const kind=String(r[1]??'').trim(),a=String(r[2]??'').trim(),b=String(r[3]??'').trim(),st=String(r[4]??'').trim();
+  if(!kind||!a||/^(inactive|in-active|no|0|false|disabled)$/i.test(st))return;
+  if(/^suppliers?$/i.test(kind)){if(!su.some(x=>norm(x)===norm(a)))su.push(a);return;}
+  if(IGN.test(kind)||norm(b)!=='customer')return;
+  const k=norm(kind),t=T.get(k);if(!t)T.set(k,{k,l:cap(kind)});else if(/^[a-z]/.test(t.l)&&/^[A-Z]/.test(kind))t.l=kind;
+  const key=k+'|'+norm(a);if(seen.has(key))return;seen.add(key);cu.push({name:a,type:k});});
+ CUST=cu.sort((x,y)=>x.name.localeCompare(y.name));SUPP=su.sort((x,y)=>x.localeCompare(y));TYPES=[...T.values()].sort((x,y)=>x.l.localeCompare(y.l));
+ PM=new Map(CUST.map(x=>[norm(x.name),x.type]));}
+const tLabel=k=>k==='supplier'?'Supplier':((TYPES.find(t=>t.k===k)||{}).l||cap(k));
+const ptOf=r=>r.dir==='in'?'supplier':(norm(r.ptype)||PM.get(norm(r.party))||'');   // receipt → pill key
+const pillOk=k=>!pill||k===pill;
+function parties(d){const m=new Map();
+ const ent=(n,k)=>{const sup=k==='supplier',key=(sup?'s|':'c|')+norm(n);let p=m.get(key);if(!p){p={n,k,sup,un:0,cnt:0};m.set(key,p);}else if(!p.k&&k)p.k=k;return p;};
+ CUST.forEach(x=>ent(x.name,x.type));SUPP.forEach(n=>ent(n,'supplier'));
+ d.ch.forEach(c=>{if(c.party)ent(c.party,c.dir==='in'?'supplier':(norm(c.ptype)||PM.get(norm(c.party))||''));});
+ d.rc.forEach(r=>{if(!r.party)return;const p=ent(r.party,ptOf(r));if(r.un>.005){p.un=r2(p.un+r.un);p.cnt++;}});
+ return[...m.values()].sort((a,b)=>(b.cnt>0)-(a.cnt>0)||a.n.localeCompare(b.n));}
+function recs(d){const q=norm(qtxt),pn=norm(party);
+ return d.rc.filter(r=>r.un>.005&&(party?norm(r.party)===pn:(!q||norm(r.party).includes(q)||norm(r.no).includes(q)))&&pillOk(ptOf(r))&&(!dateF||d10(r.date)===dateF))
+  .sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(a.no).localeCompare(String(b.no)));}
+function after(){render();if($('ps').classList.contains('open'))psRender();}
+function keepSel(){const R=recs(D());
+ if(rid&&!R.some(x=>x.id===rid)){rid=null;amts={};}
+ if(!rid&&R.length===1){rid=R[0].id;if(mode==='auto')fill();else amts={};}}   // a single match is selected for you
+function filtChg(){keepSel();$('f-clear').hidden=!(pill||dateF||qtxt);if($('ps').classList.contains('open'))psRender();render();}
+function setParty(v){qtxt=v.trim();party='';$('ps-x').hidden=!qtxt;if(!$('ps').classList.contains('open'))psShow(true);else psIdx=-1;filtChg();}   // typing = every party whose name contains the text
+function pickParty(n){$('party').value=n;qtxt=n;party=n;$('ps-x').hidden=false;psShow(false);filtChg();}
+function clearParty(){$('party').value='';qtxt='';party='';$('ps-x').hidden=true;filtChg();psShow(true);$('party').focus();}
+function clearAll(){pill='';dateF='';qtxt='';party='';$('party').value='';$('f-date').value='';$('ps-x').hidden=true;filtChg();}
+/* ── pills (one at a time) ── */
+function drawPills(){const d=D(),el=$('f-types'),opts=TYPES.map(t=>({k:t.k,l:t.l})).concat(SUPP.length?[{k:'supplier',l:'Supplier'}]:[]);
+ if(pill&&!opts.some(o=>o.k===pill))pill='';
+ const cnt={};d.rc.forEach(r=>{if(r.un>.005){const k=ptOf(r);cnt[k]=(cnt[k]||0)+1;}});
+ const h=opts.map(o=>`<button type="button" class="bw-cap${o.k===pill?' on':''}" data-v="${esc(o.k)}" title="${esc(o.l)}" aria-label="${esc(o.l)}"><i class="ti ${tIcon(o.k)}"></i>${esc(o.l)}${cnt[o.k]?`<b class="cn">${cnt[o.k]}</b>`:''}</button>`).join('');
+ if(el.dataset.h!==h){el.innerHTML=h;el.dataset.h=h;}
+ el.hidden=!opts.length;
+ $('party').placeholder=pill?'Search '+tLabel(pill).toLowerCase()+'…':'Search party (customer / supplier)…';}
+$('f-types').addEventListener('click',e=>{const b=e.target.closest('.bw-cap');if(!b)return;const v=b.dataset.v;pill=pill===v?'':v;
+ party='';qtxt='';$('party').value='';$('ps-x').hidden=true;filtChg();});
+/* ── party dropdown / dropup ── */
+function psShow(o){const ps=$('ps');ps.classList.toggle('open',o);$('ps-c').className='ti '+(o?'ti-chevron-up':'ti-chevron-down');
+ if(o){const b=ps.getBoundingClientRect(),below=innerHeight-b.bottom;ps.classList.toggle('up',below<330&&b.top>below);psIdx=-1;psRender();}}
+function psToggle(){const o=$('ps').classList.contains('open');psShow(!o);if(!o)$('party').focus();}
+function psOpenIcon(){psShow(true);$('party').focus();}
+function psRender(){const d=D(),q=party?'':norm(qtxt);
+ psL=parties(d).filter(p=>pillOk(p.k)&&(!q||norm(p.n).includes(q))).slice(0,200);
+ $('ps-m').innerHTML=psL.length?`<div class="pm-h">${psL.length} part${psL.length===1?'y':'ies'}${pill?' · '+esc(tLabel(pill)):''}</div>`+psL.map((p,i)=>{
+  const kind=p.sup?'Supplier':p.k?'Customer · '+esc(tLabel(p.k)):'Customer';
+  return `<div class="pi${i===psIdx?' hl':''}${norm(p.n)===norm(party)?' sel':''}" data-n="${esc(p.n)}" onmousedown="event.preventDefault();pickParty(this.dataset.n)"><i class="ti ${tIcon(p.k)}"></i><div class="pn"><b>${esc(p.n)}</b><span>${kind}</span></div>${p.cnt?`<div class="pa mono">${money(p.un)}<small>${p.cnt} open receipt${p.cnt>1?'s':''}</small></div>`:'<span class="dim pa0">No open receipts</span>'}</div>`;}).join('')
+  :'<div class="empty" style="padding:18px"><i class="ti ti-search-off" style="font-size:20px;display:block;margin-bottom:4px"></i>No matching party</div>';}
+function psKey(e){const o=$('ps').classList.contains('open');
+ if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(!o){psShow(true);return;}if(!psL.length)return;psIdx=(psIdx+(e.key==='ArrowDown'?1:-1)+psL.length)%psL.length;psRender();const h=$('ps-m').querySelector('.hl');if(h)h.scrollIntoView({block:'nearest'});}
+ else if(e.key==='Enter'){if(o&&psL.length){e.preventDefault();pickParty(psL[psIdx>=0?psIdx:0].n);}}
+ else if(e.key==='Escape')psShow(false);}
+document.addEventListener('mousedown',e=>{if(!$('ps').contains(e.target))psShow(false);});
+$('f-date').addEventListener('input',e=>{dateF=e.target.value;filtChg();});
+/* ── allocation logic (unchanged flow) ── */
 function setMode(m){mode=m;if(m==='auto')fill();render();}
-function cur(){const d=D();return{d,r:d.rc.find(x=>x.id===rid&&x.party===party),R:d.rc.filter(r=>r.party===party&&r.un>.005)};}
-function open_(d,r){return d.ch.filter(c=>c.party===party&&r&&c.dir===r.dir&&c.due>.005).concat(virt(d).filter(v=>r&&v.party===party&&v.dir===r.dir)).sort(fifo);}
-function why(d,r){const mine=d.ch.filter(c=>c.party===party),same=mine.filter(c=>c.dir===r.dir);
- if(same.length)return `All ${same.length} charge(s) for “${esc(party)}” are already fully allocated.`;
- if(mine.length)return `“${esc(party)}” only has ${r.dir==='out'?'supplier':'customer'} charges — this receipt is a ${r.dir==='out'?'customer receipt':'supplier payment'}.`;
- return `Nothing open for “${esc(party)}” in Bills &amp; Payments or the ledger. Check the spelling of the name (it must match the party on the bill), and that the bill is in the same direction as this receipt.`;}
+function syncSeg(){$('m-auto').classList.toggle('on',mode==='auto');$('m-man').classList.toggle('on',mode==='man');}
+function cur(){const d=D();return{d,r:d.rc.find(x=>x.id===rid)};}
+function open_(d,r){return d.ch.filter(c=>r&&c.party===r.party&&c.dir===r.dir&&c.due>.005).concat(virt(d).filter(v=>r&&v.party===r.party&&v.dir===r.dir)).sort(fifo);}
+function why(d,r){const p=r.party,mine=d.ch.filter(c=>c.party===p),same=mine.filter(c=>c.dir===r.dir);
+ if(same.length)return `All ${same.length} charge(s) for “${esc(p)}” are already fully allocated.`;
+ if(mine.length)return `“${esc(p)}” only has ${r.dir==='out'?'supplier':'customer'} charges — this receipt is a ${r.dir==='out'?'customer receipt':'supplier payment'}.`;
+ return `Nothing open for “${esc(p)}” in Bills &amp; Payments or the ledger. Check the spelling of the name (it must match the party on the bill), and that the bill is in the same direction as this receipt.`;}
 function fill(){const{d,r}=cur();amts={};if(!r)return;let rem=r.un;open_(d,r).forEach(c=>{const a=Math.min(c.due,rem);if(a>.005){amts[c.id]=r2(a);rem=r2(rem-a);}});}
 function pickR(id){rid=id;if(mode==='auto')fill();else amts={};render();}
 function sum(){return r2(Object.values(amts).reduce((a,x)=>a+(+x||0),0));}
-function ctr(){const{r}=cur();if(!r){$('ctr').textContent='';return;}const u=r2(r.un-sum());$('ctr').innerHTML=`Allocating ${money(sum())} of ${money(r.un)} · <span class="${u<-.005?'neg':''}">Left (advance): ${money(u)}</span>`;}
+const nSel=()=>Object.values(amts).filter(v=>+v>0).length;
+/* select one / many open items */
+function tog(id){const{d,r}=cur();if(!r)return;const c=open_(d,r).find(x=>x.id===id);if(!c)return;
+ if(mode==='auto'){mode='man';syncSeg();}
+ if(amts[id]>0)delete amts[id];
+ else{const a=Math.min(c.due,r2(r.un-sum()));if(a<=.005){showToast('No balance left on this receipt','error');renderItems();return;}amts[id]=r2(a);}
+ renderItems();ctr();}
+function togAll(){const{d,r}=cur();if(!r)return;const I=open_(d,r),full=nSel()>0&&(I.every(c=>amts[c.id]>0)||r2(r.un-sum())<=.005);
+ if(mode==='auto'){mode='man';syncSeg();}
+ if(full)amts={};else fill();renderItems();ctr();}
+function setAmt(id,v,due){const a=Math.min(+v||0,due);if(a>0)amts[id]=a;else delete amts[id];
+ const row=$('it-'+id);if(row){row.classList.toggle('on',a>0);const k=row.querySelector('.ckb');if(k)k.checked=a>0;}hdck();ctr();}
+function hdck(){const{d,r}=cur(),a=$('ck-all');if(!r||!a)return;const I=open_(d,r),n=nSel();
+ a.checked=n>0&&(I.every(c=>amts[c.id]>0)||r2(r.un-sum())<=.005);a.indeterminate=n>0&&!a.checked;}
+function ctr(){const{r}=cur(),e=$('ctr');
+ const s2=$('it-sel');if(s2){const n=nSel();s2.hidden=!n;s2.textContent=n+' selected';}
+ if(!r){e.innerHTML='';return;}
+ const s=sum(),u=r2(r.un-s),p=Math.max(0,Math.min(100,r.un?s/r.un*100:0));
+ e.innerHTML=`<div class="ct">Allocating <b class="mono">${money(s)}</b> of <b class="mono">${money(r.un)}</b> · <span class="${u<-.005?'neg':'dim'}">Left (advance): <span class="mono">${money(u)}</span></span></div><div class="pg"><i style="width:${p}%" class="${u<-.005?'bad':''}"></i></div>`;}
+/* ── render ── */
+function renderRc(){const d=D(),R=recs(d),tot=r2(R.reduce((a,x)=>a+x.un,0));
+ $('rc-sum').innerHTML=R.length?`<span class="chip"><i class="ti ti-receipt-2"></i>${R.length} receipt${R.length>1?'s':''} · ${money(tot)}</span>`:'';
+ const filt=party||qtxt||pill||dateF;
+ $('rc').innerHTML=R.length?R.map(x=>`<div class="rcp${x.id===rid?' on':''}" onclick="pickR('${x.id}')"><span class="rd"><i class="ti ti-check"></i></span><b class="mono rn">${esc(x.no)}</b><span class="badge ${x.dir}">${x.dir==='out'?'In':'Out'}</span><div class="rp"><i class="ti ${tIcon(ptOf(x))}"></i><span title="${esc(x.party)}">${esc(x.party)}</span>${ptOf(x)?`<em>${esc(tLabel(ptOf(x)))}</em>`:''}</div><span class="dim rdt"><i class="ti ti-calendar"></i>${esc(d10(x.date))}</span><span class="dim rmd">${esc(x.mode||'')}</span><span class="dim rnt" title="${esc(x.note||'')}">${esc(x.note||'')}</span><b class="mono ra">${money(x.un)}</b></div>`).join('')
+  :`<div class="empty"><i class="ti ti-receipt-off" style="font-size:22px;display:block;margin-bottom:6px"></i>${filt?'No unallocated receipts match the current filters':'No unallocated receipts'}</div>`;}
+function renderItems(){const{d,r}=cur(),el=$('items'),sm=$('it-sum');
+ if(!r){el.innerHTML='<div class="empty"><i class="ti ti-pointer" style="font-size:22px;display:block;margin-bottom:6px"></i>Select a receipt above to see its open items</div>';sm.innerHTML='';return;}
+ const I=open_(d,r),ro=mode==='auto'?'readonly':'',td=r2(I.reduce((a,c)=>a+c.due,0));
+ sm.innerHTML=`<span class="chip">${I.length} open · ${money(td)}</span><span class="chip on" id="it-sel" hidden></span>`;
+ if(!I.length){el.innerHTML=`<div class="empty">${why(d,r)}</div>`;return;}
+ el.innerHTML=`<div class="itl"><div class="ith"><input type="checkbox" class="ckb" id="ck-all" title="Select all (oldest first)" onchange="togAll()"/><span class="sa">Select all</span><span>Date</span><span>Bill</span><span>Order / item</span><span class="n">Charge</span><span class="n">Due</span><span class="n">Allocate</span></div>${I.map(c=>{const on=amts[c.id]>0;return `<div class="it${on?' on':''}" id="it-${c.id}" onclick="tog('${c.id}')"><input type="checkbox" class="ckb" ${on?'checked':''} onclick="event.stopPropagation()" onchange="tog('${c.id}')"/><span class="c-dt dim" data-l="Date">${esc(c.date)}</span><span class="c-bl mono">${esc(c.billNo)||'–'} ${c.type!=='Order'?`<span class="badge">${esc(c.type)}</span>`:''}</span><span class="c-or">${esc(c.orderNo||c.desc)}</span><span class="n c-ch" data-l="Charge">${money(c.amt)}</span><span class="n c-du" data-l="Due">${money(c.due)}</span><span class="c-al"><input type="number" min="0" step="any" ${ro} placeholder="0.00" value="${amts[c.id]||''}" onclick="event.stopPropagation()" oninput="setAmt('${c.id}',this.value,${c.due})" onchange="if(+this.value>${c.due})this.value=${c.due}"/></span></div>`;}).join('')}</div>`;
+ hdck();}
+function renderHist(){const{d,r}=cur(),hp=r?r.party:party;$('hist-h').textContent=hp?'· '+hp:'';
+ const rv=new Set(d.al.filter(a=>a.rev).map(a=>a.rev)),H=d.al.filter(a=>a.party===hp).sort((a,b)=>b.id.localeCompare(a.id));
+ $('hist').innerHTML=!hp?'<div class="empty">Select a party or receipt to see its allocations</div>':H.length?`<table><thead><tr><th>Date</th><th>Receipt</th><th>Bill</th><th>Order</th><th class="n">Amount</th><th>Note</th><th></th></tr></thead><tbody>${H.map(a=>`<tr><td>${esc(a.date)}</td><td class="mono">${esc(a.rno)}</td><td class="mono">${esc(a.billNo)}</td><td>${esc(a.orderNo)}</td><td class="n ${a.amt<0?'neg':''}">${money(a.amt)}</td><td>${esc(a.note)}${a.rev?' <span class="badge unpaid">Reversal</span>':rv.has(a.id)?' <span class="badge">Reversed</span>':''}</td><td class="acts">${a.amt>0&&!rv.has(a.id)?`<button class="btn sm dng" onclick="rev('${a.id}')">Reverse</button>`:''}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">No allocations yet</div>';}
 function render(){
- if(USE_BACKEND&&!ready()){$('rc').innerHTML=stateHTML();$('items').innerHTML='';$('hist').innerHTML='';$('ctr').textContent='';return;}
- const{d,r,R}=cur();
- $('m-auto').classList.toggle('on',mode==='auto');$('m-man').classList.toggle('on',mode==='man');
- $('rc').innerHTML=!party?'<div class="empty">Enter a party name</div>':R.length?R.map(x=>`<div class="rcp${x.id===rid?' on':''}" onclick="pickR('${x.id}')"><input type="radio" ${x.id===rid?'checked':''}/><div><b class="mono">${esc(x.no)}</b> <span class="badge ${x.dir}">${x.dir==='out'?'In':'Out'}</span><div class="dim" style="font-size:12px">${esc(x.date)} · ${esc(x.mode||'')} ${esc(x.note||'')}</div></div><div class="mono" style="margin-left:auto">${money(x.un)}</div></div>`).join(''):'<div class="empty">No unallocated receipts for this party</div>';
- const I=open_(d,r),ro=mode==='auto'?'readonly':'';
- $('items').innerHTML=!r?'<div class="empty">Select a receipt</div>':I.length?`<table><thead><tr><th>Date</th><th>Bill</th><th>Order / item</th><th class="n">Charge</th><th class="n">Due</th><th class="n">Allocate</th></tr></thead><tbody>${I.map(c=>`<tr><td>${esc(c.date)}</td><td class="mono">${esc(c.billNo)||'–'} ${c.type!=='Order'?`<span class="badge">${esc(c.type)}</span>`:''}</td><td>${esc(c.orderNo||c.desc)}</td><td class="n">${money(c.amt)}</td><td class="n">${money(c.due)}</td><td><input type="number" min="0" step="any" ${ro} value="${amts[c.id]||''}" oninput="amts['${c.id}']=Math.min(+this.value||0,${c.due});ctr()" onchange="if(+this.value>${c.due})this.value=${c.due}"/></td></tr>`).join('')}</tbody></table>`:`<div class="empty">${why(d,r)}</div>`;
- ctr();
- const rv=new Set(d.al.filter(a=>a.rev).map(a=>a.rev)),H=d.al.filter(a=>a.party===party).sort((a,b)=>b.id.localeCompare(a.id));
- $('hist').innerHTML=!party?'':H.length?`<table><thead><tr><th>Date</th><th>Receipt</th><th>Bill</th><th>Order</th><th class="n">Amount</th><th>Note</th><th></th></tr></thead><tbody>${H.map(a=>`<tr><td>${esc(a.date)}</td><td class="mono">${esc(a.rno)}</td><td class="mono">${esc(a.billNo)}</td><td>${esc(a.orderNo)}</td><td class="n ${a.amt<0?'neg':''}">${money(a.amt)}</td><td>${esc(a.note)}${a.rev?' <span class="badge unpaid">Reversal</span>':rv.has(a.id)?' <span class="badge">Reversed</span>':''}</td><td class="acts">${a.amt>0&&!rv.has(a.id)?`<button class="btn sm dng" onclick="rev('${a.id}')">Reverse</button>`:''}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">No allocations yet</div>';}
+ if(USE_BACKEND&&!ready()){$('rc').innerHTML=stateHTML();$('rc-sum').innerHTML='';$('it-sum').innerHTML='';$('items').innerHTML='';$('hist').innerHTML='';$('ctr').innerHTML='';return;}
+ syncSeg();drawPills();renderRc();renderItems();ctr();renderHist();}
 async function save(){if(busy||notReady())return;const{r}=cur();if(!r)return showToast('Select a receipt','error');
  const rows=Object.entries(amts).filter(([k,v])=>+v>0).map(([k,v])=>({chargeId:k,amount:r2(v),comments:$('cm').value.trim()}));
  if(!rows.length)return showToast('Nothing to allocate','error');if(sum()>r.un+.005)return showToast('More than the receipt balance','error');
@@ -292,7 +484,6 @@ PermGate.init({
   dataset:'ap2_ledger',
   controls:[
     { sel:'#sv',                       need:'add',            fn:'save' },        /* Save allocation */
-    { sel:'[onclick^="syncBills("]',   need:'add',            fn:'syncBills' },   /* Sync bills → charges */
     { sel:'[onclick^="rev("]',         need:'add&editDelete', fn:'rev' }          /* Reverse an allocation */
   ]
 });
