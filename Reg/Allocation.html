@@ -211,6 +211,9 @@ tr.cmr td{background:var(--bg3);padding:6px 10px}
 .spinner{animation:spin 1s linear infinite;display:inline-flex}
 /* while a save / reverse is running: no second click */
 body.saving .rsv,body.saving .btn.dng{opacity:.5;pointer-events:none}
+.raw{display:inline-flex;align-items:center;justify-content:flex-end;gap:5px}
+.rsy{color:var(--amber);font-size:15px}.rok{display:none;color:var(--teal);font-size:18px}.rcp.full .rok{display:inline-flex}
+.btn.dng.armed{animation:blink .6s ease-in-out infinite;border-radius:99px}@keyframes blink{50%{opacity:.35}}
 @media(max-width:600px){.vb-brand{display:none}}
 </style>
 </head>
@@ -298,12 +301,30 @@ function showToast(msg,type){   // same markup, position and timing as Master.ht
  label.textContent=msg;clearTimeout(showToast._t);
  showToast._t=setTimeout(()=>t.classList.remove('show'),type==='error'?4500:2600);}
 let L={Charges:[],Receipts:[],Allocations:[]};
+/* ═══ PENDING CHANGES — an allocation / reversal shows on the spot (receipt balance, open items, history "Syncing…") and is saved in the
+   background, one by one. Same idea as Orders.html / Master.html: network trouble keeps it on this device and retries;
+   only a refusal from the server takes the row back (with a message). ═══ */
+const rd=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}},wr=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const PK='allocation_pending_sync_v1',FATAL=/unauthori[sz]ed|forbidden|not logged in|not authori[sz]ed|permission|session/i,NETERR=/network|fetch|offline|timeout|timed out|load failed|internet|connection|failed to/i;
+let PEND=rd(PK,[]),flushing=null,stale=false;if(!Array.isArray(PEND))PEND=[];
+const savePend=()=>{wr(PK,PEND);paint();},uidc=()=>'q'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const cntAl=(AL,pid,x)=>AL.filter(a=>String(a[1])===String(pid)&&String(a[5])===String(x.chargeId)&&Math.abs((+a[11]||0)-x.amount)<.005&&String(a[13]||'')===String(x.reverses||'')).length;
+const landed=p=>{const AL=(L.Allocations||[]).filter(a=>Array.isArray(a)&&String(a[0])!=='AllocID');return p.rows.every((x,i)=>cntAl(AL,p.paymentId,x)>(p.base?p.base[i]:0));};   // the server already holds it
+function LV(){                                              // server ledger + what is still waiting to be saved
+ if(!PEND.length)return L;
+ const C=L.Charges.slice(),A=L.Allocations.slice(),have=new Set(rw(L.Charges,'ChargeID').filter(c=>c[1]==='Bill').map(c=>String(c[2])));
+ PEND.forEach(p=>{
+  (p.mk||[]).forEach(m=>{if(!have.has(String(m.billId))){have.add(String(m.billId));const q=m.row;C.push([m.tmp,'Bill',q.billId,q.billNo,'','',q.ptype,q.party,q.dir,q.date,q.desc,q.amount,q.comments,'~pending']);}});
+  if(!landed(p))p.rows.forEach(x=>A.push([x.aid,p.paymentId,p.rno,'',x.bn,x.chargeId,'',x.on,'',x.party,p.date,x.amount,x.comments,x.reverses||'','~pending']));});
+ return{Charges:C,Receipts:L.Receipts,Allocations:A};}
+const PCH=()=>new Set(PEND.flatMap(p=>p.rows.map(x=>String(x.chargeId)))),PRC=()=>new Set(PEND.map(p=>String(p.paymentId)));
 const rw=(a,h)=>(a||[]).filter(r=>Array.isArray(r)&&r[0]!==''&&String(r[0])!==h);
 function data(){
- const al=rw(L.Allocations,'AllocID').map(a=>({id:String(a[0]),pid:String(a[1]),rno:a[2],billNo:a[4],cid:String(a[5]),orderNo:a[7],party:a[9],date:String(a[10]),amt:+a[11]||0,note:a[12],rev:String(a[13]||'')}));
- const rvC={};rw(L.Charges,'ChargeID').forEach(c=>{if(c[1]==='Reversal')rvC[String(c[12]).replace('rev:','')]=+c[11]||0;});const bC={},bP={};al.forEach(a=>{bC[a.cid]=r2((bC[a.cid]||0)+a.amt);bP[a.pid]=r2((bP[a.pid]||0)+a.amt);});
- const ch=rw(L.Charges,'ChargeID').map(c=>({id:String(c[0]),type:c[1],billId:String(c[2]||''),billNo:String(c[3]||''),orderNo:String(c[5]||''),ptype:c[6],party:String(c[7]).trim(),dir:c[8],date:String(c[9]),desc:c[10],amt:+c[11]||0,note:c[12]})).map(c=>({...c,paid:bC[c.id]||0,due:r2(c.amt-(bC[c.id]||0)+(rvC[c.id]||0))}));
- const rc=rw(L.Receipts,'PaymentID').map(r=>({id:String(r[0]),no:r[1],dir:r[2],party:String(r[4]).trim(),date:String(r[5]),mode:r[6],ref:r[7],amt:+r[8]||0,note:r[9],type:r[10],ptype:String(r[3]||'')})).map(r=>({...r,alloc:bP[r.id]||0,un:r2(r.amt-(bP[r.id]||0))}));
+ const X=LV();
+ const al=rw(X.Allocations,'AllocID').map(a=>({id:String(a[0]),pid:String(a[1]),rno:a[2],billNo:a[4],cid:String(a[5]),orderNo:a[7],party:a[9],date:String(a[10]),amt:+a[11]||0,note:a[12],rev:String(a[13]||''),pend:a[14]==='~pending'}));
+ const rvC={};rw(X.Charges,'ChargeID').forEach(c=>{if(c[1]==='Reversal')rvC[String(c[12]).replace('rev:','')]=+c[11]||0;});const bC={},bP={};al.forEach(a=>{bC[a.cid]=r2((bC[a.cid]||0)+a.amt);bP[a.pid]=r2((bP[a.pid]||0)+a.amt);});
+ const ch=rw(X.Charges,'ChargeID').map(c=>({id:String(c[0]),type:c[1],billId:String(c[2]||''),billNo:String(c[3]||''),orderNo:String(c[5]||''),ptype:c[6],party:String(c[7]).trim(),dir:c[8],date:String(c[9]),desc:c[10],amt:+c[11]||0,note:c[12]})).map(c=>({...c,paid:bC[c.id]||0,due:r2(c.amt-(bC[c.id]||0)+(rvC[c.id]||0))}));
+ const rc=rw(X.Receipts,'PaymentID').map(r=>({id:String(r[0]),no:r[1],dir:r[2],party:String(r[4]).trim(),date:String(r[5]),mode:r[6],ref:r[7],amt:+r[8]||0,note:r[9],type:r[10],ptype:String(r[3]||'')})).map(r=>({...r,alloc:bP[r.id]||0,un:r2(r.amt-(bP[r.id]||0))}));
  const pm={};ch.forEach(c=>{if(c.ptype&&!pm[c.party])pm[c.party]=String(c.ptype);});rc.forEach(r=>{if(!r.ptype)r.ptype=pm[r.party]||'';});
  return{al,ch,rc};}
 const fifo=(a,b)=>a.date.localeCompare(b.date)||((b.type==='Opening')-(a.type==='Opening'))||a.billNo.localeCompare(b.billNo)||a.id.localeCompare(b.id);
@@ -353,7 +374,7 @@ async function freshLedger(){                                   // after a write
 function pushParent(key){try{if(window.parent!==window)window.parent.postMessage({type:'ap-cache-request',key,force:true},'*');}catch(e){}}   // portal reloads its copy → other modules see the change
 const rowCount=()=>rw(L.Charges,'ChargeID').length+rw(L.Receipts,'PaymentID').length+rw(L.Allocations,'AllocID').length;
 async function manualRefresh(){                                  // click on the cache button
- if(S.refreshing||busy)return;S.refreshing=true;paint();
+ if(S.refreshing)return;S.refreshing=true;paint();if(PEND.length)flushPend();
  try{
   if(!ready()){S.booting=false;await bootAll();if(!ready())throw new Error(S.err||'data not available');}
   else{await freshLedger();stale=false;await Promise.all([SRC.bills,SRC.specs].map(applyFromIDB));askParent();}
@@ -421,7 +442,7 @@ function virt(d){const m=new Map(),have=new Set(d.ch.map(c=>c.billId));
  return[...m.values()].filter(b=>!have.has(b.id)).map(b=>{const tot=calcB(b.lines,b.disc,b.dt,b.vat),due=r2(tot-(pay[b.id]||0));
   return{id:'V'+b.id,virtual:true,billId:b.id,type:'Bill',billNo:b.no,orderNo:'',desc:'Bill '+b.no+(pay[b.id]?' (net of earlier payments)':''),ptype:'',party:b.party,dir:b.dir,date:b.date,amt:due,due,note:'Auto-created from Bills when allocating'};}).filter(v=>v.due>.005);}
 const chargeRow=v=>({type:'Bill',billId:v.billId,billNo:v.billNo,orderId:'',orderNo:'',ptype:v.ptype,party:v.party,dir:v.dir,date:v.date,desc:v.desc,amount:v.amt,comments:v.note});
-let party='',qtxt='',rid=null,mode='auto',amts={},cmts={},cOpen=new Set(),busy=false,pill='',dFrom='',dTo='',psL=[],psIdx=-1;
+let party='',qtxt='',rid=null,mode='auto',amts={},cmts={},cOpen=new Set(),pill='',dFrom='',dTo='',psL=[],psIdx=-1;
 const D=()=>data();
 /* ── PARTIES — read from the "ap2_specsData" cache, same rules as Receipts.html
    row = [ID, Category, Name, Description, Status]
@@ -547,19 +568,20 @@ function ctr(){const{r}=cur(),e=$('ctr');
  const s2=$('it-sel');if(s2){const n=nSel();s2.hidden=!n;s2.textContent=n+' selected';}
  if(!r){e.innerHTML='';return;}
  const s=sum(),u=r2(r.un-s),p=Math.max(0,Math.min(100,r.un?s/r.un*100:0));
+ {const row=document.querySelector('.rcp.on');if(row)row.classList.toggle('full',s>.005&&Math.abs(r2(r.un-s))<=.005);}
  e.innerHTML=`<div class="ct">Allocating <b class="mono">${money(s)}</b> of <b class="mono">${money(r.un)}</b> · <span class="${u<-.005?'neg':'dim'}">Left (advance): <span class="mono">${money(u)}</span></span></div><div class="pg"><i style="width:${p}%" class="${u<-.005?'bad':''}"></i></div>`;}
 /* ── render ── */
-function renderRc(){const d=D(),R=recs(d),tot=r2(R.reduce((a,x)=>a+x.un,0));
+function renderRc(){const d=D(),pr=PRC(),R=recs(d),tot=r2(R.reduce((a,x)=>a+x.un,0));
  $('rc-sum').innerHTML=R.length?`<span class="chip"><i class="ti ti-receipt-2"></i>${R.length} receipt${R.length>1?'s':''} · ${money(tot)}</span>`:'';
  const filt=party||qtxt||pill||dFrom||dTo;
- $('rc').innerHTML=R.length?R.map(x=>{const k=ptOf(x);return `<div class="rcp${x.id===rid?' on':''}" data-id="${x.id}" aria-label="${esc(x.no)} ${esc(x.party)} ${money(x.un)}" onclick="pickR('${x.id}')"><span class="rd"><i class="ti ti-check"></i></span><i class="ti ${x.dir==='out'?'ti-arrow-down-left':'ti-arrow-up-right'} rdir ${x.dir}"></i><i class="ti ${tIcon(k)} rty"></i><i class="ti ${mIcon(x.mode)} rmo"></i><span class="rdt">${esc(sd(x.date))}</span><span class="rnm">${esc(x.party)}</span><b class="mono ra">${money(x.un)}</b></div>`;}).join('')
+ $('rc').innerHTML=R.length?R.map(x=>{const k=ptOf(x);return `<div class="rcp${x.id===rid?' on':''}" data-id="${x.id}" aria-label="${esc(x.no)} ${esc(x.party)} ${money(x.un)}" onclick="pickR('${x.id}')"><span class="rd"><i class="ti ti-check"></i></span><i class="ti ${x.dir==='out'?'ti-arrow-down-left':'ti-arrow-up-right'} rdir ${x.dir}"></i><i class="ti ${tIcon(k)} rty"></i><i class="ti ${mIcon(x.mode)} rmo"></i><span class="rdt">${esc(sd(x.date))}</span><span class="rnm">${esc(x.party)}</span><span class="raw">${pr.has(String(x.id))?'<i class="ti ti-loader-2 spinner rsy" title="Syncing…"></i>':''}<i class="ti ti-circle-check-filled rok" title="Fully allocated"></i><b class="mono ra">${money(x.un)}</b></span></div>`;}).join('')
   :`<div class="empty"><i class="ti ti-receipt-off" style="font-size:22px;display:block;margin-bottom:6px"></i>${filt?'No unallocated receipts match the current filters':'No unallocated receipts'}</div>`;}
 function renderItems(){const{d,r}=cur(),el=$('items'),sm=$('it-sum');
  if(!r){el.innerHTML='<div class="empty"><i class="ti ti-pointer" style="font-size:22px;display:block;margin-bottom:6px"></i>Select a receipt above to see its open items</div>';sm.innerHTML='';return;}
- const I=open_(d,r),ro=mode==='auto'?'readonly':'',td=r2(I.reduce((a,c)=>a+c.due,0));
+ const I=open_(d,r),pc=PCH(),ro=mode==='auto'?'readonly':'',td=r2(I.reduce((a,c)=>a+c.due,0));
  sm.innerHTML=`<span class="chip">${I.length} open · ${money(td)}</span><span class="chip on" id="it-sel" hidden></span>`;
  if(!I.length){el.innerHTML=`<div class="empty">${why(d,r)}</div>`;return;}
- el.innerHTML=`<div class="tw itw"><table><thead><tr><th class="ck"><input type="checkbox" class="ckb" id="ck-all" title="Select all (oldest first)" onchange="togAll()"/></th><th>Date</th><th>Bill</th><th>Order / item</th><th class="n">Charge</th><th class="n">Due</th><th class="n">Allocate</th><th></th></tr></thead><tbody>${I.map(c=>{const on=amts[c.id]>0;return `<tr class="it${on?' on':''}" id="it-${c.id}" onclick="tog('${c.id}')"><td class="ck"><input type="checkbox" class="ckb" ${on?'checked':''} onclick="event.stopPropagation()" onchange="tog('${c.id}')"/></td><td class="dim">${esc(c.date)}</td><td class="mono">${esc(c.billNo)||'–'} ${c.type!=='Order'?`<span class="badge">${esc(c.type)}</span>`:''}</td><td>${esc(c.orderNo||c.desc)}</td><td class="n">${money(c.amt)}</td><td class="n">${money(c.due)}</td><td class="n"><input type="number" min="0" step="any" ${ro} placeholder="0.00" value="${amts[c.id]||''}" onclick="event.stopPropagation()" oninput="setAmt('${c.id}',this.value,${c.due})" onchange="if(+this.value>${c.due})this.value=${c.due}"/></td><td class="ra2"><button type="button" class="ib rb${(cmts[c.id]||'').trim()?' has':''}" id="cb-${c.id}" title="Comment" aria-label="Comment" onclick="event.stopPropagation();cmtToggle('${c.id}')"><i class="ti ti-pencil"></i></button><button type="button" class="ib rb rsv" id="sb-${c.id}" title="Save this row" aria-label="Save this row" onclick="event.stopPropagation();saveRow('${c.id}')"><i class="ti ti-device-floppy"></i></button></td></tr>${cOpen.has(c.id)?`<tr class="cmr"><td colspan="8"><input class="cmi" id="ci-${c.id}" placeholder="Comment for this row…" value="${esc(cmts[c.id]||'')}" oninput="cmtSet('${c.id}',this.value)" onkeydown="if(event.key==='Enter'||event.key==='Escape')cmtToggle('${c.id}')"/></td></tr>`:''}`;}).join('')}</tbody></table></div>`;
+ el.innerHTML=`<div class="tw itw"><table><thead><tr><th class="ck"><input type="checkbox" class="ckb" id="ck-all" title="Select all (oldest first)" onchange="togAll()"/></th><th>Date</th><th>Bill</th><th>Order / item</th><th class="n">Charge</th><th class="n">Due</th><th class="n">Allocate</th><th></th></tr></thead><tbody>${I.map(c=>{const on=amts[c.id]>0;return `<tr class="it${on?' on':''}" id="it-${c.id}" onclick="tog('${c.id}')"><td class="ck"><input type="checkbox" class="ckb" ${on?'checked':''} onclick="event.stopPropagation()" onchange="tog('${c.id}')"/></td><td class="dim">${esc(c.date)}</td><td class="mono">${esc(c.billNo)||'–'}${pc.has(String(c.id))?' <span class="badge out"><i class="ti ti-loader-2 spinner"></i> Syncing…</span>':''} ${c.type!=='Order'?`<span class="badge">${esc(c.type)}</span>`:''}</td><td>${esc(c.orderNo||c.desc)}</td><td class="n">${money(c.amt)}</td><td class="n">${money(c.due)}</td><td class="n"><input type="number" min="0" step="any" ${ro} placeholder="0.00" value="${amts[c.id]||''}" onclick="event.stopPropagation()" oninput="setAmt('${c.id}',this.value,${c.due})" onchange="if(+this.value>${c.due})this.value=${c.due}"/></td><td class="ra2"><button type="button" class="ib rb${(cmts[c.id]||'').trim()?' has':''}" id="cb-${c.id}" title="Comment" aria-label="Comment" onclick="event.stopPropagation();cmtToggle('${c.id}')"><i class="ti ti-pencil"></i></button><button type="button" class="ib rb rsv" id="sb-${c.id}" title="Save this row" aria-label="Save this row" onclick="event.stopPropagation();saveRow('${c.id}')"><i class="ti ti-device-floppy"></i></button></td></tr>${cOpen.has(c.id)?`<tr class="cmr"><td colspan="8"><input class="cmi" id="ci-${c.id}" placeholder="Comment for this row…" value="${esc(cmts[c.id]||'')}" oninput="cmtSet('${c.id}',this.value)" onkeydown="if(event.key==='Enter'||event.key==='Escape')cmtToggle('${c.id}')"/></td></tr>`:''}`;}).join('')}</tbody></table></div>`;
  hdck();}
 function cmtToggle(id){if(cOpen.has(id))cOpen.delete(id);else cOpen.add(id);renderItems();cap5();const i=$('ci-'+id);if(i)i.focus();}
 function cmtSet(id,v){cmts[id]=v;const b=$('cb-'+id);if(b)b.classList.toggle('has',!!v.trim());}
@@ -571,45 +593,70 @@ function capBox(box,rows){if(!box)return;if(!rows||rows.length<=5){box.style.max
 function cap5(){capBox($('rc'),[...$('rc').querySelectorAll('.rcp')]);capBox(document.querySelector('.itw'),[...document.querySelectorAll('.itw tr.it')]);capBox($('hist'),[...$('hist').querySelectorAll('tbody tr')]);}
 function renderHist(){const{d,r}=cur(),hp=r?r.party:party;$('hist-h').textContent=hp?'· '+hp:'';
  const rv=new Set(d.al.filter(a=>a.rev).map(a=>a.rev)),H=d.al.filter(a=>a.party===hp).sort((a,b)=>b.id.localeCompare(a.id));
- $('hist').innerHTML=!hp?'<div class="empty">Select a party or receipt to see its allocations</div>':H.length?`<table><thead><tr><th>Date</th><th>Receipt</th><th>Bill</th><th>Order</th><th class="n">Amount</th><th>Note</th><th></th></tr></thead><tbody>${H.map(a=>`<tr><td>${esc(a.date)}</td><td class="mono">${esc(a.rno)}</td><td class="mono">${esc(a.billNo)}</td><td>${esc(a.orderNo)}</td><td class="n ${a.amt<0?'neg':''}">${money(a.amt)}</td><td>${esc(a.note)}${a.rev?' <span class="badge unpaid">Reversal</span>':rv.has(a.id)?' <span class="badge">Reversed</span>':''}</td><td class="acts">${a.amt>0&&!rv.has(a.id)?`<button class="btn sm dng" onclick="rev('${a.id}')">Reverse</button>`:''}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">No allocations yet</div>';}
+ $('hist').innerHTML=!hp?'<div class="empty">Select a party or receipt to see its allocations</div>':H.length?`<table><thead><tr><th>Date</th><th>Receipt</th><th>Bill</th><th>Order</th><th class="n">Amount</th><th>Note</th><th></th></tr></thead><tbody>${H.map(a=>`<tr><td>${esc(a.date)}</td><td class="mono">${esc(a.rno)}${a.pend?' <span class="badge out"><i class="ti ti-loader-2 spinner"></i> Syncing…</span>':''}</td><td class="mono">${esc(a.billNo)}</td><td>${esc(a.orderNo)}</td><td class="n ${a.amt<0?'neg':''}">${money(a.amt)}</td><td>${esc(a.note)}${a.rev?' <span class="badge unpaid">Reversal</span>':rv.has(a.id)?' <span class="badge">Reversed</span>':''}</td><td class="acts">${a.amt>0&&!a.pend&&!rv.has(a.id)?`<button class="btn sm dng${revArm===a.id?' armed':''}" onclick="rev('${a.id}')">${revArm===a.id?'Confirm?':'Reverse'}</button>`:''}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">No allocations yet</div>';}
 function render(){
  if(USE_BACKEND&&!ready()){$('rc').innerHTML=stateHTML();$('rc-sum').innerHTML='';$('it-sum').innerHTML='';$('items').innerHTML='';$('hist').innerHTML='';$('ctr').innerHTML='';return;}
  syncSeg();drawPills();renderRc();renderItems();ctr();renderHist();cap5();}
-let stale=false;   // saved on the server, but the screen could not re-read the ledger yet
-function syncInd(){const el=$('sync-ind');if(!el)return;const n=(busy?1:0)+(stale?1:0);
- el.style.display=n?'':'none';el.classList.toggle('busy',busy||S.refreshing);el.querySelector('.sync-n').textContent=n;
- el.title=busy?'Saving to the server…':stale?'Saved — screen not refreshed yet · click to retry now':'';}
+function syncInd(){const el=$('sync-ind');if(!el)return;const n=PEND.length+(stale?1:0);
+ el.style.display=n?'':'none';el.classList.toggle('busy',!!flushing||S.refreshing);el.querySelector('.sync-n').textContent=n;
+ el.title=PEND.length?PEND.length+' change'+(PEND.length>1?'s':'')+(flushing?' saving to the server…':' saved on this device, waiting to sync — click to retry now'):stale?'Saved — screen not refreshed yet · click to retry now':'';}
 function paint(){try{AP2Sync.paint();}catch(e){}syncInd();}
-$('sync-ind').addEventListener('click',async()=>{if(busy||S.refreshing||!ready())return;S.refreshing=true;paint();
- const ok=await load();S.refreshing=false;paint();if(ok)showToast('Synced — up to date','success');});
-function setBusy(b){busy=b;document.body.classList.toggle('saving',b);paint();}
-async function doSave(ids,one){if(busy||S.refreshing||notReady())return;const{r}=cur();if(!r)return showToast('Select a receipt','error');
+$('sync-ind').addEventListener('click',()=>{if(PEND.length){flushPend();return;}
+ if(stale&&!S.refreshing&&ready()){S.refreshing=true;paint();load().then(ok=>{S.refreshing=false;paint();if(ok)showToast('Synced — up to date','success');});}});
+function queue(p){p.id=uidc();p.date=today();const AL=rw(L.Allocations,'AllocID');   // base = copies of this exact row the server (or an earlier pending change) already has
+ p.base=p.rows.map(x=>cntAl(AL,p.paymentId,x)+PEND.reduce((n,q)=>n+(String(q.paymentId)===String(p.paymentId)?q.rows.filter(y=>y.chargeId===x.chargeId&&y.amount===x.amount&&(y.reverses||'')===(x.reverses||'')).length:0),0));
+ PEND.push(p);savePend();}
+function flushPend(){
+ if(flushing)return flushing;
+ flushing=(async()=>{let did=false;paint();
+  try{
+   while(PEND.length){const p=PEND[0];
+    try{
+     if(!p.posted){
+      if(p.mk.length||p.rows.some(x=>String(x.chargeId).startsWith('TMP:'))){      // a bill that has no charge yet: create it ONCE, then use its real id
+       await freshLedger();
+       const have=b=>rw(L.Charges,'ChargeID').find(c=>String(c[2])===String(b)&&c[1]==='Bill'),need=p.mk.filter(m=>!have(m.billId));
+       if(need.length){await post('addCharges',{rows:need.map(m=>m.row)});await freshLedger();}
+       p.rows.forEach(x=>{if(String(x.chargeId).startsWith('TMP:')){const c=have(x.chargeId.slice(4));if(!c)throw new Error('Charge not created for bill '+x.chargeId.slice(4));x.chargeId=String(c[0]);}});
+       p.mk=[];savePend();}
+      if(p.tried){await freshLedger();if(landed(p))p.posted=1;}                    // an earlier attempt may have gone through (reply lost)
+      if(!p.posted){p.tried=1;savePend();
+       const j=await post('addAllocations',{paymentId:p.paymentId,date:p.date,rows:p.rows.map(x=>({chargeId:x.chargeId,amount:x.amount,comments:x.comments,reverses:x.reverses}))});
+       if(j&&j.error)throw new Error(j.error);p.posted=1;savePend();}}
+     await freshLedger();                                                          // pull what the server holds BEFORE the pending row is dropped (no flicker)
+     PEND.shift();savePend();did=true;stale=false;
+    }catch(e){
+     const m=String((e&&e.message)||e);
+     if(p.posted||(!FATAL.test(m)&&(NETERR.test(m)||!navigator.onLine)))break;        // temporary → stays on this device, retried later
+     PEND.shift();savePend();after();showToast((FATAL.test(m)?'⛔ ':'Not saved: ')+errText(m),'error');   // refused → the row is taken back
+    }}
+  }finally{paint();}
+  after();
+  if(did&&!PEND.length)showToast('Saved — all changes are synced','success');
+ })().finally(()=>{flushing=null;paint();});
+ return flushing;}
+function doSave(ids,one){if(notReady())return;const{d,r}=cur();if(!r)return showToast('Select a receipt','error');
  const rows=ids.filter(k=>+amts[k]>0).map(k=>({chargeId:k,amount:r2(amts[k]),comments:(cmts[k]||'').trim()}));
  if(!rows.length)return showToast(one?'Enter an allocate amount for this row first':'Nothing to allocate','error');
- if(r2(rows.reduce((a,x)=>a+x.amount,0))>r.un+.005)return showToast('More than the receipt balance','error');
- setBusy(true);showToast('Saving…');const ic=one&&$('sb-'+one)&&$('sb-'+one).querySelector('i');if(ic)ic.className='ti ti-loader-2 spinner';   // spinner on the row being saved
- let ok=false,made=false;
- try{
-  const vs=rows.filter(x=>x.chargeId[0]==='V');
-  if(vs.length){const V=virt(D()),pick=vs.map(x=>V.find(v=>v.id===x.chargeId));if(pick.some(v=>!v))throw new Error('A bill changed — reload the page');
-   await post('addCharges',{rows:pick.map(chargeRow)});made=true;const j=await Ledger.get();
-   vs.forEach(x=>{const bid=x.chargeId.slice(1),c=rw(j.Charges,'ChargeID').find(c=>String(c[2])===bid&&c[1]==='Bill');if(!c)throw new Error('Charge not created for bill '+bid);x.chargeId=String(c[0]);});}
-  await post('addAllocations',{paymentId:r.id,date:today(),rows});
-  if(one){delete amts[one];delete cmts[one];cOpen.delete(one);}else{amts={};cmts={};cOpen.clear();rid=null;}
-  const fresh=await load();                                      // pull the saved ledger back so the screen shows what the backend now holds
-  if(one){keepSel();if(mode==='auto'&&rid)fill();render();}
-  showToast(fresh===false?'Saved — could not refresh, press the cache button':one?'Row allocated':'Allocation saved',fresh===false?'info':'success');ok=true;
- }catch(e){
-  showToast('Not saved: '+errText(e.message),'error');
-  if(made){try{await load();}catch(x){}Object.keys(amts).forEach(k=>{if(k[0]==='V')delete amts[k];});if(mode==='auto')fill();render();}   // a bill charge was already created — never create it twice
- }
- setBusy(false);if(!ok)renderItems();}
+ const tot=r2(rows.reduce((a,x)=>a+x.amount,0));
+ if(tot>r.un+.005)return showToast('More than the receipt balance','error');
+ const I=open_(d,r),mk=[],out=rows.map(x=>{const c=I.find(y=>y.id===x.chargeId);if(!c)return null;let id=c.id;
+  if(c.virtual){id='TMP:'+c.billId;mk.push({billId:c.billId,tmp:id,row:chargeRow(c)});}   // bill with no charge yet → created in the background
+  return{aid:uidc(),chargeId:id,amount:x.amount,comments:x.comments,reverses:'',bn:c.billNo,on:c.orderNo,party:c.party};});
+ if(out.some(x=>!x))return showToast('A bill changed — reload the page','error');
+ queue({paymentId:r.id,rno:r.no,rows:out,mk});
+ if(one){delete amts[one];delete cmts[one];cOpen.delete(one);}else{amts={};cmts={};cOpen.clear();rid=null;}
+ keepSel();if(mode==='auto'&&rid)fill();render();                 // impact shows at once
+ showToast((one?'Row allocated ':'Allocated ')+money(tot)+' — saving…','success');
+ flushPend();}
 function saveRow(id){return doSave([id],id);}
-async function rev(id){if(busy||S.refreshing||notReady())return;const a=D().al.find(x=>x.id===id);if(!a||!confirm('Reverse this allocation of '+money(a.amt)+'? A negative row is added; the original stays.'))return;
- setBusy(true);showToast('Reversing…');
- try{await post('addAllocations',{paymentId:a.pid,date:today(),rows:[{chargeId:a.cid,amount:-a.amt,reverses:a.id,comments:'Reversal of '+a.id}]});const fresh=await load();showToast(fresh===false?'Reversed — could not refresh, press the cache button':'Reversed',fresh===false?'info':'success');}
- catch(e){showToast('Not reversed: '+errText(e.message),'error');}
- setBusy(false);}
+let revArm='',revT;   // reverse needs two clicks: 1st arms (blinks red), 2nd does it
+function rev(id){if(notReady())return;const a=D().al.find(x=>x.id===id);if(!a||a.pend)return;
+ if(revArm!==id){revArm=id;clearTimeout(revT);revT=setTimeout(()=>{revArm='';renderHist();},4000);renderHist();return;}
+ clearTimeout(revT);revArm='';
+ queue({paymentId:a.pid,rno:a.rno,rows:[{aid:uidc(),chargeId:a.cid,amount:-a.amt,comments:'Reversal of '+a.id,reverses:a.id,bn:a.billNo,on:a.orderNo,party:a.party}],mk:[]});
+ keepSel();if(mode==='auto'&&rid)fill();render();
+ showToast('Reversed '+money(a.amt)+' — saving…','success');flushPend();}
 
 document.fonts&&document.fonts.ready&&document.fonts.ready.then(cap5);addEventListener('resize',cap5);
 /* ═══ BOOT ═══ */
@@ -618,6 +665,9 @@ if(USE_BACKEND){
  document.addEventListener('visibilitychange',()=>{if(document.hidden)return;if(!ready()&&!S.booting)bootAll();else SV.forEach(applyFromIDB);});
  watchSrc();bootAll();setInterval(()=>{if(ready())SV.forEach(applyFromIDB);},15000);   // safety net behind the subscription
 }else load();
+if(window.AP2Api&&AP2Api.onSession)AP2Api.onSession(()=>{if(PEND.length)flushPend();});
+if(window.AP2Api&&AP2Api.startRetry)AP2Api.startRetry(()=>flushPend(),()=>PEND.length);   // retries when the browser is back online and every 10 s while changes wait
+if(PEND.length)setTimeout(flushPend,1500);
 </script>
 <script>
 /* shared/permGate.js — front-end permission gate: disables denied buttons, blocks denied clicks and shows the "Permission not granted" label */
@@ -637,11 +687,13 @@ AP2Sync.init({
   online:['addCharges','addAllocations','reverseBill'],
   toast:showToast,
   state:()=>{
-    if(busy)return{state:'warn busy',title:'Saving…'};
+    if(PEND.length)return{state:'warn'+(flushing?' busy':''),title:PEND.length+' change'+(PEND.length>1?'s':'')+(flushing?' saving…':' waiting to sync — click the cloud to retry')};
     if(S.refreshing||(!ready()&&S.state!=='error'))return{state:'warn busy',title:'Loading…'};
     if(!ready())return{state:'err',title:'Could not load — '+S.err+' · click to retry'};
     const t=S.last?new Date(S.last).toLocaleTimeString('en-GB'):'';
     return{state:'ok',title:'Up to date · '+rowCount()+' rows'+(t?' · '+t:'')};},
+  extraPending:()=>PEND.length,
+  extraFlush:()=>flushPend(),
   refresh:manualRefresh
 });
 </script>
