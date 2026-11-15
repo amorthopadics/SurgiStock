@@ -61,7 +61,6 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
 .rt{max-width:110px;margin-left:auto;font-family:var(--mono);text-align:right}
 .tot{margin-left:auto;width:min(340px,100%);font-size:13px}.tot div{display:flex;justify-content:space-between;padding:3px 0}.tot .g{font:700 15px var(--mono);border-top:1px solid var(--border2);margin-top:4px;padding-top:6px}
 .pr-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) auto;gap:8px;align-items:end}
-.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border2);padding:9px 16px;border-radius:var(--radius);z-index:99;display:none;font-size:13px}.toast.error{border-color:var(--red);color:var(--red)}.toast.success{border-color:var(--teal)}
 #pr{display:none}
 @media(max-width:700px){.fg,.pr-row{grid-template-columns:1fr 1fr}.modal{border-radius:0;border:0}.ov{padding:0}.bar .btn .lbl{display:none}}
 /* ── print: only the bill ── */
@@ -188,11 +187,36 @@ tr.cmr td{background:var(--bg3);padding:6px 10px}
 .bar-scroll .ps-b:hover,.bar-scroll .ps.open .ps-b,.bar-scroll .bw-d:hover,.bar-scroll .ib:hover{background:var(--bg2)}
 .bar-scroll .ps-b.act,.bar-scroll .bw-d.has{background:var(--accent-dim);color:var(--accent)}
 .bar-scroll .qchip{height:26px}
+/* v6 — header, cache / sync buttons and notification identical to Master.html */
+:root,[data-theme="dark"]{--surface2:#2d333b;--text3:#6e7681;--red-dim:rgba(248,81,73,.12);--shadow-lg:0 8px 32px rgba(0,0,0,.6)}
+[data-theme="light"]{--surface2:#e2e7ed;--text3:#5a6370;--red-dim:rgba(168,17,27,.1);--shadow-lg:0 8px 32px rgba(0,0,0,.2)}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pingo{0%{transform:scale(1);opacity:.75}100%{transform:scale(3.2);opacity:0}}
+.bar{padding:8px 14px;gap:8px;background:var(--bg2);border-bottom:1px solid var(--border)}
+.vb-brand{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;flex-shrink:0;border-radius:var(--radius-lg);background:var(--accent-dim);color:var(--accent);border:1px solid var(--border);font-size:16px}
+.bar>.ib{width:32px;height:32px;font-size:15px;border-radius:var(--radius-lg)}
+.cache-ind{margin-left:0}
+.cache-ind,.cache-ind:hover{background:none;border:0;box-shadow:none}
+.cache-ind.ok{color:var(--teal)}.cache-ind.warn{color:var(--amber)}.cache-ind.err{color:var(--red)}
+.cache-ind.busy i{animation:spin 1s linear infinite}
+.sync-ind,.sync-ind:hover{position:relative;background:none;border:0;box-shadow:none;color:var(--red)}
+.sync-ind .ping{position:absolute;top:2px;right:2px;width:9px;height:9px;border-radius:50%;background:var(--red)}
+.sync-ind .ping::after{content:'';position:absolute;inset:0;border-radius:50%;background:var(--red);animation:pingo 1.4s ease-out infinite}
+.sync-ind .sync-n{position:absolute;bottom:-3px;right:-2px;min-width:14px;height:14px;padding:0 3px;border-radius:7px;background:var(--red);color:#fff;font-size:9px;line-height:14px;text-align:center;font-family:var(--mono)}
+.sync-ind.busy>i{animation:spin 1s linear infinite}
+.toast{position:fixed;bottom:22px;right:22px;left:auto;transform:translateY(10px);background:var(--surface2);color:var(--text);border:1px solid var(--border2);padding:10px 16px;border-radius:var(--radius-lg);font-size:12.5px;font-weight:500;z-index:999;opacity:0;transition:all .25s cubic-bezier(.34,1.56,.64,1);pointer-events:none;display:flex;align-items:center;gap:9px;box-shadow:var(--shadow-lg);max-width:340px}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:var(--teal-dim);color:var(--teal);border-color:rgba(57,211,83,.25)}
+.toast.error{background:var(--red-dim);color:var(--red);border-color:rgba(248,81,73,.25)}
+.spinner{animation:spin 1s linear infinite;display:inline-flex}
+/* while a save / reverse is running: no second click */
+body.saving .rsv,body.saving .btn.dng{opacity:.5;pointer-events:none}
+@media(max-width:600px){.vb-brand{display:none}}
 </style>
 </head>
 <body>
 <div class="bar">
-<h1><i class="ti ti-arrows-split"></i><span class="t">Amount Allocation</span></h1>
+<div class="vb-brand" title="Amount Allocation"><i class="ti ti-arrows-split"></i></div>
 <div class="bar-scroll" id="bar-scroll">
 <div class="bw-caps" id="f-types" hidden></div>
 <div class="ps" id="ps">
@@ -208,6 +232,8 @@ tr.cmr td{background:var(--bg3);padding:6px 10px}
 <button type="button" class="ib" id="f-clear" hidden title="Clear all filters" aria-label="Clear filters" onclick="clearAll()"><i class="ti ti-filter-off"></i></button>
 </div>
 <span class="seg"><button class="tab on" id="m-auto" title="Automatic (FIFO)" aria-label="Automatic (FIFO)" onclick="setMode('auto')"><i class="ti ti-wand"></i></button><button class="tab" id="m-man" title="Manual" aria-label="Manual" onclick="setMode('man')"><i class="ti ti-hand-click"></i></button></span>
+<button class="ib cache-ind warn" id="cache-ind" type="button" title="Loading…"><i class="ti ti-database"></i></button>
+<button class="ib sync-ind" id="sync-ind" type="button" style="display:none" title=""><i class="ti ti-cloud-upload"></i><span class="ping"></span><b class="sync-n">0</b></button>
 </div>
 <main>
 <div class="cols">
@@ -217,7 +243,10 @@ tr.cmr td{background:var(--bg3);padding:6px 10px}
 </div>
 <h3 class="hh"><i class="ti ti-history"></i>Allocation history <span class="dim" id="hist-h" style="font-weight:400"></span></h3><div class="tw" id="hist"></div></main>
 <div class="tip" id="tip" hidden></div>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="alert">
+  <i id="toast-icon" class="ti ti-circle-check"></i>
+  <span id="toast-msg">Saved</span>
+</div>
 <script>
 'use strict';
 /* ═══ LEDGER STORE — local-cache mode (no backend). Same data shape as the Apps Script backend,
@@ -261,8 +290,13 @@ const Ledger=USE_BACKEND?{get:()=>freshLedger(),post:(a,p)=>AP2Api.post(a,p).the
  };})();
 const CUR='AED',$=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=n=>(+n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),r2=n=>Math.round((+n||0)*100)/100;
-const today=()=>new Date().toISOString().slice(0,10),post=(a,p)=>Ledger.post(a,p),errText=m=>String(m);
-function showToast(m,t){const e=$('toast');e.textContent=m;e.className='toast '+(t||'');e.style.display='block';clearTimeout(showToast.t);showToast.t=setTimeout(()=>e.style.display='none',t==='error'?9000:3000);}
+const today=()=>new Date().toISOString().slice(0,10),post=(a,p)=>Ledger.post(a,p),errText=m=>(window.AP2Api&&AP2Api.errText?AP2Api.errText(m):String(m));
+function showToast(msg,type){   // same markup, position and timing as Master.html
+ const t=$('toast'),icon=$('toast-icon'),label=$('toast-msg');
+ t.className='toast show'+(type?' '+type:'');
+ icon.className='ti '+(type==='error'?'ti-alert-circle':type==='success'?'ti-circle-check':'ti-info-circle');
+ label.textContent=msg;clearTimeout(showToast._t);
+ showToast._t=setTimeout(()=>t.classList.remove('show'),type==='error'?4500:2600);}
 let L={Charges:[],Receipts:[],Allocations:[]};
 const rw=(a,h)=>(a||[]).filter(r=>Array.isArray(r)&&r[0]!==''&&String(r[0])!==h);
 function data(){
@@ -290,16 +324,17 @@ const SRC={
   set:d=>{BL={Bills:d.Bills,Payments:d.Payments||[]};}}};
 SRC.specs={key:'ap2_specsData',label:'Parties',shape:d=>isObj(d)&&Array.isArray(d.Specs),set:d=>{applySpecs(d.Specs);}};   // parties / categories — optional: the page works without it, just no pills
 const SV=Object.values(SRC);SV.forEach(s=>Object.assign(s,{ts:0,fp:'',painted:false,err:''}));
-const S={state:'loading',err:'',booting:false};
+const S={state:'loading',err:'',booting:false,refreshing:false,last:0};
 const REQ=[SRC.ledger,SRC.bills],ready=()=>REQ.every(s=>s.painted);   // parties (specs) load alongside but never block the page
 function unpackS(s,r){if(!isObj(r))return null;if(s.shape(r))return{data:r,ts:0};if(s.shape(r.data))return{data:r.data,ts:+r.ts||0};return null;}
 function applySrc(s,r,from,force){
  const u=unpackS(s,r);if(!u)return false;
  if(!force&&s.painted&&u.ts&&u.ts<=s.ts)return true;           // not newer than what is on screen
+ if(!force&&s.hold&&Date.now()<s.hold&&s.painted&&!u.ts)return true;   // just wrote: don't let an older cached copy overwrite it
  s.ts=force?Date.now():(u.ts||Math.max(s.ts,Date.now()));
  const fp=JSON.stringify(u.data);
  if(!force&&s.painted&&fp===s.fp)return true;                   // identical → no re-render
- s.fp=fp;s.set(u.data);s.painted=true;s.err='';
+ s.fp=fp;s.set(u.data);s.painted=true;s.err='';S.last=Date.now();
  if(ready()){S.state='ready';S.err='';after();}else render();
  return true;}
 async function readIDB(s){try{if(window.AP2CacheWatcher&&typeof AP2CacheWatcher.readKey==='function')return await AP2CacheWatcher.readKey(s.key);}catch(e){}return null;}
@@ -310,10 +345,21 @@ async function fetchLive(s){
  catch(e){s.err=String((e&&e.message)||e);}}
 async function freshLedger(){                                   // after a write: force-pull the ledger (updates IndexedDB too), fall back to the endpoint
  const s=SRC.ledger;let r=null;
- try{if(window.AdminPro){const fn=typeof AdminPro.refresh==='function'?AdminPro.refresh:AdminPro.get;r=await fn.call(AdminPro,s.key,{force:true});}}catch(e){}
+ try{if(window.AdminPro&&typeof AdminPro.get==='function')r=await AdminPro.get(s.key,true);}catch(e){console.warn('[ledger] refresh failed',e&&e.message);}
  if(!unpackS(s,r))r=await AP2Api.get('ledger');
+ s.hold=Date.now()+8000;
  if(!applySrc(s,r,'live',true))throw new Error('Ledger returned unexpected data');
- return L;}
+ pushParent(s.key);return L;}
+function pushParent(key){try{if(window.parent!==window)window.parent.postMessage({type:'ap-cache-request',key,force:true},'*');}catch(e){}}   // portal reloads its copy → other modules see the change
+const rowCount=()=>rw(L.Charges,'ChargeID').length+rw(L.Receipts,'PaymentID').length+rw(L.Allocations,'AllocID').length;
+async function manualRefresh(){                                  // click on the cache button
+ if(S.refreshing||busy)return;S.refreshing=true;paint();
+ try{
+  if(!ready()){S.booting=false;await bootAll();if(!ready())throw new Error(S.err||'data not available');}
+  else{await freshLedger();stale=false;await Promise.all([SRC.bills,SRC.specs].map(applyFromIDB));askParent();}
+  showToast('Loaded '+rowCount()+' rows','success');}
+ catch(e){showToast('Could not load data — '+errText(e&&e.message||e),'error');}
+ S.refreshing=false;after();}
 function askParent(){if(window.parent===window)return;try{window.parent.postMessage({type:'ap-cache-request',keys:SV.map(s=>s.key)},location.origin);}catch(e){}}
 function pickPayload(m,s){
  for(const bag of [m,m.data,m.datasets,m.payload,m.caches])if(isObj(bag)&&bag[s.key]!==undefined&&unpackS(s,bag[s.key]))return bag[s.key];
@@ -344,7 +390,7 @@ const stateHTML=()=>S.state==='error'
 const notReady=()=>{if(USE_BACKEND&&!ready()){showToast(S.state==='error'?'Data not loaded — press Retry':'Still loading — please wait','error');return true;}return false;};
 
 async function load(){
- if(USE_BACKEND){try{await freshLedger();}catch(e){showToast('Could not refresh the ledger: '+errText(e.message),'error');}after();return;}   // bills come from the cache; only the ledger changes through this page
+ if(USE_BACKEND){try{await freshLedger();stale=false;after();return true;}catch(e){stale=true;showToast('Could not refresh the ledger: '+errText(e.message),'error');after();return false;}}   // bills come from the cache; only the ledger changes through this page
  try{const j=await Ledger.get();L={Charges:j.Charges||[],Receipts:j.Receipts||[],Allocations:j.Allocations||[]};}
  catch(e){showToast('Could not refresh the ledger: '+errText(e.message),'error');}
  try{const b=await BillsApi.get();BL={Bills:b.Bills||[],Payments:b.Payments||[]};}
@@ -409,7 +455,7 @@ function parties(d){const m=new Map();
 function recs(d){const q=norm(qtxt),pn=norm(party);
  return d.rc.filter(r=>r.un>.005&&(party?norm(r.party)===pn:(!q||norm(r.party).includes(q)||norm(r.no).includes(q)))&&pillOk(ptOf(r))&&(!dFrom||d10(r.date)>=dFrom)&&(!dTo||d10(r.date)<=dTo))
   .sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(a.no).localeCompare(String(b.no)));}
-function after(){render();if($('ps').classList.contains('open'))psRender();}
+function after(){render();paint();if($('ps').classList.contains('open'))psRender();}
 function keepSel(){const R=recs(D());
  if(rid&&!R.some(x=>x.id===rid)){rid=null;amts={};cmts={};cOpen.clear();}
  if(!rid&&R.length===1){rid=R[0].id;if(mode==='auto')fill();else amts={};}}   // a single match is selected for you
@@ -513,7 +559,7 @@ function renderItems(){const{d,r}=cur(),el=$('items'),sm=$('it-sum');
  const I=open_(d,r),ro=mode==='auto'?'readonly':'',td=r2(I.reduce((a,c)=>a+c.due,0));
  sm.innerHTML=`<span class="chip">${I.length} open · ${money(td)}</span><span class="chip on" id="it-sel" hidden></span>`;
  if(!I.length){el.innerHTML=`<div class="empty">${why(d,r)}</div>`;return;}
- el.innerHTML=`<div class="tw itw"><table><thead><tr><th class="ck"><input type="checkbox" class="ckb" id="ck-all" title="Select all (oldest first)" onchange="togAll()"/></th><th>Date</th><th>Bill</th><th>Order / item</th><th class="n">Charge</th><th class="n">Due</th><th class="n">Allocate</th><th></th></tr></thead><tbody>${I.map(c=>{const on=amts[c.id]>0;return `<tr class="it${on?' on':''}" id="it-${c.id}" onclick="tog('${c.id}')"><td class="ck"><input type="checkbox" class="ckb" ${on?'checked':''} onclick="event.stopPropagation()" onchange="tog('${c.id}')"/></td><td class="dim">${esc(c.date)}</td><td class="mono">${esc(c.billNo)||'–'} ${c.type!=='Order'?`<span class="badge">${esc(c.type)}</span>`:''}</td><td>${esc(c.orderNo||c.desc)}</td><td class="n">${money(c.amt)}</td><td class="n">${money(c.due)}</td><td class="n"><input type="number" min="0" step="any" ${ro} placeholder="0.00" value="${amts[c.id]||''}" onclick="event.stopPropagation()" oninput="setAmt('${c.id}',this.value,${c.due})" onchange="if(+this.value>${c.due})this.value=${c.due}"/></td><td class="ra2"><button type="button" class="ib rb${(cmts[c.id]||'').trim()?' has':''}" id="cb-${c.id}" title="Comment" aria-label="Comment" onclick="event.stopPropagation();cmtToggle('${c.id}')"><i class="ti ti-pencil"></i></button><button type="button" class="ib rb rsv" title="Save this row" aria-label="Save this row" onclick="event.stopPropagation();saveRow('${c.id}')"><i class="ti ti-device-floppy"></i></button></td></tr>${cOpen.has(c.id)?`<tr class="cmr"><td colspan="8"><input class="cmi" id="ci-${c.id}" placeholder="Comment for this row…" value="${esc(cmts[c.id]||'')}" oninput="cmtSet('${c.id}',this.value)" onkeydown="if(event.key==='Enter'||event.key==='Escape')cmtToggle('${c.id}')"/></td></tr>`:''}`;}).join('')}</tbody></table></div>`;
+ el.innerHTML=`<div class="tw itw"><table><thead><tr><th class="ck"><input type="checkbox" class="ckb" id="ck-all" title="Select all (oldest first)" onchange="togAll()"/></th><th>Date</th><th>Bill</th><th>Order / item</th><th class="n">Charge</th><th class="n">Due</th><th class="n">Allocate</th><th></th></tr></thead><tbody>${I.map(c=>{const on=amts[c.id]>0;return `<tr class="it${on?' on':''}" id="it-${c.id}" onclick="tog('${c.id}')"><td class="ck"><input type="checkbox" class="ckb" ${on?'checked':''} onclick="event.stopPropagation()" onchange="tog('${c.id}')"/></td><td class="dim">${esc(c.date)}</td><td class="mono">${esc(c.billNo)||'–'} ${c.type!=='Order'?`<span class="badge">${esc(c.type)}</span>`:''}</td><td>${esc(c.orderNo||c.desc)}</td><td class="n">${money(c.amt)}</td><td class="n">${money(c.due)}</td><td class="n"><input type="number" min="0" step="any" ${ro} placeholder="0.00" value="${amts[c.id]||''}" onclick="event.stopPropagation()" oninput="setAmt('${c.id}',this.value,${c.due})" onchange="if(+this.value>${c.due})this.value=${c.due}"/></td><td class="ra2"><button type="button" class="ib rb${(cmts[c.id]||'').trim()?' has':''}" id="cb-${c.id}" title="Comment" aria-label="Comment" onclick="event.stopPropagation();cmtToggle('${c.id}')"><i class="ti ti-pencil"></i></button><button type="button" class="ib rb rsv" id="sb-${c.id}" title="Save this row" aria-label="Save this row" onclick="event.stopPropagation();saveRow('${c.id}')"><i class="ti ti-device-floppy"></i></button></td></tr>${cOpen.has(c.id)?`<tr class="cmr"><td colspan="8"><input class="cmi" id="ci-${c.id}" placeholder="Comment for this row…" value="${esc(cmts[c.id]||'')}" oninput="cmtSet('${c.id}',this.value)" onkeydown="if(event.key==='Enter'||event.key==='Escape')cmtToggle('${c.id}')"/></td></tr>`:''}`;}).join('')}</tbody></table></div>`;
  hdck();}
 function cmtToggle(id){if(cOpen.has(id))cOpen.delete(id);else cOpen.add(id);renderItems();cap5();const i=$('ci-'+id);if(i)i.focus();}
 function cmtSet(id,v){cmts[id]=v;const b=$('cb-'+id);if(b)b.classList.toggle('has',!!v.trim());}
@@ -529,22 +575,41 @@ function renderHist(){const{d,r}=cur(),hp=r?r.party:party;$('hist-h').textConten
 function render(){
  if(USE_BACKEND&&!ready()){$('rc').innerHTML=stateHTML();$('rc-sum').innerHTML='';$('it-sum').innerHTML='';$('items').innerHTML='';$('hist').innerHTML='';$('ctr').innerHTML='';return;}
  syncSeg();drawPills();renderRc();renderItems();ctr();renderHist();cap5();}
-async function doSave(ids,one){if(busy||notReady())return;const{r}=cur();if(!r)return showToast('Select a receipt','error');
-  const rows=ids.filter(k=>+amts[k]>0).map(k=>({chargeId:k,amount:r2(amts[k]),comments:(cmts[k]||'').trim()}));
+let stale=false;   // saved on the server, but the screen could not re-read the ledger yet
+function syncInd(){const el=$('sync-ind');if(!el)return;const n=(busy?1:0)+(stale?1:0);
+ el.style.display=n?'':'none';el.classList.toggle('busy',busy||S.refreshing);el.querySelector('.sync-n').textContent=n;
+ el.title=busy?'Saving to the server…':stale?'Saved — screen not refreshed yet · click to retry now':'';}
+function paint(){try{AP2Sync.paint();}catch(e){}syncInd();}
+$('sync-ind').addEventListener('click',async()=>{if(busy||S.refreshing||!ready())return;S.refreshing=true;paint();
+ const ok=await load();S.refreshing=false;paint();if(ok)showToast('Synced — up to date','success');});
+function setBusy(b){busy=b;document.body.classList.toggle('saving',b);paint();}
+async function doSave(ids,one){if(busy||S.refreshing||notReady())return;const{r}=cur();if(!r)return showToast('Select a receipt','error');
+ const rows=ids.filter(k=>+amts[k]>0).map(k=>({chargeId:k,amount:r2(amts[k]),comments:(cmts[k]||'').trim()}));
  if(!rows.length)return showToast(one?'Enter an allocate amount for this row first':'Nothing to allocate','error');
  if(r2(rows.reduce((a,x)=>a+x.amount,0))>r.un+.005)return showToast('More than the receipt balance','error');
- busy=true;try{
+ setBusy(true);showToast('Saving…');const ic=one&&$('sb-'+one)&&$('sb-'+one).querySelector('i');if(ic)ic.className='ti ti-loader-2 spinner';   // spinner on the row being saved
+ let ok=false,made=false;
+ try{
   const vs=rows.filter(x=>x.chargeId[0]==='V');
   if(vs.length){const V=virt(D()),pick=vs.map(x=>V.find(v=>v.id===x.chargeId));if(pick.some(v=>!v))throw new Error('A bill changed — reload the page');
-   await post('addCharges',{rows:pick.map(chargeRow)});const j=await Ledger.get();
+   await post('addCharges',{rows:pick.map(chargeRow)});made=true;const j=await Ledger.get();
    vs.forEach(x=>{const bid=x.chargeId.slice(1),c=rw(j.Charges,'ChargeID').find(c=>String(c[2])===bid&&c[1]==='Bill');if(!c)throw new Error('Charge not created for bill '+bid);x.chargeId=String(c[0]);});}
   await post('addAllocations',{paymentId:r.id,date:today(),rows});
-  if(one){delete amts[one];delete cmts[one];cOpen.delete(one);await load();keepSel();if(mode==='auto'&&rid)fill();render();showToast('Row allocated','success');}
-  else{amts={};cmts={};cOpen.clear();rid=null;await load();showToast('Allocation saved','success');}
- }catch(e){showToast('Not saved: '+errText(e.message),'error');}busy=false;}
+  if(one){delete amts[one];delete cmts[one];cOpen.delete(one);}else{amts={};cmts={};cOpen.clear();rid=null;}
+  const fresh=await load();                                      // pull the saved ledger back so the screen shows what the backend now holds
+  if(one){keepSel();if(mode==='auto'&&rid)fill();render();}
+  showToast(fresh===false?'Saved — could not refresh, press the cache button':one?'Row allocated':'Allocation saved',fresh===false?'info':'success');ok=true;
+ }catch(e){
+  showToast('Not saved: '+errText(e.message),'error');
+  if(made){try{await load();}catch(x){}Object.keys(amts).forEach(k=>{if(k[0]==='V')delete amts[k];});if(mode==='auto')fill();render();}   // a bill charge was already created — never create it twice
+ }
+ setBusy(false);if(!ok)renderItems();}
 function saveRow(id){return doSave([id],id);}
-async function rev(id){if(notReady())return;const a=D().al.find(x=>x.id===id);if(!a||!confirm('Reverse this allocation of '+money(a.amt)+'? A negative row is added; the original stays.'))return;
- try{await post('addAllocations',{paymentId:a.pid,date:today(),rows:[{chargeId:a.cid,amount:-a.amt,reverses:a.id,comments:'Reversal of '+a.id}]});await load();showToast('Reversed','success');}catch(e){showToast('Not reversed: '+errText(e.message),'error');}}
+async function rev(id){if(busy||S.refreshing||notReady())return;const a=D().al.find(x=>x.id===id);if(!a||!confirm('Reverse this allocation of '+money(a.amt)+'? A negative row is added; the original stays.'))return;
+ setBusy(true);showToast('Reversing…');
+ try{await post('addAllocations',{paymentId:a.pid,date:today(),rows:[{chargeId:a.cid,amount:-a.amt,reverses:a.id,comments:'Reversal of '+a.id}]});const fresh=await load();showToast(fresh===false?'Reversed — could not refresh, press the cache button':'Reversed',fresh===false?'info':'success');}
+ catch(e){showToast('Not reversed: '+errText(e.message),'error');}
+ setBusy(false);}
 
 document.fonts&&document.fonts.ready&&document.fonts.ready.then(cap5);addEventListener('resize',cap5);
 /* ═══ BOOT ═══ */
@@ -568,10 +633,16 @@ PermGate.init({
 /* shared/syncQueue.js — offline hold & sync + cache / sync buttons */
 AP2Sync.init({
   key:'allocation',
-  queue:[],                                     /* allocation depends on the live ledger → needs the network */
+  queue:[],                                     /* allocation depends on the live ledger → needs the network (never held offline) */
   online:['addCharges','addAllocations','reverseBill'],
-  state:()=> ready() ? {state:'ok',title:'Up to date'} : (S.state==='error' ? {state:'err',title:'Could not load — '+S.err} : {state:'warn',title:'Loading…'}),
-  refresh:()=>{ S.booting=false; SV.forEach(applyFromIDB); }
+  toast:showToast,
+  state:()=>{
+    if(busy)return{state:'warn busy',title:'Saving…'};
+    if(S.refreshing||(!ready()&&S.state!=='error'))return{state:'warn busy',title:'Loading…'};
+    if(!ready())return{state:'err',title:'Could not load — '+S.err+' · click to retry'};
+    const t=S.last?new Date(S.last).toLocaleTimeString('en-GB'):'';
+    return{state:'ok',title:'Up to date · '+rowCount()+' rows'+(t?' · '+t:'')};},
+  refresh:manualRefresh
 });
 </script>
 </body>
