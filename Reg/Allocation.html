@@ -74,110 +74,114 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
 
 .sk{height:34px;border-radius:6px;margin-bottom:8px;background:linear-gradient(90deg,var(--bg3),var(--surface),var(--bg3));background-size:200% 100%;animation:sk 1.2s linear infinite}@keyframes sk{to{background-position:-200% 0}}
 
-/* ═══ v2 — toolbar filters, party combobox, one-row receipts, selectable open items ═══ */
+/* ═══ v3 — compact toolbar, search dropdown, two-column cards, open-items table ═══ */
 [hidden]{display:none!important}
-.bar{position:relative;z-index:30;gap:10px 12px}
-.bar h1{margin-right:0;white-space:nowrap}
-.bar-f{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1 1 560px;min-width:0}
-.bar-t{display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap}
+.bar{position:relative;z-index:30;flex-wrap:nowrap;gap:10px;align-items:center;padding:9px 14px}
+.bar>*{flex:none}
+.bar h1{margin-right:2px;white-space:nowrap}
+.bar .seg .tab{height:36px;padding:0 12px;font-size:15px}
+.ib{border-radius:var(--radius);height:36px;width:36px}
 main{max-width:1600px;width:100%;margin:0 auto}
-/* party search (dropdown / dropup) */
-.ps{position:relative;flex:1 1 260px;min-width:220px;max-width:380px}
-.ps>input{height:36px;padding:0 64px 0 34px;border-radius:var(--radius)}
-.ps-i{position:absolute;left:3px;top:3px;width:30px;height:30px;border:0;background:transparent;color:var(--text2);cursor:pointer;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:16px}.ps-i:hover{background:var(--surface);color:var(--accent)}
-.ps-t,.ps-x{position:absolute;top:3px;height:30px;width:28px;border:0;background:transparent;color:var(--text2);cursor:pointer;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:16px}
-.ps-t{right:3px}.ps-x{right:31px}.ps-t:hover,.ps-x:hover{background:var(--surface);color:var(--text)}
-.ps.open>input{border-color:var(--accent)}
-.ps-m{position:absolute;left:0;top:calc(100% + 6px);width:max(100%,400px);max-width:calc(100vw - 24px);max-height:320px;overflow:auto;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);box-shadow:0 14px 34px rgba(0,0,0,.35);display:none;z-index:60}
-.ps.open .ps-m{display:block}.ps.up .ps-m{top:auto;bottom:calc(100% + 6px)}
+/* pills */
+.bw-caps{display:inline-flex;gap:3px;padding:3px;background:var(--bg3);border:1px solid var(--border);border-radius:99px;flex-wrap:nowrap}
+.bw-cap{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 13px;border-radius:99px;border:1px solid transparent;background:transparent;color:var(--text2);font:inherit;font-size:12.5px;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s}
+.bw-cap i{font-size:15px}.bw-cap:hover{color:var(--text)}
+.bw-cap.on{background:var(--accent-dim);color:var(--accent);border-color:var(--accent)}
+.bw-cap .cn{font:600 10.5px var(--mono);padding:1px 6px;border-radius:99px;background:var(--bg2);color:var(--text2)}.bw-cap.on .cn{background:var(--accent);color:#fff}
+/* search button + dropdown / dropup panel */
+.ps{position:relative}
+.ps-b{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 10px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:16px}
+.ps-b:hover,.ps.open .ps-b{color:var(--text);border-color:var(--accent)}.ps-b.act{color:var(--accent);background:var(--accent-dim);border-color:var(--accent)}
+.ps-b .ti-chevron-down,.ps-b .ti-chevron-up{font-size:14px}
+.ps-m{position:fixed;display:none;flex-direction:column;overflow:hidden;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);box-shadow:0 14px 34px rgba(0,0,0,.4);z-index:90}
+.ps.open .ps-m{display:flex}
+.ps-s{position:relative;flex:none;padding:8px;border-bottom:1px solid var(--border)}
+.ps-s>i{position:absolute;left:19px;top:50%;transform:translateY(-50%);color:var(--text2);font-size:16px;pointer-events:none}
+.ps-s input{height:36px;padding:0 34px 0 34px}
+.ps-x{position:absolute;right:12px;top:12px;width:28px;height:28px;border:0;background:transparent;color:var(--text2);cursor:pointer;border-radius:6px;display:inline-flex;align-items:center;justify-content:center}.ps-x:hover{background:var(--surface);color:var(--text)}
+.ps-l{flex:1;min-height:0;overflow:auto}
 .pm-h{position:sticky;top:0;background:var(--bg2);padding:7px 12px;font-size:11px;color:var(--text2);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.05em}
 .pi{display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border)}.pi:last-child{border-bottom:0}
 .pi:hover,.pi.hl{background:var(--accent-dim)}.pi.sel{box-shadow:inset 3px 0 0 var(--accent)}
 .pi>i{width:30px;height:30px;border-radius:50%;background:var(--bg3);color:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:16px;flex:none}
 .pn{min-width:0;flex:1}.pn b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pn span{font-size:11.5px;color:var(--text2)}
 .pa{margin-left:auto;text-align:right;font-size:12.5px;white-space:nowrap}.pa small{display:block;color:var(--text2);font:400 11px var(--font)}.pa0{font-size:11.5px;white-space:nowrap}
-/* filter pills */
-.bw-caps{display:inline-flex;gap:3px;padding:3px;background:var(--bg3);border:1px solid var(--border);border-radius:99px;flex-wrap:wrap}
-.bw-cap{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 12px;border-radius:99px;border:1px solid transparent;background:transparent;color:var(--text2);font:inherit;font-size:12.5px;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s}
-.bw-cap i{font-size:15px}.bw-cap:hover{color:var(--text)}
-.bw-cap.on{background:var(--accent-dim);color:var(--accent);border-color:var(--accent)}
-.bw-cap.fixed{cursor:default}
-.bw-d{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 10px;margin:0;border:1px solid var(--border);background:var(--bg3);border-radius:var(--radius);color:var(--text2);cursor:pointer}
-.bw-d:focus-within{border-color:var(--accent)}
+.qchip{display:inline-flex;align-items:center;gap:6px;height:30px;max-width:170px;padding:0 6px 0 10px;border-radius:99px;background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);font-size:12.5px}
+.qchip span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.qchip button{border:0;background:transparent;color:inherit;cursor:pointer;display:inline-flex;font-size:14px;padding:2px}
+/* From / To dates */
+.bw-d{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 10px;margin:0;border:1px solid var(--border);background:var(--bg3);border-radius:var(--radius);color:var(--text2);cursor:pointer;position:relative}
+.bw-d .lb{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.bw-d:focus-within,.bw-d.has{border-color:var(--accent)}.bw-d.has{background:var(--accent-dim);color:var(--accent)}
 .bw-d input{width:auto;height:auto;border:0;background:transparent;padding:0;color:var(--text);font-size:13px}
-.ib{border-radius:var(--radius)}
-.bar .seg .tab{height:36px}.bar .btn{height:36px}
-/* cards */
-.cols{display:block}.cols .card{margin-bottom:12px;padding:12px 14px}
-.ch{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;font-weight:600}
-.ch .no{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none}
+/* cards: same two-column arrangement as before */
+.cols{display:grid;grid-template-columns:minmax(310px,1fr) minmax(0,2fr);gap:12px;align-items:start}
+.cols .card{padding:12px 14px}
+.ch{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
 .ch .sp{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
 .chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;background:var(--bg3);border:1px solid var(--border);font:500 11.5px var(--mono);color:var(--text2)}
 .chip.on{background:var(--accent-dim);color:var(--accent);border-color:var(--accent)}
-/* receipts: ONE row per entry */
-.rl{display:flex;flex-direction:column;gap:6px;max-height:min(320px,38vh);overflow:auto;padding:1px}
-.rcp{display:grid;grid-template-columns:22px 86px 46px minmax(160px,1.6fr) 104px 80px minmax(0,1fr) 120px;align-items:center;gap:10px;padding:9px 12px;margin:0;background:var(--bg2);transition:border-color .15s,background .15s}
+/* receipts: one row (card) per entry */
+.rl{display:flex;flex-direction:column;gap:6px;max-height:min(560px,62vh);overflow:auto;padding:1px}
+.rcp{display:grid;grid-template-columns:22px minmax(0,1fr) auto;grid-template-areas:"rd top ra" "rd pty pty" "rd meta meta";gap:3px 10px;align-items:center;padding:9px 12px;margin:0;background:var(--bg2);transition:border-color .15s,background .15s}
 .rcp:hover{border-color:var(--border2)}.rcp.on{border-color:var(--accent);background:var(--accent-dim)}
-.rd{width:18px;height:18px;border-radius:50%;border:2px solid var(--border2);display:inline-flex;align-items:center;justify-content:center;color:transparent;font-size:12px}
+.rd{grid-area:rd;align-self:start;margin-top:2px;width:18px;height:18px;border-radius:50%;border:2px solid var(--border2);display:inline-flex;align-items:center;justify-content:center;color:transparent;font-size:12px}
 .rcp.on .rd{background:var(--accent);border-color:var(--accent);color:#fff}
-.rp{display:flex;align-items:center;gap:7px;min-width:0}.rp>i{color:var(--accent);font-size:16px;flex:none}.rp>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.rtop{grid-area:top;display:flex;align-items:center;gap:8px;min-width:0}.rtop b{font-size:13px}
+.ra{grid-area:ra;font-size:14px;text-align:right}
+.rp{grid-area:pty;display:flex;align-items:center;gap:7px;min-width:0}.rp>i{color:var(--accent);font-size:15px;flex:none}.rp>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
 .rp em{font-style:normal;font-size:10.5px;padding:1px 7px;border-radius:99px;background:var(--bg3);color:var(--text2);flex:none}
-.rcp .dim{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rdt i{margin-right:4px}
-.rcp .badge{justify-self:start}.ra{text-align:right;font-size:14px}
-/* open items: selectable rows */
-.itl{border:1px solid var(--border);border-radius:var(--radius-lg);max-height:min(440px,52vh);overflow:auto}
-.ith,.it{display:grid;grid-template-columns:34px 96px minmax(110px,1fr) minmax(120px,1.4fr) 110px 110px 130px;gap:10px;align-items:center;padding:8px 12px}
-.ith{position:sticky;top:0;z-index:2;background:var(--bg3);border-bottom:1px solid var(--border);font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
-.ith .sa{display:none}
-.it{border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s}.it:last-child{border-bottom:0}
-.it:hover{background:var(--accent-dim)}.it.on{background:var(--accent-dim);box-shadow:inset 3px 0 0 var(--accent)}
+.rmeta{grid-area:meta;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* open items: table */
+.itw{max-height:min(520px,58vh);overflow:auto;border:1px solid var(--border);border-radius:var(--radius-lg)}
+.itw table{border:0}.itw th{position:sticky;top:0;z-index:2}
+.itw td{vertical-align:middle}.itw th.ck,.itw td.ck{width:34px;padding-right:0}
+.itw tr.it{cursor:pointer;transition:background .12s}.itw tr.it:hover td{background:var(--accent-dim)}
+.itw tr.it.on td{background:var(--accent-dim)}.itw tr.it.on td.ck{box-shadow:inset 3px 0 0 var(--accent)}
+.itw tr:last-child td{border-bottom:0}
 .ckb{width:18px;height:18px;padding:0;accent-color:var(--accent);cursor:pointer}
-.it .c-al input{max-width:none;width:100%;text-align:right;font-family:var(--mono);height:32px}
-.it .c-or{overflow-wrap:anywhere}
+.itw td input[type=number]{max-width:130px;width:100%;height:32px;text-align:right;font-family:var(--mono)}
 /* footer */
 .ft{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
 .ctr{flex:1 1 280px;min-width:0;font-size:12.5px}.ctr .ct{margin-bottom:5px}
 .pg{height:6px;border-radius:99px;background:var(--bg3);overflow:hidden}.pg i{display:block;height:100%;background:var(--teal);border-radius:99px;transition:width .2s}.pg i.bad{background:var(--red)}
 .ft input{max-width:260px}
-.hh{margin:6px 0 8px;font-size:14px;display:flex;align-items:center;gap:8px}
+.hh{margin:16px 0 8px;font-size:14px;display:flex;align-items:center;gap:8px}
 .empty i{color:var(--text2)}
-@media(max-width:1100px){.bar-t{margin-left:0}.ps{max-width:none}}
-@media(max-width:760px){
- .bar{padding:10px}.bar-f{flex-basis:100%}.ps{flex-basis:100%}.ps-m{width:100%}
- .bar-f .bw-caps{flex:1 1 auto;justify-content:center}.bar-t{width:100%}.bar-t .seg{flex:1}.bar-t .seg .tab{flex:1;justify-content:center}
- .rcp{grid-template-columns:22px 1fr auto auto;grid-template-areas:"rd rn bd ra" "rd rp rp rp" "rd dt md md";row-gap:4px}
- .rcp .rd{grid-area:rd}.rcp .rn{grid-area:rn}.rcp .badge{grid-area:bd}.rcp .ra{grid-area:ra}.rcp .rp{grid-area:rp}.rcp .rdt{grid-area:dt}.rcp .rmd{grid-area:md}.rcp .rnt{display:none}
- .ith{grid-template-columns:34px 1fr}.ith>:not(.ckb):not(.sa){display:none}.ith .sa{display:inline}
- .it{grid-template-columns:34px 1fr auto;grid-template-areas:"ck bl du" "ck or or" "ck dt ch" "ck al al";row-gap:5px}
- .it .ckb{grid-area:ck}.it .c-bl{grid-area:bl}.it .c-or{grid-area:or}.it .c-dt{grid-area:dt}.it .c-ch{grid-area:ch}.it .c-du{grid-area:du;font-weight:600}.it .c-al{grid-area:al}
- .it [data-l]::before{content:attr(data-l) ": ";color:var(--text2);font:400 11px var(--font)}
- .ft input{max-width:none;flex:1 1 100%}.ft .btn{flex:1 1 100%;justify-content:center}
+/* compact: icons only, bar scrolls sideways */
+@media(max-width:1180px){
+ .bar{overflow-x:auto;overflow-y:hidden;padding:8px 10px;gap:8px;scrollbar-width:thin}
+ .bar::-webkit-scrollbar{height:4px}.bar::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+ .bar h1 .t,.bw-cap .l,.bw-d .lb{display:none}
+ .bw-cap{padding:0 10px}
+ .bw-d{width:36px;padding:0;justify-content:center}
+ .bw-d input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+ .qchip{max-width:120px}
 }
-
-.bw-cap .cn{font:600 10.5px var(--mono);padding:1px 6px;border-radius:99px;background:var(--bg2);color:var(--text2)}.bw-cap.on .cn{background:var(--accent);color:#fff}
+@media(max-width:900px){.cols{grid-template-columns:1fr}.rl{max-height:min(340px,45vh)}.ft input{max-width:none;flex:1 1 100%}.ft .btn{flex:1 1 100%;justify-content:center}}
+@media(max-width:600px){.qchip{display:none}}
 </style>
 </head>
 <body>
 <div class="bar">
-<h1><i class="ti ti-arrows-split"></i>Amount Allocation</h1>
-<div class="bar-f">
- <div class="ps" id="ps">
-  <button type="button" class="ps-i" title="Search party" aria-label="Open party list" onclick="psOpenIcon()"><i class="ti ti-search"></i></button>
-  <input id="party" autocomplete="off" placeholder="Search party (customer / supplier)…" aria-label="Party" oninput="setParty(this.value)" onfocus="psShow(true)" onclick="psShow(true)" onkeydown="psKey(event)"/>
-  <button type="button" class="ps-x" id="ps-x" hidden title="Clear" aria-label="Clear party" onclick="clearParty()"><i class="ti ti-x"></i></button>
-  <button type="button" class="ps-t" title="Show parties" aria-label="Toggle party list" onclick="psToggle()"><i class="ti ti-chevron-down" id="ps-c"></i></button>
-  <div class="ps-m" id="ps-m"></div>
+<h1><i class="ti ti-arrows-split"></i><span class="t">Amount Allocation</span></h1>
+<div class="bw-caps" id="f-types" hidden></div>
+<div class="ps" id="ps">
+ <button type="button" class="ps-b" id="ps-b" title="Search party" aria-label="Search party" onclick="psToggle()"><i class="ti ti-search"></i><i class="ti ti-chevron-down" id="ps-c"></i></button>
+ <div class="ps-m" id="ps-m">
+  <div class="ps-s"><i class="ti ti-search"></i><input id="party" autocomplete="off" placeholder="Search party (customer / supplier)…" aria-label="Party" oninput="setParty(this.value)" onkeydown="psKey(event)"/><button type="button" class="ps-x" id="ps-x" hidden title="Clear" aria-label="Clear" onclick="clearParty()"><i class="ti ti-x"></i></button></div>
+  <div class="ps-l" id="ps-l"></div>
  </div>
- <div class="bw-caps" id="f-types" hidden></div>
- <label class="bw-d" title="Date"><i class="ti ti-calendar"></i><input type="date" id="f-date" aria-label="Date"></label>
- <button type="button" class="ib" id="f-clear" hidden title="Clear all filters" aria-label="Clear filters" onclick="clearAll()"><i class="ti ti-filter-off"></i></button>
 </div>
-<div class="bar-t"><span class="seg"><button class="tab on" id="m-auto" onclick="setMode('auto')"><i class="ti ti-wand"></i>Automatic (FIFO)</button><button class="tab" id="m-man" onclick="setMode('man')"><i class="ti ti-hand-click"></i>Manual</button></span></div>
+<span class="qchip" id="qchip" hidden></span>
+<label class="bw-d" id="d-from" title="From date"><i class="ti ti-calendar-event"></i><span class="lb">From</span><input type="date" id="f-from" aria-label="From date"></label>
+<label class="bw-d" id="d-to" title="To date"><i class="ti ti-calendar-due"></i><span class="lb">To</span><input type="date" id="f-to" aria-label="To date"></label>
+<button type="button" class="ib" id="f-clear" hidden title="Clear all filters" aria-label="Clear filters" onclick="clearAll()"><i class="ti ti-filter-off"></i></button>
+<span class="seg" style="margin-left:auto"><button class="tab on" id="m-auto" title="Automatic (FIFO)" aria-label="Automatic (FIFO)" onclick="setMode('auto')"><i class="ti ti-wand"></i></button><button class="tab" id="m-man" title="Manual" aria-label="Manual" onclick="setMode('man')"><i class="ti ti-hand-click"></i></button></span>
 </div>
 <main>
 <div class="cols">
-<div class="card"><div class="ch"><span class="no">1</span>Receipt / payment to allocate<span class="sp" id="rc-sum"></span></div><div class="rl" id="rc"></div></div>
-<div class="card"><div class="ch"><span class="no">2</span>Open items <span class="dim" style="font-weight:400">(oldest first)</span><span class="sp" id="it-sum"></span></div><div id="items"></div>
+<div class="card"><div class="ch"><b>1. Receipt / payment to allocate</b><span class="sp" id="rc-sum"></span></div><div class="rl" id="rc"></div></div>
+<div class="card"><div class="ch"><b>2. Open items <span class="dim" style="font-weight:400">(oldest first)</span></b><span class="sp" id="it-sum"></span></div><div id="items"></div>
 <div class="ft"><div class="ctr" id="ctr"></div><input id="cm" placeholder="Comments (optional)"/><button class="btn pri" id="sv" onclick="save()"><i class="ti ti-device-floppy"></i>Save allocation</button></div></div>
 </div>
 <h3 class="hh"><i class="ti ti-history"></i>Allocation history <span class="dim" id="hist-h" style="font-weight:400"></span></h3><div class="tw" id="hist"></div></main>
@@ -339,7 +343,7 @@ function virt(d){const m=new Map(),have=new Set(d.ch.map(c=>c.billId));
  return[...m.values()].filter(b=>!have.has(b.id)).map(b=>{const tot=calcB(b.lines,b.disc,b.dt,b.vat),due=r2(tot-(pay[b.id]||0));
   return{id:'V'+b.id,virtual:true,billId:b.id,type:'Bill',billNo:b.no,orderNo:'',desc:'Bill '+b.no+(pay[b.id]?' (net of earlier payments)':''),ptype:'',party:b.party,dir:b.dir,date:b.date,amt:due,due,note:'Auto-created from Bills when allocating'};}).filter(v=>v.due>.005);}
 const chargeRow=v=>({type:'Bill',billId:v.billId,billNo:v.billNo,orderId:'',orderNo:'',ptype:v.ptype,party:v.party,dir:v.dir,date:v.date,desc:v.desc,amount:v.amt,comments:v.note});
-let party='',qtxt='',rid=null,mode='auto',amts={},busy=false,pill='',dateF='',psL=[],psIdx=-1;
+let party='',qtxt='',rid=null,mode='auto',amts={},busy=false,pill='',dFrom='',dTo='',psL=[],psIdx=-1;
 const D=()=>data();
 /* ── PARTIES — read from the "ap2_specsData" cache, same rules as Receipts.html
    row = [ID, Category, Name, Description, Status]
@@ -371,44 +375,54 @@ function parties(d){const m=new Map();
  d.rc.forEach(r=>{if(!r.party)return;const p=ent(r.party,ptOf(r));if(r.un>.005){p.un=r2(p.un+r.un);p.cnt++;}});
  return[...m.values()].sort((a,b)=>(b.cnt>0)-(a.cnt>0)||a.n.localeCompare(b.n));}
 function recs(d){const q=norm(qtxt),pn=norm(party);
- return d.rc.filter(r=>r.un>.005&&(party?norm(r.party)===pn:(!q||norm(r.party).includes(q)||norm(r.no).includes(q)))&&pillOk(ptOf(r))&&(!dateF||d10(r.date)===dateF))
+ return d.rc.filter(r=>r.un>.005&&(party?norm(r.party)===pn:(!q||norm(r.party).includes(q)||norm(r.no).includes(q)))&&pillOk(ptOf(r))&&(!dFrom||d10(r.date)>=dFrom)&&(!dTo||d10(r.date)<=dTo))
   .sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(a.no).localeCompare(String(b.no)));}
 function after(){render();if($('ps').classList.contains('open'))psRender();}
 function keepSel(){const R=recs(D());
  if(rid&&!R.some(x=>x.id===rid)){rid=null;amts={};}
  if(!rid&&R.length===1){rid=R[0].id;if(mode==='auto')fill();else amts={};}}   // a single match is selected for you
-function filtChg(){keepSel();$('f-clear').hidden=!(pill||dateF||qtxt);if($('ps').classList.contains('open'))psRender();render();}
-function setParty(v){qtxt=v.trim();party='';$('ps-x').hidden=!qtxt;if(!$('ps').classList.contains('open'))psShow(true);else psIdx=-1;filtChg();}   // typing = every party whose name contains the text
+function qUi(){const q=party||qtxt,c=$('qchip');$('ps-b').classList.toggle('act',!!q);c.hidden=!q;
+ c.innerHTML=q?`<i class="ti ti-user"></i><span title="${esc(q)}">${esc(q)}</span><button type="button" title="Clear" aria-label="Clear" onclick="clearQ()"><i class="ti ti-x"></i></button>`:'';}
+function filtChg(){keepSel();$('f-clear').hidden=!(pill||dFrom||dTo||qtxt);qUi();if($('ps').classList.contains('open'))psRender();render();}
+function clearQ(){$('party').value='';qtxt='';party='';$('ps-x').hidden=true;filtChg();}
+function setParty(v){qtxt=v.trim();party='';$('ps-x').hidden=!qtxt;psIdx=-1;filtChg();}   // typing = every party whose name contains the text
 function pickParty(n){$('party').value=n;qtxt=n;party=n;$('ps-x').hidden=false;psShow(false);filtChg();}
-function clearParty(){$('party').value='';qtxt='';party='';$('ps-x').hidden=true;filtChg();psShow(true);$('party').focus();}
-function clearAll(){pill='';dateF='';qtxt='';party='';$('party').value='';$('f-date').value='';$('ps-x').hidden=true;filtChg();}
+function clearParty(){$('party').value='';qtxt='';party='';$('ps-x').hidden=true;filtChg();$('party').focus();}
+function clearAll(){pill='';dFrom='';dTo='';qtxt='';party='';$('party').value='';['f-from','f-to'].forEach(i=>{$(i).value='';dUi(i);});$('ps-x').hidden=true;filtChg();}
+function dUi(i){const l=$(i).parentElement,v=$(i).value;l.classList.toggle('has',!!v);l.title=(i==='f-from'?'From date':'To date')+(v?': '+v:'');}
 /* ── pills (one at a time) ── */
 function drawPills(){const d=D(),el=$('f-types'),opts=TYPES.map(t=>({k:t.k,l:t.l})).concat(SUPP.length?[{k:'supplier',l:'Supplier'}]:[]);
  if(pill&&!opts.some(o=>o.k===pill))pill='';
  const cnt={};d.rc.forEach(r=>{if(r.un>.005){const k=ptOf(r);cnt[k]=(cnt[k]||0)+1;}});
- const h=opts.map(o=>`<button type="button" class="bw-cap${o.k===pill?' on':''}" data-v="${esc(o.k)}" title="${esc(o.l)}" aria-label="${esc(o.l)}"><i class="ti ${tIcon(o.k)}"></i>${esc(o.l)}${cnt[o.k]?`<b class="cn">${cnt[o.k]}</b>`:''}</button>`).join('');
+ const h=opts.map(o=>`<button type="button" class="bw-cap${o.k===pill?' on':''}" data-v="${esc(o.k)}" title="${esc(o.l)}" aria-label="${esc(o.l)}"><i class="ti ${tIcon(o.k)}"></i><span class="l">${esc(o.l)}</span>${cnt[o.k]?`<b class="cn">${cnt[o.k]}</b>`:''}</button>`).join('');
  if(el.dataset.h!==h){el.innerHTML=h;el.dataset.h=h;}
  el.hidden=!opts.length;
  $('party').placeholder=pill?'Search '+tLabel(pill).toLowerCase()+'…':'Search party (customer / supplier)…';}
 $('f-types').addEventListener('click',e=>{const b=e.target.closest('.bw-cap');if(!b)return;const v=b.dataset.v;pill=pill===v?'':v;
  party='';qtxt='';$('party').value='';$('ps-x').hidden=true;filtChg();});
 /* ── party dropdown / dropup ── */
+function psPos(){const b=$('ps-b').getBoundingClientRect(),m=$('ps-m'),W=Math.min(430,innerWidth-16);
+ m.style.width=W+'px';m.style.left=Math.max(8,Math.min(b.left,innerWidth-W-8))+'px';
+ const below=innerHeight-b.bottom-14,above=b.top-14,up=below<320&&above>below;$('ps').classList.toggle('up',up);
+ m.style.maxHeight=Math.max(200,Math.min(430,up?above:below))+'px';
+ if(up){m.style.top='auto';m.style.bottom=(innerHeight-b.top+6)+'px';}else{m.style.bottom='auto';m.style.top=(b.bottom+6)+'px';}}
 function psShow(o){const ps=$('ps');ps.classList.toggle('open',o);$('ps-c').className='ti '+(o?'ti-chevron-up':'ti-chevron-down');
- if(o){const b=ps.getBoundingClientRect(),below=innerHeight-b.bottom;ps.classList.toggle('up',below<330&&b.top>below);psIdx=-1;psRender();}}
-function psToggle(){const o=$('ps').classList.contains('open');psShow(!o);if(!o)$('party').focus();}
-function psOpenIcon(){psShow(true);$('party').focus();}
+ if(o){psPos();psIdx=-1;psRender();setTimeout(()=>{const i=$('party');if(i&&ps.classList.contains('open'))i.focus();},0);}}
+function psToggle(){psShow(!$('ps').classList.contains('open'));}
 function psRender(){const d=D(),q=party?'':norm(qtxt);
  psL=parties(d).filter(p=>pillOk(p.k)&&(!q||norm(p.n).includes(q))).slice(0,200);
- $('ps-m').innerHTML=psL.length?`<div class="pm-h">${psL.length} part${psL.length===1?'y':'ies'}${pill?' · '+esc(tLabel(pill)):''}</div>`+psL.map((p,i)=>{
+ $('ps-l').innerHTML=psL.length?`<div class="pm-h">${psL.length} part${psL.length===1?'y':'ies'}${pill?' · '+esc(tLabel(pill)):''}</div>`+psL.map((p,i)=>{
   const kind=p.sup?'Supplier':p.k?'Customer · '+esc(tLabel(p.k)):'Customer';
   return `<div class="pi${i===psIdx?' hl':''}${norm(p.n)===norm(party)?' sel':''}" data-n="${esc(p.n)}" onmousedown="event.preventDefault();pickParty(this.dataset.n)"><i class="ti ${tIcon(p.k)}"></i><div class="pn"><b>${esc(p.n)}</b><span>${kind}</span></div>${p.cnt?`<div class="pa mono">${money(p.un)}<small>${p.cnt} open receipt${p.cnt>1?'s':''}</small></div>`:'<span class="dim pa0">No open receipts</span>'}</div>`;}).join('')
   :'<div class="empty" style="padding:18px"><i class="ti ti-search-off" style="font-size:20px;display:block;margin-bottom:4px"></i>No matching party</div>';}
 function psKey(e){const o=$('ps').classList.contains('open');
- if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(!o){psShow(true);return;}if(!psL.length)return;psIdx=(psIdx+(e.key==='ArrowDown'?1:-1)+psL.length)%psL.length;psRender();const h=$('ps-m').querySelector('.hl');if(h)h.scrollIntoView({block:'nearest'});}
+ if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(!o){psShow(true);return;}if(!psL.length)return;psIdx=(psIdx+(e.key==='ArrowDown'?1:-1)+psL.length)%psL.length;psRender();const h=$('ps-l').querySelector('.hl');if(h)h.scrollIntoView({block:'nearest'});}
  else if(e.key==='Enter'){if(o&&psL.length){e.preventDefault();pickParty(psL[psIdx>=0?psIdx:0].n);}}
  else if(e.key==='Escape')psShow(false);}
 document.addEventListener('mousedown',e=>{if(!$('ps').contains(e.target))psShow(false);});
-$('f-date').addEventListener('input',e=>{dateF=e.target.value;filtChg();});
+['f-from','f-to'].forEach(i=>{const e=$(i);e.addEventListener('input',()=>{if(i==='f-from')dFrom=e.value;else dTo=e.value;dUi(i);filtChg();});e.addEventListener('click',()=>{try{e.showPicker();}catch(x){}});});
+addEventListener('resize',()=>{if($('ps').classList.contains('open'))psPos();});
+document.querySelector('.bar').addEventListener('scroll',()=>psShow(false));
 /* ── allocation logic (unchanged flow) ── */
 function setMode(m){mode=m;if(m==='auto')fill();render();}
 function syncSeg(){$('m-auto').classList.toggle('on',mode==='auto');$('m-man').classList.toggle('on',mode==='man');}
@@ -443,15 +457,15 @@ function ctr(){const{r}=cur(),e=$('ctr');
 /* ── render ── */
 function renderRc(){const d=D(),R=recs(d),tot=r2(R.reduce((a,x)=>a+x.un,0));
  $('rc-sum').innerHTML=R.length?`<span class="chip"><i class="ti ti-receipt-2"></i>${R.length} receipt${R.length>1?'s':''} · ${money(tot)}</span>`:'';
- const filt=party||qtxt||pill||dateF;
- $('rc').innerHTML=R.length?R.map(x=>`<div class="rcp${x.id===rid?' on':''}" onclick="pickR('${x.id}')"><span class="rd"><i class="ti ti-check"></i></span><b class="mono rn">${esc(x.no)}</b><span class="badge ${x.dir}">${x.dir==='out'?'In':'Out'}</span><div class="rp"><i class="ti ${tIcon(ptOf(x))}"></i><span title="${esc(x.party)}">${esc(x.party)}</span>${ptOf(x)?`<em>${esc(tLabel(ptOf(x)))}</em>`:''}</div><span class="dim rdt"><i class="ti ti-calendar"></i>${esc(d10(x.date))}</span><span class="dim rmd">${esc(x.mode||'')}</span><span class="dim rnt" title="${esc(x.note||'')}">${esc(x.note||'')}</span><b class="mono ra">${money(x.un)}</b></div>`).join('')
+ const filt=party||qtxt||pill||dFrom||dTo;
+ $('rc').innerHTML=R.length?R.map(x=>`<div class="rcp${x.id===rid?' on':''}" onclick="pickR('${x.id}')"><span class="rd"><i class="ti ti-check"></i></span><div class="rtop"><b class="mono">${esc(x.no)}</b><span class="badge ${x.dir}">${x.dir==='out'?'In':'Out'}</span></div><b class="mono ra">${money(x.un)}</b><div class="rp"><i class="ti ${tIcon(ptOf(x))}"></i><span title="${esc(x.party)}">${esc(x.party)}</span>${ptOf(x)?`<em>${esc(tLabel(ptOf(x)))}</em>`:''}</div><div class="dim rmeta">${esc(d10(x.date))} · ${esc(x.mode||'')}${x.note?' · '+esc(x.note):''}</div></div>`).join('')
   :`<div class="empty"><i class="ti ti-receipt-off" style="font-size:22px;display:block;margin-bottom:6px"></i>${filt?'No unallocated receipts match the current filters':'No unallocated receipts'}</div>`;}
 function renderItems(){const{d,r}=cur(),el=$('items'),sm=$('it-sum');
  if(!r){el.innerHTML='<div class="empty"><i class="ti ti-pointer" style="font-size:22px;display:block;margin-bottom:6px"></i>Select a receipt above to see its open items</div>';sm.innerHTML='';return;}
  const I=open_(d,r),ro=mode==='auto'?'readonly':'',td=r2(I.reduce((a,c)=>a+c.due,0));
  sm.innerHTML=`<span class="chip">${I.length} open · ${money(td)}</span><span class="chip on" id="it-sel" hidden></span>`;
  if(!I.length){el.innerHTML=`<div class="empty">${why(d,r)}</div>`;return;}
- el.innerHTML=`<div class="itl"><div class="ith"><input type="checkbox" class="ckb" id="ck-all" title="Select all (oldest first)" onchange="togAll()"/><span class="sa">Select all</span><span>Date</span><span>Bill</span><span>Order / item</span><span class="n">Charge</span><span class="n">Due</span><span class="n">Allocate</span></div>${I.map(c=>{const on=amts[c.id]>0;return `<div class="it${on?' on':''}" id="it-${c.id}" onclick="tog('${c.id}')"><input type="checkbox" class="ckb" ${on?'checked':''} onclick="event.stopPropagation()" onchange="tog('${c.id}')"/><span class="c-dt dim" data-l="Date">${esc(c.date)}</span><span class="c-bl mono">${esc(c.billNo)||'–'} ${c.type!=='Order'?`<span class="badge">${esc(c.type)}</span>`:''}</span><span class="c-or">${esc(c.orderNo||c.desc)}</span><span class="n c-ch" data-l="Charge">${money(c.amt)}</span><span class="n c-du" data-l="Due">${money(c.due)}</span><span class="c-al"><input type="number" min="0" step="any" ${ro} placeholder="0.00" value="${amts[c.id]||''}" onclick="event.stopPropagation()" oninput="setAmt('${c.id}',this.value,${c.due})" onchange="if(+this.value>${c.due})this.value=${c.due}"/></span></div>`;}).join('')}</div>`;
+ el.innerHTML=`<div class="tw itw"><table><thead><tr><th class="ck"><input type="checkbox" class="ckb" id="ck-all" title="Select all (oldest first)" onchange="togAll()"/></th><th>Date</th><th>Bill</th><th>Order / item</th><th class="n">Charge</th><th class="n">Due</th><th class="n">Allocate</th></tr></thead><tbody>${I.map(c=>{const on=amts[c.id]>0;return `<tr class="it${on?' on':''}" id="it-${c.id}" onclick="tog('${c.id}')"><td class="ck"><input type="checkbox" class="ckb" ${on?'checked':''} onclick="event.stopPropagation()" onchange="tog('${c.id}')"/></td><td class="dim">${esc(c.date)}</td><td class="mono">${esc(c.billNo)||'–'} ${c.type!=='Order'?`<span class="badge">${esc(c.type)}</span>`:''}</td><td>${esc(c.orderNo||c.desc)}</td><td class="n">${money(c.amt)}</td><td class="n">${money(c.due)}</td><td class="n"><input type="number" min="0" step="any" ${ro} placeholder="0.00" value="${amts[c.id]||''}" onclick="event.stopPropagation()" oninput="setAmt('${c.id}',this.value,${c.due})" onchange="if(+this.value>${c.due})this.value=${c.due}"/></td></tr>`;}).join('')}</tbody></table></div>`;
  hdck();}
 function renderHist(){const{d,r}=cur(),hp=r?r.party:party;$('hist-h').textContent=hp?'· '+hp:'';
  const rv=new Set(d.al.filter(a=>a.rev).map(a=>a.rev)),H=d.al.filter(a=>a.party===hp).sort((a,b)=>b.id.localeCompare(a.id));
