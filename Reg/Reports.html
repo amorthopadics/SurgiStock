@@ -156,6 +156,25 @@ tbody tr{transition:background .12s}tbody tr:hover{background:var(--accent-dim)}
 .krow .kpi b{font-size:15px;margin-top:0;overflow:hidden;text-overflow:ellipsis}
 .krow .kpi div i{top:8px;right:9px;font-size:18px}
 @media(max-width:1000px){.krow{flex-wrap:wrap}.krow .kpi{flex:1 1 100%;order:3}}
+
+/* v4 — KPI row: compact info chips, KPI grid, two-row date pill */
+.krow{align-items:stretch}
+.krow .rinfo{flex-direction:row;flex-wrap:wrap;align-content:center;align-items:center;justify-content:flex-start;gap:3px;width:236px;height:60px;max-width:236px;overflow:hidden}
+.rinfo .chip{height:22px;font-size:11px;padding:0 8px;max-width:150px;white-space:nowrap}.rinfo .chip .cl{overflow:hidden;text-overflow:ellipsis}
+.krow .kpi{grid-template-columns:repeat(auto-fit,minmax(104px,1fr))}
+.kctl{height:60px;align-self:stretch;border-radius:16px;gap:4px;padding:4px 8px}
+.kctl .dts{display:flex;flex-direction:column;gap:2px}
+.kctl .bw-d,.kctl .bw-d:hover{height:24px;width:auto;padding:0 8px;border-radius:10px;justify-content:flex-start;gap:5px;background:var(--bg2)}
+.kctl .bw-d.has{background:var(--accent-dim)}
+.kctl .bw-d .lb{display:inline;width:32px;font-size:10.5px}
+.kctl .bw-d input{position:static;opacity:1;width:106px;height:auto;font-size:12px;cursor:pointer}
+.kctl .bw-d input::-webkit-calendar-picker-indicator{padding:0;margin-left:auto;opacity:.7;cursor:pointer}
+.kctl .ib{height:34px}
+.pi{padding:7px 12px}.pi>i{width:28px;height:28px}.pa{display:flex;align-items:baseline;gap:7px;font-size:12.5px}
+.pa .pl{font:600 10.5px var(--font);text-transform:uppercase;letter-spacing:.04em;color:var(--text2)}
+.pa.neg .pl{color:var(--red)}.pa.adv .pl,.pa.adv{color:var(--teal)}
+@media(max-width:1000px){.krow .rinfo{width:100%;max-width:none;height:auto}}
+@media(max-width:700px){.krow .rinfo{flex:1 1 100%}.kctl{flex:1 1 100%;justify-content:center;height:auto}}
 @media print{.menu{display:none!important}}
 </style>
 </head>
@@ -170,7 +189,7 @@ tbody tr{transition:background .12s}tbody tr:hover{background:var(--accent-dim)}
  <div class="ps" id="ps">
   <button type="button" class="ps-b" id="ps-b" title="Search" aria-label="Search" onclick="psToggle()"><i class="ti ti-search"></i><i class="ti ti-chevron-down" id="ps-c"></i></button>
   <div class="menu" id="ps-m" style="flex-direction:column">
-   <div class="ps-s"><i class="ti ti-search"></i><input id="party" autocomplete="off" placeholder="Search party, bill, order, receipt, comments…" aria-label="Search" oninput="setQ(this.value)" onkeydown="psKey(event)"/><button type="button" class="ps-x" id="ps-x" hidden title="Clear" aria-label="Clear" onclick="clearQ(true)"><i class="ti ti-x"></i></button></div>
+   <div class="ps-s"><i class="ti ti-users" id="ps-ic"></i><input id="party" autocomplete="off" placeholder="Search party, bill, order, receipt, comments…" aria-label="Search" oninput="setQ(this.value)" onkeydown="psKey(event)"/><button type="button" class="ps-x" id="ps-x" hidden title="Clear" aria-label="Clear" onclick="clearQ(true)"><i class="ti ti-x"></i></button></div>
    <div class="ps-l" id="ps-l"></div>
   </div>
  </div>
@@ -205,8 +224,8 @@ tbody tr{transition:background .12s}tbody tr:hover{background:var(--accent-dim)}
 <main><div class="krow"><div class="rinfo" id="rinfo"></div><div class="kpi" id="kpi"></div>
 <div class="kctl">
  <button type="button" class="ib" id="rg-b" title="Quick date range" aria-label="Quick date range" onclick="menuToggle('rg')"><i class="ti ti-calendar-stats"></i></button>
- <label class="bw-d" id="d-from" title="From date"><i class="ti ti-calendar-event"></i><span class="lb">From</span><input type="date" id="from" aria-label="From date"></label>
- <label class="bw-d" id="d-to" title="To date"><i class="ti ti-calendar-due"></i><span class="lb">To</span><input type="date" id="to" aria-label="To date"></label>
+ <div class="dts"><label class="bw-d" id="d-from" title="From date"><i class="ti ti-calendar-event"></i><span class="lb">From</span><input type="date" id="from" aria-label="From date"></label>
+ <label class="bw-d" id="d-to" title="To date"><i class="ti ti-calendar-due"></i><span class="lb">To</span><input type="date" id="to" aria-label="To date"></label></div>
 <button type="button" class="ib" id="rf-b" title="Reload data" aria-label="Reload data" onclick="reloadData()"><i class="ti ti-refresh"></i></button>
 </div></div>
 <div class="tw" id="view"></div></main>
@@ -363,11 +382,12 @@ const TABS=[['out','Outstanding','ti-scale'],['stm','Statement','ti-file-text'],
 const TNAME={out:'Outstanding',stm:'Statement',age:'Aging',trc:'Trace',day:'Daily collection',hist:'Allocation history'};
 const norm=x=>String(x||'').toLowerCase().trim();
 const after=()=>render();
-const T=(h,rows,num=[])=>rows.length?`<table><thead><tr>${h.map((x,i)=>`<th class="${num.includes(i)?'n':''}">${x}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${num.includes(i)?'n':''}">${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`:'<div class="empty">No data</div>';
+const T=(h,rows,num=[])=>`<table><thead><tr>${h.map((x,i)=>`<th class="${num.includes(i)?'n':''}">${x}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${num.includes(i)?'n':''}">${c}</td>`).join('')}</tr>`).join(''):`<tr class="nd"><td colspan="${h.length}" class="empty"><i class="ti ti-database-off" style="font-size:20px;display:block;margin-bottom:4px"></i>No data</td></tr>`}</tbody></table>`;
 const M=n=>money(n),S=(a,f)=>r2(a.reduce((s,x)=>s+f(x),0));
 function drawBar(){
  $('f-tabs').innerHTML=TABS.map(([k,l,ic])=>`<button type="button" class="bw-cap${tab===k?' on':''}" title="${TNAME[k]}" aria-label="${TNAME[k]}" onclick="setTab('${k}')"><i class="ti ${ic}"></i><span class="l">${l}</span></button>`).join('');
- $('f-dir').innerHTML=[['out','Customers','ti-users'],['in','Suppliers','ti-truck-delivery']].map(([k,l,ic])=>`<button type="button" class="bw-cap ${k}${DIR===k?' on':''}" title="${k==='out'?'Customers (receivable)':'Suppliers (payable)'}" aria-label="${l}" onclick="setDir('${k}')"><i class="ti ${ic}"></i><span class="l">${l}</span></button>`).join('');
+ $('f-dir').innerHTML=[['out','Customers','ti-users'],['in','Suppliers','ti-truck-delivery']].map(([k,l,ic])=>`<button type="button" class="bw-cap ${k}${DIR===k?' on':''}" title="${k==='out'?'Customers (receivable)':'Suppliers (payable)'}" aria-label="${l}" onclick="setDir('${k}')"><i class="ti ${ic}"></i></button>`).join('');
+ $('party').placeholder=DIR==='out'?'Search customers, bill, order, receipt…':'Search suppliers, bill, order, receipt…';
  const act=!!(qtxt||party||$('from').value||$('to').value);$('f-clear').hidden=!act;
  ['from','to'].forEach(i=>{const l=$(i).parentElement,v=$(i).value;l.classList.toggle('has',!!v);l.title=(i==='from'?'From date':'To date')+(v?': '+v:'');});
  const q=party||qtxt,c=$('qchip');$('ps-b').classList.toggle('act',!!q);c.hidden=!q;
@@ -395,9 +415,10 @@ function render(){drawBar();
  if(tab==='hist'){const rv=new Set(d.al.filter(a=>a.rev).map(a=>a.rev)),cd={};d.ch.forEach(c=>cd[c.id]=c.dir);
   out=T(['Date','Receipt','Party','Bill','Order','Amount','Note'],d.al.filter(a=>cd[a.cid]===dir&&pk(a.party)&&inR(a.date)&&ok([a.party,a.rno,a.billNo,a.orderNo,a.note].join(' '))).sort((a,b)=>b.id.localeCompare(a.id)).map(a=>[esc(a.date),esc(a.rno),esc(a.party),esc(a.billNo),esc(a.orderNo),`<span class="${a.amt<0?'neg':''}">${M(a.amt)}</span>`,esc(a.note)+(a.rev?' (reversal)':rv.has(a.id)?' (reversed)':'')]),[5]);}
  $('kpi').innerHTML=kpi;$('view').innerHTML=out;
- const bits=[`<span class="chip on"><i class="ti ti-${TABS.find(t=>t[0]===tab)[2].slice(3)}"></i>${TNAME[tab]}</span>`,`<span class="chip"><i class="ti ti-${dir==='out'?'users':'truck-delivery'}"></i>${dir==='out'?'Customers':'Suppliers'}</span>`];
- if(party)bits.push(`<span class="chip"><i class="ti ti-user"></i>${esc(party)}</span>`);if(fr||to)bits.push(`<span class="chip"><i class="ti ti-calendar"></i>${esc(fr||'…')} → ${esc(to||'…')}</span>`);
- const tb=document.querySelector('#view table');if(tb)bits.push(`<span class="dim">${tb.tBodies[0]?tb.tBodies[0].rows.length:0} rows</span>`);$('rinfo').innerHTML=bits.join('');}
+ const nrow=document.querySelectorAll('#view tbody tr:not(.nd)').length,tIc=TABS.find(t=>t[0]===tab)[2];
+ const bits=[`<span class="chip on" title="${TNAME[tab]}"><i class="ti ${tIc}"></i>${TNAME[tab]}</span>`,`<span class="chip" title="${dir==='out'?'Customers':'Suppliers'}"><i class="ti ${dir==='out'?'ti-users':'ti-truck-delivery'}"></i></span>`,`<span class="chip" title="${nrow} row${nrow===1?'':'s'}"><i class="ti ti-list-numbers"></i>${nrow} row${nrow===1?'':'s'}</span>`];
+ if(party)bits.push(`<span class="chip" title="${esc(party)}"><i class="ti ti-user"></i><span class="cl">${esc(party)}</span></span>`);
+ $('rinfo').innerHTML=bits.join('');}
 /* ── search dropdown (party list + free-text search) ── */
 function partyList(){const d=data(),m={};d.ch.filter(c=>c.dir===DIR).forEach(c=>{(m[c.party]=m[c.party]||{n:c.party,b:0,c:0}).b=r2(m[c.party].b+c.amt);});d.rc.filter(r=>r.dir===DIR).forEach(r=>{(m[r.party]=m[r.party]||{n:r.party,b:0,c:0}).b=r2(m[r.party].b-r.amt);});return Object.values(m).sort((a,b)=>a.n.localeCompare(b.n));}
 function psPos(){const b=$('ps-b').getBoundingClientRect(),m=$('ps-m'),W=Math.min(430,innerWidth-16);m.style.width=W+'px';m.style.left=Math.max(8,Math.min(b.left,innerWidth-W-8))+'px';
@@ -407,8 +428,8 @@ function psShow(o){if(o)menuClose();$('ps-m').classList.toggle('open',o);$('ps')
  if(o){psPos();psIdx=-1;psRender();setTimeout(()=>$('party').focus(),0);}}
 function psToggle(){psShow(!$('ps-m').classList.contains('open'));}
 function psRender(){if(USE_BACKEND&&!ready()){$('ps-l').innerHTML='<div class="empty" style="padding:18px">Loading…</div>';psL=[];return;}
- const q=party?'':norm(qtxt);psL=partyList().filter(p=>!q||norm(p.n).includes(q)).slice(0,200);
- $('ps-l').innerHTML=psL.length?`<div class="pm-h">${psL.length} part${psL.length===1?'y':'ies'} · ${DIR==='out'?'Customers':'Suppliers'}</div>`+psL.map((p,i)=>`<div class="pi${i===psIdx?' hl':''}${p.n===party?' sel':''}" data-n="${esc(p.n)}" onmousedown="event.preventDefault();pickParty(this.dataset.n)"><i class="ti ti-${DIR==='out'?'user':'truck-delivery'}"></i><div class="pn"><b>${esc(p.n)}</b><span>${DIR==='out'?'Customer':'Supplier'}</span></div><div class="pa mono ${p.b>.005?'neg':''}">${M(Math.abs(p.b))}<small>${p.b>.005?'due':p.b<-.005?'advance':'settled'}</small></div></div>`).join('')
+ $('ps-ic').className='ti '+(DIR==='out'?'ti-users':'ti-truck-delivery');const q=party?'':norm(qtxt);psL=partyList().filter(p=>!q||norm(p.n).includes(q)).slice(0,200);
+ $('ps-l').innerHTML=psL.length?`<div class="pm-h">${psL.length} part${psL.length===1?'y':'ies'} · ${DIR==='out'?'Customers':'Suppliers'}</div>`+psL.map((p,i)=>`<div class="pi${i===psIdx?' hl':''}${p.n===party?' sel':''}" data-n="${esc(p.n)}" onmousedown="event.preventDefault();pickParty(this.dataset.n)"><i class="ti ${DIR==='out'?'ti-users':'ti-truck-delivery'}"></i><div class="pn"><b>${esc(p.n)}</b></div><div class="pa mono ${p.b>.005?'neg':p.b<-.005?'adv':''}"><span class="pl">${p.b>.005?'Due':p.b<-.005?'Advance':'Settled'}</span>${M(Math.abs(p.b))}</div></div>`).join('')
   :'<div class="empty" style="padding:18px"><i class="ti ti-search-off" style="font-size:20px;display:block;margin-bottom:4px"></i>No matching party — press Enter to search all fields</div>';}
 function setQ(v){qtxt=v.trim();party='';$('ps-x').hidden=!qtxt;psIdx=-1;psRender();render();}
 function pickParty(n){$('party').value=n;qtxt=n;party=n;$('ps-x').hidden=false;psShow(false);render();}
@@ -437,7 +458,7 @@ function setRange(k){const d=new Date(),iso=x=>new Date(x.getTime()-x.getTimezon
 function reloadData(){const b=$('rf-b');b.querySelector('i').style.animation='spin 1s linear infinite';
  Promise.resolve(USE_BACKEND?(ST.booting=false,Promise.all(SV.map(applyFromIDB)).then(()=>freshLedger()).catch(()=>{})):load()).then(()=>{showToast('Data refreshed','success');}).finally(()=>{b.querySelector('i').style.animation='';render();});}
 /* ── print the report on screen ── */
-function printReport(){if(USE_BACKEND&&!ready())return showToast('Data not loaded yet','error');const v=$('view');if(!v.querySelector('table'))return showToast('Nothing to print','error');
+function printReport(){if(USE_BACKEND&&!ready())return showToast('Data not loaded yet','error');const v=$('view');if(!v.querySelector('tbody tr:not(.nd)'))return showToast('Nothing to print','error');
  const fr=$('from').value,to=$('to').value;
  $('pr').innerHTML=`<div class="hd"><div><h2>${TNAME[tab]}</h2><div>${DIR==='out'?'Customers (receivable)':'Suppliers (payable)'}${party?' · '+esc(party):qtxt?' · “'+esc(qtxt)+'”':''}</div></div><div style="text-align:right"><div>${(fr||to)?esc(fr||'…')+' → '+esc(to||'…'):'All dates'}</div><div>Printed ${today()}</div></div></div>`+
   `<div class="kpi" style="display:flex;gap:18px;margin-bottom:8px">${[...$('kpi').children].map(k=>'<div style="border:1px solid #888;padding:4px 10px">'+k.innerText.replace(/\n/g,': ')+'</div>').join('')}</div>`+v.innerHTML;
@@ -445,8 +466,8 @@ function printReport(){if(USE_BACKEND&&!ready())return showToast('Data not loade
 function bk(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([Ledger.backup()],{type:'application/json'}));a.download='ledger-backup-'+today()+'.json';a.click();}
 function rsf(i){const f=i.files[0];if(!f)return;if(!confirm('Restore replaces ALL local ledger data with this file. Continue?')){i.value='';return;}
  f.text().then(t=>{Ledger.restore(t);return load();}).then(()=>showToast('Backup restored','success')).catch(e=>showToast('Restore failed: '+e.message,'error'));i.value='';}
-function csv(){if(USE_BACKEND&&!ready())return showToast('Data not loaded yet','error');const t=document.querySelector('#view table');if(!t)return showToast('Nothing to export','error');
- const s=[...t.rows].map(r=>[...r.cells].map(c=>'"'+c.innerText.replace(/\n/g,' ').replace(/"/g,'""')+'"').join(',')).join('\n'),a=document.createElement('a');
+function csv(){if(USE_BACKEND&&!ready())return showToast('Data not loaded yet','error');const t=document.querySelector('#view table');if(!t||!t.querySelector('tbody tr:not(.nd)'))return showToast('Nothing to export','error');
+ const s=[...t.rows].filter(r=>!r.classList.contains('nd')).map(r=>[...r.cells].map(c=>'"'+c.innerText.replace(/\n/g,' ').replace(/"/g,'""')+'"').join(',')).join('\n'),a=document.createElement('a');
  a.href=URL.createObjectURL(new Blob(['\ufeff'+s],{type:'text/csv'}));a.download='report-'+tab+'-'+today()+'.csv';a.click();}
 
 /* ═══ BOOT ═══ */
