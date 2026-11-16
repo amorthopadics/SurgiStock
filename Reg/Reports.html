@@ -73,14 +73,126 @@ label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
 .seg{display:inline-flex}.seg .tab{border-radius:0}.seg .tab:first-child{border-radius:8px 0 0 8px}.seg .tab:last-child{border-radius:0 8px 8px 0}.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:12px}@media(max-width:800px){.cols{grid-template-columns:1fr}}.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:10px}.rcp{display:flex;gap:8px;align-items:center;padding:7px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;cursor:pointer}.rcp.on{border-color:var(--accent);background:var(--accent-dim)}td input{max-width:120px;text-align:right}
 
 .sk{height:34px;border-radius:6px;margin-bottom:8px;background:linear-gradient(90deg,var(--bg3),var(--surface),var(--bg3));background-size:200% 100%;animation:sk 1.2s linear infinite}@keyframes sk{to{background-position:-200% 0}}
+
+/* ═══ v3 — Allocation-style toolbar: one pill, icon controls, search dropdown, export menu ═══ */
+:root,[data-theme="dark"]{--surface2:#2d333b;--red-dim:rgba(248,81,73,.12);--shadow-lg:0 8px 32px rgba(0,0,0,.6)}
+[data-theme="light"]{--surface2:#e2e7ed;--red-dim:rgba(168,17,27,.1);--shadow-lg:0 8px 32px rgba(0,0,0,.2)}
+@keyframes spin{to{transform:rotate(360deg)}}@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+[hidden]{display:none!important}
+.bar{position:relative;z-index:30;flex-wrap:nowrap;gap:8px;padding:8px 14px}.bar>*{flex:none}
+.bar>.bar-scroll{flex:0 1 auto;min-width:0;margin-right:auto}
+.vb-brand{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:var(--radius-lg);background:var(--accent-dim);color:var(--accent);border:1px solid var(--border);font-size:16px}
+.bar-scroll{display:flex;align-items:center;gap:4px;overflow-x:auto;overflow-y:hidden;padding:2px 4px;background:var(--bg3);border:1px solid var(--border);border-radius:99px;scrollbar-width:none}
+.bar-scroll::-webkit-scrollbar{display:none}.bar-scroll>*{flex:none}
+.bar-scroll .sep{width:1px;height:20px;background:var(--border2);margin:0 6px;opacity:.6}
+.bw-caps{display:inline-flex;gap:2px;flex-wrap:nowrap}
+.bw-cap{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 13px;border-radius:99px;border:1px solid transparent;background:transparent;color:var(--text2);font:inherit;font-size:12.5px;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s,transform .1s}
+.bw-cap i{font-size:15px}.bw-cap:hover{color:var(--text);background:var(--bg2)}.bw-cap:active{transform:scale(.96)}
+.bw-cap.on{background:var(--accent-dim);color:var(--accent);border-color:var(--accent)}
+.bw-cap.out.on{background:var(--orange-dim);color:var(--orange);border-color:var(--orange)}.bw-cap.in.on{background:var(--teal-dim);color:var(--teal);border-color:var(--teal)}
+.ib{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;position:relative;transition:color .15s,border-color .15s,background .15s}
+.ib:hover,.ib.open{color:var(--text);border-color:var(--accent)}
+.bar-scroll .ib,.bar-scroll .ps-b{height:30px;width:30px;border:0;background:transparent;border-radius:99px}
+.bar-scroll .ib:hover,.bar-scroll .ib.open,.bar-scroll .ps-b:hover,.bar-scroll .ps.open .ps-b{background:var(--bg2)}
+.bar-scroll .ib.act,.bar-scroll .ps-b.act{background:var(--accent-dim);color:var(--accent)}
+.ib.dot::after{content:'';position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.ps{position:relative}
+.ps-b{display:inline-flex;align-items:center;gap:4px;height:30px;padding:0 10px;width:auto!important;border-radius:99px;color:var(--text2);cursor:pointer;font-size:16px;border:0;background:transparent}
+.ps-b .ti-chevron-down,.ps-b .ti-chevron-up{font-size:13px}
+.menu{position:fixed;display:none;flex-direction:column;overflow:hidden;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);box-shadow:0 14px 34px rgba(0,0,0,.4);z-index:90;animation:rise .14s ease-out}
+.menu.open{display:flex}
+.ps-s{position:relative;flex:none;padding:8px;border-bottom:1px solid var(--border)}
+.ps-s>i{position:absolute;left:19px;top:50%;transform:translateY(-50%);color:var(--text2);font-size:16px;pointer-events:none}
+.ps-s input{height:36px;padding:0 34px}
+.ps-x{position:absolute;right:12px;top:12px;width:28px;height:28px;border:0;background:transparent;color:var(--text2);cursor:pointer;border-radius:6px;display:inline-flex;align-items:center;justify-content:center}.ps-x:hover{background:var(--surface);color:var(--text)}
+.ps-l{flex:1;min-height:0;overflow:auto;scrollbar-width:none}.ps-l::-webkit-scrollbar{display:none}
+.pm-h{position:sticky;top:0;background:var(--bg2);padding:7px 12px;font-size:11px;color:var(--text2);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.05em}
+.pi{display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border)}.pi:last-child{border-bottom:0}
+.pi:hover,.pi.hl{background:var(--accent-dim)}.pi.sel{box-shadow:inset 3px 0 0 var(--accent)}
+.pi>i{width:30px;height:30px;border-radius:50%;background:var(--bg3);color:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:16px;flex:none}
+.pn{min-width:0;flex:1}.pn b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pn span{font-size:11.5px;color:var(--text2)}
+.pa{margin-left:auto;text-align:right;font-size:12.5px;white-space:nowrap}.pa small{display:block;color:var(--text2);font:400 11px var(--font)}
+.qchip{display:inline-flex;align-items:center;gap:6px;height:26px;max-width:170px;padding:0 6px 0 10px;border-radius:99px;background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);font-size:12.5px}
+.qchip span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.qchip button{border:0;background:transparent;color:inherit;cursor:pointer;display:inline-flex;font-size:14px;padding:2px}
+.bw-d{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;margin:0;border-radius:99px;color:var(--text2);cursor:pointer;position:relative;border:0}
+.bw-d:hover{background:var(--bg2)}.bw-d .lb{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.bw-d.has{background:var(--accent-dim);color:var(--accent)}
+.bw-d input{width:auto;height:auto;border:0;background:transparent;padding:0;color:var(--text);font-size:13px}
+.xm{min-width:220px;padding:6px}
+.xi{display:flex;align-items:center;gap:11px;width:100%;padding:9px 11px;border:0;background:transparent;color:var(--text);font:inherit;font-size:13px;border-radius:var(--radius);cursor:pointer;text-align:left}
+.xi:hover{background:var(--accent-dim)}.xi i{font-size:18px;color:var(--accent);flex:none}.xi small{display:block;color:var(--text2);font-size:11px;margin-top:1px}
+.xi:disabled,.xi.pg-denied{opacity:.45;pointer-events:none}
+.xh{padding:6px 11px 4px;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text2)}
+.xs{height:1px;background:var(--border);margin:5px 4px}
+.cache-ind,.cache-ind:hover{background:none;border:0}.cache-ind.ok{color:var(--teal)}.cache-ind.warn{color:var(--amber)}.cache-ind.err{color:var(--red)}.cache-ind.busy i{animation:spin 1s linear infinite}
+main{max-width:1600px;width:100%;margin:0 auto}
+/* KPI cards */
+.kpi div{display:flex;flex-direction:column;position:relative;overflow:hidden;animation:rise .25s ease-out both;transition:border-color .15s,transform .15s}
+.kpi div:hover{border-color:var(--accent);transform:translateY(-1px)}
+.kpi div i{position:absolute;right:10px;top:9px;font-size:20px;color:var(--accent);opacity:.35}
+.kpi .k-neg b{color:var(--red)}.kpi .k-ok b{color:var(--teal)}
+#view{animation:rise .22s ease-out}
+tbody tr{transition:background .12s}tbody tr:hover{background:var(--accent-dim)}
+.rinfo{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;font-size:12px;color:var(--text2)}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;background:var(--bg3);border:1px solid var(--border);font:500 11.5px var(--mono);color:var(--text2)}.chip.on{background:var(--accent-dim);color:var(--accent);border-color:var(--accent)}
+.toast{position:fixed;bottom:22px;right:22px;left:auto;transform:translateY(10px);background:var(--surface2);color:var(--text);border:1px solid var(--border2);padding:10px 16px;border-radius:var(--radius-lg);font-size:12.5px;font-weight:500;z-index:999;opacity:0;transition:all .25s cubic-bezier(.34,1.56,.64,1);pointer-events:none;display:flex!important;align-items:center;gap:9px;box-shadow:var(--shadow-lg);max-width:340px}
+.toast.show{opacity:1;transform:none}.toast.success{background:var(--teal-dim);color:var(--teal);border-color:rgba(57,211,83,.25)}.toast.error{background:var(--red-dim);color:var(--red);border-color:rgba(248,81,73,.25)}
+@media(max-width:1180px){.bw-cap .l,.bw-d .lb{display:none}.bw-cap{padding:0 10px}.bw-d{width:30px;padding:0;justify-content:center}.bw-d input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}.qchip{max-width:120px}}
+@media(max-width:600px){.vb-brand,.qchip{display:none}}
+@media print{.menu{display:none!important}}
 </style>
 </head>
 <body>
-<div class="bar"><h1><i class="ti ti-chart-bar"></i>Reports &amp; History</h1><button class="btn" onclick="bk()"><i class="ti ti-database-export"></i>Backup</button><button class="btn" onclick="$('rs').click()"><i class="ti ti-database-import"></i>Restore</button><input type="file" id="rs" accept=".json" style="display:none" onchange="rsf(this)"/><button class="btn" onclick="csv()"><i class="ti ti-download"></i>CSV</button><button class="btn" onclick="window.print()"><i class="ti ti-printer"></i>Print</button></div>
-<main><div class="tools"><span class="tabs" id="tabs" style="flex-wrap:wrap"></span></div>
-<div class="tools"><select id="dir" style="max-width:170px" onchange="render()"><option value="out">Customers (receivable)</option><option value="in">Suppliers (payable)</option></select>
-<input id="q" placeholder="Search party, bill, order, receipt, comments…" oninput="render()"/><input id="from" type="date" style="max-width:150px" onchange="render()"/><input id="to" type="date" style="max-width:150px" onchange="render()"/></div>
-<div class="kpi" id="kpi"></div><div class="tw" id="view"></div></main><div class="toast" id="toast"></div>
+<div class="bar">
+<div class="vb-brand" title="Reports &amp; History"><i class="ti ti-chart-bar"></i></div>
+<div class="bar-scroll" id="bar-scroll">
+ <div class="bw-caps" id="f-tabs"></div>
+ <span class="sep"></span>
+ <div class="bw-caps" id="f-dir"></div>
+ <span class="sep"></span>
+ <div class="ps" id="ps">
+  <button type="button" class="ps-b" id="ps-b" title="Search" aria-label="Search" onclick="psToggle()"><i class="ti ti-search"></i><i class="ti ti-chevron-down" id="ps-c"></i></button>
+  <div class="menu" id="ps-m" style="flex-direction:column">
+   <div class="ps-s"><i class="ti ti-search"></i><input id="party" autocomplete="off" placeholder="Search party, bill, order, receipt, comments…" aria-label="Search" oninput="setQ(this.value)" onkeydown="psKey(event)"/><button type="button" class="ps-x" id="ps-x" hidden title="Clear" aria-label="Clear" onclick="clearQ(true)"><i class="ti ti-x"></i></button></div>
+   <div class="ps-l" id="ps-l"></div>
+  </div>
+ </div>
+ <span class="qchip" id="qchip" hidden></span>
+ <span class="sep"></span>
+ <button type="button" class="ib" id="rg-b" title="Quick date range" aria-label="Quick date range" onclick="menuToggle('rg')"><i class="ti ti-calendar-stats"></i></button>
+ <label class="bw-d" id="d-from" title="From date"><i class="ti ti-calendar-event"></i><span class="lb">From</span><input type="date" id="from" aria-label="From date"></label>
+ <label class="bw-d" id="d-to" title="To date"><i class="ti ti-calendar-due"></i><span class="lb">To</span><input type="date" id="to" aria-label="To date"></label>
+ <button type="button" class="ib" id="f-clear" hidden title="Clear all filters" aria-label="Clear filters" onclick="clearAll()"><i class="ti ti-filter-off"></i></button>
+</div>
+<button type="button" class="ib" id="rf-b" title="Reload data" aria-label="Reload data" onclick="reloadData()"><i class="ti ti-refresh"></i></button>
+<button type="button" class="ib" id="xb" title="Export · Print · Backup" aria-label="Export, print, backup" onclick="menuToggle('x')"><i class="ti ti-dots-vertical"></i></button>
+<button class="ib cache-ind warn" id="cache-ind" type="button" title="Loading…"><i class="ti ti-database"></i></button>
+<button class="ib sync-ind" id="sync-ind" type="button" style="display:none" title=""><i class="ti ti-cloud-upload"></i></button>
+</div>
+<div class="menu" id="rg-m" style="min-width:200px;padding:6px">
+ <div class="xh">Quick range</div>
+ <button class="xi" onclick="setRange('today')"><i class="ti ti-calendar-event"></i>Today</button>
+ <button class="xi" onclick="setRange('7')"><i class="ti ti-calendar-week"></i>Last 7 days</button>
+ <button class="xi" onclick="setRange('30')"><i class="ti ti-calendar-month"></i>Last 30 days</button>
+ <button class="xi" onclick="setRange('month')"><i class="ti ti-calendar"></i>This month</button>
+ <button class="xi" onclick="setRange('lmonth')"><i class="ti ti-calendar-minus"></i>Last month</button>
+ <button class="xi" onclick="setRange('year')"><i class="ti ti-calendar-stats"></i>This year</button>
+ <div class="xs"></div>
+ <button class="xi" onclick="setRange('all')"><i class="ti ti-infinity"></i>All time</button>
+</div>
+<div class="menu xm" id="x-m">
+ <div class="xh">Export current report</div>
+ <button class="xi" onclick="menuClose();csv()"><i class="ti ti-file-spreadsheet"></i><span>Download CSV<small>Excel-ready, current tab &amp; filters</small></span></button>
+ <button class="xi" onclick="menuClose();printReport()"><i class="ti ti-printer"></i><span>Print<small>Print the report on screen</small></span></button>
+ <div class="xs"></div>
+ <div class="xh">Data</div>
+ <button class="xi" onclick="menuClose();bk()"><i class="ti ti-database-export"></i><span>Backup (JSON)<small>Full ledger snapshot</small></span></button>
+ <button class="xi" id="x-rs" onclick="menuClose();$('rs').click()"><i class="ti ti-database-import"></i><span>Restore backup<small>Replace local ledger</small></span></button>
+</div>
+<div id="pr"></div><input type="file" id="rs" accept=".json" style="display:none" onchange="rsf(this)"/>
+<main><div class="rinfo" id="rinfo"></div>
+<div class="kpi" id="kpi"></div><div class="tw" id="view"></div></main>
+<div class="toast" id="toast" role="alert"><i id="toast-icon" class="ti ti-circle-check"></i><span id="toast-msg"></span></div>
 <script>
 'use strict';
 /* ═══ LEDGER STORE — local-cache mode (no backend). Same data shape as the Apps Script backend,
@@ -127,7 +239,7 @@ const Ledger=USE_BACKEND?{get:()=>freshLedger(),post:(a,p)=>AP2Api.post(a,p).the
 const CUR='AED',$=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=n=>(+n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),r2=n=>Math.round((+n||0)*100)/100;
 const today=()=>new Date().toISOString().slice(0,10),post=(a,p)=>Ledger.post(a,p),errText=m=>String(m);
-function showToast(m,t){const e=$('toast');e.textContent=m;e.className='toast '+(t||'');e.style.display='block';clearTimeout(showToast.t);showToast.t=setTimeout(()=>e.style.display='none',t==='error'?9000:3000);}
+function showToast(m,t){const e=$('toast');e.className='toast show'+(t?' '+t:'');$('toast-icon').className='ti '+(t==='error'?'ti-alert-circle':t==='success'?'ti-circle-check':'ti-info-circle');$('toast-msg').textContent=m;clearTimeout(showToast.t);showToast.t=setTimeout(()=>e.classList.remove('show'),t==='error'?5000:2600);}
 let L={Charges:[],Receipts:[],Allocations:[]};
 const rw=(a,h)=>(a||[]).filter(r=>Array.isArray(r)&&r[0]!==''&&String(r[0])!==h);
 function data(){
@@ -229,30 +341,89 @@ async function load(){
 try{const j=await Ledger.get();L={Charges:j.Charges||[],Receipts:j.Receipts||[],Allocations:j.Allocations||[]};}
  catch(e){showToast('Could not load the ledger: '+errText(e.message),'error');}after();}
 
-const TABS=[['out','Outstanding'],['stm','Statement'],['age','Aging'],['trc','Trace'],['day','Daily collection'],['hist','Allocation history']];let tab='out';
+const TABS=[['out','Outstanding','ti-scale'],['stm','Statement','ti-file-text'],['age','Aging','ti-hourglass'],['trc','Trace','ti-route'],['day','Daily','ti-cash'],['hist','History','ti-history']];let tab='out',DIR='out',qtxt='',party='',psIdx=-1,psL=[];
+const TNAME={out:'Outstanding',stm:'Statement',age:'Aging',trc:'Trace',day:'Daily collection',hist:'Allocation history'};
+const norm=x=>String(x||'').toLowerCase().trim();
 const after=()=>render();
 const T=(h,rows,num=[])=>rows.length?`<table><thead><tr>${h.map((x,i)=>`<th class="${num.includes(i)?'n':''}">${x}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${num.includes(i)?'n':''}">${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`:'<div class="empty">No data</div>';
 const M=n=>money(n),S=(a,f)=>r2(a.reduce((s,x)=>s+f(x),0));
-function render(){$('tabs').innerHTML=TABS.map(([k,l])=>`<button class="tab${tab===k?' on':''}" onclick="tab='${k}';render()">${l}</button>`).join('');
- if(USE_BACKEND&&!ready()){$('kpi').innerHTML='';$('view').innerHTML=stateHTML();return;}
- const dir=$('dir').value,q=$('q').value.toLowerCase().split(/\s+/).filter(Boolean),fr=$('from').value,to=$('to').value,d=data();
+function drawBar(){
+ $('f-tabs').innerHTML=TABS.map(([k,l,ic])=>`<button type="button" class="bw-cap${tab===k?' on':''}" title="${TNAME[k]}" aria-label="${TNAME[k]}" onclick="setTab('${k}')"><i class="ti ${ic}"></i><span class="l">${l}</span></button>`).join('');
+ $('f-dir').innerHTML=[['out','Customers','ti-users'],['in','Suppliers','ti-truck-delivery']].map(([k,l,ic])=>`<button type="button" class="bw-cap ${k}${DIR===k?' on':''}" title="${k==='out'?'Customers (receivable)':'Suppliers (payable)'}" aria-label="${l}" onclick="setDir('${k}')"><i class="ti ${ic}"></i><span class="l">${l}</span></button>`).join('');
+ const act=!!(qtxt||party||$('from').value||$('to').value);$('f-clear').hidden=!act;
+ ['from','to'].forEach(i=>{const l=$(i).parentElement,v=$(i).value;l.classList.toggle('has',!!v);l.title=(i==='from'?'From date':'To date')+(v?': '+v:'');});
+ const q=party||qtxt,c=$('qchip');$('ps-b').classList.toggle('act',!!q);c.hidden=!q;
+ c.innerHTML=q?`<i class="ti ti-${party?'user':'search'}"></i><span title="${esc(q)}">${esc(q)}</span><button type="button" title="Clear" aria-label="Clear" onclick="clearQ()"><i class="ti ti-x"></i></button>`:'';
+ $('rg-b').classList.toggle('dot',!!($('from').value||$('to').value));}
+function setTab(k){tab=k;render();}
+function setDir(k){DIR=k;party='';if($('ps').classList.contains('open'))psRender();render();}
+function render(){drawBar();
+ if(USE_BACKEND&&!ready()){$('kpi').innerHTML='';$('rinfo').innerHTML='';$('view').innerHTML=stateHTML();return;}
+ const dir=DIR,q=party?[]:qtxt.toLowerCase().split(/\s+/).filter(Boolean),fr=$('from').value,to=$('to').value,d=data(),pk=x=>!party||x===party;
  const inR=x=>(!fr||x>=fr)&&(!to||x<=to),ok=s=>q.every(w=>s.toLowerCase().includes(w));
- const ch=d.ch.filter(c=>c.dir===dir&&inR(c.date)&&ok([c.party,c.billNo,c.orderNo,c.desc,c.note,c.type].join(' '))),rc=d.rc.filter(r=>r.dir===dir&&inR(r.date)&&ok([r.party,r.no,r.ref,r.note,r.mode].join(' ')));
+ const ch=d.ch.filter(c=>c.dir===dir&&pk(c.party)&&inR(c.date)&&ok([c.party,c.billNo,c.orderNo,c.desc,c.note,c.type].join(' '))),rc=d.rc.filter(r=>r.dir===dir&&pk(r.party)&&inR(r.date)&&ok([r.party,r.no,r.ref,r.note,r.mode].join(' ')));
  const parties=[...new Set([...ch.map(c=>c.party),...rc.map(r=>r.party)])].sort();let kpi='',out='';
  if(tab==='out'){const R=parties.map(p=>{const c=S(ch.filter(x=>x.party===p),x=>x.amt),r=S(rc.filter(x=>x.party===p),x=>x.amt);return[esc(p),M(c),M(r),`<span class="${c-r>.005?'neg':''}">${M(Math.abs(c-r))} ${c-r>.005?'due':c-r<-.005?'advance':''}</span>`];});
-  kpi=`<div>Charged<b>${M(S(ch,x=>x.amt))}</b></div><div>${dir==='out'?'Received':'Paid'}<b>${M(S(rc,x=>x.amt))}</b></div><div>Net balance<b>${M(S(ch,x=>x.amt)-S(rc,x=>x.amt))}</b></div>`;out=T(['Party','Charged',dir==='out'?'Received':'Paid','Balance'],R,[1,2,3]);}
+  const net=r2(S(ch,x=>x.amt)-S(rc,x=>x.amt));kpi=`<div><i class="ti ti-receipt"></i>Charged<b>${M(S(ch,x=>x.amt))}</b></div><div class="k-ok"><i class="ti ti-cash"></i>${dir==='out'?'Received':'Paid'}<b>${M(S(rc,x=>x.amt))}</b></div><div class="${net>.005?'k-neg':''}"><i class="ti ti-scale"></i>Net balance<b>${M(net)}</b></div><div><i class="ti ti-users"></i>Parties<b>${parties.length}</b></div>`;out=T(['Party','Charged',dir==='out'?'Received':'Paid','Balance'],R,[1,2,3]);}
  if(tab==='stm'){const rows=[];parties.forEach(p=>{let b=0;[...ch.filter(c=>c.party===p).map(c=>({d:c.date,k:c.type==='Order'?'Bill':c.type,ref:c.billNo||'–',t:c.orderNo||c.desc,dr:c.amt,cr:0,n:c.note})),...rc.filter(r=>r.party===p).map(r=>({d:r.date,k:'Receipt',ref:r.no,t:[r.mode,r.ref].filter(Boolean).join(' · '),dr:0,cr:r.amt,n:r.note}))].sort((a,b)=>a.d.localeCompare(b.d)).forEach(x=>{b=r2(b+x.dr-x.cr);rows.push([esc(p),esc(x.d),x.k,esc(x.ref),esc(x.t),x.dr?M(x.dr):'',x.cr?M(x.cr):'',M(b),esc(x.n)]);});});
-  out=T(['Party','Date','Type','Ref','Details','Charge','Paid','Balance','Comments'],rows,[5,6,7]);}
+  kpi=`<div><i class="ti ti-users"></i>Parties<b>${parties.length}</b></div><div><i class="ti ti-list-numbers"></i>Entries<b>${rows.length}</b></div>`;out=T(['Party','Date','Type','Ref','Details','Charge','Paid','Balance','Comments'],rows,[5,6,7]);}
  if(tab==='age'){const now=Date.parse(today()),B=[0,0,0,0];const R=parties.map(p=>{const b=[0,0,0,0];ch.filter(c=>c.party===p&&c.due>.005).forEach(c=>{const a=Math.floor((now-Date.parse(c.date))/864e5);b[a<=30?0:a<=60?1:a<=90?2:3]+=c.due;});b.forEach((v,i)=>B[i]+=v);const adv=S(rc.filter(r=>r.party===p),r=>r.un);return[esc(p),...b.map(M),M(S(b,x=>x)),M(adv)];});
-  kpi=['0–30','31–60','61–90','90+'].map((l,i)=>`<div>${l} days<b>${M(B[i])}</b></div>`).join('');out=T(['Party','0–30','31–60','61–90','90+','Total due','Unallocated advance'],R,[1,2,3,4,5,6]);}
+  kpi=['0–30','31–60','61–90','90+'].map((l,i)=>`<div class="${i>1&&B[i]>.005?'k-neg':''}"><i class="ti ti-hourglass"></i>${l} days<b>${M(B[i])}</b></div>`).join('');out=T(['Party','0–30','31–60','61–90','90+','Total due','Unallocated advance'],R,[1,2,3,4,5,6]);}
  if(tab==='trc'){const al=d.al,rows=ch.slice(0,200).map(c=>[`<b class="mono">${esc(c.billNo||'–')}</b> ${esc(c.orderNo||c.desc)} <span class="badge">${esc(c.type)}</span>`,esc(c.party),M(c.amt),M(c.paid),M(c.due),al.filter(a=>a.cid===c.id).map(a=>`${esc(a.rno)}: ${M(a.amt)}`).join('<br>')||'<span class="dim">unpaid</span>']);
   const rr=rc.slice(0,200).map(r=>[`<b class="mono">${esc(r.no)}</b> ${esc(r.date)}`,esc(r.party),M(r.amt),M(r.alloc),M(r.un),al.filter(a=>a.pid===r.id).map(a=>`${esc(a.orderNo||a.billNo||'item')}: ${M(a.amt)}`).join('<br>')||'<span class="dim">not allocated</span>']);
-  out='<h3 style="font-size:14px;margin-bottom:6px">Charges → paid by</h3>'+T(['Bill / order','Party','Charge','Paid','Due','Paid by'],rows,[2,3,4])+'<h3 style="font-size:14px;margin:14px 0 6px">Receipts → settled</h3>'+T(['Receipt','Party','Amount','Allocated','Unallocated','Settled orders'],rr,[2,3,4]);}
+  kpi=`<div><i class="ti ti-receipt"></i>Charges<b>${ch.length}</b></div><div><i class="ti ti-cash"></i>Receipts<b>${rc.length}</b></div>`;out='<h3 style="font-size:14px;margin-bottom:6px">Charges → paid by</h3>'+T(['Bill / order','Party','Charge','Paid','Due','Paid by'],rows,[2,3,4])+'<h3 style="font-size:14px;margin:14px 0 6px">Receipts → settled</h3>'+T(['Receipt','Party','Amount','Allocated','Unallocated','Settled orders'],rr,[2,3,4]);}
  if(tab==='day'){const m={};rc.forEach(r=>{const k=r.date+'|'+r.mode;(m[k]=m[k]||{d:r.date,m:r.mode,n:0,t:0});m[k].n++;m[k].t=r2(m[k].t+r.amt);});
-  kpi=`<div>Total<b>${M(S(rc,x=>x.amt))}</b></div><div>Entries<b>${rc.length}</b></div>`;out=T(['Date','Mode','Entries','Total'],Object.values(m).sort((a,b)=>b.d.localeCompare(a.d)).map(x=>[esc(x.d),esc(x.m),x.n,M(x.t)]),[2,3]);}
+  kpi=`<div class="k-ok"><i class="ti ti-cash"></i>Total<b>${M(S(rc,x=>x.amt))}</b></div><div><i class="ti ti-list-numbers"></i>Entries<b>${rc.length}</b></div>`;out=T(['Date','Mode','Entries','Total'],Object.values(m).sort((a,b)=>b.d.localeCompare(a.d)).map(x=>[esc(x.d),esc(x.m),x.n,M(x.t)]),[2,3]);}
  if(tab==='hist'){const rv=new Set(d.al.filter(a=>a.rev).map(a=>a.rev)),cd={};d.ch.forEach(c=>cd[c.id]=c.dir);
-  out=T(['Date','Receipt','Party','Bill','Order','Amount','Note'],d.al.filter(a=>cd[a.cid]===dir&&inR(a.date)&&ok([a.party,a.rno,a.billNo,a.orderNo,a.note].join(' '))).sort((a,b)=>b.id.localeCompare(a.id)).map(a=>[esc(a.date),esc(a.rno),esc(a.party),esc(a.billNo),esc(a.orderNo),`<span class="${a.amt<0?'neg':''}">${M(a.amt)}</span>`,esc(a.note)+(a.rev?' (reversal)':rv.has(a.id)?' (reversed)':'')]),[5]);}
- $('kpi').innerHTML=kpi;$('view').innerHTML=out;}
+  out=T(['Date','Receipt','Party','Bill','Order','Amount','Note'],d.al.filter(a=>cd[a.cid]===dir&&pk(a.party)&&inR(a.date)&&ok([a.party,a.rno,a.billNo,a.orderNo,a.note].join(' '))).sort((a,b)=>b.id.localeCompare(a.id)).map(a=>[esc(a.date),esc(a.rno),esc(a.party),esc(a.billNo),esc(a.orderNo),`<span class="${a.amt<0?'neg':''}">${M(a.amt)}</span>`,esc(a.note)+(a.rev?' (reversal)':rv.has(a.id)?' (reversed)':'')]),[5]);}
+ $('kpi').innerHTML=kpi;$('view').innerHTML=out;
+ const bits=[`<span class="chip on"><i class="ti ti-${TABS.find(t=>t[0]===tab)[2].slice(3)}"></i>${TNAME[tab]}</span>`,`<span class="chip"><i class="ti ti-${dir==='out'?'users':'truck-delivery'}"></i>${dir==='out'?'Customers':'Suppliers'}</span>`];
+ if(party)bits.push(`<span class="chip"><i class="ti ti-user"></i>${esc(party)}</span>`);if(fr||to)bits.push(`<span class="chip"><i class="ti ti-calendar"></i>${esc(fr||'…')} → ${esc(to||'…')}</span>`);
+ const tb=document.querySelector('#view table');if(tb)bits.push(`<span class="dim">${tb.tBodies[0]?tb.tBodies[0].rows.length:0} rows</span>`);$('rinfo').innerHTML=bits.join('');}
+/* ── search dropdown (party list + free-text search) ── */
+function partyList(){const d=data(),m={};d.ch.filter(c=>c.dir===DIR).forEach(c=>{(m[c.party]=m[c.party]||{n:c.party,b:0,c:0}).b=r2(m[c.party].b+c.amt);});d.rc.filter(r=>r.dir===DIR).forEach(r=>{(m[r.party]=m[r.party]||{n:r.party,b:0,c:0}).b=r2(m[r.party].b-r.amt);});return Object.values(m).sort((a,b)=>a.n.localeCompare(b.n));}
+function psPos(){const b=$('ps-b').getBoundingClientRect(),m=$('ps-m'),W=Math.min(430,innerWidth-16);m.style.width=W+'px';m.style.left=Math.max(8,Math.min(b.left,innerWidth-W-8))+'px';
+ const below=innerHeight-b.bottom-14,above=b.top-14,up=below<320&&above>below;m.style.maxHeight=Math.max(200,Math.min(430,up?above:below))+'px';
+ if(up){m.style.top='auto';m.style.bottom=(innerHeight-b.top+6)+'px';}else{m.style.bottom='auto';m.style.top=(b.bottom+6)+'px';}}
+function psShow(o){menuClose();$('ps-m').classList.toggle('open',o);$('ps').classList.toggle('open',o);$('ps-c').className='ti '+(o?'ti-chevron-up':'ti-chevron-down');
+ if(o){psPos();psIdx=-1;psRender();setTimeout(()=>$('party').focus(),0);}}
+function psToggle(){psShow(!$('ps-m').classList.contains('open'));}
+function psRender(){if(USE_BACKEND&&!ready()){$('ps-l').innerHTML='<div class="empty" style="padding:18px">Loading…</div>';psL=[];return;}
+ const q=party?'':norm(qtxt);psL=partyList().filter(p=>!q||norm(p.n).includes(q)).slice(0,200);
+ $('ps-l').innerHTML=psL.length?`<div class="pm-h">${psL.length} part${psL.length===1?'y':'ies'} · ${DIR==='out'?'Customers':'Suppliers'}</div>`+psL.map((p,i)=>`<div class="pi${i===psIdx?' hl':''}${p.n===party?' sel':''}" data-n="${esc(p.n)}" onmousedown="event.preventDefault();pickParty(this.dataset.n)"><i class="ti ti-${DIR==='out'?'user':'truck-delivery'}"></i><div class="pn"><b>${esc(p.n)}</b><span>${DIR==='out'?'Customer':'Supplier'}</span></div><div class="pa mono ${p.b>.005?'neg':''}">${M(Math.abs(p.b))}<small>${p.b>.005?'due':p.b<-.005?'advance':'settled'}</small></div></div>`).join('')
+  :'<div class="empty" style="padding:18px"><i class="ti ti-search-off" style="font-size:20px;display:block;margin-bottom:4px"></i>No matching party — press Enter to search all fields</div>';}
+function setQ(v){qtxt=v.trim();party='';$('ps-x').hidden=!qtxt;psIdx=-1;psRender();render();}
+function pickParty(n){$('party').value=n;qtxt=n;party=n;$('ps-x').hidden=false;psShow(false);render();}
+function clearQ(focus){$('party').value='';qtxt='';party='';$('ps-x').hidden=true;if(focus){psRender();$('party').focus();}render();}
+function clearAll(){qtxt='';party='';$('party').value='';$('ps-x').hidden=true;$('from').value='';$('to').value='';render();}
+function psKey(e){const o=$('ps-m').classList.contains('open');
+ if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(!psL.length)return;psIdx=(psIdx+(e.key==='ArrowDown'?1:-1)+psL.length)%psL.length;psRender();const h=$('ps-l').querySelector('.hl');if(h)h.scrollIntoView({block:'nearest'});}
+ else if(e.key==='Enter'){e.preventDefault();if(psIdx>=0&&psL[psIdx])pickParty(psL[psIdx].n);else psShow(false);}
+ else if(e.key==='Escape')psShow(false);}
+/* ── generic icon menus (quick range / export) ── */
+const MENUS={rg:['rg-b','rg-m',false],x:['xb','x-m',true]};
+function menuClose(){Object.values(MENUS).forEach(([b,m])=>{$(m).classList.remove('open');$(b).classList.remove('open');});}
+function menuToggle(k){const [b,m,right]=MENUS[k],open=$(m).classList.contains('open');psShow(false);menuClose();if(open)return;
+ const r=$(b).getBoundingClientRect(),el=$(m);el.classList.add('open');$(b).classList.add('open');const w=el.offsetWidth;
+ el.style.top=(r.bottom+6)+'px';el.style.left=Math.max(8,Math.min(right?r.right-w:r.left,innerWidth-w-8))+'px';}
+document.addEventListener('mousedown',e=>{if(!$('ps').contains(e.target))psShow(false);if(!e.target.closest('.menu')&&!e.target.closest('#rg-b')&&!e.target.closest('#xb'))menuClose();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){psShow(false);menuClose();}});
+$('bar-scroll').addEventListener('scroll',()=>{psShow(false);menuClose();});addEventListener('resize',()=>{menuClose();if($('ps-m').classList.contains('open'))psPos();});
+['from','to'].forEach(i=>{const e=$(i);e.addEventListener('input',render);e.addEventListener('click',()=>{try{e.showPicker();}catch(x){}});});
+function setRange(k){const d=new Date(),iso=x=>new Date(x.getTime()-x.getTimezoneOffset()*6e4).toISOString().slice(0,10),sh=n=>{const x=new Date();x.setDate(x.getDate()-n);return x;};let f='',t='';
+ if(k==='today')f=t=iso(d);else if(k==='7'){f=iso(sh(6));t=iso(d);}else if(k==='30'){f=iso(sh(29));t=iso(d);}
+ else if(k==='month'){f=iso(new Date(d.getFullYear(),d.getMonth(),1));t=iso(d);}
+ else if(k==='lmonth'){f=iso(new Date(d.getFullYear(),d.getMonth()-1,1));t=iso(new Date(d.getFullYear(),d.getMonth(),0));}
+ else if(k==='year'){f=iso(new Date(d.getFullYear(),0,1));t=iso(d);}
+ $('from').value=f;$('to').value=t;menuClose();render();}
+function reloadData(){const b=$('rf-b');b.querySelector('i').style.animation='spin 1s linear infinite';
+ Promise.resolve(USE_BACKEND?(ST.booting=false,Promise.all(SV.map(applyFromIDB)).then(()=>freshLedger()).catch(()=>{})):load()).then(()=>{showToast('Data refreshed','success');}).finally(()=>{b.querySelector('i').style.animation='';render();});}
+/* ── print the report on screen ── */
+function printReport(){if(USE_BACKEND&&!ready())return showToast('Data not loaded yet','error');const v=$('view');if(!v.querySelector('table'))return showToast('Nothing to print','error');
+ const fr=$('from').value,to=$('to').value;
+ $('pr').innerHTML=`<div class="hd"><div><h2>${TNAME[tab]}</h2><div>${DIR==='out'?'Customers (receivable)':'Suppliers (payable)'}${party?' · '+esc(party):qtxt?' · “'+esc(qtxt)+'”':''}</div></div><div style="text-align:right"><div>${(fr||to)?esc(fr||'…')+' → '+esc(to||'…'):'All dates'}</div><div>Printed ${today()}</div></div></div>`+
+  `<div class="kpi" style="display:flex;gap:18px;margin-bottom:8px">${[...$('kpi').children].map(k=>'<div style="border:1px solid #888;padding:4px 10px">'+k.innerText.replace(/\n/g,': ')+'</div>').join('')}</div>`+v.innerHTML;
+ setTimeout(()=>window.print(),50);}
 function bk(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([Ledger.backup()],{type:'application/json'}));a.download='ledger-backup-'+today()+'.json';a.click();}
 function rsf(i){const f=i.files[0];if(!f)return;if(!confirm('Restore replaces ALL local ledger data with this file. Continue?')){i.value='';return;}
  f.text().then(t=>{Ledger.restore(t);return load();}).then(()=>showToast('Backup restored','success')).catch(e=>showToast('Restore failed: '+e.message,'error'));i.value='';}
@@ -262,7 +433,7 @@ function csv(){if(USE_BACKEND&&!ready())return showToast('Data not loaded yet','
 
 /* ═══ BOOT ═══ */
 if(USE_BACKEND){
- const rb=document.querySelector('.bar .btn[onclick*="rs"]');if(rb)rb.style.display='none';   // restore makes no sense against a server ledger
+ $('x-rs').style.display='none';   // restore makes no sense against a server ledger
  window.addEventListener('message',onCacheMessage);
  document.addEventListener('visibilitychange',()=>{if(document.hidden)return;if(!ready()&&!ST.booting)bootAll();else SV.forEach(applyFromIDB);});
  watchSrc();bootAll();setInterval(()=>{if(ready())SV.forEach(applyFromIDB);},15000);   // safety net behind the subscription
@@ -273,14 +444,14 @@ if(USE_BACKEND){
 PermGate.init({
   dataset:'ap2_ledger',
   controls:[
-    { sel:'[onclick^="bk("],[onclick^="csv("]', need:'view', fn:['bk','csv'] }   /* read-only page: only export buttons */
+    { sel:'[onclick*="bk()"],[onclick*="csv()"]', need:'view', fn:['bk','csv'] }   /* read-only page: only export buttons */
   ]
 });
 </script>
 <script>
 /* shared/syncQueue.js — offline hold & sync + cache / sync buttons */
 AP2Sync.init({
-  key:'reports', queue:[],                      /* read-only page: only the cache button */
+  key:'reports', queue:[], toast:showToast,                      /* read-only page: only the cache button */
   state:()=> ready() ? {state:'ok',title:'Up to date'} : (ST.state==='error' ? {state:'err',title:'Could not load — '+ST.err} : {state:'warn',title:'Loading…'}),
   refresh:()=>{ ST.booting=false; SV.forEach(applyFromIDB); }
 });
