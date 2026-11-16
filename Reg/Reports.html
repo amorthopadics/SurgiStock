@@ -148,6 +148,14 @@ tbody tr{transition:background .12s}tbody tr:hover{background:var(--accent-dim)}
 .kctl .ib{height:30px;width:30px;border:0;background:transparent;border-radius:99px}.kctl .ib:hover,.kctl .ib.open{background:var(--bg2)}
 .kctl .ib.dot::after{top:4px;right:4px}
 @media(max-width:700px){.krow .rinfo{max-width:none;flex-direction:row;flex-wrap:wrap;flex:1 1 100%}.kctl{flex:1 1 100%;justify-content:center}}
+
+/* KPI cards: compact fixed-height grid, never wider than the row */
+.krow{flex-wrap:nowrap}.krow>*{min-width:0}
+.krow .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;flex:1 1 0;align-self:stretch}
+.krow .kpi div{min-width:0;height:60px;padding:8px 12px;justify-content:center;gap:1px;font-size:11.5px;white-space:nowrap}
+.krow .kpi b{font-size:15px;margin-top:0;overflow:hidden;text-overflow:ellipsis}
+.krow .kpi div i{top:8px;right:9px;font-size:18px}
+@media(max-width:1000px){.krow{flex-wrap:wrap}.krow .kpi{flex:1 1 100%;order:3}}
 @media print{.menu{display:none!important}}
 </style>
 </head>
@@ -168,8 +176,8 @@ tbody tr{transition:background .12s}tbody tr:hover{background:var(--accent-dim)}
  </div>
  <span class="qchip" id="qchip" hidden></span>
  <button type="button" class="ib" id="f-clear" hidden title="Clear all filters" aria-label="Clear filters" onclick="clearAll()"><i class="ti ti-filter-off"></i></button>
+ <button type="button" class="ib" id="xb" title="Export · Print · Backup" aria-label="Export, print, backup" onclick="menuToggle('x')"><i class="ti ti-dots-vertical"></i></button>
 </div>
-<button type="button" class="ib" id="xb" title="Export · Print · Backup" aria-label="Export, print, backup" onclick="menuToggle('x')"><i class="ti ti-dots-vertical"></i></button>
 <button class="ib cache-ind warn" id="cache-ind" type="button" title="Loading…"><i class="ti ti-database"></i></button>
 <button class="ib sync-ind" id="sync-ind" type="button" style="display:none" title=""><i class="ti ti-cloud-upload"></i></button>
 </div>
@@ -395,7 +403,7 @@ function partyList(){const d=data(),m={};d.ch.filter(c=>c.dir===DIR).forEach(c=>
 function psPos(){const b=$('ps-b').getBoundingClientRect(),m=$('ps-m'),W=Math.min(430,innerWidth-16);m.style.width=W+'px';m.style.left=Math.max(8,Math.min(b.left,innerWidth-W-8))+'px';
  const below=innerHeight-b.bottom-14,above=b.top-14,up=below<320&&above>below;m.style.maxHeight=Math.max(200,Math.min(430,up?above:below))+'px';
  if(up){m.style.top='auto';m.style.bottom=(innerHeight-b.top+6)+'px';}else{m.style.bottom='auto';m.style.top=(b.bottom+6)+'px';}}
-function psShow(o){menuClose();$('ps-m').classList.toggle('open',o);$('ps').classList.toggle('open',o);$('ps-c').className='ti '+(o?'ti-chevron-up':'ti-chevron-down');
+function psShow(o){if(o)menuClose();$('ps-m').classList.toggle('open',o);$('ps').classList.toggle('open',o);$('ps-c').className='ti '+(o?'ti-chevron-up':'ti-chevron-down');
  if(o){psPos();psIdx=-1;psRender();setTimeout(()=>$('party').focus(),0);}}
 function psToggle(){psShow(!$('ps-m').classList.contains('open'));}
 function psRender(){if(USE_BACKEND&&!ready()){$('ps-l').innerHTML='<div class="empty" style="padding:18px">Loading…</div>';psL=[];return;}
