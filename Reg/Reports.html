@@ -139,6 +139,15 @@ tbody tr{transition:background .12s}tbody tr:hover{background:var(--accent-dim)}
 .toast.show{opacity:1;transform:none}.toast.success{background:var(--teal-dim);color:var(--teal);border-color:rgba(57,211,83,.25)}.toast.error{background:var(--red-dim);color:var(--red);border-color:rgba(248,81,73,.25)}
 @media(max-width:1180px){.bw-cap .l,.bw-d .lb{display:none}.bw-cap{padding:0 10px}.bw-d{width:30px;padding:0;justify-content:center}.bw-d input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}.qchip{max-width:120px}}
 @media(max-width:600px){.vb-brand,.qchip{display:none}}
+
+/* KPI row: report info + KPI cards + dates + refresh in one row */
+.krow{display:flex;align-items:stretch;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.krow .kpi{flex:1 1 360px;margin:0;min-width:0}.krow .kpi div{min-width:130px}
+.krow .rinfo{margin:0;flex-direction:column;align-items:flex-start;justify-content:center;gap:5px;flex:none;max-width:230px}
+.kctl{display:flex;align-items:center;gap:2px;padding:2px 4px;background:var(--bg3);border:1px solid var(--border);border-radius:99px;align-self:center;flex:none}
+.kctl .ib{height:30px;width:30px;border:0;background:transparent;border-radius:99px}.kctl .ib:hover,.kctl .ib.open{background:var(--bg2)}
+.kctl .ib.dot::after{top:4px;right:4px}
+@media(max-width:700px){.krow .rinfo{max-width:none;flex-direction:row;flex-wrap:wrap;flex:1 1 100%}.kctl{flex:1 1 100%;justify-content:center}}
 @media print{.menu{display:none!important}}
 </style>
 </head>
@@ -146,9 +155,9 @@ tbody tr{transition:background .12s}tbody tr:hover{background:var(--accent-dim)}
 <div class="bar">
 <div class="vb-brand" title="Reports &amp; History"><i class="ti ti-chart-bar"></i></div>
 <div class="bar-scroll" id="bar-scroll">
- <div class="bw-caps" id="f-tabs"></div>
- <span class="sep"></span>
  <div class="bw-caps" id="f-dir"></div>
+ <span class="sep"></span>
+ <div class="bw-caps" id="f-tabs"></div>
  <span class="sep"></span>
  <div class="ps" id="ps">
   <button type="button" class="ps-b" id="ps-b" title="Search" aria-label="Search" onclick="psToggle()"><i class="ti ti-search"></i><i class="ti ti-chevron-down" id="ps-c"></i></button>
@@ -158,13 +167,8 @@ tbody tr{transition:background .12s}tbody tr:hover{background:var(--accent-dim)}
   </div>
  </div>
  <span class="qchip" id="qchip" hidden></span>
- <span class="sep"></span>
- <button type="button" class="ib" id="rg-b" title="Quick date range" aria-label="Quick date range" onclick="menuToggle('rg')"><i class="ti ti-calendar-stats"></i></button>
- <label class="bw-d" id="d-from" title="From date"><i class="ti ti-calendar-event"></i><span class="lb">From</span><input type="date" id="from" aria-label="From date"></label>
- <label class="bw-d" id="d-to" title="To date"><i class="ti ti-calendar-due"></i><span class="lb">To</span><input type="date" id="to" aria-label="To date"></label>
  <button type="button" class="ib" id="f-clear" hidden title="Clear all filters" aria-label="Clear filters" onclick="clearAll()"><i class="ti ti-filter-off"></i></button>
 </div>
-<button type="button" class="ib" id="rf-b" title="Reload data" aria-label="Reload data" onclick="reloadData()"><i class="ti ti-refresh"></i></button>
 <button type="button" class="ib" id="xb" title="Export · Print · Backup" aria-label="Export, print, backup" onclick="menuToggle('x')"><i class="ti ti-dots-vertical"></i></button>
 <button class="ib cache-ind warn" id="cache-ind" type="button" title="Loading…"><i class="ti ti-database"></i></button>
 <button class="ib sync-ind" id="sync-ind" type="button" style="display:none" title=""><i class="ti ti-cloud-upload"></i></button>
@@ -190,8 +194,14 @@ tbody tr{transition:background .12s}tbody tr:hover{background:var(--accent-dim)}
  <button class="xi" id="x-rs" onclick="menuClose();$('rs').click()"><i class="ti ti-database-import"></i><span>Restore backup<small>Replace local ledger</small></span></button>
 </div>
 <div id="pr"></div><input type="file" id="rs" accept=".json" style="display:none" onchange="rsf(this)"/>
-<main><div class="rinfo" id="rinfo"></div>
-<div class="kpi" id="kpi"></div><div class="tw" id="view"></div></main>
+<main><div class="krow"><div class="rinfo" id="rinfo"></div><div class="kpi" id="kpi"></div>
+<div class="kctl">
+ <button type="button" class="ib" id="rg-b" title="Quick date range" aria-label="Quick date range" onclick="menuToggle('rg')"><i class="ti ti-calendar-stats"></i></button>
+ <label class="bw-d" id="d-from" title="From date"><i class="ti ti-calendar-event"></i><span class="lb">From</span><input type="date" id="from" aria-label="From date"></label>
+ <label class="bw-d" id="d-to" title="To date"><i class="ti ti-calendar-due"></i><span class="lb">To</span><input type="date" id="to" aria-label="To date"></label>
+<button type="button" class="ib" id="rf-b" title="Reload data" aria-label="Reload data" onclick="reloadData()"><i class="ti ti-refresh"></i></button>
+</div></div>
+<div class="tw" id="view"></div></main>
 <div class="toast" id="toast" role="alert"><i id="toast-icon" class="ti ti-circle-check"></i><span id="toast-msg"></span></div>
 <script>
 'use strict';
