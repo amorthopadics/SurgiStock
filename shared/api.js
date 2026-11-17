@@ -21,7 +21,8 @@
   'use strict';
   if (global.AP2Api) return;
 
-  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzct2GZ617tHjPtRWsyKUP8cqaOUzL-279w50JO59HnZ4bKgr_JUzRKzVXwBDpud_gWQg/exec';
+  // const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzct2GZ617tHjPtRWsyKUP8cqaOUzL-279w50JO59HnZ4bKgr_JUzRKzVXwBDpud_gWQg/exec';
+  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbws9jIYf-Gri0-LG0QxAEi-sHXABOq3AXvV3HY59GmHh1r-Er4elx-FEV3uSg3SIV6ofw/exec';
 
   /* ── session: same lookup order every module used before ── */
   let SES = null;
