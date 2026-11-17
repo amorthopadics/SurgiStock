@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>User Manual</title>
+<style>
+:root{--bg:#12161d;--p1:#1a1f28;--p2:#222831;--ln:#2d3440;--tx:#e8ecf2;--mu:#8b95a5;--ac:#4c8dff;--ok:#2fd45a;--pu:#8b5cf6;--r:16px}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--tx);font:14px/1.55 "Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column}
+header{height:56px;border-bottom:1px solid var(--ln);display:flex;align-items:center;gap:12px;padding:0 20px;flex:none}
+header .lg{width:38px;height:38px;border-radius:10px;background:#1c2a45;display:grid;place-items:center;font-size:18px}
+header b{font-size:15px}
+main{flex:1;min-height:0;display:flex;gap:12px;padding:12px}
+.pane{background:var(--p1);border:1px solid var(--ln);border-radius:var(--r);min-height:0;display:flex;flex-direction:column}
+#nav{width:150px;flex:none;padding:10px;gap:8px;overflow:auto}
+.mod{position:relative;background:var(--p2);border:2px solid transparent;border-radius:12px;padding:12px 8px 10px;text-align:center;cursor:pointer;color:var(--mu);font-size:12px;font-weight:600;line-height:1.3}
+.mod span.i{display:block;font-size:20px;margin-bottom:4px}
+.mod:hover{color:var(--tx)}
+.mod.on{border-color:var(--ac);color:var(--tx);background:#1c2a45}
+.mod em{position:absolute;top:-6px;right:-6px;background:var(--ok);color:#06210f;font-style:normal;font-size:11px;font-weight:800;min-width:20px;height:20px;border-radius:10px;display:grid;place-items:center}
+#mid{flex:1;min-width:0}
+#sh{flex:0 0 42%;min-width:0;display:none}
+#sh.open{display:flex}
+.ph{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--ln);flex:none}
+.ph h2{font-size:16px}
+.ph .bd{background:#2a2250;color:#b8a0ff;border-radius:20px;padding:1px 10px;font-size:12px;font-weight:700}
+.ph button{margin-left:auto}
+.body{padding:20px;overflow:auto;flex:1;min-height:0}
+.sum{color:var(--mu);margin-bottom:18px;max-width:70ch}
+.use{background:var(--p2);border-left:3px solid var(--ac);border-radius:8px;padding:10px 14px;margin-bottom:20px;max-width:70ch}
+ol{list-style:none;padding:0;counter-reset:s;max-width:70ch}
+li{counter-increment:s;display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--ln)}
+li:before{content:counter(s);flex:none;width:26px;height:26px;border-radius:50%;background:var(--p2);color:var(--ac);font-weight:800;display:grid;place-items:center;font-size:12px}
+li .t{flex:1}
+li b{color:#fff}
+.lk{display:inline-block;margin-top:6px;color:var(--ac);font-size:12.5px;font-weight:600;cursor:pointer;background:none;border:0;padding:0}
+.lk:hover{text-decoration:underline}
+li.act{background:#1c2a4522}
+button.x{background:var(--p2);color:var(--tx);border:1px solid var(--ln);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:15px}
+button.x:hover{border-color:var(--ac)}
+.cap{color:var(--mu);font-size:12.5px;margin-bottom:12px}
+.frame{position:relative;background:var(--p2);border:1px solid var(--ln);border-radius:12px;min-height:220px;display:grid;place-items:center;overflow:hidden}
+.frame img{width:100%;display:block;cursor:zoom-in}
+.ld{position:absolute;inset:0;display:grid;place-items:center;color:var(--mu);gap:8px;align-content:center;text-align:center;padding:16px}
+.sp{width:26px;height:26px;border:3px solid var(--ln);border-top-color:var(--ac);border-radius:50%;animation:r .8s linear infinite;margin:auto}
+@keyframes r{to{transform:rotate(360deg)}}
+.er code{background:#0d1117;padding:2px 8px;border-radius:6px;color:#ffd28a;word-break:break-all}
+.row{display:flex;gap:14px;margin-top:12px;flex-wrap:wrap}
+#zoom{position:fixed;inset:0;background:#000d;display:none;place-items:center;z-index:9;cursor:zoom-out;padding:20px}
+#zoom.open{display:grid}
+#zoom img{max-width:100%;max-height:100%;border-radius:8px}
+@media(max-width:900px){main{flex-direction:column;overflow:auto}#nav{width:auto;flex-direction:row;overflow-x:auto}.mod{min-width:110px}#sh.open{flex:none;height:70vh}}
+@media(prefers-color-scheme:light){:root{--bg:#eef1f6;--p1:#fff;--p2:#f1f4f9;--ln:#dde3ec;--tx:#1b2230;--mu:#667286}li b{color:#000}.mod.on{background:#e3edff}}
+</style>
+</head>
+<body>
+<header><div class="lg">📘</div><b>SurgiStock · User Manual</b></header>
+<main>
+  <div class="pane" id="nav"></div>
+  <div class="pane" id="mid"></div>
+  <div class="pane" id="sh"></div>
+</main>
+<div id="zoom"><img alt=""></div>
+
+<script>
+/* ---------- Screenshot location (same folder the print logo / watermark use) ---------- */
+const IMG_BASES=[
+  'https://amorthopadics.github.io/SurgiStock/shared/',
+  'https://raw.githubusercontent.com/amorthopadics/SurgiStock/main/shared/'
+];
+const EXT='.jpg', VER='1';   /* change VER after replacing a screenshot to refresh the cache */
+
+/* ---------- Manual content: edit text here, one block per module ----------
+   shot = file name (without .jpg) saved in /shared/ */
+const M=[
+ {id:'master',n:'Master Setup',i:'🗂️',s:'Set up the basic lists everything else depends on.',u:'Do this first — all dropdowns in other modules come from here.',
+  st:[['Open <b>Master Setup</b> and pick a list on the left (Item Lists, Category, Domain, Store, Source, Specs).','manual_master_1'],
+      ['Click <b>Add</b>, fill the name and optional description, then <b>Save</b>.','manual_master_2'],
+      ['Use <b>Search</b> to find an entry, then edit or delete it.','manual_master_3'],
+      ['Under <b>Specs Settings</b> add fields like Brand, Size or Colour.','manual_master_4']]},
+ {id:'dc',n:'DC Lists',i:'📑',s:'Lists used on delivery challans (DC).',u:'Set the printed DC name once, then reuse it in orders.',
+  st:[['Open <b>DC Lists</b> from the tabs.','manual_dc_1'],
+      ['Choose the DC and type the <b>name to print</b>.','manual_dc_2'],
+      ['Add or edit entries and <b>Save</b>.','manual_dc_3']]},
+ {id:'orders',n:'Orders',i:'📦',s:'Record goods sent out and received, and watch your stock.',u:'Outgoing = to customers. Incoming = from suppliers. Stock = incoming − outgoing.',
+  st:[['Choose the <b>Outgoing</b> or <b>Incoming</b> tab.','manual_orders_1'],
+      ['Click <b>New Order</b> and select the party.','manual_orders_2'],
+      ['Press <b>Add Item</b>, pick items and quantities, then <b>Save</b>.','manual_orders_3'],
+      ['Open <b>Stock</b> to see store-wise quantity.','manual_orders_4'],
+      ['In <b>Minimum Stock Levels</b> set the lowest quantity per item and store.','manual_orders_5']]},
+ {id:'bills',n:'Bills & Payments',i:'🧾',s:'Turn orders into bills and track paid and unpaid amounts.',u:'Received = customers owe you. Paid = you owe suppliers.',
+  st:[['Open <b>Unbilled orders</b> and choose the date range.','manual_bills_1'],
+      ['Tick the orders to bill and check <b>Items &amp; rates</b>.','manual_bills_2'],
+      ['Add <b>Other charges</b> (fuel, delivery, assistance) if needed.','manual_bills_3'],
+      ['Create the bill, then <b>Send on WhatsApp</b> or print.','manual_bills_4'],
+      ['Use <b>Fix Rate</b> to lock a minimum or maximum rate per item and party.','manual_bills_5']]},
+ {id:'mbill',n:'Manual Bills',i:'✍️',s:'Create a bill by hand when there is no order.',u:'Preview before saving to avoid mistakes.',
+  st:[['Click <b>New bill</b> and fill in party and items.','manual_mbill_1'],
+      ['Press <b>Preview</b> to check the bill.','manual_mbill_2'],
+      ['Choose <b>Save</b>, <b>Save &amp; Print</b> or <b>WhatsApp</b>.','manual_mbill_3'],
+      ['Find old bills under <b>Saved bills</b>.','manual_mbill_4']]},
+ {id:'receipts',n:'Receipts & Payments',i:'💵',s:'Record money received from customers and paid to suppliers.',u:'This only records the money. Matching to bills is done in Allocation.',
+  st:[['Click <b>Receive</b> (from customer) or <b>Pay</b> (to supplier).','manual_receipts_1'],
+      ['Select the party, amount and method: cash, bank, cheque or card.','manual_receipts_2'],
+      ['Choose <b>Normal</b> or <b>Opening advance</b>, then <b>Save</b>.','manual_receipts_3'],
+      ['Print or send the receipt on <b>WhatsApp</b>.','manual_receipts_4']]},
+ {id:'alloc',n:'Allocation',i:'🔗',s:'Match received or paid money against open bills.',u:'Unmatched money stays as the party\'s advance.',
+  st:[['Search the <b>party</b> (customer or supplier).','manual_alloc_1'],
+      ['Select the receipt or payment to allocate.','manual_alloc_2'],
+      ['Choose <b>Automatic (FIFO)</b> for oldest-first, or <b>Manual</b> to pick bills.','manual_alloc_3'],
+      ['Add a comment and press <b>Save this row</b>.','manual_alloc_4']]},
+ {id:'reports',n:'Reports',i:'📊',s:'View, export and back up your records.',u:'Use the quick range buttons for the fastest results.',
+  st:[['Pick a <b>Quick range</b> or set From / To dates.','manual_reports_1'],
+      ['Switch the report tab and <b>Search</b> by party, bill or receipt.','manual_reports_2'],
+      ['Click <b>Download CSV</b> for Excel or <b>Print</b>.','manual_reports_3'],
+      ['Use <b>Data Backup</b> to save a copy, or <b>Restore backup</b> to load one.','manual_reports_4']]},
+ {id:'portal',n:'User Portal',i:'👥',s:'Admins approve users and control what each person can open.',u:'Admin only.',
+  st:[['Open <b>Requests Portal</b> to see pending logins.','manual_portal_1'],
+      ['Click a request, set name, role and modules, then <b>Approve &amp; Save</b> — or <b>Reject</b> with a reason.','manual_portal_2'],
+      ['In <b>Users</b> edit role, status or switch modules on and off.','manual_portal_3'],
+      ['Check <b>Permissions Sheet</b> for a live view of all access.','manual_portal_4']]},
+ {id:'log',n:'Request History & Log',i:'🕘',s:'Permanent audit record of approvals and changes.',u:'Admin only. Records cannot be edited.',
+  st:[['Open <b>Request History</b> to see approved and rejected requests with reasons.','manual_log_1'],
+      ['Open <b>Activity Log</b> to see who approved, rejected or changed permissions.','manual_log_2'],
+      ['Filter by <b>email</b> or <b>date</b>; press <b>Clear</b> to reset.','manual_log_3']]}
+];
+
+/* ---------- Image loader: preload, spinner, fallback host, retry ---------- */
+const cache={};
+function loadShot(name,cb){
+  if(cache[name]){cb(cache[name]);return}
+  let k=0;
+  (function next(){
+    if(k>=IMG_BASES.length){cb(null);return}
+    const url=IMG_BASES[k++]+name+EXT+'?v='+VER, im=new Image();
+    im.onload=()=>{cache[name]=url;cb(url)};
+    im.onerror=next;
+    im.src=url;
+  })();
+}
+
+const $=s=>document.querySelector(s);
+let cur=M[0],curStep=-1;
+
+function nav(){
+  $('#nav').innerHTML=M.map(m=>`<div class="mod ${m===cur?'on':''}" data-id="${m.id}"><em>${m.st.length}</em><span class="i">${m.i}</span>${m.n}</div>`).join('');
+  document.querySelectorAll('.mod').forEach(e=>e.onclick=()=>{cur=M.find(m=>m.id===e.dataset.id);curStep=-1;nav();mid();closeShot();location.hash=cur.id});
+}
+function mid(){
+  $('#mid').innerHTML=`<div class="ph"><span style="font-size:18px">${cur.i}</span><h2>${cur.n}</h2><span class="bd">${cur.st.length} steps</span></div>
+  <div class="body"><p class="sum">${cur.s}</p><div class="use">💡 ${cur.u}</div>
+  <ol>${cur.st.map((s,i)=>`<li data-i="${i}" class="${i===curStep?'act':''}"><div class="t">${s[0]}<br><button class="lk" data-i="${i}">View screenshot →</button></div></li>`).join('')}</ol></div>`;
+  document.querySelectorAll('.lk').forEach(b=>b.onclick=()=>openShot(+b.dataset.i));
+}
+function openShot(i){
+  curStep=i;const [txt,name]=cur.st[i];
+  document.querySelectorAll('#mid li').forEach(l=>l.classList.toggle('act',+l.dataset.i===i));
+  const sh=$('#sh');sh.classList.add('open');
+  sh.innerHTML=`<div class="ph"><h2>Step ${i+1} · ${cur.n}</h2><button class="x" title="Close">✕</button></div>
+  <div class="body"><p class="cap">${txt.replace(/<[^>]+>/g,'')}</p>
+  <div class="frame"><div class="ld"><div class="sp"></div>Loading screenshot…</div></div><div class="row" id="acts"></div></div>`;
+  sh.querySelector('.x').onclick=closeShot;
+  loadShot(name,url=>{
+    if(curStep!==i||cur.st[i][1]!==name)return;
+    const f=sh.querySelector('.frame');if(!f)return;
+    if(url){
+      f.innerHTML=`<img src="${url}" alt="${name}">`;
+      f.querySelector('img').onclick=()=>{$('#zoom img').src=url;$('#zoom').classList.add('open')};
+      $('#acts').innerHTML=`<a class="lk" href="${url}" target="_blank" rel="noopener">Open full image ↗</a>${i>0?'<button class="lk" id="pv">← Previous</button>':''}${i<cur.st.length-1?'<button class="lk" id="nx">Next →</button>':''}`;
+    }else{
+      f.innerHTML=`<div class="ld er">Screenshot not found.<br>Save it as <code>shared/${name}${EXT}</code><button class="lk" id="rt">Try again</button></div>`;
+      $('#acts').innerHTML=`${i>0?'<button class="lk" id="pv">← Previous</button>':''}${i<cur.st.length-1?'<button class="lk" id="nx">Next →</button>':''}`;
+      f.querySelector('#rt').onclick=()=>openShot(i);
+    }
+    const p=$('#pv'),n=$('#nx');if(p)p.onclick=()=>openShot(i-1);if(n)n.onclick=()=>openShot(i+1);
+  });
+  /* warm the next screenshot */
+  if(cur.st[i+1])loadShot(cur.st[i+1][1],()=>{});
+}
+function closeShot(){curStep=-1;$('#sh').classList.remove('open');document.querySelectorAll('#mid li').forEach(l=>l.classList.remove('act'))}
+$('#zoom').onclick=()=>$('#zoom').classList.remove('open');
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('#zoom').classList.remove('open');closeShot()}});
+
+const h=location.hash.slice(1);if(M.some(m=>m.id===h))cur=M.find(m=>m.id===h);
+nav();mid();
+</script>
+</body>
+</html>
