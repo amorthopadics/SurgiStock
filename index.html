@@ -1620,9 +1620,12 @@ function _hasPerm(perms, key) {
      permKey  Permissions-sheet column, or null = always visible
    Colour tokens for the top-bar pill come from cls (see _SC_PILL).          */
 const SHORTCUTS = [
-  { id:'sc-additem', label:'DC', icon:'ti-plus',               file:'Reg/DC_Lists.html',   title:'Add Item',       sub:'Make item list',  cls:'emp',  permKey:'ap2_specsData' },
-  { id:'sc-store',   label:'Bill',    icon:'ti-building-warehouse', file:'Reg/mBill.html', title:'Items Incoming', sub:'Store / incoming', cls:'bike', permKey:'ap2_specsData' },
-  // { id:'sc-new', label:'New Portal', icon:'ti-star', file:'Reg/NewPortal.html', title:'New Portal', sub:'Description', cls:'sim', permKey:'ap2_newPortal' },
+  // { id:'sc-additem', label:'DC', icon:'ti-plus',file:'Reg/DC_Lists.html',   title:'Add Item',       sub:'Make item list',  cls:'emp',  permKey:'ap2_specsData' },
+  // { id:'sc-store',   label:'Bill',    icon:'ti-building-warehouse', file:'Reg/mBill.html', title:'Items Incoming', sub:'Store / incoming', cls:'bike', permKey:'ap2_specsData' },
+  // { id:'sc-additem', label:'DC', icon:'ti-plus',file:'Reg/UserManual.html',   title:'Check how to use the system',       sub:'User Manual',  cls:'emp',  permKey:'ap2_specsData' },
+  { id:'sc-dc',     label:'DC',     icon:'ti-truck-delivery',    file:'Reg/DC_Lists.html', 				 title:'Delivery Challan',            sub:'Make item list',   cls:'emp',    permKey:'ap2_specsData' },
+  { id:'sc-store',  label:'Bill',   icon:'ti-file-invoice',      file:'Reg/mBill.html',            		 title:'Items Incoming',              sub:'Store / incoming', cls:'bike',   permKey:'ap2_specsData' },
+  { id:'sc-manual', label:'Manual', icon:'ti-book',              file:'Reg/UserManual.html',             title:'Check how to use the system', sub:'User Manual',      cls:'manual', permKey:'ap2_specsData' },
 ];
 const _SC_PILL = {
   emp:  ['var(--accent-dim)','var(--accent)'],
